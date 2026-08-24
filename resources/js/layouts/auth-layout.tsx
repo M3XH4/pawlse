@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react';
 import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
 
 export default function AuthLayout({
     title = '',
     description = '',
-    subTitle = "",
+    subTitle = '',
     children,
 }: {
-    title?: string;
+    title?: ReactNode;
     description?: string;
-    subTitle?: string;
-    children: React.ReactNode;
+    subTitle?: ReactNode;
+    children: ReactNode;
 }) {
     return (
         <AuthLayoutTemplate title={title} description={description} subTitle={subTitle}>

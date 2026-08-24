@@ -1,10 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
-use Inertia\Inertia;
 use App\Http\Controllers\PetController;
+use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\UserNotificationController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Laravel\Fortify\Features;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -15,7 +17,7 @@ Route::inertia('/donate', 'donate')->name('donate');
 
 Route::get('/volunteer', function (Request $request) {
     return Inertia::render('volunteer', [
-        'selectedEvent' => $request->input('selectedEvent')
+        'selectedEvent' => $request->input('selectedEvent'),
     ]);
 });
 
@@ -27,12 +29,62 @@ Route::inertia('/sos', 'sos')->name('sos');
 Route::post('/ai/predict', [PetController::class, 'predict']);
 Route::post('/ai/generate-names', [PetController::class, 'generateNames']);
 
+Route::prefix('account/notifications')->name('account.notifications.')->group(function () {
+    Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
+    Route::patch('read-all', [UserNotificationController::class, 'readAll'])->name('read-all');
+});
 
-Route::inertia('/account/user', 'user/dashboard')->name('account.user');
-Route::inertia('/account/user/bookmark', 'user/bookmark')->name('account.user.bookmark');
+Route::prefix('account/user')->name('account.user.')->group(function () {
+    Route::inertia('/', 'user/bookmark')->name('index');
+    Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
+    Route::inertia('rescue-reports', 'user/rescue-reports')->name('rescue-reports');
+    Route::inertia('adoption-applications', 'user/adoption-applications')->name('adoption-applications');
+    Route::inertia('donations', 'user/donations')->name('donations');
+    Route::inertia('missing-found', 'user/missing-found')->name('missing-found');
+    Route::inertia('notifications', 'user/notifications')->name('notifications');
+    Route::inertia('account-settings', 'user/account-settings')->name('account-settings');
+});
+
+Route::prefix('account/volunteer')->name('account.volunteer.')->group(function () {
+    Route::inertia('/', 'volunteer/profile-information')->name('index');
+    Route::inertia('profile', 'volunteer/profile-information')->name('profile');
+    Route::inertia('status', 'volunteer/volunteer-status')->name('status');
+    Route::inertia('assigned-tasks', 'volunteer/assigned-tasks')->name('assigned-tasks');
+    Route::inertia('participation-history', 'volunteer/participation-history')->name('participation-history');
+    Route::inertia('certificates', 'volunteer/certificates')->name('certificates');
+    Route::inertia('rescue-reports', 'volunteer/rescue-reports')->name('rescue-reports');
+    Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
+    Route::inertia('account-settings', 'volunteer/account-settings')->name('account-settings');
+});
+
+Route::prefix('account/admin')->name('account.admin.')->group(function () {
+    Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
+    Route::inertia('rescue-management', 'admin/rescue-management')->name('rescue-management');
+    Route::inertia('ai-validation', 'admin/ai-validation')->name('ai-validation');
+    Route::inertia('adoption-management', 'admin/adoption-management')->name('adoption-management');
+    Route::inertia('volunteer-management', 'admin/volunteer-management')->name('volunteer-management');
+    Route::inertia('donation-monitoring', 'admin/donation-monitoring')->name('donation-monitoring');
+    Route::inertia('events', 'admin/events')->name('events');
+    Route::inertia('reports-analytics', 'admin/reports-analytics')->name('reports-analytics');
+    Route::inertia('notifications', 'admin/notifications')->name('notifications');
+    Route::inertia('account-settings', 'admin/account-settings')->name('account-settings');
+});
+
+Route::prefix('account/super-admin')->name('account.super-admin.')->group(function () {
+    Route::inertia('dashboard', 'super-admin/dashboard')->name('dashboard');
+    Route::inertia('admin-management', 'super-admin/admin-management')->name('admin-management');
+    Route::inertia('audit-logs', 'super-admin/audit-logs')->name('audit-logs');
+    Route::inertia('archives', 'super-admin/archives')->name('archives');
+    Route::inertia('security-access', 'super-admin/security-access')->name('security-access');
+    Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
+    Route::inertia('backup-restore', 'super-admin/backup-restore')->name('backup-restore');
+    Route::inertia('ai-configuration', 'super-admin/ai-configuration')->name('ai-configuration');
+    Route::inertia('system-settings', 'super-admin/system-settings')->name('system-settings');
+    Route::inertia('notifications', 'super-admin/notifications')->name('notifications');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'user/dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardRedirectController::class)->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

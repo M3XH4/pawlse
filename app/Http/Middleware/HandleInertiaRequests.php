@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -35,6 +36,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $dashboardRole = $this->dashboardRole($request);
+        $dashboardNotifications = $dashboardRole === null
+            ? []
+            : $this->dashboardNotifications($request);
+
+        $dashboardChrome = $dashboardRole === null
+            ? null
+            : [
+                'greeting' => match (true) {
+                    now()->hour < 12 => 'Good Morning',
+                    now()->hour < 17 => 'Good Afternoon',
+                    default => 'Good Evening',
+                },
+                'dateLabel' => now()->timezone(config('app.timezone'))->format('l, F j, Y'),
+            ];
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -42,6 +59,55 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'dashboardRole' => $dashboardRole,
+            'dashboardNotifications' => $dashboardNotifications,
+            'dashboardNotificationActions' => $request->user() === null
+                ? null
+                : [
+                    'markAllReadUrl' => route('account.notifications.read-all'),
+                ],
+            'dashboardChrome' => $dashboardChrome,
+            'adminNotifications' => $dashboardNotifications,
+            'adminChrome' => $dashboardChrome,
         ];
+    }
+
+    private function dashboardRole(Request $request): ?string
+    {
+        return match (true) {
+            $request->is('account/super-admin*') => 'super-admin',
+            $request->is('account/admin*') => 'admin',
+            $request->is('account/volunteer*') => 'volunteer',
+            $request->is('account/user*') => 'user',
+            default => null,
+        };
+    }
+
+    /**
+     * @return list<array{id: string, title: string, description: string, time: string, url: string, icon: string, read: bool, readUrl: string}>
+     */
+    private function dashboardNotifications(Request $request): array
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return [];
+        }
+
+        return $user->notifications()
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (DatabaseNotification $notification): array => [
+                'id' => $notification->id,
+                'title' => (string) ($notification->data['title'] ?? 'Notification'),
+                'description' => (string) ($notification->data['message'] ?? $notification->data['description'] ?? ''),
+                'time' => $notification->created_at?->diffForHumans() ?? '',
+                'url' => (string) ($notification->data['url'] ?? url()->current()),
+                'icon' => (string) ($notification->data['icon'] ?? 'system'),
+                'read' => $notification->read(),
+                'readUrl' => route('account.notifications.read', $notification),
+            ])
+            ->all();
     }
 }

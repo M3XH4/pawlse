@@ -182,6 +182,7 @@
   --color-paw-yellow: #FBBF24;
   --color-paw-blue: #38BDF8;
   --color-paw-green: #22C55E;
+  --color-paw-purple: #7C3AED;
   --color-paw-coral: #FB7185;
   --color-paw-navy: #1F2937;
   --color-paw-bg: #F8FAFC;
@@ -414,4 +415,44 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+}
+
+[data-dashboard-theme] {
+  --dashboard-primary: #16a34a;
+  --dashboard-primary-from: #16a34a;
+  --dashboard-primary-to: #22c55e;
+  --dashboard-primary-shadow: rgb(22 163 74 / 0.35);
+  --dashboard-ring: #22c55e;
+}
+
+[data-dashboard-theme='user'] {
+  --dashboard-primary: #16a34a;
+  --dashboard-primary-from: #15803d;
+  --dashboard-primary-to: #22c55e;
+  --dashboard-primary-shadow: rgb(22 163 74 / 0.35);
+  --dashboard-ring: #22c55e;
+}
+
+[data-dashboard-theme='volunteer'] {
+  --dashboard-primary: #00b4d8;
+  --dashboard-primary-from: #0096c7;
+  --dashboard-primary-to: #48cae4;
+  --dashboard-primary-shadow: rgb(0 180 216 / 0.35);
+  --dashboard-ring: #00b4d8;
+}
+
+[data-dashboard-theme='admin'] {
+  --dashboard-primary: #0d9488;
+  --dashboard-primary-from: #0f766e;
+  --dashboard-primary-to: #14b8a6;
+  --dashboard-primary-shadow: rgb(13 148 136 / 0.35);
+  --dashboard-ring: #14b8a6;
+}
+
+[data-dashboard-theme='super-admin'] {
+  --dashboard-primary: #7c3aed;
+  --dashboard-primary-from: #6d28d9;
+  --dashboard-primary-to: #c026d3;
+  --dashboard-primary-shadow: rgb(124 58 237 / 0.38);
+  --dashboard-ring: #a855f7;
 }

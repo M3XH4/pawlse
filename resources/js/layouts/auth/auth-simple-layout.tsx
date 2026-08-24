@@ -7,8 +7,11 @@ export default function AuthSimpleLayout({
     children,
     title,
     description,
+    subTitle,
     sub_title,
 }: AuthLayoutProps) {
+    const subtitle = subTitle ?? sub_title;
+
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
             <div className="w-full max-w-sm">
@@ -29,9 +32,9 @@ export default function AuthSimpleLayout({
                             <p className="text-center text-sm text-muted-foreground">
                                 {description}
                             </p>
-                            {sub_title && (
+                            {subtitle && (
                                 <p className="text-center text-lg font-bold text-foreground">
-                                    {sub_title}
+                                    {subtitle}
                                 </p>
                             )}
                         </div>
