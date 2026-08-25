@@ -132,4 +132,12 @@ class User extends Authenticatable implements MustVerifyEmailContract
     {
         return $this->hasMany(Certificate::class);
     }
+
+    /**
+     * @return HasMany<PetReport, $this>
+     */
+    public function petReports(): HasMany
+    {
+        return $this->hasMany(PetReport::class);
+    }
 }

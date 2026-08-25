@@ -41,4 +41,12 @@ class AssignedTask extends Model
     {
         return $this->belongsTo(FeedingSchedule::class);
     }
+
+    /**
+     * @return BelongsTo<PetReport, $this>
+     */
+    public function petReport(): BelongsTo
+    {
+        return $this->belongsTo(PetReport::class);
+    }
 }

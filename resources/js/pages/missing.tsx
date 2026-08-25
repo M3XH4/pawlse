@@ -1,7 +1,8 @@
 
 import { Search, MapPin, Calendar, Camera, Info, X, Phone, Share2, AlertTriangle, CheckCircle2, Upload, User, Mail, MessageCircle, Facebook, PawPrint, Activity, FileText, Zap, Twitter, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -178,18 +179,58 @@ const MISSING_PETS = [
   },
 ];
 
-export default function MissingPetsPage() {
-  const [filter, setFilter] = useState<'All' | 'Missing' | 'Found' | 'Searching'>('All');
+interface PetReport {
+    id: number;
+    type: string;
+    status: string;
+    animal_type: string;
+    breed: string | null;
+    age_category: string | null;
+    gender: string | null;
+    name: string | null;
+    color: string | null;
+    last_seen_date: string | null;
+    urgency: string | null;
+    situation_type: string | null;
+    description: string | null;
+    location: string;
+    contact_name: string | null;
+    contact_phone: string | null;
+    contact_email: string | null;
+    is_duplicate: boolean;
+    created_at: string;
+    photos: { id: number; path: string }[];
+}
+
+interface MissingPetsPageProps {
+    reports: {
+        data: PetReport[];
+        links: any[];
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+    };
+    filters: {
+        search: string;
+        status: string;
+    };
+}
+
+export default function MissingPetsPage({ reports, filters }: MissingPetsPageProps) {
+  const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+  const [statusFilter, setStatusFilter] = useState(filters?.status || 'All');
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [formData, setFormData] = useState({
     petName: '',
-    petType: '',
+    petType: 'Dog',
     breed: '',
     color: '',
     lastSeenLocation: '',
@@ -201,51 +242,111 @@ export default function MissingPetsPage() {
     distinguishingFeatures: ''
   });
 
-  const filteredPets = MISSING_PETS.filter(pet => filter === 'All' || pet.status === filter);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
-    if (file) {
-      setUploadedFile(file);
+    setUploadedFiles(files);
 
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFilePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else if (file.type.startsWith('video/')) {
-        setFilePreview(URL.createObjectURL(file));
-      }
+    const newPreviews: string[] = [];
+    for (const file of files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            const preview = await new Promise<string>((resolve) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+            });
+            newPreviews.push(preview);
+        } else if (file.type.startsWith('video/')) {
+            newPreviews.push(URL.createObjectURL(file));
+        }
     }
+    setFilePreviews(newPreviews);
+  };
+
+  const handleFilterChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    router.get('/missing', {
+      search: searchQuery,
+      status: newStatus
+    }, {
+      preserveState: true,
+      preserveScroll: true
+    });
+  };
+
+  const handleSearch = () => {
+    router.get('/missing', {
+      search: searchQuery,
+      status: statusFilter
+    }, {
+      preserveState: true,
+      preserveScroll: true
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setReportSubmitted(true);
-    setTimeout(() => {
-      setReportModalOpen(false);
-      setReportSubmitted(false);
-      setFormData({
-        petName: '',
-        petType: '',
-        breed: '',
-        color: '',
-        lastSeenLocation: '',
-        lastSeenDate: '',
-        description: '',
-        contactName: '',
-        contactPhone: '',
-        contactEmail: '',
-        distinguishingFeatures: ''
-      });
-    }, 2000);
+    if (!formData.lastSeenLocation) {
+        toast.error('Location is required.');
+        return;
+    }
+
+    setSubmitting(true);
+
+    const data = new FormData();
+    data.append('petName', formData.petName);
+    data.append('petType', formData.petType);
+    data.append('breed', formData.breed || '');
+    data.append('color', formData.color || '');
+    data.append('lastSeenLocation', formData.lastSeenLocation);
+    data.append('lastSeenDate', formData.lastSeenDate);
+    data.append('description', formData.description || '');
+    data.append('contactName', formData.contactName);
+    data.append('contactPhone', formData.contactPhone);
+    data.append('contactEmail', formData.contactEmail || '');
+    data.append('distinguishingFeatures', formData.distinguishingFeatures || '');
+
+    uploadedFiles.forEach((file) => {
+        data.append('images[]', file);
+    });
+
+    router.post('/pet-reports/missing', data, {
+        onSuccess: () => {
+            setReportSubmitted(true);
+            toast.success('Missing pet report submitted successfully!');
+            setTimeout(() => {
+                setReportModalOpen(false);
+                setReportSubmitted(false);
+                setFormData({
+                    petName: '',
+                    petType: 'Dog',
+                    breed: '',
+                    color: '',
+                    lastSeenLocation: '',
+                    lastSeenDate: '',
+                    description: '',
+                    contactName: '',
+                    contactPhone: '',
+                    contactEmail: '',
+                    distinguishingFeatures: ''
+                });
+                setUploadedFiles([]);
+                setFilePreviews([]);
+                setSubmitting(false);
+            }, 2000);
+        },
+        onError: (errors) => {
+            const message = Object.values(errors).flat().join(' ');
+            toast.error(message || 'Failed to submit report.');
+            setSubmitting(false);
+        }
+    });
   };
 
   const handleShare = async (pet: any) => {
@@ -309,66 +410,151 @@ export default function MissingPetsPage() {
                 Our community network helps reunite families across Iligan.
               </p>
             </div>
-            <div className="flex gap-4 w-full md:w-auto">
-               <button
-                 onClick={() => setReportModalOpen(true)}
-                 className="flex-1 md:flex-none bg-red-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3"
-               >
-                  <Camera size={20} />
-                  REPORT MISSING
-               </button>
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+              <div className="relative w-full sm:w-80">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="Search breed, location, description..."
+                  className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-paw-navy text-sm shadow-xl shadow-paw-navy/5"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              </div>
+              <button
+                onClick={() => setReportModalOpen(true)}
+                className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3"
+              >
+                <Camera size={20} />
+                REPORT MISSING
+              </button>
             </div>
           </div>
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-12">
-            {['All', 'Missing', 'Found', 'Searching'].map((f) => (
+            {['All', 'Missing', 'Searching', 'Found'].map((f) => (
               <button 
                 key={f}
-                onClick={() => setFilter(f as any)}
-                className={`px-8 py-3 rounded-2xl font-black transition-all ${filter === f ? 'bg-paw-orange text-white shadow-xl shadow-paw-orange/20 scale-105' : 'bg-white text-paw-navy hover:bg-paw-orange/10'}`}
+                onClick={() => handleFilterChange(f)}
+                className={`px-8 py-3 rounded-2xl font-black transition-all ${statusFilter === f ? 'bg-paw-orange text-white shadow-xl shadow-paw-orange/20 scale-105' : 'bg-white text-paw-navy hover:bg-paw-orange/10'}`}
               >
                 {f.toUpperCase()}
               </button>
             ))}
           </div>
 
+          {/* Grid of pets */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredPets.map((pet) => (
-              <motion.div 
-                key={pet.id}
-                layoutId={`missing-${pet.id}`}
-                whileHover={{ y: -10 }}
-                onClick={() => setSelectedPet(pet)}
-                className="bg-white rounded-[40px] overflow-hidden shadow-2xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/20 transition-all cursor-pointer group"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <ImageWithFallback src={pet.img} alt={pet.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className={`absolute top-6 left-6 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl ${
-                    pet.status === 'Missing' ? 'bg-red-600 text-white' :
-                    pet.status === 'Found' ? 'bg-green-500 text-white' :
-                    'bg-yellow-500 text-white'
-                  }`}>
-                    {pet.status}
+            {(() => {
+              const mappedReports = (reports?.data || []).map((report: any) => {
+                let statusText = 'Missing';
+                if (report.status === 'resolved') {
+                  statusText = 'Found';
+                } else if (report.status === 'assigned') {
+                  statusText = 'Searching';
+                }
+
+                const photosArray = report.photos || [];
+                const imgUrl = photosArray.length > 0
+                  ? photosArray[0].path
+                  : 'https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?w=500&auto=format&fit=crop&q=60';
+
+                return {
+                  id: report.id,
+                  name: report.name || 'Unnamed Pet',
+                  type: report.animal_type,
+                  breed: report.breed || 'Unknown Breed',
+                  color: report.color || 'N/A',
+                  status: statusText,
+                  lastSeen: report.location,
+                  date: new Date(report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
+                  desc: report.description,
+                  img: imgUrl,
+                  owner: {
+                    name: report.contact_name || 'Anonymous',
+                    phone: report.contact_phone || 'N/A',
+                    email: report.contact_email || 'N/A'
+                  }
+                };
+              });
+
+              if (mappedReports.length === 0) {
+                return (
+                  <div className="col-span-full bg-white rounded-[40px] p-16 text-center border-2 border-gray-100 shadow-xl">
+                    <PawPrint className="mx-auto text-gray-300 mb-4 animate-bounce" size={48} />
+                    <h3 className="text-2xl font-black text-paw-navy mb-2">No Reports Found</h3>
+                    <p className="text-gray-500 font-bold">Try adjusting your filters or search keywords.</p>
                   </div>
-                </div>
-                <div className="p-8">
-                  <h3 className="text-2xl font-black text-paw-navy mb-4">{pet.name}</h3>
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                      <MapPin size={16} className="text-paw-orange" /> {pet.lastSeen}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                      <Calendar size={16} className="text-paw-orange" /> {pet.date}
+                );
+              }
+
+              return mappedReports.map((pet) => (
+                <motion.div 
+                  key={pet.id}
+                  layoutId={`missing-${pet.id}`}
+                  whileHover={{ y: -10 }}
+                  onClick={() => setSelectedPet(pet)}
+                  className="bg-white rounded-[40px] overflow-hidden shadow-2xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/20 transition-all cursor-pointer group"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <ImageWithFallback src={pet.img} alt={pet.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className={`absolute top-6 left-6 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl ${
+                      pet.status === 'Missing' ? 'bg-red-600 text-white' :
+                      pet.status === 'Found' ? 'bg-green-500 text-white' :
+                      'bg-yellow-500 text-white'
+                    }`}>
+                      {pet.status}
                     </div>
                   </div>
-                  <button className="w-full bg-paw-bg text-paw-navy py-4 rounded-2xl font-black hover:bg-paw-navy hover:text-white transition-all">
-                    VIEW DETAILS
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="p-8">
+                    <h3 className="text-2xl font-black text-paw-navy mb-4">{pet.name}</h3>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
+                        <MapPin size={16} className="text-paw-orange" /> {pet.lastSeen}
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
+                        <Calendar size={16} className="text-paw-orange" /> {pet.date}
+                      </div>
+                    </div>
+                    <button className="w-full bg-paw-bg text-paw-navy py-4 rounded-2xl font-black hover:bg-paw-navy hover:text-white transition-all">
+                      VIEW DETAILS
+                    </button>
+                  </div>
+                </motion.div>
+              ));
+            })()}
           </div>
+
+          {/* Pagination */}
+          {reports?.last_page > 1 && (
+            <div className="flex justify-center gap-2 mt-12">
+              {reports.links.map((link: any, idx: number) => {
+                let label = link.label;
+                if (label.includes('Previous')) {
+                  label = '←';
+                }
+                if (label.includes('Next')) {
+                  label = '→';
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    disabled={!link.url}
+                    onClick={() => router.get(link.url!, {}, { preserveScroll: true, preserveState: true })}
+                    className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${
+                      link.active
+                        ? 'bg-paw-orange text-white shadow-lg'
+                        : 'bg-white text-paw-navy hover:bg-gray-100'
+                    } ${!link.url ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    dangerouslySetInnerHTML={{ __html: label }}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
 
@@ -913,6 +1099,7 @@ export default function MissingPetsPage() {
                             type="file"
                             id="missing-pet-upload"
                             accept="image/*,video/*"
+                            multiple
                             onChange={handleFileChange}
                             className="hidden"
                           />
@@ -920,28 +1107,30 @@ export default function MissingPetsPage() {
                             htmlFor="missing-pet-upload"
                             className="border-4 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-paw-orange transition-all cursor-pointer block"
                           >
-                            {!uploadedFile ? (
+                            {uploadedFiles.length === 0 ? (
                               <>
                                 <Upload size={40} className="mx-auto text-gray-400 mb-3" />
                                 <p className="font-black text-paw-navy mb-1">Click to upload or drag and drop</p>
-                                <p className="text-sm text-gray-400 font-bold">PNG, JPG up to 10MB</p>
+                                <p className="text-sm text-gray-400 font-bold">PNG, JPG up to 10MB (Multiple allowed)</p>
                               </>
                             ) : (
                               <div className="space-y-4">
-                                {filePreview && uploadedFile.type.startsWith('image/') && (
-                                  <img src={filePreview} alt="Preview" className="max-h-48 mx-auto rounded-xl object-cover" />
-                                )}
-                                {filePreview && uploadedFile.type.startsWith('video/') && (
-                                  <video src={filePreview} controls className="max-h-48 mx-auto rounded-xl" />
-                                )}
+                                <div className="grid grid-cols-3 gap-2">
+                                  {filePreviews.map((preview, idx) => (
+                                    <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+                                      {uploadedFiles[idx]?.type.startsWith('image/') ? (
+                                        <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <video src={preview} className="w-full h-full object-cover" />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
                                 <div className="flex items-center justify-center gap-2">
                                   <CheckCircle2 size={20} className="text-green-600" />
-                                  <p className="font-black text-green-600">{uploadedFile.name}</p>
+                                  <p className="font-black text-green-600">{uploadedFiles.length} files selected</p>
                                 </div>
-                                <p className="text-sm text-gray-500 font-bold">
-                                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                                <p className="text-xs text-gray-400 font-bold">Click to change file</p>
+                                <p className="text-xs text-gray-400 font-bold">Click to change files</p>
                               </div>
                             )}
                           </label>
@@ -1046,10 +1235,11 @@ export default function MissingPetsPage() {
 
                       <button
                         type="submit"
-                        className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3"
+                        disabled={submitting}
+                        className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3 disabled:opacity-50"
                       >
-                        <Camera size={24} />
-                        SUBMIT REPORT
+                        <Camera size={24} className={submitting ? 'animate-spin' : ''} />
+                        {submitting ? 'SUBMITTING REPORT...' : 'SUBMIT REPORT'}
                       </button>
                     </form>
                   </>

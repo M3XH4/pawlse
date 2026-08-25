@@ -1,6 +1,7 @@
 import { AlertCircle, MapPin, Camera, Clock, CheckCircle2, Siren, Phone, Navigation, Hospital } from 'lucide-react';
 import { motion } from 'motion/react';
 import React, { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -22,8 +23,9 @@ const NEARBY_VETS = [
 
 export default function SOS() {
   const [submitted, setSubmitted] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     animalType: '',
     location: '',
@@ -39,23 +41,26 @@ export default function SOS() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
-    if (file) {
-      setUploadedFile(file);
+    setUploadedFiles(files);
 
-      // Create preview URL for image files
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFilePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else if (file.type.startsWith('video/')) {
-        setFilePreview(URL.createObjectURL(file));
-      }
+    const newPreviews: string[] = [];
+    for (const file of files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            const preview = await new Promise<string>((resolve) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+            });
+            newPreviews.push(preview);
+        } else if (file.type.startsWith('video/')) {
+            newPreviews.push(URL.createObjectURL(file));
+        }
     }
+    setFilePreviews(newPreviews);
   };
 
   const handleDetectLocation = () => {
@@ -80,7 +85,42 @@ export default function SOS() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!formData.situationType) {
+      toast.error('Please select the type of emergency.');
+      return;
+    }
+    if (!formData.location) {
+      toast.error('Location is required.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    const data = new FormData();
+    data.append('animalType', formData.animalType);
+    data.append('location', formData.location);
+    data.append('urgency', formData.urgency);
+    data.append('description', formData.description);
+    data.append('contactName', formData.contactName || '');
+    data.append('contactPhone', formData.contactPhone || '');
+    data.append('situationType', formData.situationType);
+
+    uploadedFiles.forEach((file) => {
+      data.append('images[]', file);
+    });
+
+    router.post('/pet-reports/sos', data, {
+      onSuccess: () => {
+        setSubmitted(true);
+        toast.success('SOS report submitted successfully!');
+        setSubmitting(false);
+      },
+      onError: (errors) => {
+        const message = Object.values(errors).flat().join(' ');
+        toast.error(message || 'Failed to submit SOS report.');
+        setSubmitting(false);
+      }
+    });
   };
 
   return (
@@ -218,6 +258,7 @@ export default function SOS() {
                       type="file"
                       id="file-upload"
                       accept="image/*,video/*"
+                      multiple
                       onChange={handleFileChange}
                       className="hidden"
                     />
@@ -225,28 +266,30 @@ export default function SOS() {
                       htmlFor="file-upload"
                       className="border-4 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-red-300 transition-all cursor-pointer bg-gray-50 block"
                     >
-                      {!uploadedFile ? (
+                      {uploadedFiles.length === 0 ? (
                         <>
                           <Camera size={40} className="mx-auto text-gray-400 mb-3" />
                           <p className="font-black text-gray-900 mb-1">Upload evidence</p>
-                          <p className="text-sm text-gray-500 font-bold">Photo or video of the situation (Max 10MB)</p>
+                          <p className="text-sm text-gray-500 font-bold">Photo or video of the situation (Max 10MB, multiple allowed)</p>
                         </>
                       ) : (
                         <div className="space-y-4">
-                          {filePreview && uploadedFile.type.startsWith('image/') && (
-                            <img src={filePreview} alt="Preview" className="max-h-48 mx-auto rounded-xl object-cover" />
-                          )}
-                          {filePreview && uploadedFile.type.startsWith('video/') && (
-                            <video src={filePreview} controls className="max-h-48 mx-auto rounded-xl" />
-                          )}
+                          <div className="grid grid-cols-3 gap-2">
+                            {filePreviews.map((preview, idx) => (
+                              <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+                                {uploadedFiles[idx]?.type.startsWith('image/') ? (
+                                  <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
+                                ) : (
+                                  <video src={preview} className="w-full h-full object-cover" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
                           <div className="flex items-center justify-center gap-2">
                             <CheckCircle2 size={20} className="text-green-600" />
-                            <p className="font-black text-green-600">{uploadedFile.name}</p>
+                            <p className="font-black text-green-600">{uploadedFiles.length} files selected</p>
                           </div>
-                          <p className="text-sm text-gray-500 font-bold">
-                            {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                          <p className="text-xs text-gray-400 font-bold">Click to change file</p>
+                          <p className="text-xs text-gray-400 font-bold">Click to change files</p>
                         </div>
                       )}
                     </label>
@@ -294,10 +337,11 @@ export default function SOS() {
 
                   <button
                     type="submit"
-                    className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-2xl hover:bg-red-700 transition-all shadow-2xl shadow-red-600/40 flex items-center justify-center gap-3 uppercase tracking-tight"
+                    disabled={submitting}
+                    className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-2xl hover:bg-red-700 transition-all shadow-2xl shadow-red-600/40 flex items-center justify-center gap-3 uppercase tracking-tight disabled:opacity-50"
                   >
-                    <Siren size={28} className="animate-bounce" />
-                    SEND EMERGENCY REPORT
+                    <Siren size={28} className={submitting ? 'animate-spin' : 'animate-bounce'} />
+                    {submitting ? 'SENDING EMERGENCY REPORT...' : 'SEND EMERGENCY REPORT'}
                   </button>
                 </form>
               </div>

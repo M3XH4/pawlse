@@ -1,6 +1,7 @@
 import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
+import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -36,6 +37,9 @@ type AIResult = {
 type ReportMode = 'selection' | 'ai-full' | 'ai-only' | 'manual' | 'success';
 
 export default function RescuePage() {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
     // Mode selection
     const [mode, setMode] = useState<ReportMode>('selection');
     const [submittedMode, setSubmittedMode] = useState<string>('');
@@ -51,8 +55,8 @@ export default function RescuePage() {
     const [imageUploaded, setImageUploaded] = useState(false);
 
     // File upload state
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-    const [filePreview, setFilePreview] = useState<string | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
     // Form fields
     const [animalType, setAnimalType] = useState<'Dog' | 'Cat'>('Dog');
@@ -62,6 +66,12 @@ export default function RescuePage() {
     const [suggestedName, setSuggestedName] = useState('');
     const [incidentDesc, setIncidentDesc] = useState('');
     const [location, setLocation] = useState('');
+
+    // Guest contact fields
+    const [contactName, setContactName] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
+    const [contactEmail, setContactEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     // Age category options based on animal type
     const dogAgeCategories = [
@@ -85,29 +95,35 @@ export default function RescuePage() {
     const currentAgeCategories = animalType === 'Dog' ? dogAgeCategories : catAgeCategories;
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length === 0) return;
 
-        // eslint-disable-next-line curly
-        if (!file) return;
+        setUploadedFiles(files);
 
-        setUploadedFile(file);
-
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onloadend = () => setFilePreview(reader.result as string);
-            reader.readAsDataURL(file);
-        } else if (file.type.startsWith('video/')) {
-            setFilePreview(URL.createObjectURL(file));
+        const newPreviews: string[] = [];
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                const preview = await new Promise<string>((resolve) => {
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+                newPreviews.push(preview);
+            } else if (file.type.startsWith('video/')) {
+                newPreviews.push(URL.createObjectURL(file));
+            }
         }
+        setFilePreviews(newPreviews);
 
         setImageUploaded(true);
         setAnalyzing(true);
         setAiResult(null);
         setIsEditing(false);
 
+        const firstFile = files[0];
         try {
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('image', firstFile);
 
             const token = document
                 .querySelector('meta[name="csrf-token"]')
@@ -129,12 +145,10 @@ export default function RescuePage() {
                 
             if (data.accepted === false) {
                 toast.error(data.message ?? 'Image cannot be processed.');
-
                 setAiResult(null);
                 setEditedResult(null);
                 setImageUploaded(false);
                 setAnalyzing(false);
-
                 return;
             }
 
@@ -153,14 +167,11 @@ export default function RescuePage() {
                 gender: data.gender ?? 'Unknown',
                 suggestedName,
                 confidence: Math.round((data.confidence ?? 0) * 100),
-
                 confidenceLevel: data.confidence_level ?? 'Unknown',
                 isConfident: data.is_confident ?? false,
                 confidenceMessage: data.confidence_message ?? 'Review is recommended.',
-
                 isMixedBreed: data.is_mixed_breed ?? false,
                 mixedConfidence: data.mixed_confidence ?? 0,
-
                 breeds: data.breeds ?? [],
                 similarBreeds: data.similar_breeds ?? [],
             };
@@ -208,10 +219,51 @@ export default function RescuePage() {
         }
     };
 
-    const handleSubmit = (modeType: string) => {
-        setSubmittedMode(modeType);
-        setMode('success');
-        toast.success('Rescue report submitted successfully!');
+    const handleSubmit = async (modeType: string) => {
+        if (!location) {
+            toast.error('Location is required.');
+            return;
+        }
+
+        if (!user && (!contactName || !contactPhone)) {
+            toast.error('Contact Name and Phone are required for guests.');
+            return;
+        }
+
+        setSubmitting(true);
+
+        const formData = new FormData();
+        formData.append('animal_type', animalType);
+        formData.append('breed', breed || '');
+        formData.append('age_category', ageCategory || '');
+        formData.append('gender', gender || '');
+        formData.append('name', suggestedName || '');
+        formData.append('description', incidentDesc || '');
+        formData.append('location', location);
+        
+        if (!user) {
+            formData.append('contact_name', contactName);
+            formData.append('contact_phone', contactPhone);
+            formData.append('contact_email', contactEmail);
+        }
+
+        uploadedFiles.forEach((file) => {
+            formData.append('images[]', file);
+        });
+
+        router.post('/pet-reports/rescue', formData, {
+            onSuccess: () => {
+                setSubmittedMode(modeType);
+                setMode('success');
+                toast.success('Rescue report submitted successfully!');
+                setSubmitting(false);
+            },
+            onError: (errors) => {
+                const message = Object.values(errors).flat().join(' ');
+                toast.error(message || 'Failed to submit report.');
+                setSubmitting(false);
+            }
+        });
     };
 
     const handleBackToSelection = () => {
@@ -222,8 +274,8 @@ export default function RescuePage() {
         setEditedResult(null);
         setIsEditing(false);
         setImageUploaded(false);
-        setUploadedFile(null);
-        setFilePreview(null);
+        setUploadedFiles([]);
+        setFilePreviews([]);
         setAnimalType('Dog');
         setBreed('');
         setAgeCategory('Adult: 1 to 7 years');
@@ -231,6 +283,9 @@ export default function RescuePage() {
         setSuggestedName('');
         setIncidentDesc('');
         setLocation('');
+        setContactName('');
+        setContactPhone('');
+        setContactEmail('');
     };
 
     const handleReset = () => {
@@ -240,8 +295,8 @@ export default function RescuePage() {
         setEditedResult(null);
         setIsEditing(false);
         setImageUploaded(false);
-        setUploadedFile(null);
-        setFilePreview(null);
+        setUploadedFiles([]);
+        setFilePreviews([]);
         setAnimalType('Dog');
         setBreed('');
         setAgeCategory('Adult: 1 to 7 years');
@@ -249,6 +304,9 @@ export default function RescuePage() {
         setSuggestedName('');
         setIncidentDesc('');
         setLocation('');
+        setContactName('');
+        setContactPhone('');
+        setContactEmail('');
     };
 
     const handleModeSelect = (selectedMode: ReportMode) => {
@@ -257,8 +315,8 @@ export default function RescuePage() {
         setImageUploaded(false);
         setAnalyzing(false);
         setAiResult(null);
-        setUploadedFile(null);
-        setFilePreview(null);
+        setUploadedFiles([]);
+        setFilePreviews([]);
     };
 
     const handleSaveEdit = () => {
@@ -517,14 +575,20 @@ export default function RescuePage() {
                                             </div>
 
                                             {/* Uploaded Photo Preview */}
-                                            {uploadedFile && filePreview && (
-                                                <div className="rounded-3xl overflow-hidden border-2 border-gray-100">
-                                                    {uploadedFile.type.startsWith('image/') && (
-                                                        <img src={filePreview} alt="Preview" className="w-full max-h-64 object-cover" />
-                                                    )}
-                                                    {uploadedFile.type.startsWith('video/') && (
-                                                        <video src={filePreview} controls className="w-full max-h-64" />
-                                                    )}
+                                            {filePreviews.length > 0 && (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-3xl p-3 border-2 border-gray-100 bg-white">
+                                                    {filePreviews.map((preview, index) => {
+                                                        const file = uploadedFiles[index];
+                                                        return (
+                                                            <div key={index} className="relative rounded-2xl overflow-hidden aspect-video border bg-gray-50 flex items-center justify-center">
+                                                                {file?.type.startsWith('image/') ? (
+                                                                    <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <video src={preview} controls className="w-full h-full object-cover" />
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
 
@@ -748,6 +812,47 @@ export default function RescuePage() {
                                                     <p className="text-xs text-gray-400 font-bold mt-2">Click "Pin Location" to use your current coordinates</p>
                                                 </div>
 
+                                                {/* Guest Contact Details */}
+                                                {!user && (
+                                                    <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
+                                                        <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
+                                                        <div className="grid md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    value={contactName}
+                                                                    onChange={(e) => setContactName(e.target.value)}
+                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                    placeholder="Reporter Name"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    value={contactPhone}
+                                                                    onChange={(e) => setContactPhone(e.target.value)}
+                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                    placeholder="Contact Number"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email (Optional)</label>
+                                                            <input
+                                                                type="email"
+                                                                value={contactEmail}
+                                                                onChange={(e) => setContactEmail(e.target.value)}
+                                                                className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                placeholder="email@example.com"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* Summary */}
                                                 <div className="bg-gradient-to-br from-paw-orange/5 to-orange-50/30 rounded-2xl p-5 border-2 border-paw-orange/10">
                                                     <h4 className="font-black text-paw-navy mb-3 text-sm">Report Summary</h4>
@@ -781,10 +886,11 @@ export default function RescuePage() {
                                                     BACK
                                                 </button>
                                                 <button
+                                                    disabled={submitting}
                                                     onClick={() => handleSubmit('AI-Assisted Reporting')}
-                                                    className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl flex items-center justify-center gap-3 uppercase"
+                                                    className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl flex items-center justify-center gap-3 uppercase disabled:opacity-50"
                                                 >
-                                                    SUBMIT RESCUE REPORT <Siren size={20} />
+                                                    {submitting ? 'Submitting Report...' : 'SUBMIT RESCUE REPORT'} <Siren size={20} className={submitting ? 'animate-spin' : ''} />
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -881,14 +987,20 @@ export default function RescuePage() {
                                         </div>
 
                                         {/* Uploaded file preview */}
-                                        {uploadedFile && filePreview && (
-                                            <div className="bg-white rounded-[32px] p-6 border-2 border-paw-navy/10 shadow-xl">
-                                                {uploadedFile.type.startsWith('image/') && (
-                                                    <img src={filePreview} alt="Preview" className="w-full max-h-96 mx-auto rounded-xl object-contain" />
-                                                )}
-                                                {uploadedFile.type.startsWith('video/') && (
-                                                    <video src={filePreview} controls className="w-full max-h-96 mx-auto rounded-xl" />
-                                                )}
+                                        {filePreviews.length > 0 && (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-3xl p-3 border-2 border-gray-100 bg-white">
+                                                {filePreviews.map((preview, index) => {
+                                                    const file = uploadedFiles[index];
+                                                    return (
+                                                        <div key={index} className="relative rounded-2xl overflow-hidden aspect-video border bg-gray-50 flex items-center justify-center">
+                                                            {file?.type.startsWith('image/') ? (
+                                                                <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <video src={preview} controls className="w-full h-full object-cover" />
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                         {/* AI Result Card */}
@@ -1018,20 +1130,27 @@ export default function RescuePage() {
                                                 type="file"
                                                 id="manual-upload"
                                                 accept="image/*,video/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
+                                                multiple
+                                                onChange={async (e) => {
+                                                    const files = e.target.files ? Array.from(e.target.files) : [];
+                                                    if (files.length === 0) return;
 
-                                                    if (file) {
-                                                        setUploadedFile(file);
+                                                    setUploadedFiles(files);
 
+                                                    const newPreviews: string[] = [];
+                                                    for (const file of files) {
                                                         if (file.type.startsWith('image/')) {
                                                             const reader = new FileReader();
-                                                            reader.onloadend = () => setFilePreview(reader.result as string);
-                                                            reader.readAsDataURL(file);
+                                                            const preview = await new Promise<string>((resolve) => {
+                                                                reader.onloadend = () => resolve(reader.result as string);
+                                                                reader.readAsDataURL(file);
+                                                            });
+                                                            newPreviews.push(preview);
                                                         } else if (file.type.startsWith('video/')) {
-                                                            setFilePreview(URL.createObjectURL(file));
+                                                            newPreviews.push(URL.createObjectURL(file));
                                                         }
                                                     }
+                                                    setFilePreviews(newPreviews);
                                                 }}
                                                 className="hidden"
                                             />
@@ -1039,25 +1158,30 @@ export default function RescuePage() {
                                                 htmlFor="manual-upload"
                                                 className="block border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
                                             >
-                                                {!uploadedFile ? (
+                                                {uploadedFiles.length === 0 ? (
                                                     <>
                                                         <Camera size={32} className="mx-auto text-gray-400 mb-3" />
-                                                        <p className="font-bold text-gray-600">Click to upload photo</p>
-                                                        <p className="text-sm text-gray-400 font-bold mt-1">JPG, PNG or Video</p>
+                                                        <p className="font-bold text-gray-600">Click to upload photos</p>
+                                                        <p className="text-sm text-gray-400 font-bold mt-1">JPG, PNG or Videos (Multiple allowed)</p>
                                                     </>
                                                 ) : (
-                                                    <div className="space-y-3">
-                                                        {filePreview && uploadedFile.type.startsWith('image/') && (
-                                                            <img src={filePreview} alt="Preview" className="max-h-32 mx-auto rounded-xl object-cover" />
-                                                        )}
-                                                        {filePreview && uploadedFile.type.startsWith('video/') && (
-                                                            <video src={filePreview} controls className="max-h-32 mx-auto rounded-xl" />
-                                                        )}
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            {filePreviews.map((preview, idx) => (
+                                                                <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+                                                                    {uploadedFiles[idx]?.type.startsWith('image/') ? (
+                                                                        <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <video src={preview} className="w-full h-full object-cover" />
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                         <div className="flex items-center justify-center gap-2">
                                                             <CheckCircle2 size={18} className="text-green-600" />
-                                                            <p className="font-bold text-green-600">{uploadedFile.name}</p>
+                                                            <p className="font-bold text-green-600">{uploadedFiles.length} files selected</p>
                                                         </div>
-                                                        <p className="text-xs text-gray-400 font-bold">Click to change file</p>
+                                                        <p className="text-xs text-gray-400 font-bold">Click to change files</p>
                                                     </div>
                                                 )}
                                             </label>
@@ -1176,12 +1300,54 @@ export default function RescuePage() {
                                             <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to use your current coordinates</p>
                                         </div>
 
+                                        {/* Guest Contact Details */}
+                                        {!user && (
+                                            <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
+                                                <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
+                                                <div className="grid md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name *</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            value={contactName}
+                                                            onChange={(e) => setContactName(e.target.value)}
+                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                            placeholder="Reporter Name"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            value={contactPhone}
+                                                            onChange={(e) => setContactPhone(e.target.value)}
+                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                            placeholder="Contact Number"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email (Optional)</label>
+                                                    <input
+                                                        type="email"
+                                                        value={contactEmail}
+                                                        onChange={(e) => setContactEmail(e.target.value)}
+                                                        className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                        placeholder="email@example.com"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Submit Button */}
                                         <button
+                                            disabled={submitting}
                                             onClick={() => handleSubmit('Manual Entry')}
-                                            className="w-full bg-red-600 text-white py-6 rounded-2xl font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/30 flex items-center justify-center gap-3 uppercase"
+                                            className="w-full bg-red-600 text-white py-6 rounded-2xl font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/30 flex items-center justify-center gap-3 uppercase disabled:opacity-50"
                                         >
-                                            SUBMIT RESCUE REPORT <Siren size={24} />
+                                            {submitting ? 'Submitting Report...' : 'SUBMIT RESCUE REPORT'} <Siren size={24} className={submitting ? 'animate-spin' : ''} />
                                         </button>
                                     </div>
                                 </div>

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
+use App\Http\Controllers\Admin\RescueManagementController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\AdoptController;
 use App\Http\Controllers\Adoptions\AdoptionApplicationController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PetController;
+use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
@@ -46,11 +48,17 @@ Route::get('/volunteer/switch', [VolunteerController::class, 'switchRole'])->nam
 Route::get('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
 
 Route::inertia('/rescue', 'rescue')->name('rescue');
+Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])->name('pet-reports.store-rescue');
+
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::post('/events/{event}/join', [EventController::class, 'joinEvent'])->name('events.join')->middleware('auth');
 Route::post('/feeding-schedules/{schedule}/join', [EventController::class, 'joinFeedingRoute'])->name('feeding-schedules.join')->middleware('auth');
-Route::inertia('/missing', 'missing')->name('missing');
+
+Route::get('/missing', [PetReportController::class, 'missingIndex'])->name('missing');
+Route::post('/pet-reports/missing', [PetReportController::class, 'storeMissing'])->name('pet-reports.store-missing');
+
 Route::inertia('/sos', 'sos')->name('sos');
+Route::post('/pet-reports/sos', [PetReportController::class, 'storeSos'])->name('pet-reports.store-sos');
 
 Route::post('/ai/predict', [PetController::class, 'predict']);
 Route::post('/ai/generate-names', [PetController::class, 'generateNames']);
@@ -76,7 +84,7 @@ Route::prefix('account/notifications')->name('account.notifications.')->middlewa
 Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {
     Route::inertia('/', 'user/bookmark')->name('index');
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
-    Route::inertia('rescue-reports', 'user/rescue-reports')->name('rescue-reports');
+    Route::get('rescue-reports', [PetReportController::class, 'userReports'])->name('rescue-reports');
     Route::inertia('adoption-applications', 'user/adoption-applications')->name('adoption-applications');
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::inertia('missing-found', 'user/missing-found')->name('missing-found');
@@ -92,14 +100,17 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::get('assigned-tasks', [VolunteerDashboardController::class, 'assignedTasks'])->name('assigned-tasks');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
-    Route::inertia('rescue-reports', 'volunteer/rescue-reports')->name('rescue-reports');
+    Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::inertia('account-settings', 'volunteer/account-settings')->name('account-settings');
 });
 
 Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboardMiddleware)->group(function () {
     Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
-    Route::inertia('rescue-management', 'admin/rescue-management')->name('rescue-management');
+    Route::get('rescue-management', [RescueManagementController::class, 'index'])->name('rescue-management');
+    Route::post('rescue-management/{report}/assign', [RescueManagementController::class, 'assignVolunteer'])->name('rescue-management.assign');
+    Route::post('rescue-management/{report}/status', [RescueManagementController::class, 'updateStatus'])->name('rescue-management.update-status');
+    Route::post('rescue-management/{report}/duplicate', [RescueManagementController::class, 'resolveDuplicate'])->name('rescue-management.resolve-duplicate');
     Route::inertia('ai-validation', 'admin/ai-validation')->name('ai-validation');
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
