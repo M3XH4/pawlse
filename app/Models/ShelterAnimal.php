@@ -34,4 +34,12 @@ class ShelterAnimal extends Model
     {
         return $this->hasMany(AdoptionApplication::class);
     }
+
+    /**
+     * @return HasMany<AnimalDonationNeed, $this>
+     */
+    public function needs(): HasMany
+    {
+        return $this->hasMany(AnimalDonationNeed::class);
+    }
 }

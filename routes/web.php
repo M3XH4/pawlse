@@ -3,12 +3,15 @@
 use App\Enums\Role;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
+use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\AdoptController;
 use App\Http\Controllers\Adoptions\AdoptionApplicationController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\DonateController;
+use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\UserNotificationController;
@@ -29,7 +32,13 @@ Route::inertia('/', 'welcome', [
 Route::inertia('/about', 'about')->name('about');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
-Route::inertia('/donate', 'donate')->name('donate');
+
+Route::get('/donate', [DonateController::class, 'index'])->name('donate');
+Route::post('/donate/cash', [DonateController::class, 'storeCash'])->name('donate.store-cash');
+Route::post('/donate/in-kind', [DonateController::class, 'storeInKind'])->name('donate.store-inkind');
+Route::post('/donate/sponsor', [DonateController::class, 'storeSponsor'])->name('donate.store-sponsor');
+Route::get('/checkout/{ref}', [DonateController::class, 'checkout'])->name('donate.checkout');
+Route::post('/checkout/{ref}/pay', [DonateController::class, 'pay'])->name('donate.pay');
 
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/apply', [VolunteerController::class, 'store'])->name('volunteer.apply')->middleware('auth');
@@ -69,7 +78,7 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::inertia('rescue-reports', 'user/rescue-reports')->name('rescue-reports');
     Route::inertia('adoption-applications', 'user/adoption-applications')->name('adoption-applications');
-    Route::inertia('donations', 'user/donations')->name('donations');
+    Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::inertia('missing-found', 'user/missing-found')->name('missing-found');
     Route::inertia('notifications', 'user/notifications')->name('notifications');
     Route::inertia('account-settings', 'user/account-settings')->name('account-settings');
@@ -104,7 +113,10 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('volunteer-management/tasks/{task}/status', [VolunteerManagementController::class, 'updateTaskStatus'])->name('volunteer-management.update-task-status');
     Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate');
 
-    Route::inertia('donation-monitoring', 'admin/donation-monitoring')->name('donation-monitoring');
+    Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
+    Route::post('donation-monitoring/in-kind/{donation}/verify', [DonationMonitoringController::class, 'verifyInKind'])->name('donation-monitoring.in-kind.verify');
+    Route::post('donation-monitoring/inventory', [DonationMonitoringController::class, 'storeInventoryItem'])->name('donation-monitoring.inventory.store');
+    Route::post('donation-monitoring/inventory/{item}/adjust', [DonationMonitoringController::class, 'adjustStock'])->name('donation-monitoring.inventory.adjust');
 
     // Event Management Dashboard
     Route::get('events', [EventManagementController::class, 'index'])->name('events');
