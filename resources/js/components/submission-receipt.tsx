@@ -1,4 +1,4 @@
-import { CheckCircle2, X, Download } from 'lucide-react';
+import { CheckCircle2, X, Download, Printer } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
 
@@ -54,7 +54,7 @@ export function SubmissionReceipt({
 
   const currentColor = colors[type];
 
-  const handleDownload = () => {
+  const handlePrintPdf = () => {
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -64,72 +64,144 @@ export function SubmissionReceipt({
     });
     const timeStr = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+      minute: '2-digit'
     });
 
-    const border = '═'.repeat(60);
-    const divider = '─'.repeat(60);
-    const space = ' ';
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Pop-up blocker is enabled. Please allow pop-ups to print the receipt.');
+      return;
+    }
 
-    const centerText = (text: string, width: number = 60) => {
-      const padding = Math.max(0, Math.floor((width - text.length) / 2));
+    // Strip React components/icons from items values for clean text display in print
+    const cleanItems = items.map(item => {
+      let val = item.value;
+      if (React.isValidElement(item.value)) {
+        // If the value is a React component, let's use the label or try to get string value
+        val = item.label === 'Status' ? 'Completed' : 'Verified';
+      }
+      return {
+        label: item.label,
+        value: val
+      };
+    });
 
-      return space.repeat(padding) + text;
-    };
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>PAWLSE Receipt - ${referenceNumber || 'Receipt'}</title>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+          <style>
+            body {
+              font-family: 'Quicksand', sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+              background-color: #F8FAFC;
+            }
+            .receipt-card {
+              border-radius: 2rem;
+              box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            }
+            @media print {
+              body {
+                background-color: white;
+                padding: 0;
+              }
+              .no-print {
+                display: none;
+              }
+              .receipt-card {
+                border: 2px solid #E2E8F0;
+                box-shadow: none;
+                margin-top: 1cm;
+              }
+            }
+          </style>
+        </head>
+        <body class="p-6 md:p-12 min-h-screen flex items-center justify-center">
+          <div class="max-w-xl w-full bg-white receipt-card border border-gray-100 p-8 md:p-10 relative overflow-hidden">
+            <!-- Decorative corner badge -->
+            <div class="absolute -right-16 -top-16 w-36 h-36 bg-green-100 rounded-full flex items-center justify-center transform rotate-45 pointer-events-none">
+              <span class="text-[9px] font-black text-green-700 tracking-widest uppercase mt-12 mr-2">VERIFIED</span>
+            </div>
 
-    const formatItem = (label: string, value: string, width: number = 60) => {
-      const colonIndex = width - value.length - 2;
-      const dots = '.'.repeat(Math.max(1, colonIndex - label.length - 1));
+            <!-- Header logo & Shelter info -->
+            <div class="flex justify-between items-start border-b-2 border-gray-150 pb-6 mb-6">
+              <div>
+                <h1 class="text-3xl font-black text-blue-900 tracking-tight flex items-center gap-2">
+                  🐾 PAWLSE
+                </h1>
+                <p class="text-xs text-gray-500 font-bold uppercase mt-1 tracking-wider">Iligan Stray Friends Shelter</p>
+                <p class="text-[10px] text-gray-400 font-bold">Zone 5, Barangay Tambo, Iligan City, 9200</p>
+                <p class="text-[10px] text-gray-400 font-bold">info@pawlse.org | +63 912 345 6789</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Official Receipt</span>
+                <p class="text-lg font-black text-blue-950 font-mono tracking-tight mt-1">${referenceNumber || 'N/A'}</p>
+              </div>
+            </div>
 
-      return `  ${label} ${dots} ${value}`;
-    };
+            <!-- Receipt title -->
+            <div class="mb-6">
+              <h3 class="text-xl font-black text-blue-950 uppercase tracking-tight">${title}</h3>
+              ${subtitle ? `<p class="text-xs text-gray-500 font-bold mt-1">${subtitle}</p>` : ''}
+            </div>
 
-    const receiptContent = `
-╔${border}╗
-║${centerText('🐾 ILIGAN STRAY FRIENDS 🐾')}║
-║${centerText('Official Receipt')}║
-╚${border}╝
+            <!-- Date and Status block -->
+            <div class="grid grid-cols-2 gap-4 text-xs mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <div>
+                <p class="text-gray-400 font-bold uppercase text-[9px] tracking-wider">Receipt Date</p>
+                <p class="font-black text-gray-700 mt-1">${dateStr} @ ${timeStr}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-gray-400 font-bold uppercase text-[9px] tracking-wider">Status</p>
+                <p class="font-black text-green-600 uppercase text-xs mt-1">CONFIRMED & COMPLETED</p>
+              </div>
+            </div>
 
-${divider}
-  SUBMISSION CONFIRMED
-${divider}
+            <!-- Details list -->
+            <div class="space-y-3 mb-8">
+              <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Receipt Details</h4>
+              ${cleanItems.map(item => `
+                <div class="flex justify-between items-center py-3.5 px-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">${item.label}</span>
+                  <span class="text-sm font-black text-blue-950">${item.value}</span>
+                </div>
+              `).join('')}
+            </div>
 
-  ${title.toUpperCase()}
-${subtitle ? `  ${subtitle}\n` : ''}
-${referenceNumber ? `\n  Reference Number: ${referenceNumber}\n${divider}\n` : ''}
-  Date: ${dateStr}
-  Time: ${timeStr}
+            <!-- Important notice -->
+            ${footerMessage ? `
+              <div class="bg-blue-50/50 border border-dashed border-blue-200 rounded-2xl p-4 mb-8">
+                <p class="text-xs font-bold text-blue-900 leading-relaxed text-center">${footerMessage}</p>
+              </div>
+            ` : ''}
 
-${divider}
-  SUBMISSION DETAILS
-${divider}
+            <!-- Receipt footer note -->
+            <div class="text-center pt-6 border-t-2 border-gray-100">
+              <p class="text-sm font-black text-blue-900">Thank you for your life-saving contribution!</p>
+              <p class="text-[10px] font-bold text-gray-400 mt-1">🐾 Saving Lives, One Paw at a Time 🐾</p>
+              <p class="text-[8px] text-gray-300 font-medium mt-4 uppercase">This is a computer-generated receipt. No signature is required.</p>
+            </div>
+          </div>
 
-${items.map(item => formatItem(item.label, item.value)).join('\n')}
+          <script>
+            window.onload = function() {
+              window.print();
+              // Auto close tab after print prompt finishes
+              setTimeout(function() {
+                window.close();
+              }, 1000);
+            };
+          </script>
+        </body>
+      </html>
+    `;
 
-${divider}
-${footerMessage ? `\n${centerText('⚠️ IMPORTANT NOTICE ⚠️')}\n${divider}\n\n  ${footerMessage}\n` : ''}
-${divider}
-${centerText('Thank you for your submission!')}
-${centerText('Please keep this receipt for your records.')}
-${divider}
-
-╔${border}╗
-║${centerText('Iligan Stray Friends (ISF)')}║
-║${centerText('Serving the community since 2020')}║
-║${centerText('Contact: info@iligansf.org | +63 917 123 4567')}║
-╚${border}╝
-
-${centerText('🐾 Saving Lives, One Paw at a Time 🐾')}
-    `.trim();
-
-    const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ISF-Receipt-${referenceNumber || Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   return (
@@ -245,11 +317,11 @@ ${centerText('🐾 Saving Lives, One Paw at a Time 🐾')}
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={handleDownload}
-            className="flex-1 bg-gray-100 text-paw-navy py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-gray-200 transition-all shadow-md flex items-center justify-center gap-2"
+            onClick={handlePrintPdf}
+            className="flex-1 bg-gray-100 text-paw-navy py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-gray-200 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Download size={20} />
-            Download Receipt
+            <Printer size={20} />
+            Print / Save PDF
           </button>
           <button
             onClick={onClose}
