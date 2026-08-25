@@ -1,32 +1,34 @@
 import { Heart, Filter, Search, X, Info, Shield, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo } from 'react';
+import { Head } from '@inertiajs/react';
 import { AdoptionWizard } from '@/components/adoption-wizard';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
-const PETS = [
-  { id: 1, name: 'Luna', breed: 'Aspin', age: '2 yrs', ageCategory: 'Adult', gender: 'Female', color: 'Brown', behavior: 'Friendly, calm', story: 'Rescued near a market in 2023.', img: 'https://cdn.britannica.com/70/234870-050-D4D024BB/Orange-colored-cat-yawns-displaying-teeth.jpg?w=300', mainImg: 'https://cdn.britannica.com/70/234870-050-D4D024BB/Orange-colored-cat-yawns-displaying-teeth.jpg?w=300', vaccinated: true, shelterDays: 245 },
-  { id: 2, name: 'Milo', breed: 'Aspin-Mix', age: '8 mos', ageCategory: 'Puppy', gender: 'Male', color: 'Black & White', behavior: 'Playful, energetic', story: 'Found in a box during a storm.', img: 'https://cdn.manilastandard.net/wp-content/uploads/2023/01/campus_cats3-750x525.jpg', mainImg: 'https://cdn.manilastandard.net/wp-content/uploads/2023/01/campus_cats3-750x525.jpg', vaccinated: true, shelterDays: 89 },
-  { id: 3, name: 'Bella', breed: 'Aspin', age: '1 yr', ageCategory: 'Young', gender: 'Female', color: 'White', behavior: 'Shy but sweet', story: 'Lost pet that was never claimed.', img: 'https://news.orvis.com/wp-content/uploads/2019/08/stray.jpg', mainImg: 'https://news.orvis.com/wp-content/uploads/2019/08/stray.jpg', vaccinated: true, shelterDays: 156 },
-  { id: 4, name: 'Cooper', breed: 'Labrador-Mix', age: '3 yrs', ageCategory: 'Adult', gender: 'Male', color: 'Golden', behavior: 'Protective, loyal', story: 'Former guard dog needing love.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCPacSaJWfPdtLtxmEeD2ZbNxtn2n12DMziQ&s', mainImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCPacSaJWfPdtLtxmEeD2ZbNxtn2n12DMziQ&s', vaccinated: true, shelterDays: 432 },
-  { id: 5, name: 'Coco', breed: 'Puspin', age: '1 yr', ageCategory: 'Young', gender: 'Female', color: 'Orange', behavior: 'Vocal, cuddly', story: 'Rescued from a drainage pipe.', img: 'https://images.ctfassets.net/mrbo2ykgx5lt/32670/23cb097f16b30963b5be00e22c848d36/frontiers-psychology-stray-dogs-human-cues-behavior.jpg', mainImg: 'https://images.ctfassets.net/mrbo2ykgx5lt/32670/23cb097f16b30963b5be00e22c848d36/frontiers-psychology-stray-dogs-human-cues-behavior.jpg', vaccinated: true, shelterDays: 178 },
-  { id: 6, name: 'Simba', breed: 'Puspin', age: '6 mos', ageCategory: 'Kitten', gender: 'Male', color: 'Gray', behavior: 'Adventurous', story: 'Found wandering in a subdivision.', img: 'https://tnrireland.ie/wp-content/uploads/ngg_featured/tc01.jpg', mainImg: 'https://tnrireland.ie/wp-content/uploads/ngg_featured/tc01.jpg', vaccinated: false, shelterDays: 45 },
-  { id: 7, name: 'Max', breed: 'Shih Tzu Mix', age: '5 yrs', ageCategory: 'Senior', gender: 'Male', color: 'White & Brown', behavior: 'Gentle, quiet', story: 'Owner passed away, needs a loving home.', img: 'https://th-thumbnailer.cdn-si-edu.com/nSG89vchaPYMu-swpgA0RmIJZA4=/1280x720/https://tf-cmsv2-smithsonianmag-media.s3.amazonaws.com/filer/Surprising-Science-Feral-Cats-631.jpg', mainImg: 'https://th-thumbnailer.cdn-si-edu.com/nSG89vchaPYMu-swpgA0RmIJZA4=/1280x720/https://tf-cmsv2-smithsonianmag-media.s3.amazonaws.com/filer/Surprising-Science-Feral-Cats-631.jpg', vaccinated: true, shelterDays: 567 },
-  { id: 8, name: 'Daisy', breed: 'Aspin', age: '4 mos', ageCategory: 'Puppy', gender: 'Female', color: 'Brown & White', behavior: 'Curious, loving', story: 'Abandoned puppy found near the highway.', img: 'https://www.thespruce.com/thmb/PrfluQWFB8RhXABxIUeN5nNHrIo=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/discourage-feral-cats-386479-hero-50eeb16535844e75853d52720baeaec5.jpg', mainImg: 'https://www.thespruce.com/thmb/PrfluQWFB8RhXABxIUeN5nNHrIo=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/discourage-feral-cats-386479-hero-50eeb16535844e75853d52720baeaec5.jpg', vaccinated: true, shelterDays: 34 },
-  { id: 9, name: 'Charlie', breed: 'Beagle Mix', age: '2 yrs', ageCategory: 'Adult', gender: 'Male', color: 'Tricolor', behavior: 'Friendly, vocal', story: 'Rescued from animal hoarder situation.', img: 'https://www.funpawcare.com/wp-content/uploads/2013/03/IMAG2691.jpg', mainImg: 'https://www.funpawcare.com/wp-content/uploads/2013/03/IMAG2691.jpg', vaccinated: true, shelterDays: 298 },
-  { id: 10, name: 'Whiskers', breed: 'Puspin', age: '3 yrs', ageCategory: 'Adult', gender: 'Male', color: 'Black', behavior: 'Independent, affectionate', story: 'Street cat that sought shelter during typhoon.', img: 'https://akm-img-a-in.tosshub.com/indiatoday/images/story/202508/order-to-remove-all-delhi-street-dogs-sparks-outcry-from-animal-welfare-groups-113703314-16x9_0.jpg?VersionId=ed0u.hul0.ib0yhgCKasG_hK2zBwCHLS&size=690:388', mainImg: 'https://akm-img-a-in.tosshub.com/indiatoday/images/story/202508/order-to-remove-all-delhi-street-dogs-sparks-outcry-from-animal-welfare-groups-113703314-16x9_0.jpg?VersionId=ed0u.hul0.ib0yhgCKasG_hK2zBwCHLS&size=690:388', vaccinated: false, shelterDays: 123 },
-];
+interface Pet {
+  id: number;
+  name: string;
+  type: string;
+  breed: string;
+  age: string;
+  ageCategory: string;
+  gender: string;
+  color: string;
+  behavior: string;
+  story: string;
+  img: string;
+  mainImg: string;
+  vaccinated: boolean;
+  shelterDays: number;
+}
 
-const SEARCH_SUGGESTIONS = [
-  'Luna', 'Milo', 'Bella', 'Cooper', 'Coco', 'Simba', 'Max', 'Daisy', 'Charlie', 'Whiskers',
-  'Aspin', 'Puspin', 'Labrador', 'Shih Tzu', 'Beagle',
-  'Brown', 'Black', 'White', 'Golden', 'Orange', 'Gray', 'Tricolor',
-  'Male', 'Female', 'Puppy', 'Kitten', 'Adult', 'Senior'
-];
+interface AdoptProps {
+  pets: Pet[];
+}
 
-export default function Adopt() {
+export default function Adopt({ pets = [] }: AdoptProps) {
   const [selectedPet, setSelectedPet] = useState<number | null>(null);
   const [applyingPet, setApplyingPet] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,6 +43,30 @@ export default function Adopt() {
     sortBy: 'newest' // 'newest', 'longest', 'name'
   });
 
+  // Dynamic Search Suggestions
+  const searchSuggestions = useMemo(() => {
+    const suggestions = new Set<string>();
+    pets.forEach(pet => {
+      if (pet.name) {
+        suggestions.add(pet.name);
+      }
+      if (pet.breed) {
+        suggestions.add(pet.breed);
+      }
+      if (pet.color) {
+        suggestions.add(pet.color);
+      }
+      if (pet.gender) {
+        suggestions.add(pet.gender);
+      }
+      if (pet.ageCategory) {
+        suggestions.add(pet.ageCategory);
+      }
+    });
+
+    return Array.from(suggestions);
+  }, [pets]);
+
   // Search suggestions
   const filteredSuggestions = useMemo(() => {
     // eslint-disable-next-line curly
@@ -48,17 +74,17 @@ export default function Adopt() {
 
     const query = searchQuery.toLowerCase();
 
-    return SEARCH_SUGGESTIONS.filter(
+    return searchSuggestions.filter(
       s => s.toLowerCase().includes(query)
     ).slice(0, 6);
-  }, [searchQuery]);
+  }, [searchQuery, searchSuggestions]);
 
   // Filter and sort pets
   const filteredPets = useMemo(() => {
-    const result = PETS.filter(pet => {
+    const result = pets.filter(pet => {
       const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            pet.breed.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           pet.color.toLowerCase().includes(searchQuery.toLowerCase());
+                           (pet.color && pet.color.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesColor = filters.color === 'All' || pet.color === filters.color;
       const matchesBreed = filters.breed === 'All' || pet.breed === filters.breed;
       const matchesGender = filters.gender === 'All' || pet.gender === filters.gender;
@@ -77,15 +103,20 @@ export default function Adopt() {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [pets, searchQuery, filters]);
 
   // Get unique values for filters
-  const uniqueColors = ['All', ...Array.from(new Set(PETS.map(p => p.color)))];
-  const uniqueBreeds = ['All', ...Array.from(new Set(PETS.map(p => p.breed)))];
+  const uniqueColors = useMemo(() => ['All', ...Array.from(new Set(pets.map(p => p.color).filter(Boolean)))], [pets]);
+  const uniqueBreeds = useMemo(() => ['All', ...Array.from(new Set(pets.map(p => p.breed).filter(Boolean)))], [pets]);
   const uniqueAgeCategories = ['All', 'Puppy', 'Kitten', 'Young', 'Adult', 'Senior'];
+
+  const activeSelectedPet = useMemo(() => {
+    return pets.find(p => p.id === selectedPet) || null;
+  }, [pets, selectedPet]);
 
   return (
     <div className="min-h-screen bg-paw-bg font-quicksand">
+      <Head title="Find Your New Best Friend" />
       <Header />
       
       <main className="py-12">
@@ -232,7 +263,7 @@ export default function Adopt() {
 
                 <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-100">
                   <p className="text-sm font-bold text-gray-600">
-                    Showing <span className="text-paw-orange font-black">{filteredPets.length}</span> of <span className="font-black">{PETS.length}</span> pets
+                    Showing <span className="text-paw-orange font-black">{filteredPets.length}</span> of <span className="font-black">{pets.length}</span> pets
                   </p>
                   <button
                     onClick={() => {
@@ -296,7 +327,9 @@ export default function Adopt() {
 
                   <div className="flex items-center gap-1 mb-2">
                     <span className="bg-paw-yellow/20 text-paw-navy text-[8px] font-black px-2 py-0.5 rounded-full uppercase">{pet.breed}</span>
-                    <span className="bg-paw-blue/20 text-paw-blue text-[8px] font-black px-2 py-0.5 rounded-full uppercase">{pet.color}</span>
+                    {pet.color && (
+                      <span className="bg-paw-blue/20 text-paw-blue text-[8px] font-black px-2 py-0.5 rounded-full uppercase">{pet.color}</span>
+                    )}
                   </div>
 
                   <div className="space-y-1 mb-3">
@@ -327,7 +360,7 @@ export default function Adopt() {
 
       {/* Pet Detail Modal (Flip simulation with Expand) */}
       <AnimatePresence>
-        {selectedPet && (
+        {selectedPet && activeSelectedPet && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
@@ -351,37 +384,37 @@ export default function Adopt() {
               <div className="grid md:grid-cols-2">
                 <div className="h-64 sm:h-80 md:h-full">
                   <ImageWithFallback
-                    src={PETS.find(p => p.id === selectedPet)?.img || ''}
+                    src={activeSelectedPet.img || ''}
                     alt="Pet"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-5 sm:p-6 md:p-8 lg:p-12">
                   <span className="text-paw-orange font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">Available for Adoption</span>
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-paw-navy mb-4 md:mb-6">{PETS.find(p => p.id === selectedPet)?.name}</h2>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-paw-navy mb-4 md:mb-6">{activeSelectedPet.name}</h2>
 
                   <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8">
                     <div className="bg-paw-bg p-4 rounded-2xl">
                       <p className="text-xs text-gray-500 font-bold uppercase">Gender</p>
-                      <p className="font-black text-paw-navy">{PETS.find(p => p.id === selectedPet)?.gender}</p>
+                      <p className="font-black text-paw-navy">{activeSelectedPet.gender}</p>
                     </div>
                     <div className="bg-paw-bg p-4 rounded-2xl">
                       <p className="text-xs text-gray-500 font-bold uppercase">Age</p>
-                      <p className="font-black text-paw-navy">{PETS.find(p => p.id === selectedPet)?.age}</p>
+                      <p className="font-black text-paw-navy">{activeSelectedPet.age}</p>
                     </div>
                     <div className="bg-paw-bg p-4 rounded-2xl">
                       <p className="text-xs text-gray-500 font-bold uppercase">Color</p>
-                      <p className="font-black text-paw-navy">{PETS.find(p => p.id === selectedPet)?.color}</p>
+                      <p className="font-black text-paw-navy">{activeSelectedPet.color}</p>
                     </div>
                     <div className="bg-paw-bg p-4 rounded-2xl">
                       <p className="text-xs text-gray-500 font-bold uppercase">Breed</p>
-                      <p className="font-black text-paw-navy">{PETS.find(p => p.id === selectedPet)?.breed}</p>
+                      <p className="font-black text-paw-navy">{activeSelectedPet.breed}</p>
                     </div>
-                    <div className={`p-4 rounded-2xl ${PETS.find(p => p.id === selectedPet)?.vaccinated ? 'bg-paw-green/10' : 'bg-gray-100'}`}>
+                    <div className={`p-4 rounded-2xl ${activeSelectedPet.vaccinated ? 'bg-paw-green/10' : 'bg-gray-100'}`}>
                       <p className="text-xs text-gray-500 font-bold uppercase">Vaccination</p>
-                      <p className={`font-black flex items-center gap-2 ${PETS.find(p => p.id === selectedPet)?.vaccinated ? 'text-paw-green' : 'text-gray-500'}`}>
+                      <p className={`font-black flex items-center gap-2 ${activeSelectedPet.vaccinated ? 'text-paw-green' : 'text-gray-500'}`}>
                         <Shield size={16} />
-                        {PETS.find(p => p.id === selectedPet)?.vaccinated ? 'Vaccinated' : 'Not Vaccinated'}
+                        {activeSelectedPet.vaccinated ? 'Vaccinated' : 'Not Vaccinated'}
                       </p>
                     </div>
                     <div className="bg-paw-blue/10 p-4 rounded-2xl">
@@ -389,7 +422,7 @@ export default function Adopt() {
                       <p className="font-black text-paw-blue flex items-center gap-2">
                         <Calendar size={16} />
                         {(() => {
-                          const days = PETS.find(p => p.id === selectedPet)?.shelterDays || 0;
+                          const days = activeSelectedPet.shelterDays || 0;
 
                           if (days < 30) {
                             return `${days} days`;
@@ -403,26 +436,21 @@ export default function Adopt() {
                     </div>
                     <div className="bg-paw-bg p-4 rounded-2xl col-span-2">
                       <p className="text-xs text-gray-500 font-bold uppercase">Behavior</p>
-                      <p className="font-black text-paw-navy">{PETS.find(p => p.id === selectedPet)?.behavior}</p>
+                      <p className="font-black text-paw-navy">{activeSelectedPet.behavior}</p>
                     </div>
                   </div>
 
                   <div className="mb-8">
                     <h4 className="font-black text-paw-navy mb-2">My Story</h4>
                     <p className="text-gray-600 leading-relaxed">
-                      {PETS.find(p => p.id === selectedPet)?.story} Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                      {activeSelectedPet.story}
                     </p>
                   </div>
 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const pet = PETS.find(p => p.id === selectedPet);
-
-                      if (pet) {
-                        setApplyingPet(pet);
-                      }
+                      setApplyingPet(activeSelectedPet);
                     }}
                     className="w-full bg-paw-orange text-white py-4 rounded-2xl font-black text-lg hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20"
                   >

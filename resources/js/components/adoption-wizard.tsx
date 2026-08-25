@@ -1,6 +1,7 @@
 import { X, CheckCircle2, User, FileText, Upload, Calendar, ChevronLeft, ChevronRight, MapPin, Mail, Camera, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
+import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
@@ -13,58 +14,60 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
-  // Step 1: Applicant Information
-  const [fullName, setFullName] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [occupation, setOccupation] = useState('');
-  const [company, setCompany] = useState('');
-  const [socialMedia, setSocialMedia] = useState('');
-  const [status, setStatus] = useState('');
-  const [pronouns, setPronouns] = useState('');
-  const [adoptionSource, setAdoptionSource] = useState<string[]>([]);
-  const [adoptedBefore, setAdoptedBefore] = useState('');
-  const [emergencyName, setEmergencyName] = useState('');
-  const [emergencyRelationship, setEmergencyRelationship] = useState('');
-  const [emergencyPhone, setEmergencyPhone] = useState('');
-  const [emergencyEmail, setEmergencyEmail] = useState('');
+  const { data, setData, post, processing, errors } = useForm({
+    pet_id: pet.id,
+    
+    // Step 1: Applicant Information
+    fullName: '',
+    address: '',
+    phone: '',
+    email: '',
+    birthDate: '',
+    occupation: '',
+    company: '',
+    socialMedia: '',
+    status: '',
+    pronouns: '',
+    adoptionSource: [] as string[],
+    adoptedBefore: '',
+    emergencyName: '',
+    emergencyRelationship: '',
+    emergencyPhone: '',
+    emergencyEmail: '',
 
-  // Step 2: Questionnaire
-  const [adoptionPreference, setAdoptionPreference] = useState('');
-  const [residenceType, setResidenceType] = useState('');
-  const [isRenting, setIsRenting] = useState('');
-  const [movingPlan, setMovingPlan] = useState('');
-  const [livesWith, setLivesWith] = useState<string[]>([]);
-  const [hasAllergies, setHasAllergies] = useState('');
-  const [dailyCareHandler, setDailyCareHandler] = useState('');
-  const [expensesHandler, setExpensesHandler] = useState('');
-  const [emergencyHandler, setEmergencyHandler] = useState('');
-  const [hoursAlone, setHoursAlone] = useState('');
-  const [introductionPlan, setIntroductionPlan] = useState('');
-  const [familySupport, setFamilySupport] = useState('');
-  const [familySupportExplanation, setFamilySupportExplanation] = useState('');
-  const [currentPets, setCurrentPets] = useState('');
-  const [pastPets, setPastPets] = useState('');
+    // Step 2: Questionnaire
+    adoptionPreference: '',
+    residenceType: '',
+    isRenting: '',
+    movingPlan: '',
+    livesWith: [] as string[],
+    hasAllergies: '',
+    dailyCareHandler: '',
+    expensesHandler: '',
+    emergencyHandler: '',
+    hoursAlone: '',
+    introductionPlan: '',
+    familySupport: '',
+    familySupportExplanation: '',
+    currentPets: '',
+    pastPets: '',
 
-  // Step 3: Home & Uploads
-  const [uploadedPhotos, setUploadedPhotos] = useState<{[key: string]: File | null}>({
-    frontHouse: null,
-    streetView: null,
-    livingRoom: null,
-    diningArea: null,
-    kitchen: null,
-    bedroom: null,
-    windows: null,
-    yard: null
+    // Step 3: Home & Uploads
+    frontHouse: null as File | null,
+    streetView: null as File | null,
+    livingRoom: null as File | null,
+    diningArea: null as File | null,
+    kitchen: null as File | null,
+    bedroom: null as File | null,
+    windows: null as File | null,
+    yard: null as File | null,
+    uploadedId: null as File | null,
+
+    // Step 4: Interview & Confirmation
+    preferredDate: '',
+    preferredTime: '',
+    canVisitShelter: '',
   });
-  const [uploadedId, setUploadedId] = useState<File | null>(null);
-
-  // Step 4: Interview & Confirmation
-  const [preferredDate, setPreferredDate] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
-  const [canVisitShelter, setCanVisitShelter] = useState('');
 
   const steps = [
     { number: 1, title: 'Applicant Info', icon: User },
@@ -76,21 +79,19 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
   const handleFileUpload = (key: string, file: File | null) => {
     if (file && file.size > 8 * 1024 * 1024) {
       toast.error('File size must be less than 8MB');
-
       return;
     }
-
-    setUploadedPhotos(prev => ({ ...prev, [key]: file }));
+    setData(key as any, file);
   };
 
   const validateStep1 = () => {
-    return fullName && address && phone && email && birthDate && company && status && pronouns && adoptionSource.length > 0 && adoptedBefore && emergencyName && emergencyRelationship && emergencyPhone && emergencyEmail;
+    return data.fullName && data.address && data.phone && data.email && data.birthDate && data.company && data.status && data.pronouns && data.adoptionSource.length > 0 && data.adoptedBefore && data.emergencyName && data.emergencyRelationship && data.emergencyPhone && data.emergencyEmail;
   };
 
   const validateStep2 = () => {
-    const baseValid = adoptionPreference && residenceType && isRenting && movingPlan && livesWith.length > 0 && hasAllergies && dailyCareHandler && expensesHandler && emergencyHandler && hoursAlone && introductionPlan && familySupport && currentPets && pastPets;
+    const baseValid = data.adoptionPreference && data.residenceType && data.isRenting && data.movingPlan && data.livesWith.length > 0 && data.hasAllergies && data.dailyCareHandler && data.expensesHandler && data.emergencyHandler && data.hoursAlone && data.introductionPlan && data.familySupport && data.currentPets && data.pastPets;
 
-    if (familySupport === 'No' && !familySupportExplanation) {
+    if (data.familySupport === 'No' && !data.familySupportExplanation) {
       return false;
     }
 
@@ -98,11 +99,11 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
   };
 
   const validateStep3 = () => {
-    return uploadedId !== null;
+    return data.uploadedId !== null;
   };
 
   const validateStep4 = () => {
-    return preferredDate && preferredTime && canVisitShelter;
+    return data.preferredDate && data.preferredTime && data.canVisitShelter;
   };
 
   const canProceed = () => {
@@ -146,19 +147,28 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
     e.preventDefault();
     
     if (validateStep4()) {
-      setCompletedSteps(prev => [...new Set([...prev, 4])]);
-      toast.success(`Adoption application for ${pet.name} submitted successfully! We will contact you soon.`);
-      setTimeout(() => onClose(), 1500);
+      post('/adopt/apply', {
+        onSuccess: () => {
+          setCompletedSteps(prev => [...new Set([...prev, 4])]);
+          toast.success(`Adoption application for ${pet.name} submitted successfully! We will contact you soon.`);
+          setTimeout(() => onClose(), 1500);
+        },
+        onError: (errs) => {
+          console.error(errs);
+          const firstErr = Object.values(errs)[0];
+          toast.error(typeof firstErr === 'string' ? firstErr : 'Please correct errors on the form');
+        }
+      });
     }
   };
 
   const progress = (currentStep / 4) * 100;
 
-  const toggleArrayValue = (array: string[], value: string, setter: (val: string[]) => void) => {
+  const toggleArrayValue = (array: string[], value: string, key: string) => {
     if (array.includes(value)) {
-      setter(array.filter(v => v !== value));
+      setData(key as any, array.filter(v => v !== value));
     } else {
-      setter([...array, value]);
+      setData(key as any, [...array, value]);
     }
   };
 
@@ -257,8 +267,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <input
                       required
                       type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      value={data.fullName}
+                      onChange={(e) => setData('fullName', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       placeholder="Juan Dela Cruz"
                     />
@@ -269,8 +279,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <input
                       required
                       type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      value={data.address}
+                      onChange={(e) => setData('address', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       placeholder="Iligan City, Philippines"
                     />
@@ -281,8 +291,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <input
                       required
                       type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={data.phone}
+                      onChange={(e) => setData('phone', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       placeholder="+63 912 345 6789"
                     />
@@ -293,8 +303,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <input
                       required
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={data.email}
+                      onChange={(e) => setData('email', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       placeholder="juan@email.com"
                     />
@@ -306,17 +316,16 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        placeholder="YYYY-MM-DD or MM/DD/YYYY"
-                        pattern="(\d{4}-\d{2}-\d{2})|(\d{2}/\d{2}/\d{4})"
+                        value={data.birthDate}
+                        onChange={(e) => setData('birthDate', e.target.value)}
+                        placeholder="YYYY-MM-DD"
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 pr-12 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       />
                       <input
                         type="date"
                         id="date-picker-hidden"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
+                        value={data.birthDate}
+                        onChange={(e) => setData('birthDate', e.target.value)}
                         className="hidden"
                       />
                       <button
@@ -328,7 +337,6 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                         <Calendar size={20} />
                       </button>
                     </div>
-                    <p className="text-xs text-gray-400 font-bold">Type manually (YYYY-MM-DD) or click calendar icon</p>
                   </div>
                 </div>
 
@@ -339,8 +347,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Occupation</label>
                       <input
                         type="text"
-                        value={occupation}
-                        onChange={(e) => setOccupation(e.target.value)}
+                        value={data.occupation}
+                        onChange={(e) => setData('occupation', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Your job title"
                       />
@@ -351,8 +359,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
+                        value={data.company}
+                        onChange={(e) => setData('company', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Company name or N/A"
                       />
@@ -362,8 +370,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Social Media Profile (N/A if none)</label>
                       <input
                         type="text"
-                        value={socialMedia}
-                        onChange={(e) => setSocialMedia(e.target.value)}
+                        value={data.socialMedia}
+                        onChange={(e) => setData('socialMedia', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Facebook, Instagram, etc. or N/A"
                       />
@@ -378,8 +386,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Status *</label>
                       <select
                         required
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
+                        value={data.status}
+                        onChange={(e) => setData('status', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       >
                         <option value="">Select status</option>
@@ -393,8 +401,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Pronouns *</label>
                       <select
                         required
-                        value={pronouns}
-                        onChange={(e) => setPronouns(e.target.value)}
+                        value={data.pronouns}
+                        onChange={(e) => setData('pronouns', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       >
                         <option value="">Select pronouns</option>
@@ -414,8 +422,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label key={source} className="flex items-center gap-3 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={adoptionSource.includes(source)}
-                          onChange={() => toggleArrayValue(adoptionSource, source, setAdoptionSource)}
+                          checked={data.adoptionSource.includes(source)}
+                          onChange={() => toggleArrayValue(data.adoptionSource, source, 'adoptionSource')}
                           className="w-5 h-5 rounded accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{source}</span>
@@ -434,8 +442,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                           type="radio"
                           name="adoptedBefore"
                           value={option}
-                          checked={adoptedBefore === option}
-                          onChange={(e) => setAdoptedBefore(e.target.value)}
+                          checked={data.adoptedBefore === option}
+                          onChange={(e) => setData('adoptedBefore', e.target.value)}
                           className="w-5 h-5 accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -452,8 +460,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={emergencyName}
-                        onChange={(e) => setEmergencyName(e.target.value)}
+                        value={data.emergencyName}
+                        onChange={(e) => setData('emergencyName', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Emergency contact name"
                       />
@@ -464,8 +472,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={emergencyRelationship}
-                        onChange={(e) => setEmergencyRelationship(e.target.value)}
+                        value={data.emergencyRelationship}
+                        onChange={(e) => setData('emergencyRelationship', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Mother, Brother, etc."
                       />
@@ -476,8 +484,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="tel"
-                        value={emergencyPhone}
-                        onChange={(e) => setEmergencyPhone(e.target.value)}
+                        value={data.emergencyPhone}
+                        onChange={(e) => setData('emergencyPhone', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="+63 912 345 6789"
                       />
@@ -488,8 +496,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="email"
-                        value={emergencyEmail}
-                        onChange={(e) => setEmergencyEmail(e.target.value)}
+                        value={data.emergencyEmail}
+                        onChange={(e) => setData('emergencyEmail', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="emergency@email.com"
                       />
@@ -520,8 +528,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">What would you like to adopt? *</label>
                       <select
                         required
-                        value={adoptionPreference}
-                        onChange={(e) => setAdoptionPreference(e.target.value)}
+                        value={data.adoptionPreference}
+                        onChange={(e) => setData('adoptionPreference', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       >
                         <option value="">Select preference</option>
@@ -541,8 +549,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Residence Type *</label>
                       <select
                         required
-                        value={residenceType}
-                        onChange={(e) => setResidenceType(e.target.value)}
+                        value={data.residenceType}
+                        onChange={(e) => setData('residenceType', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       >
                         <option value="">Select type</option>
@@ -557,8 +565,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Do you rent? *</label>
                       <select
                         required
-                        value={isRenting}
-                        onChange={(e) => setIsRenting(e.target.value)}
+                        value={data.isRenting}
+                        onChange={(e) => setData('isRenting', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       >
                         <option value="">Select option</option>
@@ -572,8 +580,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={movingPlan}
-                        onChange={(e) => setMovingPlan(e.target.value)}
+                        value={data.movingPlan}
+                        onChange={(e) => setData('movingPlan', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="What will happen to the pet if you move?"
                       />
@@ -589,8 +597,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <label key={option} className="flex items-center gap-3 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={livesWith.includes(option)}
-                          onChange={() => toggleArrayValue(livesWith, option, setLivesWith)}
+                          checked={data.livesWith.includes(option)}
+                          onChange={() => toggleArrayValue(data.livesWith, option, 'livesWith')}
                           className="w-5 h-5 rounded accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -606,8 +614,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                           type="radio"
                           name="hasAllergies"
                           value={option}
-                          checked={hasAllergies === option}
-                          onChange={(e) => setHasAllergies(e.target.value)}
+                          checked={data.hasAllergies === option}
+                          onChange={(e) => setData('hasAllergies', e.target.value)}
                           className="w-5 h-5 accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -624,8 +632,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={dailyCareHandler}
-                        onChange={(e) => setDailyCareHandler(e.target.value)}
+                        value={data.dailyCareHandler}
+                        onChange={(e) => setData('dailyCareHandler', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Who will feed, walk, and care for the pet?"
                       />
@@ -636,8 +644,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={expensesHandler}
-                        onChange={(e) => setExpensesHandler(e.target.value)}
+                        value={data.expensesHandler}
+                        onChange={(e) => setData('expensesHandler', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Who will handle food, vet, and other costs?"
                       />
@@ -648,8 +656,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={emergencyHandler}
-                        onChange={(e) => setEmergencyHandler(e.target.value)}
+                        value={data.emergencyHandler}
+                        onChange={(e) => setData('emergencyHandler', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Who will handle emergency vet visits?"
                       />
@@ -660,8 +668,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={hoursAlone}
-                        onChange={(e) => setHoursAlone(e.target.value)}
+                        value={data.hoursAlone}
+                        onChange={(e) => setData('hoursAlone', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                         placeholder="Average hours per day the pet will be alone"
                       />
@@ -675,8 +683,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">How will you introduce your new pet to your home? *</label>
                     <textarea
                       required
-                      value={introductionPlan}
-                      onChange={(e) => setIntroductionPlan(e.target.value)}
+                      value={data.introductionPlan}
+                      onChange={(e) => setData('introductionPlan', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white h-24 resize-none"
                       placeholder="Describe your plan for introducing the pet to your home..."
                     />
@@ -693,8 +701,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                           type="radio"
                           name="familySupport"
                           value={option}
-                          checked={familySupport === option}
-                          onChange={(e) => setFamilySupport(e.target.value)}
+                          checked={data.familySupport === option}
+                          onChange={(e) => setData('familySupport', e.target.value)}
                           className="w-5 h-5 accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -702,13 +710,13 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     ))}
                   </div>
 
-                  {familySupport === 'No' && (
+                  {data.familySupport === 'No' && (
                     <div className="space-y-2">
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Please explain *</label>
                       <textarea
                         required
-                        value={familySupportExplanation}
-                        onChange={(e) => setFamilySupportExplanation(e.target.value)}
+                        value={data.familySupportExplanation}
+                        onChange={(e) => setData('familySupportExplanation', e.target.value)}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white h-24 resize-none"
                         placeholder="Why doesn't your family support the adoption?"
                       />
@@ -728,8 +736,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                               type="radio"
                               name="currentPets"
                               value={option}
-                              checked={currentPets === option}
-                              onChange={(e) => setCurrentPets(e.target.value)}
+                              checked={data.currentPets === option}
+                              onChange={(e) => setData('currentPets', e.target.value)}
                               className="w-5 h-5 accent-paw-orange"
                             />
                             <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -747,8 +755,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                               type="radio"
                               name="pastPets"
                               value={option}
-                              checked={pastPets === option}
-                              onChange={(e) => setPastPets(e.target.value)}
+                              checked={data.pastPets === option}
+                              onChange={(e) => setData('pastPets', e.target.value)}
                               className="w-5 h-5 accent-paw-orange"
                             />
                             <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -786,40 +794,43 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     { key: 'bedroom', label: 'Bedroom(s)' },
                     { key: 'windows', label: 'Windows (for cats)' },
                     { key: 'yard', label: 'Yard (for dogs)' }
-                  ].map(({ key, label }) => (
-                    <div key={key} className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 block">{label}</label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(key, e.target.files?.[0] || null)}
-                          className="hidden"
-                          id={`upload-${key}`}
-                        />
-                        <label
-                          htmlFor={`upload-${key}`}
-                          className={`flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all ${
-                            uploadedPhotos[key]
-                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                              : 'border-gray-300 dark:border-gray-600 hover:border-paw-orange bg-gray-50 dark:bg-gray-800'
-                          }`}
-                        >
-                          {uploadedPhotos[key] ? (
-                            <>
-                              <CheckCircle2 size={24} className="text-green-500 mb-2" />
-                              <span className="text-xs font-bold text-green-600 dark:text-green-400 text-center px-2">Uploaded</span>
-                            </>
-                          ) : (
-                            <>
-                              <Camera size={24} className="text-gray-400 mb-2" />
-                              <span className="text-xs font-bold text-gray-500 dark:text-gray-400 text-center px-2">Upload</span>
-                            </>
-                          )}
-                        </label>
+                  ].map(({ key, label }) => {
+                    const fileObj = (data as any)[key] as File | null;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 block">{label}</label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(key, e.target.files?.[0] || null)}
+                            className="hidden"
+                            id={`upload-${key}`}
+                          />
+                          <label
+                            htmlFor={`upload-${key}`}
+                            className={`flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                              fileObj
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-gray-300 dark:border-gray-600 hover:border-paw-orange bg-gray-50 dark:bg-gray-800'
+                            }`}
+                          >
+                            {fileObj ? (
+                              <>
+                                <CheckCircle2 size={24} className="text-green-500 mb-2" />
+                                <span className="text-xs font-bold text-green-600 dark:text-green-400 text-center px-2 truncate max-w-full">{fileObj.name}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Camera size={24} className="text-gray-400 mb-2" />
+                                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 text-center px-2">Upload</span>
+                              </>
+                            )}
+                          </label>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
@@ -830,14 +841,11 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     accept="image/*,.pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
-
                       if (file && file.size > 8 * 1024 * 1024) {
                         toast.error('File size must be less than 8MB');
-
                         return;
                       }
-
-                      setUploadedId(file);
+                      setData('uploadedId', file);
                     }}
                     className="hidden"
                     id="upload-id"
@@ -845,17 +853,17 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                   <label
                     htmlFor="upload-id"
                     className={`flex items-center justify-center p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
-                      uploadedId
+                      data.uploadedId
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-paw-orange bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
-                    {uploadedId ? (
+                    {data.uploadedId ? (
                       <div className="flex items-center gap-3">
                         <CheckCircle2 size={32} className="text-green-500" />
                         <div>
-                          <p className="font-bold text-green-600 dark:text-green-400">{uploadedId.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{(uploadedId.size / 1024 / 1024).toFixed(2)} MB</p>
+                          <p className="font-bold text-green-600 dark:text-green-400">{data.uploadedId.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{(data.uploadedId.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
                       </div>
                     ) : (
@@ -897,17 +905,16 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       <input
                         required
                         type="text"
-                        value={preferredDate}
-                        onChange={(e) => setPreferredDate(e.target.value)}
-                        placeholder="YYYY-MM-DD or MM/DD/YYYY"
-                        pattern="(\d{4}-\d{2}-\d{2})|(\d{2}/\d{2}/\d{4})"
+                        value={data.preferredDate}
+                        onChange={(e) => setData('preferredDate', e.target.value)}
+                        placeholder="YYYY-MM-DD"
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 pr-12 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                       />
                       <input
                         type="date"
                         id="interview-date-picker-hidden"
-                        value={preferredDate}
-                        onChange={(e) => setPreferredDate(e.target.value)}
+                        value={data.preferredDate}
+                        onChange={(e) => setData('preferredDate', e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
                         className="hidden"
                       />
@@ -920,7 +927,6 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                         <Calendar size={20} />
                       </button>
                     </div>
-                    <p className="text-xs text-gray-400 font-bold">Type manually or click calendar icon (future dates only)</p>
                   </div>
 
                   <div className="space-y-2">
@@ -928,8 +934,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <input
                       required
                       type="time"
-                      value={preferredTime}
-                      onChange={(e) => setPreferredTime(e.target.value)}
+                      value={data.preferredTime}
+                      onChange={(e) => setData('preferredTime', e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
                     />
                   </div>
@@ -944,8 +950,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                           type="radio"
                           name="canVisitShelter"
                           value={option}
-                          checked={canVisitShelter === option}
-                          onChange={(e) => setCanVisitShelter(e.target.value)}
+                          checked={data.canVisitShelter === option}
+                          onChange={(e) => setData('canVisitShelter', e.target.value)}
                           className="w-5 h-5 accent-paw-orange"
                         />
                         <span className="font-bold text-gray-700 dark:text-gray-300">{option}</span>
@@ -965,30 +971,11 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                         <p className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Application Summary</p>
                         <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Adopting {pet.name}</h4>
                         <div className="space-y-1 text-sm font-bold text-gray-600 dark:text-gray-400">
-                          <p className="flex items-center gap-2"><User size={14} /> {fullName}</p>
-                          <p className="flex items-center gap-2"><MapPin size={14} /> {address}</p>
-                          <p className="flex items-center gap-2"><Mail size={14} /> {email}</p>
-                          <p className="flex items-center gap-2"><Calendar size={14} /> Interview: {preferredDate} at {preferredTime}</p>
+                          <p className="flex items-center gap-2"><User size={14} /> {data.fullName}</p>
+                          <p className="flex items-center gap-2"><MapPin size={14} /> {data.address}</p>
+                          <p className="flex items-center gap-2"><Mail size={14} /> {data.email}</p>
+                          <p className="flex items-center gap-2"><Calendar size={14} /> Interview: {data.preferredDate} at {data.preferredTime}</p>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                        <CheckCircle2 size={16} className="text-green-500" />
-                        Step 1 Complete
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                        <CheckCircle2 size={16} className="text-green-500" />
-                        Step 2 Complete
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                        <CheckCircle2 size={16} className="text-green-500" />
-                        ID Uploaded
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                        <CheckCircle2 size={16} className="text-green-500" />
-                        Interview Scheduled
                       </div>
                     </div>
                   </div>
@@ -1031,15 +1018,19 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={!validateStep4()}
+              disabled={!validateStep4() || processing}
               className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ml-auto ${
-                validateStep4()
+                validateStep4() && !processing
                   ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30'
                   : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
               }`}
             >
-              <CheckCircle2 size={20} />
-              Submit Application
+              {processing ? 'Submitting...' : (
+                <>
+                  <CheckCircle2 size={20} />
+                  Submit Application
+                </>
+              )}
             </button>
           )}
         </div>

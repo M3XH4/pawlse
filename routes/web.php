@@ -1,6 +1,10 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\Admin\AdoptablePetController;
+use App\Http\Controllers\Admin\AdoptionManagementController;
+use App\Http\Controllers\AdoptController;
+use App\Http\Controllers\Adoptions\AdoptionApplicationController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\PetController;
@@ -20,7 +24,8 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 Route::inertia('/about', 'about')->name('about');
-Route::inertia('/adopt', 'adopt')->name('adopt');
+Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
+Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
 Route::inertia('/donate', 'donate')->name('donate');
 
 Route::get('/volunteer', function (Request $request) {
@@ -82,7 +87,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
     Route::inertia('rescue-management', 'admin/rescue-management')->name('rescue-management');
     Route::inertia('ai-validation', 'admin/ai-validation')->name('ai-validation');
-    Route::inertia('adoption-management', 'admin/adoption-management')->name('adoption-management');
+    Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
+    Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
+    Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');
     Route::inertia('volunteer-management', 'admin/volunteer-management')->name('volunteer-management');
     Route::inertia('donation-monitoring', 'admin/donation-monitoring')->name('donation-monitoring');
     Route::inertia('events', 'admin/events')->name('events');
