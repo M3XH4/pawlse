@@ -142,7 +142,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 </div>
                 <div className="flex gap-2">
-                    {['All', 'Rescue', 'Missing', 'SOS'].map((t) => (
+                    {['All', 'Rescue', 'SOS'].map((t) => (
                         <button
                             key={t}
                             onClick={() => handleTypeChange(t)}

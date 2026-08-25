@@ -88,9 +88,9 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::inertia('/', 'user/bookmark')->name('index');
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::get('rescue-reports', [PetReportController::class, 'userReports'])->name('rescue-reports');
-    Route::inertia('adoption-applications', 'user/adoption-applications')->name('adoption-applications');
+    Route::get('adoption-applications', [AdoptionApplicationController::class, 'index'])->name('adoption-applications');
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
-    Route::inertia('missing-found', 'user/missing-found')->name('missing-found');
+    Route::get('missing-found', [PetReportController::class, 'userMissingFoundReports'])->name('missing-found');
     Route::inertia('notifications', 'user/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('volunteer-status', [VolunteerDashboardController::class, 'userStatus'])->name('volunteer-status');

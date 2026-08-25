@@ -11,9 +11,24 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdoptionApplicationController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+
+        $applications = AdoptionApplication::where('user_id', $user->id)
+            ->with(['shelterAnimal'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('user/adoption-applications', [
+            'applications' => $applications,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([

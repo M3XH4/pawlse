@@ -245,6 +245,7 @@ class PetReportController extends Controller
 
         $reportsQuery = PetReport::with(['photos', 'assignedVolunteer'])
             ->where('user_id', $user->id)
+            ->whereIn('type', ['rescue', 'sos'])
             ->when($typeFilter !== 'All', function ($query) use ($typeFilter) {
                 $query->where('type', strtolower($typeFilter));
             })
@@ -263,6 +264,35 @@ class PetReportController extends Controller
             'filters' => [
                 'search' => $search,
                 'type' => $typeFilter,
+            ],
+        ]);
+    }
+
+    /**
+     * User's missing/found reports list.
+     */
+    public function userMissingFoundReports(Request $request): Response
+    {
+        $user = $request->user();
+        $search = $request->input('search', '');
+
+        $reportsQuery = PetReport::with(['photos'])
+            ->where('user_id', $user->id)
+            ->where('type', 'missing')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('location', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            });
+
+        $reports = $reportsQuery->latest()->paginate(10)->withQueryString();
+
+        return Inertia::render('user/missing-found', [
+            'reports' => $reports,
+            'filters' => [
+                'search' => $search,
             ],
         ]);
     }

@@ -75,3 +75,38 @@ test('all super admin dashboard pages are reachable for super admins', function 
     ['account.super-admin.notifications', 'super-admin/notifications'],
     ['account.super-admin.account-settings', 'super-admin/account-settings'],
 ]);
+
+test('user adoption applications page receives user applications data', function () {
+    $user = User::factory()->create();
+    $pet = App\Models\ShelterAnimal::factory()->create();
+    $application = App\Models\AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $pet->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('account.user.adoption-applications'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('user/adoption-applications')
+            ->has('applications', 1)
+            ->where('applications.0.id', $application->id)
+        );
+});
+
+test('user missing found reports page receives user missing reports data', function () {
+    $user = User::factory()->create();
+    $report = App\Models\PetReport::factory()->create([
+        'user_id' => $user->id,
+        'type' => 'missing',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('account.user.missing-found'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('user/missing-found')
+            ->has('reports.data', 1)
+            ->where('reports.data.0.id', $report->id)
+        );
+});
