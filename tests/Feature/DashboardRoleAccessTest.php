@@ -79,6 +79,8 @@ test('users cannot access other role dashboards', function (string $state, strin
     ['admin', 'account.user.index'],
     ['admin', 'account.volunteer.index'],
     ['admin', 'account.super-admin.dashboard'],
+    ['superAdmin', 'account.user.index'],
+    ['superAdmin', 'account.volunteer.index'],
 ]);
 
 test('super admins can access admin dashboards but admins cannot access super admin dashboards', function () {

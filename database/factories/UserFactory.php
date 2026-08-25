@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role as PermissionRole;
 
 /**
  * @extends Factory<User>
@@ -16,6 +18,16 @@ class UserFactory extends Factory
      * The current password being used by the factory.
      */
     protected static ?string $password;
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $role = $user->role ?? Role::User->value;
+
+            PermissionRole::findOrCreate($role, 'web');
+            $user->syncRoles([$role]);
+        });
+    }
 
     /**
      * Define the model's default state.
@@ -28,7 +40,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'role' => 'user',
+            'role' => Role::User->value,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
@@ -62,28 +74,28 @@ class UserFactory extends Factory
     public function user(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'user',
+            'role' => Role::User->value,
         ]);
     }
 
     public function volunteer(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'volunteer',
+            'role' => Role::Volunteer->value,
         ]);
     }
 
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'admin',
+            'role' => Role::Admin->value,
         ]);
     }
 
     public function superAdmin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'super-admin',
+            'role' => Role::SuperAdmin->value,
         ]);
     }
 }

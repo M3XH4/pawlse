@@ -111,14 +111,21 @@ export function Header() {
   };
 
   const getAccountPath = () => {
-    // eslint-disable-next-line curly
-    if (!user) return '/account/user';
+    if (!user) {
+      return '/account/user';
+    }
 
-    // eslint-disable-next-line curly
-    if (user.role === 'admin') return '/dashboard';
+    if (user.role === 'super-admin') {
+      return '/account/super-admin/dashboard';
+    }
 
-    // eslint-disable-next-line curly
-    if (user.role === 'volunteer') return '/account/volunteer';
+    if (user.role === 'admin') {
+      return '/account/admin/dashboard';
+    }
+
+    if (user.role === 'volunteer') {
+      return '/account/volunteer';
+    }
 
     return '/account/user';
   };

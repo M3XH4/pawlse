@@ -78,6 +78,16 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
+        RateLimiter::for('email-verification-otp', function (Request $request) {
+            return Limit::perMinute((int) config('auth.email_otp.max_attempts', 5))->by(
+                $request->user()?->id.'|'.$request->ip(),
+            );
+        });
+
+        RateLimiter::for('email-verification-otp-resend', function (Request $request) {
+            return Limit::perMinute(1)->by($request->user()?->id.'|'.$request->ip());
+        });
+
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });

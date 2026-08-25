@@ -1,12 +1,20 @@
 <?php
 
-use App\Http\Controllers\PetController;
+use App\Enums\Role;
+use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\PetController;
 use App\Http\Controllers\UserNotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use Spatie\Permission\Middleware\RoleMiddleware;
+
+$userDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::User)];
+$volunteerDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::Volunteer)];
+$adminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using([Role::Admin, Role::SuperAdmin])];
+$superAdminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::SuperAdmin)];
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -29,12 +37,25 @@ Route::inertia('/sos', 'sos')->name('sos');
 Route::post('/ai/predict', [PetController::class, 'predict']);
 Route::post('/ai/generate-names', [PetController::class, 'generateNames']);
 
-Route::prefix('account/notifications')->name('account.notifications.')->group(function () {
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', [EmailVerificationOtpController::class, 'show'])
+        ->name('verification.notice');
+
+    Route::post('/email/verify', [EmailVerificationOtpController::class, 'store'])
+        ->middleware('throttle:email-verification-otp')
+        ->name('verification.verify');
+
+    Route::post('/email/verification-notification', [EmailVerificationOtpController::class, 'resend'])
+        ->middleware('throttle:email-verification-otp-resend')
+        ->name('verification.send');
+});
+
+Route::prefix('account/notifications')->name('account.notifications.')->middleware(['auth', 'verified'])->group(function () {
     Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
     Route::patch('read-all', [UserNotificationController::class, 'readAll'])->name('read-all');
 });
 
-Route::prefix('account/user')->name('account.user.')->group(function () {
+Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {
     Route::inertia('/', 'user/bookmark')->name('index');
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::inertia('rescue-reports', 'user/rescue-reports')->name('rescue-reports');
@@ -45,7 +66,7 @@ Route::prefix('account/user')->name('account.user.')->group(function () {
     Route::inertia('account-settings', 'user/account-settings')->name('account-settings');
 });
 
-Route::prefix('account/volunteer')->name('account.volunteer.')->group(function () {
+Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volunteerDashboardMiddleware)->group(function () {
     Route::inertia('/', 'volunteer/profile-information')->name('index');
     Route::inertia('profile', 'volunteer/profile-information')->name('profile');
     Route::inertia('status', 'volunteer/volunteer-status')->name('status');
@@ -57,7 +78,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->group(function (
     Route::inertia('account-settings', 'volunteer/account-settings')->name('account-settings');
 });
 
-Route::prefix('account/admin')->name('account.admin.')->group(function () {
+Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboardMiddleware)->group(function () {
     Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
     Route::inertia('rescue-management', 'admin/rescue-management')->name('rescue-management');
     Route::inertia('ai-validation', 'admin/ai-validation')->name('ai-validation');
@@ -70,7 +91,7 @@ Route::prefix('account/admin')->name('account.admin.')->group(function () {
     Route::inertia('account-settings', 'admin/account-settings')->name('account-settings');
 });
 
-Route::prefix('account/super-admin')->name('account.super-admin.')->group(function () {
+Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($superAdminDashboardMiddleware)->group(function () {
     Route::inertia('dashboard', 'super-admin/dashboard')->name('dashboard');
     Route::inertia('admin-management', 'super-admin/admin-management')->name('admin-management');
     Route::inertia('audit-logs', 'super-admin/audit-logs')->name('audit-logs');
