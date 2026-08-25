@@ -14,13 +14,13 @@ type Props = {
     twoFactorEnabled?: boolean;
 };
 
-export default function VolunteerAccountSettings(props: Props) {
+export default function SuperAdminAccountSettings(props: Props) {
     return (
         <>
             <Head title="Account Settings" />
             <DashboardSectionPage
                 title="Account Settings"
-                description="Manage your volunteer profile, security, notification, and theme preferences."
+                description="Manage your super admin profile, security, notifications, and theme settings."
                 badge={<DashboardMetricBadge icon={<Settings className="h-4 w-4" />} label="Profile" />}
             >
                 <SharedAccountSettings {...props} />

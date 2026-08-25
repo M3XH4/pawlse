@@ -3,8 +3,10 @@
 use App\Enums\Role;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
+use App\Http\Controllers\Admin\ReportsAnalyticsController;
 use App\Http\Controllers\Admin\RescueManagementController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\AdoptController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
+use App\Http\Controllers\Settings\AccountSettingsController;
 use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
@@ -89,7 +92,7 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::inertia('missing-found', 'user/missing-found')->name('missing-found');
     Route::inertia('notifications', 'user/notifications')->name('notifications');
-    Route::inertia('account-settings', 'user/account-settings')->name('account-settings');
+    Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('volunteer-status', [VolunteerDashboardController::class, 'userStatus'])->name('volunteer-status');
 });
 
@@ -102,11 +105,11 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
     Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
-    Route::inertia('account-settings', 'volunteer/account-settings')->name('account-settings');
+    Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
 
 Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboardMiddleware)->group(function () {
-    Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('rescue-management', [RescueManagementController::class, 'index'])->name('rescue-management');
     Route::post('rescue-management/{report}/assign', [RescueManagementController::class, 'assignVolunteer'])->name('rescue-management.assign');
     Route::post('rescue-management/{report}/status', [RescueManagementController::class, 'updateStatus'])->name('rescue-management.update-status');
@@ -140,9 +143,10 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::put('feeding-schedules/{schedule}', [EventManagementController::class, 'updateFeedingSchedule'])->name('feeding-schedules.update');
     Route::delete('feeding-schedules/{schedule}', [EventManagementController::class, 'destroyFeedingSchedule'])->name('feeding-schedules.destroy');
 
-    Route::inertia('reports-analytics', 'admin/reports-analytics')->name('reports-analytics');
+    Route::get('reports-analytics', [ReportsAnalyticsController::class, 'index'])->name('reports-analytics');
+    Route::get('reports-analytics/export', [ReportsAnalyticsController::class, 'export'])->name('reports-analytics.export');
     Route::inertia('notifications', 'admin/notifications')->name('notifications');
-    Route::inertia('account-settings', 'admin/account-settings')->name('account-settings');
+    Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
 
 Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($superAdminDashboardMiddleware)->group(function () {
@@ -156,6 +160,7 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::inertia('ai-configuration', 'super-admin/ai-configuration')->name('ai-configuration');
     Route::inertia('system-settings', 'super-admin/system-settings')->name('system-settings');
     Route::inertia('notifications', 'super-admin/notifications')->name('notifications');
+    Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -73,4 +73,5 @@ test('all super admin dashboard pages are reachable for super admins', function 
     ['account.super-admin.ai-configuration', 'super-admin/ai-configuration'],
     ['account.super-admin.system-settings', 'super-admin/system-settings'],
     ['account.super-admin.notifications', 'super-admin/notifications'],
+    ['account.super-admin.account-settings', 'super-admin/account-settings'],
 ]);

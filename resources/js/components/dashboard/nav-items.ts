@@ -31,6 +31,7 @@ import {
     dashboard as superAdminDashboard,
     securityAccess,
     systemSettings,
+    accountSettings as superAdminAccountSettings,
 } from '@/routes/account/super-admin';
 import {
     accountSettings as userAccountSettings,
@@ -93,6 +94,7 @@ export const superAdminNavItems: DashboardNavItem[] = [
     navItem('Backup & Restore', backupRestore.url(), DatabaseBackup),
     navItem('AI Configuration', aiConfiguration.url(), Sparkles),
     navItem('System Settings', systemSettings.url(), Settings),
+    navItem('Account Settings', superAdminAccountSettings.url(), Settings),
 ];
 
 export const userNotificationsUrl = '/account/user/notifications';
