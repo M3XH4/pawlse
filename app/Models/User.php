@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -106,5 +107,29 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->email_verification_otp_sent_at->addSeconds(
             (int) config('auth.email_otp.resend_cooldown', 60),
         );
+    }
+
+    /**
+     * @return HasMany<VolunteerApplication, $this>
+     */
+    public function volunteerApplications(): HasMany
+    {
+        return $this->hasMany(VolunteerApplication::class);
+    }
+
+    /**
+     * @return HasMany<AssignedTask, $this>
+     */
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(AssignedTask::class);
+    }
+
+    /**
+     * @return HasMany<Certificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
     }
 }

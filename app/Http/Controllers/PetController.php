@@ -8,11 +8,12 @@ use Inertia\Inertia;
 
 class PetController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         return Inertia::render('rescue');
     }
 
-     public function predict(Request $request)
+    public function predict(Request $request)
     {
         $request->validate([
             'image' => ['required', 'image', 'max:10240'],
@@ -24,7 +25,7 @@ class PetController extends Controller
                 file_get_contents($request->file('image')),
                 $request->file('image')->getClientOriginalName()
             )
-            ->post(config('services.ai.url') . '/predict');
+            ->post(config('services.ai.url').'/predict');
 
         if ($response->failed()) {
             return response()->json([
@@ -43,14 +44,14 @@ class PetController extends Controller
             'gender' => ['required', 'in:male,female,neutral,unknown'],
         ]);
 
-        $response = Http::timeout(60)->post(config('services.ai.url') . '/generate-names', [
+        $response = Http::timeout(60)->post(config('services.ai.url').'/generate-names', [
             'species' => $request->species,
             'gender' => $request->gender,
         ]);
 
         return response()->json($response->json());
     }
-    
+
     // public function predict(Request $request) {
     //     $response = Http::attach(
     //         'file',
@@ -71,6 +72,5 @@ class PetController extends Controller
 
     //     return response()->json($response->json());
     // }
-
 
 }

@@ -68,6 +68,7 @@ export const userNavItems: DashboardNavItem[] = [
     navItem('My Adoption Applications', adoptionApplications.url(), Heart),
     navItem('My Donations', donations.url(), Gift),
     navItem('Missing/Found Reports', missingFound.url(), Search),
+    navItem('Volunteer Status', '/account/user/volunteer-status', Zap),
     navItem('Account Settings', userAccountSettings.url(), Settings),
 ];
 
@@ -79,6 +80,7 @@ export const volunteerNavItems: DashboardNavItem[] = [
     navItem('Certificates & Recognition', certificates.url(), Award),
     navItem('My Rescue Reports', volunteerRescueReports.url(), FileText),
     navItem('Account Settings', volunteerAccountSettings.url(), Settings),
+    navItem('Switch to User Dashboard', '/volunteer/switch-user', User),
 ];
 
 export const superAdminNavItems: DashboardNavItem[] = [

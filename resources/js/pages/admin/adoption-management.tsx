@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';

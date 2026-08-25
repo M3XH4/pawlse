@@ -16,7 +16,7 @@ return [
     'ai' => [
         'url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
     ],
-    
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
