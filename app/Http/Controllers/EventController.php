@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssignedTask;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
 use App\Models\VolunteerApplication;
@@ -149,6 +150,8 @@ class EventController extends Controller
             $event->decrement('spots');
         }
 
+        AuditLog::log('volunteer_join_event', "Joined event '{$event->title}'");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Successfully joined the event!',
@@ -205,6 +208,8 @@ class EventController extends Controller
             'role' => 'Food Carrier',
             'status' => 'pending',
         ]);
+
+        AuditLog::log('volunteer_join_feeding_route', "Joined feeding route zone '{$schedule->zone}' on {$schedule->day}");
 
         Inertia::flash('toast', [
             'type' => 'success',

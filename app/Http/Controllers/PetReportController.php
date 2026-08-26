@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssignedTask;
+use App\Models\AuditLog;
 use App\Models\PetReport;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -29,6 +32,7 @@ class PetReportController extends Controller
             'contact_email' => ['nullable', 'email', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],
+            'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
 
         $user = Auth::user();
@@ -47,9 +51,13 @@ class PetReportController extends Controller
             'contact_name' => $validated['contact_name'] ?? ($user ? $user->name : 'Anonymous'),
             'contact_phone' => $validated['contact_phone'] ?? null,
             'contact_email' => $validated['contact_email'] ?? ($user ? $user->email : null),
+            'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
+            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
         ]);
 
         $this->uploadPhotos($request, $report);
+
+        AuditLog::log('rescue_report_submit', "Submitted rescue report at {$validated['location']}");
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -85,6 +93,7 @@ class PetReportController extends Controller
             'contactEmail' => ['nullable', 'email', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],
+            'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
 
         $user = Auth::user();
@@ -108,9 +117,13 @@ class PetReportController extends Controller
             'contact_name' => $validated['contactName'],
             'contact_phone' => $validated['contactPhone'],
             'contact_email' => $validated['contactEmail'] ?? null,
+            'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
+            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
         ]);
 
         $this->uploadPhotos($request, $report);
+
+        AuditLog::log('missing_report_submit', "Submitted missing pet report for '{$validated['petName']}'");
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -142,6 +155,7 @@ class PetReportController extends Controller
             'contactPhone' => ['nullable', 'string', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],
+            'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
 
         $user = Auth::user();
@@ -158,9 +172,13 @@ class PetReportController extends Controller
             'contact_name' => $validated['contactName'] ?? ($user ? $user->name : 'Anonymous'),
             'contact_phone' => $validated['contactPhone'] ?? null,
             'contact_email' => $user ? $user->email : null,
+            'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
+            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
         ]);
 
         $this->uploadPhotos($request, $report);
+
+        AuditLog::log('sos_report_submit', "Submitted SOS report at {$validated['location']}");
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -304,7 +322,7 @@ class PetReportController extends Controller
     {
         $user = $request->user();
         $search = $request->input('search', '');
-        $statusFilter = $request->input('status', 'pending'); // pending, resolved, cancelled
+        $statusFilter = $request->input('status', 'assigned'); // pending, resolved, cancelled
 
         $reportsQuery = PetReport::with(['photos'])
             ->where('assigned_volunteer_id', $user->id)
@@ -328,5 +346,49 @@ class PetReportController extends Controller
                 'status' => $statusFilter,
             ],
         ]);
+    }
+
+    /**
+     * Volunteer updates the status of their assigned rescue report.
+     */
+    public function updateStatus(Request $request, PetReport $report): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($report->assigned_volunteer_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:assigned,resolved,cancelled'],
+        ]);
+
+        $report->update([
+            'status' => $validated['status'],
+        ]);
+
+        AuditLog::log('volunteer_rescue_status_update', "Updated rescue report status for report ID {$report->id} to {$validated['status']}");
+
+        // Propagate status change to the associated volunteer tasks
+        if ($validated['status'] === 'resolved') {
+            AssignedTask::query()
+                ->where('pet_report_id', $report->id)
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'completed']);
+        } elseif ($validated['status'] === 'cancelled') {
+            AssignedTask::query()
+                ->where('pet_report_id', $report->id)
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'cancelled']);
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Rescue report status updated successfully.',
+        ]);
+
+        return redirect()->back();
     }
 }

@@ -47,7 +47,7 @@ interface VolunteerRescueReportsProps {
 
 export default function VolunteerRescueReports({ reports, filters }: VolunteerRescueReportsProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
-    const [statusFilter, setStatusFilter] = useState(filters?.status || 'pending');
+    const [statusFilter, setStatusFilter] = useState(filters?.status || 'assigned');
 
     const handleSearch = () => {
         router.get(
@@ -68,7 +68,7 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'pending':
+            case 'assigned':
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                         <Clock size={12} /> Assigned (Pending Action)
@@ -130,7 +130,7 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
                 </div>
                 <div className="flex gap-2">
                     {[
-                        { val: 'pending', label: 'Active' },
+                        { val: 'assigned', label: 'Active' },
                         { val: 'resolved', label: 'Completed' },
                         { val: 'cancelled', label: 'Cancelled' }
                     ].map((s) => (
@@ -214,6 +214,31 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
                                         <p>Phone: <span className="text-paw-orange">{report.contact_phone || 'N/A'}</span></p>
                                         {report.contact_email && <p>Email: <span className="text-paw-orange">{report.contact_email}</span></p>}
                                     </div>
+
+                                    {report.status === 'assigned' && (
+                                        <div className="flex gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800/40">
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Are you sure you want to mark this rescue report as resolved?')) {
+                                                        router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'resolved' });
+                                                    }
+                                                }}
+                                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+                                            >
+                                                <CheckCircle2 size={14} /> Mark as Resolved
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Are you sure you want to cancel this rescue assignment?')) {
+                                                        router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'cancelled' });
+                                                    }
+                                                }}
+                                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-red-200 dark:border-red-900/55"
+                                            >
+                                                <XCircle size={14} /> Cancel Rescue
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </DashboardCard>

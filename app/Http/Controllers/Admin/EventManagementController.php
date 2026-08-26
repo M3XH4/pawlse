@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
 use Illuminate\Http\RedirectResponse;
@@ -91,6 +92,8 @@ class EventManagementController extends Controller
             'status' => 'open',
         ]);
 
+        AuditLog::log('event_create', "Created event '{$validated['title']}'");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Event created successfully.',
@@ -132,6 +135,8 @@ class EventManagementController extends Controller
             'img' => $validated['img'],
         ]);
 
+        AuditLog::log('event_update', "Updated event '{$validated['title']}'");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Event updated successfully.',
@@ -148,6 +153,8 @@ class EventManagementController extends Controller
         $newStatus = $event->status === 'open' ? 'closed' : 'open';
         $event->update(['status' => $newStatus]);
 
+        AuditLog::log('event_status_toggle', "Toggled status of event ID {$event->id} to {$newStatus}");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => "Event is now {$newStatus}.",
@@ -162,6 +169,8 @@ class EventManagementController extends Controller
     public function destroyEvent(Request $request, Event $event): RedirectResponse
     {
         $event->delete();
+
+        AuditLog::log('event_delete', "Deleted event '{$event->title}'");
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -185,6 +194,8 @@ class EventManagementController extends Controller
         ]);
 
         FeedingSchedule::query()->create($validated);
+
+        AuditLog::log('feeding_route_create', "Created feeding route zone '{$validated['zone']}'");
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -210,6 +221,8 @@ class EventManagementController extends Controller
 
         $schedule->update($validated);
 
+        AuditLog::log('feeding_route_update', "Updated feeding route zone '{$validated['zone']}'");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Feeding route updated successfully.',
@@ -224,6 +237,8 @@ class EventManagementController extends Controller
     public function destroyFeedingSchedule(Request $request, FeedingSchedule $schedule): RedirectResponse
     {
         $schedule->delete();
+
+        AuditLog::log('feeding_route_delete', "Deleted feeding route zone '{$schedule->zone}'");
 
         Inertia::flash('toast', [
             'type' => 'success',

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { 
   User, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
   MapPin, Calendar, Camera, Info, ShieldAlert, Sparkles, Siren, 
-  Eye, Check, Link as LinkIcon, RefreshCw, Phone, Mail
+  Eye, Check, Link as LinkIcon, RefreshCw, Phone, Mail, X
 } from 'lucide-react';
 
 interface PaginatedData<T> {

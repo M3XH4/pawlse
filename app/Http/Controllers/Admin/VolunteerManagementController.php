@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AssignedTask;
+use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
@@ -55,6 +56,7 @@ class VolunteerManagementController extends Controller
 
         // 3. Assigned Tasks
         $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule'])
+            ->whereNull('pet_report_id')
             ->when($search !== '', function ($query) use ($search) {
                 $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%");
@@ -100,6 +102,8 @@ class VolunteerManagementController extends Controller
 
         $user->syncRoles([Role::Volunteer]);
 
+        AuditLog::log('volunteer_application_approve', "Approved volunteer application for {$application->full_name}");
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => "Application for {$application->full_name} has been approved.",
@@ -121,6 +125,8 @@ class VolunteerManagementController extends Controller
             'status' => 'rejected',
             'rejection_reason' => $validated['rejection_reason'],
         ]);
+
+        AuditLog::log('volunteer_application_reject', "Rejected volunteer application for {$application->full_name}");
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -176,6 +182,9 @@ class VolunteerManagementController extends Controller
             'status' => 'pending',
         ]);
 
+        $assignedUser = User::find($validated['user_id']);
+        AuditLog::log('volunteer_task_assign', "Assigned volunteer role '{$validated['role']}' to volunteer {$assignedUser->name}");
+
         // If event is limited spots, decrement it
         if (! empty($eventId)) {
             $event = Event::query()->find($eventId);
@@ -208,6 +217,8 @@ class VolunteerManagementController extends Controller
             'status' => $validated['status'],
             'hours_logged' => $validated['hours_logged'] ?? $task->hours_logged,
         ]);
+
+        AuditLog::log('volunteer_task_status_update', "Updated status of assigned task ID {$task->id} to {$validated['status']}");
 
         // If status was changed to cancelled and it was an event, restore spots
         if ($validated['status'] === 'cancelled' && $previousStatus !== 'cancelled' && $task->event_id !== null) {
@@ -247,6 +258,9 @@ class VolunteerManagementController extends Controller
             'issue_date' => now()->toDateString(),
             'certificate_number' => $certificateNumber,
         ]);
+
+        $issuedUser = User::find($validated['user_id']);
+        AuditLog::log('volunteer_certificate_issue', "Issued certificate '{$validated['title']}' to volunteer {$issuedUser->name}");
 
         Inertia::flash('toast', [
             'type' => 'success',

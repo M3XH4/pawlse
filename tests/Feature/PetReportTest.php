@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\AssignedTask;
 use App\Models\PetReport;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -299,4 +300,36 @@ test('volunteer can view assigned rescue reports', function () {
         ->has('reports.data', 1)
         ->where('reports.data.0.id', $report->id)
     );
+});
+
+test('volunteer can resolve an assigned rescue report and status propagates to task', function () {
+    $volunteer = User::factory()->create(['role' => Role::Volunteer->value]);
+
+    $report = PetReport::create([
+        'type' => 'rescue',
+        'animal_type' => 'Dog',
+        'location' => 'Pala-o',
+        'status' => 'assigned',
+        'assigned_volunteer_id' => $volunteer->id,
+    ]);
+
+    $task = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'pet_report_id' => $report->id,
+        'role' => 'Rescue Responder (Rescue)',
+        'status' => 'pending',
+        'hours_logged' => 0.00,
+    ]);
+
+    $response = $this->actingAs($volunteer)->post("/account/volunteer/rescue-reports/{$report->id}/status", [
+        'status' => 'resolved',
+    ]);
+
+    $response->assertRedirect();
+
+    $report->refresh();
+    expect($report->status)->toBe('resolved');
+
+    $task->refresh();
+    expect($task->status)->toBe('completed');
 });

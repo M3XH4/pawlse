@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PetReport extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [];
 
@@ -39,6 +40,14 @@ class PetReport extends Model
     public function assignedVolunteer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_volunteer_id');
+    }
+
+    /**
+     * @return BelongsTo<AiPredictionLog, $this>
+     */
+    public function aiPredictionLog(): BelongsTo
+    {
+        return $this->belongsTo(AiPredictionLog::class, 'ai_prediction_log_id');
     }
 
     /**

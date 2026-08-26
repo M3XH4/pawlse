@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\AdoptionApplication;
+use App\Models\PetReport;
+use App\Models\ShelterAnimal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -64,7 +67,7 @@ test('all super admin dashboard pages are reachable for super admins', function 
         ->assertInertia(fn (Assert $page) => $page->component($component));
 })->with([
     ['account.super-admin.dashboard', 'super-admin/dashboard'],
-    ['account.super-admin.admin-management', 'super-admin/admin-management'],
+    ['account.super-admin.user-management', 'super-admin/user-management'],
     ['account.super-admin.audit-logs', 'super-admin/audit-logs'],
     ['account.super-admin.archives', 'super-admin/archives'],
     ['account.super-admin.security-access', 'super-admin/security-access'],
@@ -78,8 +81,8 @@ test('all super admin dashboard pages are reachable for super admins', function 
 
 test('user adoption applications page receives user applications data', function () {
     $user = User::factory()->create();
-    $pet = App\Models\ShelterAnimal::factory()->create();
-    $application = App\Models\AdoptionApplication::factory()->create([
+    $pet = ShelterAnimal::factory()->create();
+    $application = AdoptionApplication::factory()->create([
         'user_id' => $user->id,
         'shelter_animal_id' => $pet->id,
     ]);
@@ -96,7 +99,7 @@ test('user adoption applications page receives user applications data', function
 
 test('user missing found reports page receives user missing reports data', function () {
     $user = User::factory()->create();
-    $report = App\Models\PetReport::factory()->create([
+    $report = PetReport::factory()->create([
         'user_id' => $user->id,
         'type' => 'missing',
     ]);

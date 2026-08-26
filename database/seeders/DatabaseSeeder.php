@@ -17,7 +17,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AccountSeeder::class,
+            SystemSettingSeeder::class,
             ShelterAnimalSeeder::class,
+            AnimalDonationNeedSeeder::class,
+            InventorySeeder::class,
+            FeedingScheduleSeeder::class,
+            EventSeeder::class,
+            PetReportSeeder::class,
+            DonationSeeder::class,
+            AdoptionApplicationSeeder::class,
+            AssignedTaskSeeder::class,
         ]);
     }
 }

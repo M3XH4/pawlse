@@ -6,6 +6,7 @@ use App\Enums\DonationStatus;
 use App\Enums\DonationType;
 use App\Enums\InKindStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Donation;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
@@ -155,6 +156,8 @@ class DonationMonitoringController extends Controller
                 'verified_by' => auth()->id(),
             ]);
 
+            AuditLog::log('donation_inkind_verify', "Verified in-kind donation ref {$donation->public_reference}");
+
             // Audit Logs
             DB::table('donation_audit_logs')->insert([
                 'donation_id' => $donation->id,
@@ -195,6 +198,8 @@ class DonationMonitoringController extends Controller
                 'category' => $validated['category'],
             ]);
 
+            AuditLog::log('inventory_item_create', "Created inventory item '{$validated['name']}' with qty {$validated['quantity']}");
+
             InventoryLog::create([
                 'inventory_item_id' => $item->id,
                 'user_id' => auth()->id(),
@@ -221,6 +226,8 @@ class DonationMonitoringController extends Controller
 
         DB::transaction(function () use ($item, $validated) {
             $item->increment('quantity', $validated['quantity_changed']);
+
+            AuditLog::log('inventory_stock_adjust', "Adjusted stock for '{$item->name}' by {$validated['quantity_changed']}");
 
             InventoryLog::create([
                 'inventory_item_id' => $item->id,

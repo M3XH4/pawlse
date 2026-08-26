@@ -6,6 +6,7 @@ use App\Enums\DonationStatus;
 use App\Enums\DonationType;
 use App\Enums\InKindStatus;
 use App\Enums\PaymentStatus;
+use App\Models\AuditLog;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSponsorship;
@@ -119,6 +120,8 @@ class DonateController extends Controller
             'status' => PaymentStatus::Pending->value,
         ]);
 
+        AuditLog::log('donation_cash_create', 'Initiated cash donation of ₱'.number_format($validated['amount'])." with ref {$ref}");
+
         return redirect()->route('donate.checkout', $ref);
     }
 
@@ -181,6 +184,8 @@ class DonateController extends Controller
             ]);
         });
 
+        AuditLog::log('donation_inkind_create', "Scheduled in-kind donation with ref {$ref}");
+
         return redirect()->back()->with('success', 'Thank you! Your drop-off has been scheduled. Reference: '.$ref);
     }
 
@@ -237,6 +242,8 @@ class DonateController extends Controller
                 'status' => 'pending',
             ]);
         });
+
+        AuditLog::log('donation_sponsor_create', "Initiated feeding sponsorship of ₱3,500 with ref {$ref}");
 
         return redirect()->route('donate.checkout', $ref);
     }
@@ -338,6 +345,8 @@ class DonateController extends Controller
                 }
             });
 
+            AuditLog::log('donation_payment_success', "Payment successful for donation ref {$ref}");
+
             return redirect()->route('donate')->with([
                 'donation_success' => true,
                 'success_ref' => $ref,
@@ -379,6 +388,8 @@ class DonateController extends Controller
                     ]);
                 }
             });
+
+            AuditLog::log('donation_payment_failed', "Payment failed for donation ref {$ref}");
 
             return redirect()->route('donate')->with('error', 'Your payment was cancelled or failed.');
         }

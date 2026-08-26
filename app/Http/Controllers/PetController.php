@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AiPredictionLog;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -15,6 +17,22 @@ class PetController extends Controller
 
     public function predict(Request $request)
     {
+        $settings = SystemSetting::getValue('ai_settings', [
+            'ai_enabled' => true,
+            'ai_reporting_enabled' => true,
+            'ai_identifying_enabled' => true,
+            'ai_confidence_threshold' => 0.70,
+            'ai_auto_validation' => false,
+        ]);
+
+        if (! ($settings['ai_enabled'] ?? true)) {
+            return response()->json(['message' => 'AI services are currently disabled by the system administrator.'], 403);
+        }
+
+        if (! ($settings['ai_identifying_enabled'] ?? true)) {
+            return response()->json(['message' => 'AI pet identification is currently disabled.'], 403);
+        }
+
         $request->validate([
             'image' => ['required', 'image', 'max:10240'],
         ]);
@@ -34,11 +52,34 @@ class PetController extends Controller
             ], 500);
         }
 
-        return response()->json($response->json());
+        $data = $response->json();
+        $confidence = $data['confidence'] ?? $data['score'] ?? ($data['predictions'][0]['confidence'] ?? null);
+
+        $log = AiPredictionLog::create([
+            'feature' => 'pet_prediction',
+            'input_data' => ['image_name' => $request->file('image')->getClientOriginalName()],
+            'output_data' => $data,
+            'confidence' => $confidence,
+            'is_accurate' => null,
+        ]);
+
+        return response()->json(array_merge($data, ['prediction_log_id' => $log->id]));
     }
 
     public function generateNames(Request $request)
     {
+        $settings = SystemSetting::getValue('ai_settings', [
+            'ai_enabled' => true,
+            'ai_reporting_enabled' => true,
+            'ai_identifying_enabled' => true,
+            'ai_confidence_threshold' => 0.70,
+            'ai_auto_validation' => false,
+        ]);
+
+        if (! ($settings['ai_enabled'] ?? true)) {
+            return response()->json(['message' => 'AI services are currently disabled by the system administrator.'], 403);
+        }
+
         $request->validate([
             'species' => ['required', 'in:cat,dog'],
             'gender' => ['required', 'in:male,female,neutral,unknown'],
@@ -49,7 +90,17 @@ class PetController extends Controller
             'gender' => $request->gender,
         ]);
 
-        return response()->json($response->json());
+        $data = $response->json();
+
+        AiPredictionLog::create([
+            'feature' => 'name_generation',
+            'input_data' => $request->only(['species', 'gender']),
+            'output_data' => $data,
+            'confidence' => null,
+            'is_accurate' => null,
+        ]);
+
+        return response()->json($data);
     }
 
     // public function predict(Request $request) {

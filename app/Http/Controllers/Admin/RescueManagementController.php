@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AssignedTask;
+use App\Models\AuditLog;
 use App\Models\PetReport;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -92,11 +93,12 @@ class RescueManagementController extends Controller
 
         $volunteer = User::query()->findOrFail($validated['volunteer_id']);
 
-        // Update report details
         $report->update([
             'assigned_volunteer_id' => $volunteer->id,
             'status' => 'assigned',
         ]);
+
+        AuditLog::log('rescue_volunteer_assign', "Assigned volunteer {$volunteer->name} to pet report ID {$report->id}");
 
         // Check if there is already an active assignment to prevent duplicate tasks
         $alreadyAssigned = AssignedTask::query()
@@ -136,6 +138,8 @@ class RescueManagementController extends Controller
             'status' => $validated['status'],
         ]);
 
+        AuditLog::log('rescue_report_status_update', "Updated pet report ID {$report->id} status to {$validated['status']}");
+
         // Propagate status change to the associated volunteer tasks
         if ($validated['status'] === 'resolved') {
             AssignedTask::query()
@@ -174,6 +178,8 @@ class RescueManagementController extends Controller
                 'status' => 'duplicate',
             ]);
 
+            AuditLog::log('rescue_report_duplicate_resolve', "Flagged pet report ID {$report->id} as duplicate of ID {$validated['duplicate_of_id']}");
+
             // If it had a volunteer, cancel their task
             AssignedTask::query()
                 ->where('pet_report_id', $report->id)
@@ -185,6 +191,8 @@ class RescueManagementController extends Controller
                 'duplicate_of_id' => null,
                 'status' => 'pending',
             ]);
+
+            AuditLog::log('rescue_report_duplicate_resolve', "Unflagged duplicate status of pet report ID {$report->id}");
         }
 
         Inertia::flash('toast', [

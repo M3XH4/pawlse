@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Models\AuditLog;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,8 @@ class VolunteerController extends Controller
             'reference_number' => $referenceNumber,
         ]);
 
+        AuditLog::log('volunteer_apply', "Submitted volunteer application (ref: {$referenceNumber})");
+
         return redirect()->back();
     }
 
@@ -111,6 +114,8 @@ class VolunteerController extends Controller
 
         $user->syncRoles([Role::Volunteer]);
 
+        AuditLog::log('role_switch_volunteer', 'Switched active role to volunteer');
+
         return redirect()->route('account.volunteer.index');
     }
 
@@ -130,6 +135,8 @@ class VolunteerController extends Controller
         ])->save();
 
         $user->syncRoles([Role::User]);
+
+        AuditLog::log('role_switch_user', 'Switched active role back to user');
 
         return redirect()->route('account.user.index');
     }

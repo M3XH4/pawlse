@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, Zap } from 'lucide-react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
 import { dashboardThemes } from '@/lib/dashboard-theme';
@@ -33,6 +33,17 @@ export function DashboardSidebar({
     const fallbackName = dashboardThemes[theme].fallbackName;
     const userName = auth.user?.name ?? fallbackName;
     const initials = initialsFromName(userName) || fallbackName.slice(0, 2).toUpperCase();
+
+    const canSwitchToVolunteer = page.props.can_switch_to_volunteer as boolean;
+    const displayedNavItems = [...navItems];
+    if (theme === 'user' && canSwitchToVolunteer) {
+        displayedNavItems.push({
+            title: 'Volunteer Dashboard',
+            href: '/volunteer/switch',
+            match: '/volunteer/switch',
+            icon: Zap,
+        });
+    }
 
     return (
         <aside
@@ -93,7 +104,7 @@ export function DashboardSidebar({
                 )}
                 aria-label={`${brandLabel} sections`}
             >
-                {navItems.map((item) => {
+                {displayedNavItems.map((item) => {
                     const Icon = item.icon;
 
                     return (

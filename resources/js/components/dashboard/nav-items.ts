@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { adminNavItems } from '@/components/admin/nav-items';
 import {
-    adminManagement,
+    userManagement,
     advancedAnalytics,
     aiConfiguration,
     archives,
@@ -86,7 +86,7 @@ export const volunteerNavItems: DashboardNavItem[] = [
 
 export const superAdminNavItems: DashboardNavItem[] = [
     navItem('System Overview', superAdminDashboard.url(), LayoutGrid),
-    navItem('Admin Management', adminManagement.url(), Users),
+    navItem('User Management', userManagement.url(), Users),
     navItem('Audit Logs', auditLogs.url(), FileSearch),
     navItem('Archives', archives.url(), Archive),
     navItem('Security & Access', securityAccess.url(), ShieldCheck),

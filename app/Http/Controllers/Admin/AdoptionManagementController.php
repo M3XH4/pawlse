@@ -6,6 +6,7 @@ use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
+use App\Models\AuditLog;
 use App\Models\ShelterAnimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -137,6 +138,8 @@ class AdoptionManagementController extends Controller
                 'status' => ShelterAnimalStatus::Pending,
             ]);
         }
+
+        AuditLog::log('adoption_application_update', "Updated status of adoption application ID {$application->id} to {$validated['status']}");
 
         Inertia::flash('toast', [
             'type' => 'success',

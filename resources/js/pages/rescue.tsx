@@ -53,6 +53,7 @@ export default function RescuePage() {
     const [editedResult, setEditedResult] = useState<AIResult | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [imageUploaded, setImageUploaded] = useState(false);
+    const [predictionLogId, setPredictionLogId] = useState<number | null>(null);
 
     // File upload state
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -152,6 +153,10 @@ export default function RescuePage() {
                 return;
             }
 
+            if (data.prediction_log_id) {
+                setPredictionLogId(data.prediction_log_id);
+            }
+
             console.log('AI Response:', data);
 
             const suggestedName =
@@ -247,6 +252,10 @@ export default function RescuePage() {
             formData.append('contact_email', contactEmail);
         }
 
+        if (predictionLogId) {
+            formData.append('ai_prediction_log_id', predictionLogId.toString());
+        }
+
         uploadedFiles.forEach((file) => {
             formData.append('images[]', file);
         });
@@ -272,6 +281,7 @@ export default function RescuePage() {
         setSubmittedMode('');
         setAiResult(null);
         setEditedResult(null);
+        setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
         setUploadedFiles([]);
@@ -293,6 +303,7 @@ export default function RescuePage() {
         setWizardStep(1);
         setAiResult(null);
         setEditedResult(null);
+        setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
         setUploadedFiles([]);

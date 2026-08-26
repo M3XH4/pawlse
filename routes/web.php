@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
+use App\Http\Controllers\Admin\AiValidationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
@@ -19,6 +20,15 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\Settings\AccountSettingsController;
+use App\Http\Controllers\SuperAdmin\AiConfigController;
+use App\Http\Controllers\SuperAdmin\AnalyticsController;
+use App\Http\Controllers\SuperAdmin\ArchiveController;
+use App\Http\Controllers\SuperAdmin\AuditLogController;
+use App\Http\Controllers\SuperAdmin\BackupController;
+use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\SecurityController;
+use App\Http\Controllers\SuperAdmin\SystemSettingsController;
+use App\Http\Controllers\SuperAdmin\UserManagementController;
 use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
@@ -97,13 +107,15 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
 });
 
 Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volunteerDashboardMiddleware)->group(function () {
-    Route::inertia('/', 'volunteer/profile-information')->name('index');
-    Route::inertia('profile', 'volunteer/profile-information')->name('profile');
+    Route::get('/', [VolunteerDashboardController::class, 'profile'])->name('index');
+    Route::get('profile', [VolunteerDashboardController::class, 'profile'])->name('profile');
+    Route::post('profile', [VolunteerDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('status', [VolunteerDashboardController::class, 'status'])->name('status');
     Route::get('assigned-tasks', [VolunteerDashboardController::class, 'assignedTasks'])->name('assigned-tasks');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
     Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');
+    Route::post('rescue-reports/{report}/status', [PetReportController::class, 'updateStatus'])->name('rescue-reports.update-status');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
@@ -114,7 +126,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('rescue-management/{report}/assign', [RescueManagementController::class, 'assignVolunteer'])->name('rescue-management.assign');
     Route::post('rescue-management/{report}/status', [RescueManagementController::class, 'updateStatus'])->name('rescue-management.update-status');
     Route::post('rescue-management/{report}/duplicate', [RescueManagementController::class, 'resolveDuplicate'])->name('rescue-management.resolve-duplicate');
-    Route::inertia('ai-validation', 'admin/ai-validation')->name('ai-validation');
+    Route::get('ai-validation', [AiValidationController::class, 'index'])->name('ai-validation');
+    Route::post('ai-validation/{report}/approve', [AiValidationController::class, 'approve'])->name('ai-validation.approve');
+    Route::post('ai-validation/{report}/reject', [AiValidationController::class, 'reject'])->name('ai-validation.reject');
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
     Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');
@@ -150,15 +164,38 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
 });
 
 Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($superAdminDashboardMiddleware)->group(function () {
-    Route::inertia('dashboard', 'super-admin/dashboard')->name('dashboard');
-    Route::inertia('admin-management', 'super-admin/admin-management')->name('admin-management');
-    Route::inertia('audit-logs', 'super-admin/audit-logs')->name('audit-logs');
-    Route::inertia('archives', 'super-admin/archives')->name('archives');
-    Route::inertia('security-access', 'super-admin/security-access')->name('security-access');
+    Route::get('dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('user-management', [UserManagementController::class, 'index'])->name('user-management');
+    Route::post('user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+    Route::put('user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');
+    Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+    Route::post('user-management/{id}/restore', [UserManagementController::class, 'restore'])->name('user-management.restore');
+
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
+
+    Route::get('archives', [ArchiveController::class, 'index'])->name('archives');
+    Route::post('archives/{type}/{id}/restore', [ArchiveController::class, 'restore'])->name('archives.restore');
+    Route::delete('archives/{type}/{id}/force', [ArchiveController::class, 'forceDelete'])->name('archives.force-delete');
+
+    Route::get('security-access', [SecurityController::class, 'index'])->name('security-access');
+
+    Route::get('backup-restore', [BackupController::class, 'index'])->name('backup-restore');
+    Route::post('backup-restore/run', [BackupController::class, 'runBackup'])->name('backup-restore.run');
+    Route::post('backup-restore/{backup}/restore', [BackupController::class, 'restoreBackup'])->name('backup-restore.restore');
+    Route::delete('backup-restore/{backup}', [BackupController::class, 'destroyBackup'])->name('backup-restore.destroy');
+    Route::post('backup-restore/settings', [BackupController::class, 'updateSettings'])->name('backup-restore.settings');
+
+    Route::get('ai-configuration', [AiConfigController::class, 'index'])->name('ai-configuration');
+    Route::post('ai-configuration/settings', [AiConfigController::class, 'updateSettings'])->name('ai-configuration.settings');
+    Route::post('ai-configuration/logs/{log}/accuracy', [AiConfigController::class, 'toggleAccuracy'])->name('ai-configuration.logs.accuracy');
+
+    Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings');
+    Route::post('system-settings', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+
     Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
-    Route::inertia('backup-restore', 'super-admin/backup-restore')->name('backup-restore');
-    Route::inertia('ai-configuration', 'super-admin/ai-configuration')->name('ai-configuration');
-    Route::inertia('system-settings', 'super-admin/system-settings')->name('system-settings');
+    Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
     Route::inertia('notifications', 'super-admin/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });

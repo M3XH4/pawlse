@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Models\VolunteerApplication;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -59,6 +60,23 @@ class AccountSeeder extends Seeder
             ])->save();
 
             $user->syncRoles([$account['role']]);
+
+            if ($account['role'] === Role::Volunteer) {
+                VolunteerApplication::query()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'full_name' => $user->name,
+                        'mobile' => '09123456789',
+                        'email' => $user->email,
+                        'address' => 'Iligan City',
+                        'role' => 'Feeding Route Volunteer',
+                        'why' => 'I want to help stray animals.',
+                        'experience' => 'Experienced feeder.',
+                        'status' => 'approved',
+                        'reference_number' => 'VOL-'.time().'-'.random_int(100, 999),
+                    ]
+                );
+            }
         }
     }
 }

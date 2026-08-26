@@ -4,10 +4,12 @@ use App\Enums\Role;
 use App\Models\AssignedTask;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
+use App\Models\PetReport;
 use App\Models\User;
 use App\Models\VolunteerApplication;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -252,4 +254,94 @@ test('admin can manually issue certificate to a volunteer', function () {
         'user_id' => $volunteer->id,
         'title' => 'Outstanding Caregiver Award',
     ]);
+});
+
+test('volunteer can view their profile details', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $application = VolunteerApplication::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'approved',
+        'full_name' => 'Jane Volunteer',
+        'mobile' => '09999999999',
+        'address' => 'Iligan City',
+        'role' => 'Recorder',
+        'why' => 'I want to document strays.',
+    ]);
+
+    $response = $this->actingAs($volunteer)
+        ->get(route('account.volunteer.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('volunteer/profile-information')
+            ->has('profile')
+            ->where('profile.full_name', 'Jane Volunteer')
+        );
+});
+
+test('volunteer can update their profile details', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $application = VolunteerApplication::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'approved',
+        'full_name' => 'Jane Volunteer',
+    ]);
+
+    $response = $this->actingAs($volunteer)
+        ->post(route('account.volunteer.profile.update'), [
+            'fullName' => 'Jane Updated',
+            'mobile' => '09111111111',
+            'address' => 'New Address',
+            'experience' => 'Updated experience',
+        ]);
+
+    $response->assertRedirect();
+
+    $application->refresh();
+    expect($application->full_name)->toBe('Jane Updated');
+    expect($application->mobile)->toBe('09111111111');
+    expect($application->address)->toBe('New Address');
+    expect($application->experience)->toBe('Updated experience');
+
+    $volunteer->refresh();
+    expect($volunteer->name)->toBe('Jane Updated');
+});
+
+test('volunteer can update status of their assigned rescue report', function () {
+    $volunteer = User::factory()->volunteer()->create();
+    $report = PetReport::factory()->create([
+        'assigned_volunteer_id' => $volunteer->id,
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($volunteer)
+        ->post(route('account.volunteer.rescue-reports.update-status', $report), [
+            'status' => 'resolved',
+        ]);
+
+    $response->assertRedirect();
+
+    $report->refresh();
+    expect($report->status)->toBe('resolved');
+});
+
+test('volunteer cannot update status of another volunteer assigned rescue report', function () {
+    $volunteer1 = User::factory()->volunteer()->create();
+    $volunteer2 = User::factory()->volunteer()->create();
+    $report = PetReport::factory()->create([
+        'assigned_volunteer_id' => $volunteer2->id,
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($volunteer1)
+        ->post(route('account.volunteer.rescue-reports.update-status', $report), [
+            'status' => 'resolved',
+        ]);
+
+    $response->assertStatus(403);
+
+    $report->refresh();
+    expect($report->status)->toBe('pending');
 });

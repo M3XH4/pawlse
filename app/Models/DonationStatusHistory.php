@@ -10,4 +10,8 @@ class DonationStatusHistory extends Model
 {
     /** @use HasFactory<DonationStatusHistoryFactory> */
     use HasFactory;
+
+    protected $guarded = [];
+
+    const UPDATED_AT = null;
 }

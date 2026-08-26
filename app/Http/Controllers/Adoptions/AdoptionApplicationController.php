@@ -7,6 +7,7 @@ use App\Enums\AdoptionDocumentKind;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AdoptionApplicationFile;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +164,8 @@ class AdoptionApplicationController extends Controller
                 }
             }
         });
+
+        AuditLog::log('adoption_apply', "Submitted adoption application for pet ID {$validated['pet_id']}");
 
         Inertia::flash('toast', [
             'type' => 'success',

@@ -7,6 +7,7 @@ use App\Enums\AnimalGender;
 use App\Enums\AnimalType;
 use App\Enums\ShelterAnimalStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\ShelterAnimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,8 @@ class AdoptablePetController extends Controller
             'photo_url' => $photoUrl,
             'status' => ShelterAnimalStatus::Available,
         ]);
+
+        AuditLog::log('pet_create', "Created adoptable pet '{$validated['name']}'");
 
         Inertia::flash('toast', [
             'type' => 'success',
