@@ -1,10 +1,11 @@
-import { AlertCircle, MapPin, Camera, Clock, CheckCircle2, Siren, Phone, Navigation, Hospital } from 'lucide-react';
+import { AlertCircle, MapPin, Camera, Clock, CheckCircle2, Siren, Phone, Navigation, Hospital, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React, { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { reverseGeocode } from '@/lib/geocoding';
 
 
 const EMERGENCY_CONTACTS = [
@@ -24,6 +25,7 @@ const NEARBY_VETS = [
 export default function SOS() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -65,16 +67,30 @@ export default function SOS() {
 
   const handleDetectLocation = () => {
     if ('geolocation' in navigator) {
+      setDetectingLocation(true);
       toast.info('Detecting your location...');
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          setFormData({ ...formData, location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)} (Current Location)` });
-          toast.success('Location pinned!');
+          try {
+            const address = await reverseGeocode(latitude, longitude);
+            setFormData((prev) => ({ ...prev, location: address }));
+            toast.success('Location address pinned!');
+          } catch (error) {
+            console.error('Geocoding error:', error);
+            setFormData((prev) => ({
+              ...prev,
+              location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            }));
+            toast.success('Location pinned!');
+          } finally {
+            setDetectingLocation(false);
+          }
         },
         (error) => {
           console.error('Geolocation error:', error);
           toast.error('Unable to detect location. Please enter manually.');
+          setDetectingLocation(false);
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -199,15 +215,25 @@ export default function SOS() {
                         />
                         <button
                           type="button"
+                          disabled={detectingLocation}
                           onClick={handleDetectLocation}
-                          className="px-6 py-4 sm:py-0 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                          className="px-6 py-4 sm:py-0 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                         >
-                          <MapPin size={18} />
-                          <span className="hidden sm:inline">Pin Location</span>
-                          <span className="sm:hidden">Pin My Location</span>
+                          {detectingLocation ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              <span>Detecting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <MapPin size={18} />
+                              <span className="hidden sm:inline">Pin Location</span>
+                              <span className="sm:hidden">Pin My Location</span>
+                            </>
+                          )}
                         </button>
                       </div>
-                      <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to use your current coordinates</p>
+                      <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to detect your address</p>
                     </div>
                   </div>
 

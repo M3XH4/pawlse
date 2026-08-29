@@ -1,10 +1,11 @@
-import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText } from 'lucide-react';
+import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { reverseGeocode } from '@/lib/geocoding';
 
 type BreedPrediction = {
     name: string;
@@ -68,6 +69,9 @@ export default function RescuePage() {
     const [incidentDesc, setIncidentDesc] = useState('');
     const [location, setLocation] = useState('');
 
+    // Location detection state
+    const [detectingLocation, setDetectingLocation] = useState(false);
+
     // Guest contact fields
     const [contactName, setContactName] = useState('');
     const [contactPhone, setContactPhone] = useState('');
@@ -101,6 +105,7 @@ export default function RescuePage() {
 
         setUploadedFiles(files);
 
+        // Generate previews
         const newPreviews: string[] = [];
         for (const file of files) {
             if (file.type.startsWith('image/')) {
@@ -115,7 +120,6 @@ export default function RescuePage() {
             }
         }
         setFilePreviews(newPreviews);
-
         setImageUploaded(true);
         setAnalyzing(true);
         setAiResult(null);
@@ -206,16 +210,27 @@ export default function RescuePage() {
 
     const handleDetectLocation = () => {
         if ('geolocation' in navigator) {
+            setDetectingLocation(true);
             toast.info('Detecting your location...');
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const { latitude, longitude } = position.coords;
-                    setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)} (Current Location)`);
-                    toast.success('Location pinned!');
+                    try {
+                        const address = await reverseGeocode(latitude, longitude);
+                        setLocation(address);
+                        toast.success('Location address pinned!');
+                    } catch (error) {
+                        console.error('Geocoding error:', error);
+                        setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                        toast.success('Location pinned!');
+                    } finally {
+                        setDetectingLocation(false);
+                    }
                 },
                 (error) => {
                     console.error('Geolocation error:', error);
                     toast.error('Unable to detect location. Please enter manually.');
+                    setDetectingLocation(false);
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
@@ -812,15 +827,25 @@ export default function RescuePage() {
                                                         />
                                                         <button
                                                             type="button"
+                                                            disabled={detectingLocation}
                                                             onClick={handleDetectLocation}
-                                                            className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                                                            className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                                                         >
-                                                            <MapPin size={18} />
-                                                            <span className="hidden sm:inline">Pin Location</span>
-                                                            <span className="sm:hidden">Pin My Location</span>
+                                                            {detectingLocation ? (
+                                                                <>
+                                                                    <Loader2 size={18} className="animate-spin" />
+                                                                    <span>Detecting...</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <MapPin size={18} />
+                                                                    <span className="hidden sm:inline">Pin Location</span>
+                                                                    <span className="sm:hidden">Pin My Location</span>
+                                                                </>
+                                                            )}
                                                         </button>
                                                     </div>
-                                                    <p className="text-xs text-gray-400 font-bold mt-2">Click "Pin Location" to use your current coordinates</p>
+                                                    <p className="text-xs text-gray-400 font-bold mt-2">Click "Pin Location" to detect your address</p>
                                                 </div>
 
                                                 {/* Guest Contact Details */}
@@ -1300,15 +1325,25 @@ export default function RescuePage() {
                                                 />
                                                 <button
                                                     type="button"
+                                                    disabled={detectingLocation}
                                                     onClick={handleDetectLocation}
-                                                    className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                                                    className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                                                 >
-                                                    <MapPin size={18} />
-                                                    <span className="hidden sm:inline">Pin Location</span>
-                                                    <span className="sm:hidden">Pin My Location</span>
+                                                    {detectingLocation ? (
+                                                        <>
+                                                            <Loader2 size={18} className="animate-spin" />
+                                                            <span>Detecting...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <MapPin size={18} />
+                                                            <span className="hidden sm:inline">Pin Location</span>
+                                                            <span className="sm:hidden">Pin My Location</span>
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
-                                            <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to use your current coordinates</p>
+                                            <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to detect your address</p>
                                         </div>
 
                                         {/* Guest Contact Details */}
