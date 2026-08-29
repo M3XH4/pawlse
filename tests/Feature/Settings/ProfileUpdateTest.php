@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -12,14 +14,17 @@ test('profile page is displayed', function () {
     $response->assertOk();
 });
 
-test('profile information can be updated', function () {
-    $user = User::factory()->create();
+test('unverified user profile information and email can be updated', function () {
+    $user = User::factory()->unverified()->create();
 
     $response = $this
         ->actingAs($user)
+        ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'phone' => '+639123456789',
+            'location' => 'Pasig City',
         ]);
 
     $response
@@ -30,24 +35,72 @@ test('profile information can be updated', function () {
 
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
+    expect($user->phone)->toBe('+639123456789');
+    expect($user->location)->toBe('Pasig City');
     expect($user->email_verified_at)->toBeNull();
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
-    $user = User::factory()->create();
+test('verified user email cannot be changed and remains verified', function () {
+    $user = User::factory()->create([
+        'email' => 'verified@example.com',
+    ]);
 
     $response = $this
         ->actingAs($user)
+        ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
-            'email' => $user->email,
+            'name' => 'Updated Name',
+            'email' => 'newemail@example.com',
+            'phone' => '+639189999999',
+            'location' => 'Quezon City',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('profile.edit'));
 
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
+    $user->refresh();
+
+    expect($user->name)->toBe('Updated Name');
+    expect($user->email)->toBe('verified@example.com');
+    expect($user->phone)->toBe('+639189999999');
+    expect($user->location)->toBe('Quezon City');
+    expect($user->email_verified_at)->not->toBeNull();
+});
+
+test('user can upload and remove avatar', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $file = UploadedFile::fake()->image('profile.jpg', 300, 300);
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'avatar' => $file,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $user->refresh();
+
+    expect($user->avatar_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($user->avatar_path);
+
+    // Now test removing avatar
+    $removeResponse = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'remove_avatar' => true,
+        ]);
+
+    $removeResponse->assertSessionHasNoErrors();
+    $user->refresh();
+
+    expect($user->avatar_path)->toBeNull();
 });
 
 test('user can delete their account', function () {

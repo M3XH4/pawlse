@@ -15,10 +15,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'location', 'avatar_path'])]
 #[Hidden(['password', 'email_verification_otp_hash', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -37,6 +38,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
      */
     public function getAvatarAttribute(): string
     {
+        if ($this->avatar_path && Storage::disk('public')->exists($this->avatar_path)) {
+            return Storage::disk('public')->url($this->avatar_path);
+        }
+
         $name = urlencode($this->name ?? 'User');
 
         return "https://ui-avatars.com/api/?name={$name}&background=FF750F&color=ffffff&bold=true";

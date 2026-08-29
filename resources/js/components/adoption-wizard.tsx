@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface AdoptionWizardProps {
   pet: any;
@@ -292,9 +293,9 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                       required
                       type="tel"
                       value={data.phone}
-                      onChange={(e) => setData('phone', e.target.value)}
+                      onChange={(e) => setData('phone', formatPhoneNumber(e.target.value))}
                       className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      placeholder="+63 912 345 6789"
+                      placeholder="+63 9XX XXX XXXX"
                     />
                   </div>
 
@@ -469,9 +470,9 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                         required
                         type="tel"
                         value={data.emergencyPhone}
-                        onChange={(e) => setData('emergencyPhone', e.target.value)}
+                        onChange={(e) => setData('emergencyPhone', formatPhoneNumber(e.target.value))}
                         className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                        placeholder="+63 912 345 6789"
+                        placeholder="+63 9XX XXX XXXX"
                       />
                     </div>
 

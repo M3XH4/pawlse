@@ -9,6 +9,7 @@ import { Header } from '@/components/header';
 import { SubmissionReceipt } from '@/components/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { TransparencyAuditModal, type AuditRecord } from '@/components/transparency-audit-modal';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface DonateProps {
     wishlist?: Array<{
@@ -295,9 +296,9 @@ export default function Donate({
                                                             <input
                                                                 type="tel"
                                                                 value={cashForm.data.donor_mobile}
-                                                                onChange={(e) => cashForm.setData('donor_mobile', e.target.value)}
+                                                                onChange={(e) => cashForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="Optional (09XX XXX XXXX)"
+                                                                placeholder="+63 9XX XXX XXXX"
                                                             />
                                                         </div>
                                                         <div>
@@ -463,9 +464,9 @@ export default function Donate({
                                                             <input
                                                                 type="tel"
                                                                 value={inKindForm.data.donor_mobile}
-                                                                onChange={(e) => inKindForm.setData('donor_mobile', e.target.value)}
+                                                                onChange={(e) => inKindForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="Optional"
+                                                                placeholder="+63 9XX XXX XXXX"
                                                             />
                                                         </div>
                                                     </div>
@@ -893,9 +894,9 @@ export default function Donate({
                                             type="tel"
                                             required
                                             value={sponsorForm.data.mobile}
-                                            onChange={(e) => sponsorForm.setData('mobile', e.target.value)}
+                                            onChange={(e) => sponsorForm.setData('mobile', formatPhoneNumber(e.target.value))}
                                             className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                            placeholder="09XX XXX XXXX"
+                                            placeholder="+63 9XX XXX XXXX"
                                         />
                                     </div>
                                     <div>

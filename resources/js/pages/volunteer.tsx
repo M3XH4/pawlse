@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { SubmissionReceipt } from '@/components/submission-receipt';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 
 type Event = {
     type: string,
@@ -52,11 +53,13 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
     const [submitted, setSubmitted] = useState(false);
     const [ignoreApplication, setIgnoreApplication] = useState(false);
 
+    const currentUser = auth?.user;
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        fullName: '',
-        mobile: '',
-        email: '',
-        address: '',
+        fullName: currentUser?.name || '',
+        mobile: currentUser?.phone ? formatPhoneNumber(currentUser.phone) : '',
+        email: currentUser?.email || '',
+        address: currentUser?.location || '',
         role: '',
         experience: '',
         why: ''
@@ -67,6 +70,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
     const validateStep1 = () => {
         return data.fullName.trim() !== '' &&
             data.mobile.trim() !== '' &&
+            isValidPhoneNumber(data.mobile) &&
             data.email.trim() !== '' &&
             data.address.trim() !== '' &&
             data.role !== '';
@@ -137,6 +141,10 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+        if (name === 'mobile') {
+            setData('mobile', formatPhoneNumber(value));
+            return;
+        }
         setData(name as any, value);
     };
 
@@ -369,7 +377,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                             </div>
                                                             <div>
                                                                 <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Mobile Number *</label>
-                                                                <input required type="tel" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="09XX XXX XXXX" name="mobile" value={data.mobile} onChange={handleInputChange} />
+                                                                <input required type="tel" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="+63 9XX XXX XXXX" name="mobile" value={data.mobile} onChange={handleInputChange} />
                                                             </div>
                                                         </div>
 

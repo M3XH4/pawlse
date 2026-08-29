@@ -5,6 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { PhoneInput } from '@/components/phone-input';
 import { reverseGeocode } from '@/lib/geocoding';
 
 type BreedPrediction = {
@@ -67,14 +68,14 @@ export default function RescuePage() {
     const [gender, setGender] = useState('Male');
     const [suggestedName, setSuggestedName] = useState('');
     const [incidentDesc, setIncidentDesc] = useState('');
-    const [location, setLocation] = useState('');
+    const [location, setLocation] = useState(user?.location || '');
 
     // Location detection state
     const [detectingLocation, setDetectingLocation] = useState(false);
 
     // Contact fields
     const [contactName, setContactName] = useState(user?.name || '');
-    const [contactPhone, setContactPhone] = useState('');
+    const [contactPhone, setContactPhone] = useState(user?.phone || '');
     const [contactEmail, setContactEmail] = useState(user?.email || '');
     const [submitting, setSubmitting] = useState(false);
 
@@ -82,6 +83,8 @@ export default function RescuePage() {
         if (user) {
             if (!contactName && user.name) setContactName(user.name);
             if (!contactEmail && user.email) setContactEmail(user.email);
+            if (!contactPhone && user.phone) setContactPhone(user.phone);
+            if (!location && user.location) setLocation(user.location);
         }
     }, [user]);
 
@@ -903,12 +906,11 @@ export default function RescuePage() {
                                                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
                                                                     Phone Number (For Responders)
                                                                 </label>
-                                                                <input
-                                                                    type="text"
+                                                                <PhoneInput
                                                                     value={contactPhone}
-                                                                    onChange={(e) => setContactPhone(e.target.value)}
+                                                                    onChange={(val) => setContactPhone(val)}
                                                                     className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                                    placeholder="e.g. 0912 345 6789"
+                                                                    placeholder="+63 9XX XXX XXXX"
                                                                 />
                                                             </div>
                                                         </div>
@@ -940,13 +942,12 @@ export default function RescuePage() {
                                                             </div>
                                                             <div>
                                                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
-                                                                <input
-                                                                    type="text"
+                                                                <PhoneInput
                                                                     required
                                                                     value={contactPhone}
-                                                                    onChange={(e) => setContactPhone(e.target.value)}
+                                                                    onChange={(val) => setContactPhone(val)}
                                                                     className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
-                                                                    placeholder="Contact Number"
+                                                                    placeholder="+63 9XX XXX XXXX"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1470,12 +1471,11 @@ export default function RescuePage() {
                                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
                                                             Phone Number (For Responders)
                                                         </label>
-                                                        <input
-                                                            type="text"
+                                                        <PhoneInput
                                                             value={contactPhone}
-                                                            onChange={(e) => setContactPhone(e.target.value)}
+                                                            onChange={(val) => setContactPhone(val)}
                                                             className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                            placeholder="e.g. 0912 345 6789"
+                                                            placeholder="+63 9XX XXX XXXX"
                                                         />
                                                     </div>
                                                 </div>
@@ -1507,13 +1507,12 @@ export default function RescuePage() {
                                                     </div>
                                                     <div>
                                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
-                                                        <input
-                                                            type="text"
+                                                        <PhoneInput
                                                             required
                                                             value={contactPhone}
-                                                            onChange={(e) => setContactPhone(e.target.value)}
+                                                            onChange={(val) => setContactPhone(val)}
                                                             className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
-                                                            placeholder="Contact Number"
+                                                            placeholder="+63 9XX XXX XXXX"
                                                         />
                                                     </div>
                                                 </div>

@@ -1,6 +1,7 @@
 import { User, Mail, Phone, MapPin, Briefcase, FileText, Edit, Save, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -25,7 +26,7 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
 
     const { data, setData, post, processing, errors } = useForm({
         fullName: profile?.full_name || '',
-        mobile: profile?.mobile || '',
+        mobile: profile?.mobile ? formatPhoneNumber(profile.mobile) : '',
         address: profile?.address || '',
         experience: profile?.experience || '',
     });
@@ -184,7 +185,8 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
                                         <input
                                             type="text"
                                             value={data.mobile}
-                                            onChange={(e) => setData('mobile', e.target.value)}
+                                            onChange={(e) => setData('mobile', formatPhoneNumber(e.target.value))}
+                                            placeholder="+63 9XX XXX XXXX"
                                             className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] dark:border-[#334155] rounded-xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-[#0B2340] dark:text-[#F8FAFC] dark:bg-[#1E293B]"
                                             required
                                         />

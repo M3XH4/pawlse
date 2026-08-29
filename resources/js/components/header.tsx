@@ -376,15 +376,6 @@ export function Header() {
 
                       <div className="p-2">
                         <Link
-                          href="/settings/profile"
-                          onClick={() => setProfileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group"
-                        >
-                          <UserCircle size={18} className="text-gray-400 group-hover:text-paw-orange transition-colors" />
-                          <span className="font-bold text-sm">Profile Settings</span>
-                        </Link>
-
-                        <Link
                           href={getAccountSettingsPath()}
                           onClick={() => setProfileMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group"

@@ -18,6 +18,10 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'phone' => ['nullable', 'string', 'max:30'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ];
     }
 
@@ -39,6 +43,7 @@ trait ProfileValidationRules
     protected function emailRules(?int $userId = null): array
     {
         return [
+            'sometimes',
             'required',
             'string',
             'email',
