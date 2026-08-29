@@ -339,7 +339,7 @@ export default function AiValidation({
       </AdminCard>
 
       {/* Reports Queue Table */}
-      <AdminCard title="AI validation Queue" className="p-0 overflow-hidden">
+      <AdminCard className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
