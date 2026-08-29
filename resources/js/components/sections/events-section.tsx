@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '../../context/BookmarkContext';
+import { getEventDateBadge, formatEventTime } from '@/lib/event-utils';
 
 
 const defaultEvents = [
@@ -95,7 +96,7 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
     const [bookingEvent, setBookingEvent] = useState<any | null>(null);
     const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
 
-    const handleBookmark = (e: React.MouseEvent, event: typeof events[0]) => {
+    const handleBookmark = (e: React.MouseEvent, event: any) => {
         e.stopPropagation();
 
         if (!isAuthenticated) {
@@ -287,9 +288,7 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
                         {displayEvents.map((event, i) => {
-                            const dateParts = event.date ? event.date.split(' ') : ['Upcoming', ''];
-                            const monthLabel = (dateParts[0] || 'Upcoming').slice(0, 3).toUpperCase();
-                            const dayLabel = dateParts[1] ? dateParts[1].replace(',', '') : '';
+                            const dateBadge = getEventDateBadge(event.date);
 
                             return (
                                 <motion.div
@@ -302,8 +301,8 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
                                     <div className="relative h-48 overflow-hidden bg-gray-100 shrink-0">
                                         <ImageWithFallback src={event.img} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                         <div className={`absolute top-4 left-4 ${event.color} text-white rounded-2xl shadow-lg flex flex-col items-center justify-center min-w-[56px] py-1.5 px-3`}>
-                                            <span className="text-[10px] font-black tracking-widest leading-tight">{monthLabel}</span>
-                                            <span className="text-xl font-black leading-none">{dayLabel}</span>
+                                            <span className="text-[10px] font-black tracking-widest leading-tight">{dateBadge.month}</span>
+                                            <span className="text-xl font-black leading-none">{dateBadge.day}</span>
                                         </div>
 
                                         <button
