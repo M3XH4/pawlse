@@ -281,9 +281,16 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
 
     switch (platform) {
         case 'facebook': {
+            try {
+                await navigator.clipboard.writeText(fullPost);
+                toast.success('Post text copied to clipboard!', {
+                    description: 'Opening Facebook. Simply paste (Ctrl+V) into your post to include full details!'
+                });
+            } catch {
+                toast.success('Opening Facebook share...');
+            }
             const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedFullPost}`;
             window.open(fbUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
-            toast.success('Opening Facebook share...');
             break;
         }
 

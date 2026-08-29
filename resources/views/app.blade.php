@@ -41,10 +41,13 @@
             $ogImage = isset($sharedEvent) && $sharedEvent && $sharedEvent->img ? (str_starts_with($sharedEvent->img, 'http') ? $sharedEvent->img : url($sharedEvent->img)) : url('/assets/paw-icon.png');
             $ogUrl = isset($sharedEvent) && $sharedEvent ? url('/events?event=' . $sharedEvent->id) : url()->current();
         @endphp
+        <meta property="og:site_name" content="{{ config('app.name', 'Pawlse') }}">
         <meta property="og:type" content="{{ isset($sharedEvent) && $sharedEvent ? 'article' : 'website' }}">
         <meta property="og:title" content="{{ $ogTitle }}">
         <meta property="og:description" content="{{ $ogDesc }}">
         <meta property="og:image" content="{{ $ogImage }}">
+        <meta property="og:image:secure_url" content="{{ $ogImage }}">
+        <meta property="og:image:alt" content="{{ $ogTitle }}">
         <meta property="og:url" content="{{ $ogUrl }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $ogTitle }}">

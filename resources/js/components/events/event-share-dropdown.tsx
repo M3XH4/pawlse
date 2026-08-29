@@ -143,7 +143,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '', 
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">Facebook</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Share post with preview card</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Copies post & opens share dialog</span>
                         </div>
                     </DropdownMenuItem>
 
