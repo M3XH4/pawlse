@@ -35,6 +35,22 @@
 
         @fonts
 
+        @php
+            $ogTitle = isset($sharedEvent) && $sharedEvent ? $sharedEvent->title . ' - Pawlse Events' : config('app.name', 'Pawlse') . ' - Animal Rescue & Care Platform';
+            $ogDesc = isset($sharedEvent) && $sharedEvent ? ($sharedEvent->desc ?: 'Join us for ' . $sharedEvent->title . ' on ' . $sharedEvent->date . ' at ' . $sharedEvent->location) : 'Connecting strays to loving homes, animal rescues, and community volunteers in Iligan City.';
+            $ogImage = isset($sharedEvent) && $sharedEvent && $sharedEvent->img ? (str_starts_with($sharedEvent->img, 'http') ? $sharedEvent->img : url($sharedEvent->img)) : url('/assets/paw-icon.png');
+            $ogUrl = isset($sharedEvent) && $sharedEvent ? url('/events?event=' . $sharedEvent->id) : url()->current();
+        @endphp
+        <meta property="og:type" content="{{ isset($sharedEvent) && $sharedEvent ? 'article' : 'website' }}">
+        <meta property="og:title" content="{{ $ogTitle }}">
+        <meta property="og:description" content="{{ $ogDesc }}">
+        <meta property="og:image" content="{{ $ogImage }}">
+        <meta property="og:url" content="{{ $ogUrl }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $ogTitle }}">
+        <meta name="twitter:description" content="{{ $ogDesc }}">
+        <meta name="twitter:image" content="{{ $ogImage }}">
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>

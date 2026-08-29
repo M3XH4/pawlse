@@ -225,8 +225,48 @@ export interface ShareOptions {
         location: string;
         category?: string;
         desc?: string;
+        img?: string;
     };
     customUrl?: string;
+}
+
+/**
+ * Builds a structured, complete post string with Title, Category, Date, Time, Location, Description & Link.
+ */
+export function buildEventPostContent(event: ShareOptions['event'], url: string): {
+    fullPost: string;
+    shortSummary: string;
+    headline: string;
+} {
+    const formattedDate = formatEventDate(event.date, 'weekday');
+    const timeStr = event.time ? formatEventTime(event.time) : 'Time TBA';
+    const categoryTag = event.category ? `#${event.category.replace(/\s+/g, '')}` : '#CommunityEvent';
+
+    const lines = [
+        `📢 ${event.title.toUpperCase()}`,
+        `✨ Category: ${event.category || 'Community Initiative'}`,
+        `🗓 Date: ${formattedDate}`,
+        `⏰ Time: ${timeStr}`,
+        `📍 Location: ${event.location}`,
+    ];
+
+    if (event.desc && event.desc.trim()) {
+        lines.push('', `📝 About this Event:\n${event.desc.trim()}`);
+    }
+
+    lines.push(
+        '',
+        '🐾 Join us in supporting local animal rescue efforts in Iligan!',
+        `🔗 Event link: ${url}`,
+        '',
+        `#Pawlse #AnimalRescue #IliganCity ${categoryTag} #AdoptDontShop`
+    );
+
+    const fullPost = lines.join('\n');
+    const shortSummary = `🐾 ${event.title}\n🗓 ${formattedDate} | ⏰ ${timeStr}\n📍 ${event.location}\n\n${event.desc ? event.desc.slice(0, 120) + '... ' : ''}\n🔗 ${url}`;
+    const headline = `🐾 ${event.title} - ${formattedDate}`;
+
+    return { fullPost, shortSummary, headline };
 }
 
 /**
@@ -234,46 +274,46 @@ export interface ShareOptions {
  */
 export async function shareEvent({ platform, event, customUrl }: ShareOptions): Promise<void> {
     const baseUrl = customUrl || (typeof window !== 'undefined' ? `${window.location.origin}/events?event=${event.id}` : '');
-    const formattedDate = formatEventDate(event.date, 'weekday');
-    const shareText = `🐾 Join me at "${event.title}" on ${formattedDate} (${event.time || 'Time TBA'}) at ${event.location}! Let's make a difference for our community animals.`;
+    const { fullPost, shortSummary } = buildEventPostContent(event, baseUrl);
 
     const encodedUrl = encodeURIComponent(baseUrl);
-    const encodedText = encodeURIComponent(shareText);
+    const encodedFullPost = encodeURIComponent(fullPost);
 
     switch (platform) {
         case 'facebook': {
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
-            window.open(fbUrl, '_blank', 'width=600,height=450,noopener,noreferrer');
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedFullPost}`;
+            window.open(fbUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
             toast.success('Opening Facebook share...');
             break;
         }
 
         case 'twitter': {
-            const twUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}&hashtags=Pawlse,AnimalRescue,IliganCity`;
-            window.open(twUrl, '_blank', 'width=600,height=450,noopener,noreferrer');
+            const tweetText = encodeURIComponent(`🐾 ${event.title}\n🗓 ${formatEventDate(event.date, 'short')} | ⏰ ${event.time || 'TBA'}\n📍 ${event.location}\n\nJoin us!`);
+            const twUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodedUrl}&hashtags=Pawlse,AnimalRescue,IliganCity`;
+            window.open(twUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
             toast.success('Opening X (Twitter) share...');
             break;
         }
 
         case 'whatsapp': {
-            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareText}\n\n🔗 ${baseUrl}`)}`;
-            window.open(waUrl, '_blank', 'width=600,height=450,noopener,noreferrer');
+            const waUrl = `https://api.whatsapp.com/send?text=${encodedFullPost}`;
+            window.open(waUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
             toast.success('Opening WhatsApp...');
             break;
         }
 
         case 'telegram': {
-            const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
-            window.open(tgUrl, '_blank', 'width=600,height=450,noopener,noreferrer');
+            const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedFullPost}`;
+            window.open(tgUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
             toast.success('Opening Telegram...');
             break;
         }
 
         case 'instagram': {
             try {
-                await navigator.clipboard.writeText(`${shareText}\n\nEvent Link: ${baseUrl}`);
-                toast.success('Event details copied to clipboard!', {
-                    description: 'Ready to paste into your Instagram Story, Post caption, or Direct Message.'
+                await navigator.clipboard.writeText(fullPost);
+                toast.success('Full event post copied to clipboard!', {
+                    description: 'Ready to paste into your Instagram caption, story, or DM.'
                 });
             } catch (e) {
                 toast.error('Failed to copy event details.');
@@ -291,21 +331,38 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
         case 'native': {
             if (navigator.share) {
                 try {
-                    await navigator.share({
-                        title: `Pawlse: ${event.title}`,
-                        text: shareText,
+                    const shareData: ShareData = {
+                        title: event.title,
+                        text: fullPost,
                         url: baseUrl
-                    });
+                    };
+
+                    if (event.img && navigator.canShare) {
+                        try {
+                            const res = await fetch(event.img, { mode: 'cors' });
+                            if (res.ok) {
+                                const blob = await res.blob();
+                                const file = new File([blob], `event-${event.id}.jpg`, { type: blob.type || 'image/jpeg' });
+                                if (navigator.canShare({ files: [file] })) {
+                                    shareData.files = [file];
+                                }
+                            }
+                        } catch {
+                            // Fallback to text & url if image fetch fails
+                        }
+                    }
+
+                    await navigator.share(shareData);
                     toast.success('Event shared successfully!');
                 } catch (err) {
                     if ((err as Error).name !== 'AbortError') {
-                        await navigator.clipboard.writeText(`${shareText}\n${baseUrl}`);
-                        toast.success('Link copied to clipboard!');
+                        await navigator.clipboard.writeText(fullPost);
+                        toast.success('Full event post copied to clipboard!');
                     }
                 }
             } else {
-                await navigator.clipboard.writeText(`${shareText}\n${baseUrl}`);
-                toast.success('Link copied to clipboard!');
+                await navigator.clipboard.writeText(fullPost);
+                toast.success('Full event post copied to clipboard!');
             }
             break;
         }
@@ -313,12 +370,12 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
         case 'copy':
         default: {
             try {
-                await navigator.clipboard.writeText(baseUrl);
-                toast.success('Event link copied to clipboard!', {
-                    description: 'You can now paste and share this link anywhere.'
+                await navigator.clipboard.writeText(fullPost);
+                toast.success('Full event post copied to clipboard!', {
+                    description: 'Title, time, date, location, and description are copied and ready to paste.'
                 });
             } catch (e) {
-                toast.error('Failed to copy link to clipboard.');
+                toast.error('Failed to copy event post.');
             }
             break;
         }

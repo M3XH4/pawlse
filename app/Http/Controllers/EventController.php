@@ -69,6 +69,13 @@ class EventController extends Controller
                 ->toArray();
         }
 
+        // Check if an event is requested via query param (?event=ID or ?id=ID) for sharing
+        $sharedEventId = $request->input('event') ?? $request->input('id');
+        $sharedEvent = null;
+        if ($sharedEventId) {
+            $sharedEvent = Event::find($sharedEventId);
+        }
+
         return Inertia::render('events', [
             'events' => $events,
             'feedingSchedules' => $feedingSchedules,
@@ -78,6 +85,9 @@ class EventController extends Controller
             ],
             'joinedEventIds' => $joinedEventIds,
             'joinedScheduleIds' => $joinedScheduleIds,
+            'sharedEvent' => $sharedEvent,
+        ])->withViewData([
+            'sharedEvent' => $sharedEvent,
         ]);
     }
 

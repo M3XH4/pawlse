@@ -26,9 +26,11 @@ export interface EventShareProps {
         location: string;
         category?: string;
         desc?: string;
+        img?: string;
     };
-    variant?: 'button' | 'icon' | 'pill';
+    variant?: 'button' | 'icon' | 'pill' | 'modal-button';
     className?: string;
+    containerClassName?: string;
 }
 
 // Crisp Brand SVGs
@@ -72,7 +74,7 @@ export function TelegramIcon({ className = 'size-4' }: { className?: string }) {
     );
 }
 
-export function EventShareDropdown({ event, variant = 'button', className = '' }: EventShareProps) {
+export function EventShareDropdown({ event, variant = 'button', className = '', containerClassName = '' }: EventShareProps) {
     const hasNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
     const handleShare = (
@@ -85,7 +87,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
     };
 
     return (
-        <div onClick={(e) => e.stopPropagation()} className="inline-block">
+        <div onClick={(e) => e.stopPropagation()} className={containerClassName || (variant === 'modal-button' ? 'w-full' : 'inline-block')}>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     {variant === 'icon' ? (
@@ -104,12 +106,20 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                             <Share2 size={14} />
                             <span>Share</span>
                         </button>
+                    ) : variant === 'modal-button' ? (
+                        <button
+                            type="button"
+                            className={`w-full h-12 py-2.5 px-3.5 rounded-2xl border-2 border-paw-navy/10 hover:border-paw-orange hover:bg-paw-orange/5 text-paw-navy font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${className}`}
+                        >
+                            <Share2 size={16} className="text-paw-orange shrink-0" />
+                            <span>Share</span>
+                        </button>
                     ) : (
                         <button
                             type="button"
                             className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-paw-navy hover:text-paw-orange hover:bg-paw-orange/10 border border-gray-200/80 bg-white shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5 ${className}`}
                         >
-                            <Share2 size={14} className="text-paw-orange" />
+                            <Share2 size={14} className="text-paw-orange shrink-0" />
                             <span>Share</span>
                         </button>
                     )}
@@ -118,10 +128,10 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                 <DropdownMenuContent
                     align="end"
                     sideOffset={8}
-                    className="w-60 p-2 rounded-2xl bg-white shadow-2xl border-2 border-gray-100 font-quicksand z-[200]"
+                    className="w-64 p-2 rounded-2xl bg-white shadow-2xl border-2 border-gray-100 font-quicksand z-[200]"
                 >
                     <DropdownMenuLabel className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-gray-400">
-                        Share this Event
+                        Share Event Post
                     </DropdownMenuLabel>
 
                     <DropdownMenuItem
@@ -133,7 +143,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">Facebook</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Share to feed / story</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Share post with preview card</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -146,7 +156,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">X (Twitter)</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Post to followers</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Post to your followers</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -159,7 +169,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">Instagram</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Copy details & link</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Copy caption & details</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -172,7 +182,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">WhatsApp</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Send in chat / group</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Send full post to chats</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -185,7 +195,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-paw-navy">Telegram</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Broadcast to channel</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Broadcast to channels</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -212,8 +222,8 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                             <Copy size={16} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-black text-paw-navy">Copy Direct Link</span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Copy URL to clipboard</span>
+                            <span className="font-black text-paw-navy">Copy Full Post</span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Copy title, date, desc & link</span>
                         </div>
                     </DropdownMenuItem>
 
@@ -227,7 +237,7 @@ export function EventShareDropdown({ event, variant = 'button', className = '' }
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-black text-paw-orange">Device Share Sheet</span>
-                                <span className="text-[10px] text-paw-orange/70 font-semibold">AirDrop, Bluetooth, etc.</span>
+                                <span className="text-[10px] text-paw-orange/70 font-semibold">Native OS sharing & image</span>
                             </div>
                         </DropdownMenuItem>
                     )}

@@ -1,6 +1,6 @@
 /* eslint-disable @stylistic/brace-style */
 /* eslint-disable curly */
-import { router, Link, usePage } from '@inertiajs/react';
+import { router, Link, usePage, Head } from '@inertiajs/react';
 import {
     Calendar,
     MapPin,
@@ -83,6 +83,7 @@ interface EventsProps {
     };
     joinedEventIds: number[];
     joinedScheduleIds: number[];
+    sharedEvent?: EventModel | null;
     auth?: {
         user?: any;
     };
@@ -284,6 +285,26 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
 
     return (
         <div className="min-h-screen bg-paw-bg font-quicksand selection:bg-paw-orange/20 selection:text-paw-orange">
+            <Head title={selectedEvent ? `${selectedEvent.title} - Pawlse Events` : 'Upcoming Events & Drives - Pawlse'}>
+                {selectedEvent ? (
+                    <>
+                        <meta name="description" content={selectedEvent.desc || `${selectedEvent.title} on ${selectedEvent.date} at ${selectedEvent.location}`} />
+                        <meta property="og:title" content={`${selectedEvent.title} - Pawlse`} />
+                        <meta property="og:description" content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`} />
+                        <meta property="og:image" content={selectedEvent.img} />
+                        <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/events?event=${selectedEvent.id}` : ''} />
+                        <meta name="twitter:card" content="summary_large_image" />
+                        <meta name="twitter:title" content={`${selectedEvent.title} - Pawlse`} />
+                        <meta name="twitter:description" content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`} />
+                        <meta name="twitter:image" content={selectedEvent.img} />
+                    </>
+                ) : (
+                    <>
+                        <meta name="description" content="Discover upcoming community animal rescue events, feeding operations, and free vaccination drives in Iligan City." />
+                    </>
+                )}
+            </Head>
+
             <Header />
 
             <main className="py-12 pb-24">
@@ -725,12 +746,12 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                                 {/* Modal Content Side */}
                                 <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-between">
                                     <div>
-                                        <div className="flex justify-between items-center mb-3">
+                                        <div className="flex items-center justify-between gap-3 mb-3 pr-12 md:pr-14">
                                             <span className="text-[11px] font-black uppercase tracking-widest text-paw-orange">
                                                 Event Information
                                             </span>
                                             {selectedEvent.spots !== null && (
-                                                <span className="text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+                                                <span className="text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap">
                                                     {selectedEvent.spots} Spots Left
                                                 </span>
                                             )}
@@ -743,33 +764,33 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                                         {/* Formatted Date/Time/Location Info Cards */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                                             <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-paw-orange/10 flex items-center justify-center text-paw-orange shrink-0">
-                                                    <Calendar size={16} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Date</p>
-                                                    <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventDate(selectedEvent.date, 'full')}</p>
-                                                </div>
+                                                 <div className="w-8 h-8 rounded-xl bg-paw-orange/10 flex items-center justify-center text-paw-orange shrink-0">
+                                                     <Calendar size={16} />
+                                                 </div>
+                                                 <div>
+                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Date</p>
+                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventDate(selectedEvent.date, 'full')}</p>
+                                                 </div>
                                             </div>
 
                                             <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-paw-blue/10 flex items-center justify-center text-paw-blue shrink-0">
-                                                    <Clock size={16} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Time</p>
-                                                    <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventTime(selectedEvent.time)}</p>
-                                                </div>
+                                                 <div className="w-8 h-8 rounded-xl bg-paw-blue/10 flex items-center justify-center text-paw-blue shrink-0">
+                                                     <Clock size={16} />
+                                                 </div>
+                                                 <div>
+                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Time</p>
+                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventTime(selectedEvent.time)}</p>
+                                                 </div>
                                             </div>
 
                                             <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 sm:col-span-2 flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-paw-green/10 flex items-center justify-center text-paw-green shrink-0">
-                                                    <MapPin size={16} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Location</p>
-                                                    <p className="font-black text-paw-navy text-xs sm:text-sm">{selectedEvent.location}</p>
-                                                </div>
+                                                 <div className="w-8 h-8 rounded-xl bg-paw-green/10 flex items-center justify-center text-paw-green shrink-0">
+                                                     <MapPin size={16} />
+                                                 </div>
+                                                 <div>
+                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Location</p>
+                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{selectedEvent.location}</p>
+                                                 </div>
                                             </div>
                                         </div>
 
@@ -796,21 +817,22 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                                             </button>
                                         )}
 
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 gap-3 items-center">
                                             {/* Google Calendar Link */}
                                             <button
                                                 onClick={() => shareEvent({ platform: 'calendar', event: selectedEvent })}
-                                                className="py-3.5 px-4 rounded-2xl border-2 border-paw-navy/10 hover:border-paw-orange hover:bg-paw-orange/5 text-paw-navy font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                                className="w-full h-12 py-2.5 px-3 rounded-2xl border-2 border-paw-navy/10 hover:border-paw-orange hover:bg-paw-orange/5 text-paw-navy font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                                             >
-                                                <CalendarPlus size={16} className="text-paw-orange" />
+                                                <CalendarPlus size={16} className="text-paw-orange shrink-0" />
                                                 <span>Add to Calendar</span>
                                             </button>
 
                                             {/* Share Button with Dropdown */}
                                             <EventShareDropdown
                                                 event={selectedEvent}
-                                                variant="button"
-                                                className="w-full justify-center py-3.5 px-4 rounded-2xl border-2 border-paw-navy/10 hover:border-paw-orange hover:bg-paw-orange/5 text-paw-navy font-black text-xs uppercase tracking-wider"
+                                                variant="modal-button"
+                                                containerClassName="w-full h-full flex"
+                                                className="w-full h-12"
                                             />
                                         </div>
                                     </div>
