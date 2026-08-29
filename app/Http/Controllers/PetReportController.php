@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
 use App\Models\User;
+use App\Notifications\RescueReportSubmittedNotification;
+use App\Notifications\RescueStatusUpdatedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -56,6 +60,11 @@ class PetReportController extends Controller
         ]);
 
         $this->uploadPhotos($request, $report);
+
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new RescueReportSubmittedNotification($report));
+        }
 
         AuditLog::log('rescue_report_submit', "Submitted rescue report at {$validated['location']}");
 
@@ -123,6 +132,11 @@ class PetReportController extends Controller
 
         $this->uploadPhotos($request, $report);
 
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new RescueReportSubmittedNotification($report));
+        }
+
         AuditLog::log('missing_report_submit', "Submitted missing pet report for '{$validated['petName']}'");
 
         if ($report->is_duplicate) {
@@ -177,6 +191,11 @@ class PetReportController extends Controller
         ]);
 
         $this->uploadPhotos($request, $report);
+
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new RescueReportSubmittedNotification($report));
+        }
 
         AuditLog::log('sos_report_submit', "Submitted SOS report at {$validated['location']}");
 
@@ -382,6 +401,10 @@ class PetReportController extends Controller
                 ->where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->update(['status' => 'cancelled']);
+        }
+
+        if ($report->user) {
+            $report->user->notify(new RescueStatusUpdatedNotification($report));
         }
 
         Inertia::flash('toast', [

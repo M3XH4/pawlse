@@ -32,4 +32,27 @@ class UserNotificationController extends Controller
 
         return back(303);
     }
+
+    public function destroy(Request $request, DatabaseNotification $notification): RedirectResponse
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $user !== null
+            && $notification->notifiable_type === $user::class
+            && (string) $notification->notifiable_id === (string) $user->getKey(),
+            404,
+        );
+
+        $notification->delete();
+
+        return back(303);
+    }
+
+    public function clearAll(Request $request): RedirectResponse
+    {
+        $request->user()?->readNotifications()->delete();
+
+        return back(303);
+    }
 }

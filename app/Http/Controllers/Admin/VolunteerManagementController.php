@@ -11,6 +11,9 @@ use App\Models\Event;
 use App\Models\FeedingSchedule;
 use App\Models\User;
 use App\Models\VolunteerApplication;
+use App\Notifications\VolunteerApplicationReviewedNotification;
+use App\Notifications\VolunteerCertificateIssuedNotification;
+use App\Notifications\VolunteerTaskAssignedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -102,6 +105,8 @@ class VolunteerManagementController extends Controller
 
         $user->syncRoles([Role::Volunteer]);
 
+        $user->notify(new VolunteerApplicationReviewedNotification($application));
+
         AuditLog::log('volunteer_application_approve', "Approved volunteer application for {$application->full_name}");
 
         Inertia::flash('toast', [
@@ -125,6 +130,8 @@ class VolunteerManagementController extends Controller
             'status' => 'rejected',
             'rejection_reason' => $validated['rejection_reason'],
         ]);
+
+        $application->user?->notify(new VolunteerApplicationReviewedNotification($application));
 
         AuditLog::log('volunteer_application_reject', "Rejected volunteer application for {$application->full_name}");
 
@@ -174,7 +181,7 @@ class VolunteerManagementController extends Controller
             ]);
         }
 
-        AssignedTask::query()->create([
+        $task = AssignedTask::query()->create([
             'user_id' => $validated['user_id'],
             'event_id' => $eventId ?: null,
             'feeding_schedule_id' => $feedingScheduleId ?: null,
@@ -183,7 +190,9 @@ class VolunteerManagementController extends Controller
         ]);
 
         $assignedUser = User::find($validated['user_id']);
-        AuditLog::log('volunteer_task_assign', "Assigned volunteer role '{$validated['role']}' to volunteer {$assignedUser->name}");
+        $assignedUser?->notify(new VolunteerTaskAssignedNotification($task));
+
+        AuditLog::log('volunteer_task_assign', "Assigned volunteer role '{$validated['role']}' to volunteer {$assignedUser?->name}");
 
         // If event is limited spots, decrement it
         if (! empty($eventId)) {
@@ -250,7 +259,7 @@ class VolunteerManagementController extends Controller
 
         $certificateNumber = 'CERT-'.date('Y').'-'.Str::upper(Str::random(6));
 
-        Certificate::query()->create([
+        $certificate = Certificate::query()->create([
             'user_id' => $validated['user_id'],
             'event_id' => $validated['event_id'] ?? null,
             'title' => $validated['title'],
@@ -260,7 +269,9 @@ class VolunteerManagementController extends Controller
         ]);
 
         $issuedUser = User::find($validated['user_id']);
-        AuditLog::log('volunteer_certificate_issue', "Issued certificate '{$validated['title']}' to volunteer {$issuedUser->name}");
+        $issuedUser?->notify(new VolunteerCertificateIssuedNotification($certificate));
+
+        AuditLog::log('volunteer_certificate_issue', "Issued certificate '{$validated['title']}' to volunteer {$issuedUser?->name}");
 
         Inertia::flash('toast', [
             'type' => 'success',

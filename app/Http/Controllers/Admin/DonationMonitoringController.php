@@ -10,6 +10,7 @@ use App\Models\AuditLog;
 use App\Models\Donation;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
+use App\Notifications\DonationVerifiedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -176,6 +177,10 @@ class DonationMonitoringController extends Controller
                 'reason' => 'In-kind donation verified and received.',
                 'created_at' => now(),
             ]);
+
+            if ($donation->user) {
+                $donation->user->notify(new DonationVerifiedNotification($donation));
+            }
         });
 
         return redirect()->back()->with('success', 'In-kind donation verified and items added to inventory.');

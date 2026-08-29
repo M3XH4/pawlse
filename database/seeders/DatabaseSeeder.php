@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             DonationSeeder::class,
             AdoptionApplicationSeeder::class,
             AssignedTaskSeeder::class,
+            NotificationSeeder::class,
         ]);
     }
 }

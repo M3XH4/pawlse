@@ -89,8 +89,10 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('account/notifications')->name('account.notifications.')->middleware(['auth', 'verified'])->group(function () {
-    Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
     Route::patch('read-all', [UserNotificationController::class, 'readAll'])->name('read-all');
+    Route::delete('clear-all', [UserNotificationController::class, 'clearAll'])->name('clear-all');
+    Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
+    Route::delete('{notification}', [UserNotificationController::class, 'destroy'])->name('destroy');
 });
 
 Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {

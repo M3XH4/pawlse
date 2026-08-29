@@ -68,7 +68,9 @@ class HandleInertiaRequests extends Middleware
                 ? null
                 : [
                     'markAllReadUrl' => route('account.notifications.read-all'),
+                    'clearAllUrl' => route('account.notifications.clear-all'),
                 ],
+            'unreadNotificationCount' => $request->user()?->unreadNotifications()->count() ?? 0,
             'dashboardChrome' => $dashboardChrome,
             'adminNotifications' => $dashboardNotifications,
             'adminChrome' => $dashboardChrome,
@@ -87,7 +89,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return list<array{id: string, title: string, description: string, time: string, url: string, icon: string, read: bool, readUrl: string}>
+     * @return list<array{id: string, title: string, description: string, time: string, url: string, icon: string, category: string, read: bool, readUrl: string, deleteUrl: string, createdAt: string|null}>
      */
     private function dashboardNotifications(Request $request): array
     {
@@ -99,7 +101,7 @@ class HandleInertiaRequests extends Middleware
 
         return $user->notifications()
             ->latest()
-            ->limit(10)
+            ->limit(30)
             ->get()
             ->map(fn (DatabaseNotification $notification): array => [
                 'id' => $notification->id,
@@ -108,8 +110,11 @@ class HandleInertiaRequests extends Middleware
                 'time' => $notification->created_at?->diffForHumans() ?? '',
                 'url' => (string) ($notification->data['url'] ?? url()->current()),
                 'icon' => (string) ($notification->data['icon'] ?? 'system'),
+                'category' => (string) ($notification->data['category'] ?? $notification->data['icon'] ?? 'system'),
                 'read' => $notification->read(),
                 'readUrl' => route('account.notifications.read', $notification),
+                'deleteUrl' => route('account.notifications.destroy', $notification),
+                'createdAt' => $notification->created_at?->toIso8601String(),
             ])
             ->all();
     }

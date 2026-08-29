@@ -20,12 +20,16 @@ export type DashboardNotification = {
     time: string;
     url: string;
     icon: DashboardNotificationIcon;
+    category?: string;
     read?: boolean;
     readUrl?: string;
+    deleteUrl?: string;
+    createdAt?: string;
 };
 
 export type DashboardNotificationActions = {
     markAllReadUrl: string;
+    clearAllUrl?: string;
 };
 
 export type DashboardNavItem = {

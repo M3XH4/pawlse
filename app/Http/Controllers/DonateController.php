@@ -6,6 +6,7 @@ use App\Enums\DonationStatus;
 use App\Enums\DonationType;
 use App\Enums\InKindStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\Donation;
 use App\Models\Event;
@@ -13,8 +14,12 @@ use App\Models\FeedingSponsorship;
 use App\Models\InKindDonation;
 use App\Models\Payment;
 use App\Models\ShelterAnimal;
+use App\Models\User;
+use App\Notifications\DonationReceivedNotification;
+use App\Notifications\DonationVerifiedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -176,6 +181,11 @@ class DonateController extends Controller
             'status' => PaymentStatus::Pending->value,
         ]);
 
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new DonationReceivedNotification($donation));
+        }
+
         AuditLog::log('donation_cash_create', 'Initiated cash donation of ₱'.number_format($validated['amount'])." with ref {$ref}");
 
         return redirect()->route('donate.checkout', $ref);
@@ -238,6 +248,11 @@ class DonateController extends Controller
                 'reason' => 'Scheduled in-kind donation created',
                 'created_at' => now(),
             ]);
+
+            $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+            if ($admins->isNotEmpty()) {
+                Notification::send($admins, new DonationReceivedNotification($donation));
+            }
         });
 
         AuditLog::log('donation_inkind_create', "Scheduled in-kind donation with ref {$ref}");
@@ -297,6 +312,11 @@ class DonateController extends Controller
                 'amount' => $amount,
                 'status' => 'pending',
             ]);
+
+            $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+            if ($admins->isNotEmpty()) {
+                Notification::send($admins, new DonationReceivedNotification($donation));
+            }
         });
 
         AuditLog::log('donation_sponsor_create', "Initiated feeding sponsorship of ₱3,500 with ref {$ref}");
@@ -398,6 +418,10 @@ class DonateController extends Controller
                         'keywords' => json_encode(['feeding', 'sponsored', 'strays']),
                         'status' => 'open',
                     ]);
+                }
+
+                if ($donation->user) {
+                    $donation->user->notify(new DonationVerifiedNotification($donation));
                 }
             });
 

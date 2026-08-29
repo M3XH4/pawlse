@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AuditLog;
 use App\Models\ShelterAnimal;
+use App\Notifications\AdoptionApplicationStatusUpdatedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -138,6 +139,8 @@ class AdoptionManagementController extends Controller
                 'status' => ShelterAnimalStatus::Pending,
             ]);
         }
+
+        $application->user?->notify(new AdoptionApplicationStatusUpdatedNotification($application));
 
         AuditLog::log('adoption_application_update', "Updated status of adoption application ID {$application->id} to {$validated['status']}");
 

@@ -6,7 +6,7 @@ use App\Models\Donation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class DonationVerifiedNotification extends Notification
+class DonationReceivedNotification extends Notification
 {
     use Queueable;
 
@@ -25,16 +25,18 @@ class DonationVerifiedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $donor = $this->donation->anonymous ? 'Anonymous' : ($this->donation->donor_name ?: 'Donor');
         $type = ucfirst($this->donation->type ?? 'donation');
+
         $details = $this->donation->amount
             ? '₱'.number_format($this->donation->amount)
-            : 'in-kind supplies';
+            : 'In-kind supplies';
 
         return [
-            'title' => 'Donation Verified',
-            'message' => "Your {$type} donation of {$details} (Ref: {$this->donation->public_reference}) has been verified.",
-            'description' => "Verified {$type} donation (Ref: {$this->donation->public_reference}).",
-            'url' => route('account.user.donations'),
+            'title' => "{$type} Donation Received",
+            'message' => "{$type} donation of {$details} received from {$donor} (Ref: {$this->donation->public_reference}).",
+            'description' => "{$type} donation ({$details}) from {$donor}.",
+            'url' => route('account.admin.donation-monitoring'),
             'icon' => 'donation',
             'category' => 'donation',
             'donation_id' => $this->donation->id,

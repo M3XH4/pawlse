@@ -2,7 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { AdminNotificationPanel } from '@/components/admin/notification-panel';
 import { AdminThemeToggle } from '@/components/admin/theme-toggle';
-import { useAdminNotifications } from '@/hooks/use-admin-notifications';
+import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
 import { Bell, Home, Menu } from 'lucide-react';
 import { home } from '@/routes';
 
@@ -14,7 +14,7 @@ export function AdminHeader({
     onOpenSidebar: () => void;
 }) {
     const { auth, adminChrome } = usePage().props;
-    const { unreadCount } = useAdminNotifications();
+    const { unreadCount } = useDashboardNotifications();
     const [panelOpen, setPanelOpen] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
     const panelId = useId();

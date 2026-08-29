@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\AuditLog;
+use App\Models\User;
 use App\Models\VolunteerApplication;
+use App\Notifications\VolunteerApplicationSubmittedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,7 +71,7 @@ class VolunteerController extends Controller
 
         $referenceNumber = 'VOL-'.time().'-'.random_int(100, 999);
 
-        VolunteerApplication::query()->create([
+        $application = VolunteerApplication::query()->create([
             'user_id' => $user->id,
             'full_name' => $validated['fullName'],
             'mobile' => $validated['mobile'],
@@ -80,6 +83,11 @@ class VolunteerController extends Controller
             'status' => 'pending',
             'reference_number' => $referenceNumber,
         ]);
+
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new VolunteerApplicationSubmittedNotification($application));
+        }
 
         AuditLog::log('volunteer_apply', "Submitted volunteer application (ref: {$referenceNumber})");
 

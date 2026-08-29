@@ -8,6 +8,8 @@ use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
 use App\Models\User;
+use App\Notifications\RescueStatusUpdatedNotification;
+use App\Notifications\RescueTaskAssignedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -117,6 +119,8 @@ class RescueManagementController extends Controller
             ]);
         }
 
+        $volunteer->notify(new RescueTaskAssignedNotification($report));
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => "Volunteer {$volunteer->name} successfully assigned to this report.",
@@ -151,6 +155,10 @@ class RescueManagementController extends Controller
                 ->where('pet_report_id', $report->id)
                 ->where('status', 'pending')
                 ->update(['status' => 'cancelled']);
+        }
+
+        if ($report->user) {
+            $report->user->notify(new RescueStatusUpdatedNotification($report));
         }
 
         Inertia::flash('toast', [

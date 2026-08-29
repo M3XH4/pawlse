@@ -2,52 +2,39 @@
 
 namespace App\Notifications;
 
+use App\Models\AdoptionApplication;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class AdoptionApplicationSubmittedNotification extends Notification
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(public AdoptionApplication $application) {}
 
     /**
-     * Get the notification's delivery channels.
-     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database'];
     }
 
     /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
+        $petName = $this->application->shelterAnimal?->name ?? 'Shelter Pet';
+
         return [
-            //
+            'title' => 'Adoption Application Submitted',
+            'message' => "Adoption application submitted for {$petName} by {$this->application->full_name}.",
+            'description' => "Application for {$petName} submitted by {$this->application->full_name}.",
+            'url' => route('account.admin.adoption-management'),
+            'icon' => 'adoption',
+            'category' => 'adoption',
+            'application_id' => $this->application->id,
         ];
     }
 }

@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Adoptions;
 
 use App\Enums\AdoptionApplicationStatus;
 use App\Enums\AdoptionDocumentKind;
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AdoptionApplicationFile;
 use App\Models\AuditLog;
+use App\Models\User;
+use App\Notifications\AdoptionApplicationSubmittedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -164,6 +168,14 @@ class AdoptionApplicationController extends Controller
                 }
             }
         });
+
+        $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+        if ($admins->isNotEmpty()) {
+            $latestApp = AdoptionApplication::with('shelterAnimal')->where('user_id', $request->user()->id)->latest()->first();
+            if ($latestApp) {
+                Notification::send($admins, new AdoptionApplicationSubmittedNotification($latestApp));
+            }
+        }
 
         AuditLog::log('adoption_apply', "Submitted adoption application for pet ID {$validated['pet_id']}");
 
