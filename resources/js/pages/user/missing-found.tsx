@@ -6,6 +6,8 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface PetReport {
     id: number;
@@ -99,7 +101,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
     return (
         <DashboardSectionPage
             title="Missing & Found Reports"
-            description="Manage and track missing or found reports you have filed"
+            description="Manage and track missing, found, and reunited animal reports you have filed."
             badge={<DashboardMetricBadge icon={<Search className="h-4 w-4" />} label={`${reports?.total || 0} Reports`} />}
         >
             {/* Search and Action Bar */}
@@ -155,11 +157,11 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                                 {report.photos && report.photos.length > 0 ? (
                                     <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
                                         {report.photos.map((photo) => (
-                                            <img
+                                            <ImageWithFallback
                                                 key={photo.id}
-                                                src={photo.path}
+                                                src={formatPhotoUrl(photo.path)}
                                                 alt="Pet report attachment"
-                                                className="w-20 h-20 rounded-xl object-cover border border-gray-100 shrink-0"
+                                                className="w-20 h-20 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
                                             />
                                         ))}
                                     </div>

@@ -165,7 +165,7 @@ export function DashboardNotificationsPage() {
                                 </span>
                             )}
                         </div>
-                        <p className="mt-1 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
+                        <p className="mt-2 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
                             Stay informed on pet adoptions, rescue missions, donations, and updates.
                         </p>
                     </div>

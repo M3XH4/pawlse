@@ -246,7 +246,10 @@ export default function EventManagement({
     return (
         <>
             <Head title="Event Management" />
-            <AdminPageShell title="Event Management">
+            <AdminPageShell 
+                title="Event Management"
+                description="Create, schedule, and manage community outreach events, adoption drives, and feeding programs."
+            >
 
                 {/* Filters and search card */}
                 <AdminCard className="p-4 mb-6">

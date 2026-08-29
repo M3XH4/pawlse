@@ -71,7 +71,7 @@ export default function DashboardLayout({
         <DashboardContext.Provider value={contextValue}>
             <div
                 data-dashboard-theme={theme}
-                className="flex min-h-screen overflow-x-hidden bg-[#F8FAFC] font-quicksand text-[#0B2340] antialiased transition-colors duration-200 dark:bg-[#020617] dark:text-[#F8FAFC]"
+                className="flex min-h-screen overflow-x-clip bg-[#F8FAFC] font-quicksand text-[#0B2340] antialiased transition-colors duration-200 dark:bg-[#020617] dark:text-[#F8FAFC]"
             >
                 <div
                     className={`fixed inset-0 z-40 bg-[#0B2340]/50 transition-opacity duration-300 lg:hidden ${

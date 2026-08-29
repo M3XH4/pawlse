@@ -39,7 +39,7 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
     return (
         <DashboardSectionPage
             title="Assigned Tasks"
-            description="See your active volunteer assignments"
+            description="View and manage your active rescue assignments, feeding routes, and outreach tasks."
             badge={<DashboardMetricBadge icon={<ClipboardList className="h-4 w-4" />} label={`${tasks?.total || 0} Tasks`} />}
         >
             {activeTasks.length === 0 ? (

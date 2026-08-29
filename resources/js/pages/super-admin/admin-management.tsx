@@ -9,7 +9,7 @@ export default function SuperAdminManagement() {
     return (
         <DashboardSectionPage
             title="Admin Management"
-            description="Manage administrator access and operational assignments"
+            description="Manage administrator accounts, roles, access permissions, and operational assignments."
             badge={<DashboardMetricBadge icon={<Users className="h-4 w-4" />} label="3 Admins" />}
         >
             <DashboardCard>

@@ -20,7 +20,7 @@ export default function UserVolunteerStatus({ application }: VolunteerStatusProp
     return (
         <DashboardSectionPage
             title="Volunteer Onboarding"
-            description="Track your application status and onboarding details"
+            description="Track your volunteer application review progress and onboarding standing."
             badge={
                 <DashboardMetricBadge
                     icon={<Zap className="h-4 w-4" />}

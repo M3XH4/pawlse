@@ -132,10 +132,10 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                 {/* Greeting Section */}
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="font-fredoka text-3xl font-black tracking-wide text-paw-navy dark:text-white">
+                        <h1 className="font-fredoka text-3xl font-bold tracking-tight text-[#0B2340] dark:text-[#F8FAFC]">
                             Hello, {user?.name ?? 'Admin'}!
                         </h1>
-                        <p className="text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
                             Here is what is happening across the PAWLSE network today.
                         </p>
                     </div>
@@ -320,36 +320,38 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                 </div>
                             ) : (
                                 <div className="flow-root">
-                                    <ul className="-mb-8">
-                                        {recentActivities.map((activity, idx) => (
-                                            <li key={activity.id}>
-                                                <div className="relative pb-8">
-                                                    {idx !== recentActivities.length - 1 ? (
+                                    <ul className="relative">
+                                        {recentActivities.slice(0, 5).map((activity, idx, arr) => {
+                                            const isLast = idx === arr.length - 1;
+
+                                            return (
+                                                <li key={activity.id} className="relative">
+                                                    {!isLast && (
                                                         <span
-                                                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-100 dark:bg-slate-850"
+                                                            className="absolute left-[17px] top-[34px] -bottom-[8px] w-0.5 -translate-x-1/2 bg-gray-100 dark:bg-slate-800"
                                                             aria-hidden="true"
                                                         />
-                                                    ) : null}
-                                                    <div className="relative flex space-x-3">
-                                                        <div>
-                                                            <span className={cn('flex h-8.5 w-8.5 items-center justify-center rounded-xl shadow-xs', getActivityColor(activity.type))}>
+                                                    )}
+                                                    <div className={cn('relative flex items-center space-x-3.5', !isLast && 'pb-6')}>
+                                                        <div className="relative z-10 flex shrink-0">
+                                                            <span className={cn('flex h-8.5 w-8.5 items-center justify-center rounded-xl ring-4 ring-white dark:ring-slate-900 shadow-xs', getActivityColor(activity.type))}>
                                                                 {getActivityIcon(activity.type)}
                                                             </span>
                                                         </div>
-                                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                                            <div>
-                                                                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                        <div className="flex min-w-0 flex-1 items-center justify-between space-x-4">
+                                                            <div className="min-w-0">
+                                                                <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                                     {activity.description}
                                                                 </p>
                                                             </div>
-                                                            <div className="whitespace-nowrap text-right text-xs text-gray-400 dark:text-gray-500">
+                                                            <div className="shrink-0 whitespace-nowrap text-right text-xs text-gray-400 dark:text-gray-500">
                                                                 <time>{activity.time}</time>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        ))}
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 </div>
                             )}
@@ -426,14 +428,53 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
 
                         {/* Quick Tips or Reminders */}
                         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/20 p-6 dark:border-emerald-950/20 dark:bg-emerald-950/5">
-                            <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400 font-bold">
-                                <AlertCircle className="h-5 w-5" />
-                                <h3>Operational Tips</h3>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400 font-bold">
+                                    <AlertCircle className="h-5 w-5" />
+                                    <h3 className="font-fredoka text-lg font-bold">Operational Tips</h3>
+                                </div>
+                                <span className="rounded-full bg-emerald-100/80 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                    Protocols
+                                </span>
                             </div>
-                            <ul className="mt-3 list-disc pl-4 text-xs space-y-2 text-emerald-800/80 dark:text-emerald-400/80 leading-relaxed">
-                                <li><strong>Rescue Cases:</strong> Check location coordinates and coordinate with volunteers nearby.</li>
-                                <li><strong>Adoptions:</strong> Make sure emergency contact phone numbers are active before schedule approvals.</li>
-                                <li><strong>Inventory Check:</strong> Verify dropped off items in In-Kind monitoring and update stock levels.</li>
+                            <hr className="my-3.5 border-emerald-200/50 dark:border-emerald-950/40" />
+                            <ul className="space-y-3 text-xs text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed">
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">Rescue Cases:</strong> Check location coordinates and coordinate with volunteers nearby.
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">Adoptions:</strong> Make sure emergency contact phone numbers are active before schedule approvals.
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">Inventory Check:</strong> Verify dropped off items in In-Kind monitoring and update stock levels.
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">Volunteer Dispatch:</strong> Confirm field availability and log completed mission hours post-event.
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">AI Validation:</strong> Review high-confidence stray sightings and merge duplicate citizen reports.
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                    <div>
+                                        <strong className="text-emerald-950 dark:text-emerald-200">Data Integrity:</strong> Regularly export monthly summary backups and review pending audits.
+                                    </div>
+                                </li>
                             </ul>
                         </div>
                     </div>

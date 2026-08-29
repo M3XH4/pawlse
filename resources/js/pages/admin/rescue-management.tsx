@@ -3,6 +3,8 @@ import { Head, router, Link } from '@inertiajs/react';
 import { AnimatePresence } from 'motion/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
   User, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
@@ -372,13 +374,13 @@ export default function RescueManagement({
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         {report.photos && report.photos.length > 0 ? (
-                          <img
-                            src={report.photos[0].path}
-                            alt="pet"
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-100 shrink-0"
+                          <ImageWithFallback
+                            src={formatPhotoUrl(report.photos[0].path, report.animal_type)}
+                            alt={report.name || 'Pet'}
+                            className="w-10 h-10 rounded-lg object-cover border border-gray-100 dark:border-slate-800 shrink-0"
                           />
                         ) : (
-                          <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400">🐾</span>
+                          <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 shrink-0">🐾</span>
                         )}
                         <div>
                           <p className="text-sm font-black">{report.name || 'Unnamed'}</p>
@@ -558,19 +560,22 @@ export default function RescueManagement({
                       <div>
                         <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest mb-3 block">Attached Photos ({selectedReport.photos.length})</h4>
                         <div className="grid grid-cols-3 gap-2">
-                          {selectedReport.photos.map((photo) => (
-                            <a
-                              key={photo.id}
-                              href={photo.path}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="relative aspect-video rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-gray-50 flex items-center justify-center hover:opacity-80 transition-opacity"
-                              title="Click to view full size"
-                            >
-                              <img src={photo.path} alt="Incident attachment" className="w-full h-full object-cover" />
-                              <span className="absolute bottom-2 right-2 bg-black/60 p-1 rounded text-white text-[9px]"><Eye size={8} /></span>
-                            </a>
-                          ))}
+                          {selectedReport.photos.map((photo) => {
+                            const photoUrl = formatPhotoUrl(photo.path, selectedReport.animal_type);
+                            return (
+                              <a
+                                key={photo.id}
+                                href={photoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative aspect-video rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/40 flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer"
+                                title="Click to view full size"
+                              >
+                                <ImageWithFallback src={photoUrl} alt="Incident attachment" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <span className="absolute bottom-2 right-2 bg-black/60 p-1.5 rounded-lg text-white text-[9px]"><Eye size={10} /></span>
+                              </a>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -600,11 +605,11 @@ export default function RescueManagement({
                     {/* Status Update Form */}
                     <form onSubmit={handleStatusSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
                       <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Update Status</h4>
-                      <div className="flex gap-2">
+                      <div className="flex items-stretch gap-2 w-full">
                         <select
                           value={updateStatusVal}
                           onChange={(e) => setUpdateStatusVal(e.target.value)}
-                          className="flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white"
+                          className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white"
                         >
                           <option value="pending">Pending Review</option>
                           <option value="assigned">Assigned</option>
@@ -614,7 +619,7 @@ export default function RescueManagement({
                         </select>
                         <button
                           type="submit"
-                          className="bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center gap-1"
+                          className="shrink-0 bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5"
                         >
                           <Check size={14} /> UPDATE
                         </button>
@@ -632,12 +637,12 @@ export default function RescueManagement({
                         <p className="text-xs text-amber-600 dark:text-amber-400 font-bold italic">No volunteer responder assigned yet.</p>
                       )}
                       
-                      <div className="flex gap-2">
+                      <div className="flex items-stretch gap-2 w-full">
                         <select
                           required
                           value={assignVolunteerId}
                           onChange={(e) => setAssignVolunteerId(e.target.value)}
-                          className="flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white"
+                          className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate"
                         >
                           <option value="">Select volunteer...</option>
                           {volunteers.map((vol) => (
@@ -646,7 +651,7 @@ export default function RescueManagement({
                         </select>
                         <button
                           type="submit"
-                          className="bg-paw-orange text-white px-4 rounded-xl font-bold text-xs hover:bg-orange-600 transition-all flex items-center gap-1 shadow-md shadow-paw-orange/20"
+                          className="shrink-0 bg-paw-orange text-white px-4 rounded-xl font-bold text-xs hover:bg-orange-600 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-paw-orange/20"
                         >
                           <User size={14} /> ASSIGN
                         </button>
@@ -676,12 +681,12 @@ export default function RescueManagement({
                       ) : (
                         <form onSubmit={handleDuplicateLink} className="space-y-3">
                           <p className="text-xs text-gray-400 font-bold">Link this report manually to another active report if it is a duplicate:</p>
-                          <div className="flex gap-2">
+                          <div className="flex items-stretch gap-2 w-full">
                             <select
                               required
                               value={linkDuplicateOfId}
                               onChange={(e) => setLinkDuplicateOfId(e.target.value)}
-                              className="flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white"
+                              className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate"
                             >
                               <option value="">Select original report...</option>
                               {duplicateCandidates
@@ -694,7 +699,7 @@ export default function RescueManagement({
                             </select>
                             <button
                               type="submit"
-                              className="bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center gap-1"
+                              className="shrink-0 bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5"
                             >
                               <LinkIcon size={14} /> LINK
                             </button>

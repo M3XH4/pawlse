@@ -71,7 +71,7 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
     return (
         <DashboardSectionPage
             title="My Adoption Applications"
-            description="Review the adoption applications connected to your account"
+            description="Track and manage the status of your shelter pet adoption applications."
             badge={<DashboardMetricBadge icon={<Heart className="h-4 w-4" />} label={`${activeCount} Active`} />}
         >
             {applications.length === 0 ? (

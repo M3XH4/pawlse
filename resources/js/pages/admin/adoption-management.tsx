@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface ApplicationFile {
   id: number;
@@ -199,8 +200,8 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
         {/* Header Block */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-black text-paw-navy dark:text-white">Adoption Management</h1>
-            <p className="text-gray-500 dark:text-gray-400">Review adoption applications and manage shelter pets.</p>
+            <h1 className="font-fredoka text-3xl font-bold tracking-tight text-[#0B2340] dark:text-[#F8FAFC]">Adoption Management</h1>
+            <p className="mt-2 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">Review adoption applications and manage shelter pets.</p>
           </div>
           {activeTab === 'pets' && (
             <button
@@ -296,7 +297,7 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                           {app.pet ? (
                             <div className="flex items-center gap-2">
                               {app.pet.photo_url && (
-                                <img src={app.pet.photo_url} alt={app.pet.name} className="w-8 h-8 rounded-lg object-cover" />
+                                <ImageWithFallback src={formatPhotoUrl(app.pet.photo_url)} alt={app.pet.name} className="w-8 h-8 rounded-lg object-cover" />
                               )}
                               <div>
                                 <p className="font-bold text-sm text-gray-700 dark:text-gray-300">{app.pet.name}</p>
@@ -394,7 +395,7 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                   <div key={pet.id} className="bg-paw-bg dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
                     <div className="aspect-square relative overflow-hidden bg-gray-100">
                       {pet.img ? (
-                        <img src={pet.img} alt={pet.name} className="w-full h-full object-cover" />
+                        <ImageWithFallback src={formatPhotoUrl(pet.img)} alt={pet.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300"><Heart size={32} /></div>
                       )}
@@ -460,7 +461,7 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                 {/* Pet summary */}
                 <div className="bg-paw-bg dark:bg-gray-800/20 p-4 rounded-3xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
                   {selectedApp.pet?.photo_url && (
-                    <img src={selectedApp.pet.photo_url} alt={selectedApp.pet.name} className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-md" />
+                    <ImageWithFallback src={formatPhotoUrl(selectedApp.pet.photo_url)} alt={selectedApp.pet.name} className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-md" />
                   )}
                   <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Application for</span>

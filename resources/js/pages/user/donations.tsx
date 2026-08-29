@@ -127,7 +127,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
     return (
         <DashboardSectionPage
             title="My Donations"
-            description="View your donation history and support for stray rescue operations"
+            description="View your monetary and in-kind contribution history supporting animal rescues."
             badge={<DashboardMetricBadge icon={<Gift className="h-4 w-4" />} label={`${stats.totalCount} Contributions`} />}
         >
             {/* Stats Summary Cards */}

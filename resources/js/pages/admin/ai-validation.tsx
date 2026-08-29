@@ -3,6 +3,8 @@ import { Head, router } from '@inertiajs/react';
 import { AnimatePresence } from 'motion/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
@@ -371,10 +373,10 @@ export default function AiValidation({
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         {report.photos && report.photos.length > 0 ? (
-                          <img
-                            src={report.photos[0].path}
-                            alt="pet"
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-100 shrink-0"
+                          <ImageWithFallback
+                            src={formatPhotoUrl(report.photos[0].path, report.animal_type)}
+                            alt={report.name || 'Pet'}
+                            className="w-10 h-10 rounded-lg object-cover border border-gray-100 dark:border-slate-800 shrink-0"
                           />
                         ) : (
                           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 shrink-0">🐾</span>
@@ -469,8 +471,8 @@ export default function AiValidation({
                 <div className="p-6 flex flex-col gap-4">
                   <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-gray-50 flex items-center justify-center relative">
                     {selectedReport.photos && selectedReport.photos.length > 0 ? (
-                      <img 
-                        src={selectedReport.photos[0].path} 
+                      <ImageWithFallback 
+                        src={formatPhotoUrl(selectedReport.photos[0].path, selectedReport.animal_type)} 
                         alt="Submitted stray animal" 
                         className="w-full h-full object-cover"
                       />

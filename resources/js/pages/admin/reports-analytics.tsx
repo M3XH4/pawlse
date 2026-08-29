@@ -147,10 +147,10 @@ export default function ReportsAnalytics({
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="font-fredoka text-3xl font-black tracking-wide text-paw-navy dark:text-white">
+                        <h1 className="font-fredoka text-3xl font-bold tracking-tight text-[#0B2340] dark:text-[#F8FAFC]">
                             Reports &amp; Analytics
                         </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
                             Analyze platform activities, track rescues, monitor donations, and export reports.
                         </p>
                     </div>

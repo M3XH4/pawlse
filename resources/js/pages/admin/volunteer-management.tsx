@@ -238,7 +238,10 @@ export default function VolunteerManagement({
     return (
         <>
             <Head title="Volunteer Management" />
-            <AdminPageShell title="Volunteer Management">
+            <AdminPageShell 
+                title="Volunteer Management"
+                description="Review volunteer applications, monitor active members, assign tasks, and track volunteer contributions."
+            >
                 
                 {/* Search and Filters Bar */}
                 <AdminCard className="p-4 mb-6">

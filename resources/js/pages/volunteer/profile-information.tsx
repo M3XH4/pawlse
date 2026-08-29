@@ -41,7 +41,7 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
         return (
             <DashboardSectionPage
                 title="Profile Information"
-                description="Review your volunteer profile details"
+                description="Review and update your volunteer profile, availability, and contact details."
                 badge={<DashboardMetricBadge icon={<User className="h-4 w-4" />} label="Volunteer" />}
             >
                 <DashboardCard className="p-8 text-center text-gray-500 font-bold">
@@ -55,7 +55,7 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
     return (
         <DashboardSectionPage
             title="Profile Information"
-            description="Review and update your volunteer profile details"
+            description="Review and update your volunteer profile, availability, and contact details."
             badge={<DashboardMetricBadge icon={<User className="h-4 w-4" />} label="Volunteer" />}
         >
             <div className="w-full">

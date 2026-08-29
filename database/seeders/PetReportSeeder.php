@@ -70,7 +70,7 @@ class PetReportSeeder extends Seeder
 
         PetReportPhoto::create([
             'pet_report_id' => $report1->id,
-            'path' => 'reports/stray_dog_1.jpg',
+            'path' => 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80',
             'original_filename' => 'stray_dog_1.jpg',
             'mime_type' => 'image/jpeg',
             'file_size' => 124500,
@@ -100,7 +100,7 @@ class PetReportSeeder extends Seeder
 
         PetReportPhoto::create([
             'pet_report_id' => $report2->id,
-            'path' => 'reports/stray_cat_1.jpg',
+            'path' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop&q=80',
             'original_filename' => 'stray_cat_1.jpg',
             'mime_type' => 'image/jpeg',
             'file_size' => 98500,
@@ -121,7 +121,7 @@ class PetReportSeeder extends Seeder
 
         PetReportPhoto::create([
             'pet_report_id' => $report3->id,
-            'path' => 'reports/trash_1.jpg',
+            'path' => 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80',
             'original_filename' => 'trash_1.jpg',
             'mime_type' => 'image/jpeg',
             'file_size' => 78000,

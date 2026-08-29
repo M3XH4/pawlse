@@ -6,6 +6,8 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface PetReport {
     id: number;
@@ -112,7 +114,7 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
     return (
         <DashboardSectionPage
             title="Assigned Rescue Reports"
-            description="Track and handle rescue reports assigned to your volunteer profile"
+            description="Track and handle stray animal and emergency rescue missions assigned to you."
             badge={<DashboardMetricBadge icon={<FileText className="h-4 w-4" />} label={`${reports?.total || 0} Assignments`} />}
         >
             {/* Search and Filters */}
@@ -168,11 +170,11 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
                                 {report.photos && report.photos.length > 0 && (
                                     <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
                                         {report.photos.map((photo) => (
-                                            <img
+                                            <ImageWithFallback
                                                 key={photo.id}
-                                                src={photo.path}
+                                                src={formatPhotoUrl(photo.path)}
                                                 alt="Report attachment"
-                                                className="w-16 h-16 rounded-xl object-cover border border-gray-100 shrink-0"
+                                                className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
                                             />
                                         ))}
                                     </div>

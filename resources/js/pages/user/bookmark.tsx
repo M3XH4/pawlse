@@ -30,7 +30,7 @@ export default function UserBookmarks() {
     return (
         <DashboardSectionPage
             title="My Bookmarks"
-            description="Your saved pets, events, and missing alerts"
+            description="Access your saved adoptable pets, community events, and missing pet alerts."
             badge={<DashboardMetricBadge icon={<Bookmark className="h-4 w-4" />} label={`${bookmarks.length} Saved`} />}
         >
             {/* Tabs */}

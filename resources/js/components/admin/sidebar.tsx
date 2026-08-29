@@ -36,7 +36,7 @@ export function AdminSidebar({
             id="admin-sidebar"
             data-collapsed={collapsed ? 'true' : 'false'}
             className={cn(
-                'fixed inset-y-0 left-0 z-50 flex w-[280px] shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white shadow-[4px_0_24px_rgba(15,23,42,0.06)] transition-[width,transform] duration-300 ease-out dark:border-[#1E293B] dark:bg-[#0F172A] dark:shadow-[4px_0_24px_rgba(0,0,0,0.35)] lg:static lg:z-auto lg:translate-x-0 lg:shadow-[4px_0_24px_rgba(15,23,42,0.04)]',
+                'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen w-[280px] shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white shadow-[4px_0_24px_rgba(15,23,42,0.06)] transition-[width,transform] duration-300 ease-out dark:border-[#1E293B] dark:bg-[#0F172A] dark:shadow-[4px_0_24px_rgba(0,0,0,0.35)] lg:sticky lg:top-0 lg:z-40 lg:h-screen lg:max-h-screen lg:self-start lg:translate-x-0 lg:shadow-[4px_0_24px_rgba(15,23,42,0.04)]',
                 open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
                 collapsed && 'lg:w-[5.5rem]',
             )}

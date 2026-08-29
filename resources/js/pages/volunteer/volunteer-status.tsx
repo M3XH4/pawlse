@@ -23,7 +23,7 @@ export default function VolunteerStatus({ application, stats }: VolunteerStatusP
     return (
         <DashboardSectionPage
             title="Volunteer Status"
-            description="Track your onboarding and activity standing"
+            description="Monitor your active volunteer standing, logged service hours, and task contributions."
             badge={<DashboardMetricBadge icon={<Zap className="h-4 w-4" />} label="Active Volunteer" />}
         >
             <div className="grid gap-6 md:grid-cols-3 mb-8">

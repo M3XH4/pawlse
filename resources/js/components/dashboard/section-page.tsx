@@ -51,8 +51,8 @@ export function DashboardSectionPage({
 
                 {children ?? (
                     <DashboardCard>
-                        <p className="text-sm text-[#64748B] dark:text-[#94A3B8]">
-                            This section is ready for your latest PAWLSE records.
+                        <p className="text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
+                            No records are available in this section yet.
                         </p>
                     </DashboardCard>
                 )}

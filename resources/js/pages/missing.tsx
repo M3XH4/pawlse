@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPhotoUrl } from '@/lib/utils';
 
 const MISSING_PETS = [
   {
@@ -474,7 +475,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
                 const photosArray = report.photos || [];
                 const imgUrl = photosArray.length > 0
-                  ? photosArray[0].path
+                  ? formatPhotoUrl(photosArray[0].path)
                   : 'https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?w=500&auto=format&fit=crop&q=60';
 
                 return {

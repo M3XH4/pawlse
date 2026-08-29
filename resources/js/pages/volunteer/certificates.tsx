@@ -44,7 +44,7 @@ export default function VolunteerCertificates({ certificates, auth }: Certificat
     return (
         <DashboardSectionPage
             title="Certificates & Recognition"
-            description="Access your PAWLSE volunteer certificates"
+            description="Access and download your official PAWLSE volunteer recognition certificates."
             badge={<DashboardMetricBadge icon={<Award className="h-4 w-4" />} label={`${certificates?.total || 0} Certificates`} />}
         >
             {certs.length === 0 ? (

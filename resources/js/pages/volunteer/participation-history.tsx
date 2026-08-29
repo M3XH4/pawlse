@@ -35,7 +35,7 @@ export default function VolunteerParticipationHistory({ history }: Participation
     return (
         <DashboardSectionPage
             title="Participation History"
-            description="Your volunteer activity timeline"
+            description="Review your timeline of completed volunteer tasks, events, and service hours."
             badge={<DashboardMetricBadge icon={<Clock className="h-4 w-4" />} label={`${history?.total || 0} Events`} />}
         >
             {historyData.length === 0 ? (
