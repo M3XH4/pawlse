@@ -315,22 +315,36 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                             )}
 
                                             {/* Progress Indicator */}
-                                            <div className="flex items-center gap-3 mb-8">
-                                                {[1, 2, 3].map((step) => (
-                                                    <div key={step} className="flex items-center flex-1">
-                                                        <div className={`flex items-center justify-center w-10 h-10 rounded-full font-black transition-all ${currentStep >= step ? 'bg-paw-orange text-white' : 'bg-gray-200 text-gray-400'
-                                                            }`}>
-                                                            {step}
-                                                        </div>
-                                                        {step < 3 && (
-                                                            <div className={`flex-1 h-1 mx-2 rounded-full transition-all ${currentStep > step ? 'bg-paw-orange' : 'bg-gray-200'
-                                                                }`} />
-                                                        )}
+                                            <div className="max-w-md mx-auto mb-8 px-2">
+                                                <div className="relative flex items-center justify-between">
+                                                    {/* Background connecting track */}
+                                                    <div className="absolute left-5 right-5 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0">
+                                                        <div
+                                                            className="h-full bg-paw-orange rounded-full transition-all duration-300"
+                                                            style={{
+                                                                width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%'
+                                                            }}
+                                                        />
                                                     </div>
-                                                ))}
+
+                                                    {/* Step circles */}
+                                                    {[1, 2, 3].map((step) => (
+                                                        <div key={step} className="relative z-10 flex flex-col items-center">
+                                                            <div
+                                                                className={`flex items-center justify-center w-10 h-10 rounded-full font-black transition-all duration-300 ring-4 ring-white ${
+                                                                    currentStep >= step
+                                                                        ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/30'
+                                                                        : 'bg-gray-200 text-gray-400'
+                                                                }`}
+                                                            >
+                                                                {step}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
 
-                                            <p className="text-sm font-black text-paw-orange uppercase tracking-widest">
+                                            <p className="text-sm font-black text-paw-orange uppercase tracking-widest text-center">
                                                 {currentStep === 1 && 'Step 1: Basic Information'}
                                                 {currentStep === 2 && 'Step 2: Terms & Requirements'}
                                                 {currentStep === 3 && 'Step 3: Motivation & Submit'}

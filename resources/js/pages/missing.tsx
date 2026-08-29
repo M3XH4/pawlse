@@ -410,24 +410,40 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                 Our community network helps reunite families across Iligan.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              <div className="relative w-full sm:w-80">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
+              <div className="relative w-full sm:w-80 lg:w-96">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                  <Search size={18} />
+                </div>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Search breed, location, description..."
-                  className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-paw-navy text-sm shadow-xl shadow-paw-navy/5"
+                  className="w-full pl-11 pr-10 py-3.5 bg-white border-2 border-transparent hover:border-gray-100 focus:border-paw-orange rounded-2xl outline-none transition-all font-bold text-paw-navy text-sm shadow-xl shadow-paw-navy/5 placeholder:text-gray-400 placeholder:font-medium"
                 />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      router.get('/missing', { search: '', status: statusFilter }, { preserveState: true, preserveScroll: true });
+                    }}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-paw-navy transition-colors cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
               <button
+                type="button"
                 onClick={() => setReportModalOpen(true)}
-                className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3"
+                className="px-6 py-3.5 bg-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-red-700 active:scale-[0.98] transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-2.5 shrink-0 whitespace-nowrap cursor-pointer"
               >
-                <Camera size={20} />
-                REPORT MISSING
+                <Camera size={18} className="shrink-0" />
+                <span>REPORT MISSING</span>
               </button>
             </div>
           </div>

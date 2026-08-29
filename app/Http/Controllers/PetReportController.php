@@ -19,6 +19,8 @@ class PetReportController extends Controller
      */
     public function storeRescue(Request $request)
     {
+        $user = Auth::user();
+
         $validated = $request->validate([
             'animal_type' => ['required', 'string', 'in:Dog,Cat,Other'],
             'breed' => ['nullable', 'string', 'max:255'],
@@ -27,15 +29,13 @@ class PetReportController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'location' => ['required', 'string', 'max:255'],
-            'contact_name' => ['nullable', 'required_without:user_id', 'string', 'max:255'],
-            'contact_phone' => ['nullable', 'required_without:user_id', 'string', 'max:255'],
+            'contact_name' => [$user ? 'nullable' : 'required', 'string', 'max:255'],
+            'contact_phone' => [$user ? 'nullable' : 'required', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],
             'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
-
-        $user = Auth::user();
 
         $report = PetReport::create([
             'user_id' => $user ? $user->id : null,
@@ -48,9 +48,9 @@ class PetReportController extends Controller
             'name' => $validated['name'] ?? null,
             'description' => $validated['description'] ?? null,
             'location' => $validated['location'],
-            'contact_name' => $validated['contact_name'] ?? ($user ? $user->name : 'Anonymous'),
-            'contact_phone' => $validated['contact_phone'] ?? null,
-            'contact_email' => $validated['contact_email'] ?? ($user ? $user->email : null),
+            'contact_name' => ! empty($validated['contact_name']) ? $validated['contact_name'] : ($user ? $user->name : 'Anonymous'),
+            'contact_phone' => ! empty($validated['contact_phone']) ? $validated['contact_phone'] : null,
+            'contact_email' => ! empty($validated['contact_email']) ? $validated['contact_email'] : ($user ? $user->email : null),
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
             'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
         ]);

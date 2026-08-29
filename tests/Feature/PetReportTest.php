@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\AiPredictionLog;
 use App\Models\AssignedTask;
 use App\Models\PetReport;
 use App\Models\User;
@@ -332,4 +333,119 @@ test('volunteer can resolve an assigned rescue report and status propagates to t
 
     $task->refresh();
     expect($task->status)->toBe('completed');
+});
+
+test('guest can submit an AI-assisted rescue report with prediction log and contact info', function () {
+    $predictionLog = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'input_data' => ['image_name' => 'aspin.jpg'],
+        'output_data' => [
+            'species' => 'dog',
+            'breed' => 'Aspin (Mixed Breed)',
+            'age_group' => 'Adult: 1 to 7 years',
+            'gender' => 'Male',
+            'suggested_name' => 'Buddy',
+            'confidence' => 0.92,
+        ],
+        'confidence' => 0.92,
+    ]);
+
+    $response = $this->post('/pet-reports/rescue', [
+        'animal_type' => 'Dog',
+        'breed' => 'Aspin (Mixed Breed)',
+        'age_category' => 'Adult: 1 to 7 years',
+        'gender' => 'Male',
+        'name' => 'Buddy',
+        'description' => 'AI detected stray dog in need of rescue.',
+        'location' => 'Iligan City Public Plaza',
+        'contact_name' => 'Guest Reporter',
+        'contact_phone' => '09123456789',
+        'contact_email' => 'guest@example.com',
+        'ai_prediction_log_id' => $predictionLog->id,
+        'images' => [
+            UploadedFile::fake()->image('aspin.jpg'),
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('pet_reports', [
+        'type' => 'rescue',
+        'animal_type' => 'Dog',
+        'breed' => 'Aspin (Mixed Breed)',
+        'contact_name' => 'Guest Reporter',
+        'contact_phone' => '09123456789',
+        'ai_prediction_log_id' => $predictionLog->id,
+        'ai_validation_status' => 'pending',
+        'status' => 'pending',
+    ]);
+});
+
+test('guest cannot submit a rescue report without contact name or contact phone', function () {
+    $response = $this->post('/pet-reports/rescue', [
+        'animal_type' => 'Dog',
+        'location' => 'Iligan City Hall',
+    ]);
+
+    $response->assertSessionHasErrors(['contact_name', 'contact_phone']);
+});
+
+test('authenticated user can submit an AI-assisted rescue report without explicit contact fields', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+        'role' => Role::User->value,
+    ]);
+
+    $predictionLog = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'input_data' => ['image_name' => 'cat.jpg'],
+        'output_data' => ['species' => 'cat', 'breed' => 'Domestic Short Hair'],
+        'confidence' => 0.88,
+    ]);
+
+    $response = $this->actingAs($user)->post('/pet-reports/rescue', [
+        'animal_type' => 'Cat',
+        'breed' => 'Domestic Short Hair',
+        'age_category' => 'Adult: 1 to 7 years',
+        'gender' => 'Female',
+        'name' => 'Mimi',
+        'description' => 'Found kitten near clinic.',
+        'location' => 'Pala-o Market',
+        'ai_prediction_log_id' => $predictionLog->id,
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('pet_reports', [
+        'type' => 'rescue',
+        'user_id' => $user->id,
+        'animal_type' => 'Cat',
+        'breed' => 'Domestic Short Hair',
+        'contact_name' => 'John Doe',
+        'contact_email' => 'john@example.com',
+        'ai_prediction_log_id' => $predictionLog->id,
+        'ai_validation_status' => 'pending',
+    ]);
+});
+
+test('authenticated user can submit a rescue report with custom contact phone', function () {
+    $user = User::factory()->create([
+        'name' => 'Jane Smith',
+        'email' => 'jane@example.com',
+        'role' => Role::User->value,
+    ]);
+
+    $response = $this->actingAs($user)->post('/pet-reports/rescue', [
+        'animal_type' => 'Dog',
+        'location' => 'Suarez Highway',
+        'contact_phone' => '09987654321',
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('pet_reports', [
+        'type' => 'rescue',
+        'user_id' => $user->id,
+        'contact_name' => 'Jane Smith',
+        'contact_phone' => '09987654321',
+        'contact_email' => 'jane@example.com',
+    ]);
 });

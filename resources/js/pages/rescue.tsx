@@ -1,6 +1,6 @@
 import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
@@ -72,11 +72,18 @@ export default function RescuePage() {
     // Location detection state
     const [detectingLocation, setDetectingLocation] = useState(false);
 
-    // Guest contact fields
-    const [contactName, setContactName] = useState('');
+    // Contact fields
+    const [contactName, setContactName] = useState(user?.name || '');
     const [contactPhone, setContactPhone] = useState('');
-    const [contactEmail, setContactEmail] = useState('');
+    const [contactEmail, setContactEmail] = useState(user?.email || '');
     const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            if (!contactName && user.name) setContactName(user.name);
+            if (!contactEmail && user.email) setContactEmail(user.email);
+        }
+    }, [user]);
 
     // Age category options based on animal type
     const dogAgeCategories = [
@@ -245,7 +252,7 @@ export default function RescuePage() {
             return;
         }
 
-        if (!user && (!contactName || !contactPhone)) {
+        if (!user && (!contactName.trim() || !contactPhone.trim())) {
             toast.error('Contact Name and Phone are required for guests.');
             return;
         }
@@ -261,10 +268,18 @@ export default function RescuePage() {
         formData.append('description', incidentDesc || '');
         formData.append('location', location);
         
-        if (!user) {
-            formData.append('contact_name', contactName);
-            formData.append('contact_phone', contactPhone);
-            formData.append('contact_email', contactEmail);
+        const reporterName = contactName.trim() || (user?.name ?? '');
+        const reporterPhone = contactPhone.trim();
+        const reporterEmail = contactEmail.trim() || (user?.email ?? '');
+
+        if (reporterName) {
+            formData.append('contact_name', reporterName);
+        }
+        if (reporterPhone) {
+            formData.append('contact_phone', reporterPhone);
+        }
+        if (reporterEmail) {
+            formData.append('contact_email', reporterEmail);
         }
 
         if (predictionLogId) {
@@ -467,30 +482,41 @@ export default function RescuePage() {
                                 </button>
 
                                 {/* Wizard Progress Bar */}
-                                <div className="mb-12">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="max-w-2xl mx-auto mb-12 px-4">
+                                    <div className="relative flex items-center justify-between">
+                                        {/* Background connecting track */}
+                                        <div className="absolute left-6 right-6 top-5 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0">
+                                            <div
+                                                className="h-full bg-paw-orange rounded-full transition-all duration-300"
+                                                style={{
+                                                    width: wizardStep === 1 ? '0%' : wizardStep === 2 ? '50%' : '100%'
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Step nodes */}
                                         {[
                                             { num: 1, label: 'Upload Photo' },
                                             { num: 2, label: 'AI Results' },
                                             { num: 3, label: 'Complete Report' }
-                                        ].map((step, idx) => (
-                                            <div key={step.num} className="flex items-center flex-1">
-                                                <div className="flex flex-col items-center">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${wizardStep >= step.num
-                                                        ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/30'
-                                                        : 'bg-gray-200 text-gray-400'
-                                                        }`}>
-                                                        {wizardStep > step.num ? <CheckCircle2 size={20} /> : step.num}
-                                                    </div>
-                                                    <span className={`text-xs font-black mt-2 uppercase tracking-widest ${wizardStep >= step.num ? 'text-paw-orange' : 'text-gray-400'
-                                                        }`}>
-                                                        {step.label}
-                                                    </span>
+                                        ].map((step) => (
+                                            <div key={step.num} className="relative z-10 flex flex-col items-center">
+                                                <div
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 ring-4 ring-paw-bg ${
+                                                        wizardStep >= step.num
+                                                            ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/30'
+                                                            : 'bg-gray-200 text-gray-400'
+                                                    }`}
+                                                >
+                                                    {wizardStep > step.num ? <CheckCircle2 size={20} /> : step.num}
                                                 </div>
-                                                {idx < 2 && (
-                                                    <div className={`flex-1 h-1 mx-2 rounded-full transition-all ${wizardStep > step.num ? 'bg-paw-orange' : 'bg-gray-200'
-                                                        }`} />
-                                                )}
+                                                <span
+                                                    className={`text-xs font-black mt-2 uppercase tracking-widest text-center whitespace-nowrap ${
+                                                        wizardStep >= step.num ? 'text-paw-orange' : 'text-gray-400'
+                                                    }`}
+                                                >
+                                                    {step.label}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -848,8 +874,56 @@ export default function RescuePage() {
                                                     <p className="text-xs text-gray-400 font-bold mt-2">Click "Pin Location" to detect your address</p>
                                                 </div>
 
-                                                {/* Guest Contact Details */}
-                                                {!user && (
+                                                {/* Contact Details */}
+                                                {user ? (
+                                                    <div className="bg-emerald-50/60 p-6 rounded-3xl border-2 border-emerald-500/20 space-y-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <ShieldCheck className="text-emerald-600" size={20} />
+                                                                <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">
+                                                                    Your Contact Information (Logged In)
+                                                                </h4>
+                                                            </div>
+                                                            <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                                                                Verified Account
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={contactName}
+                                                                    onChange={(e) => setContactName(e.target.value)}
+                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                                    placeholder={user.name || 'Reporter Name'}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
+                                                                    Phone Number (For Responders)
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={contactPhone}
+                                                                    onChange={(e) => setContactPhone(e.target.value)}
+                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                                    placeholder="e.g. 0912 345 6789"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email</label>
+                                                            <input
+                                                                type="email"
+                                                                value={contactEmail}
+                                                                onChange={(e) => setContactEmail(e.target.value)}
+                                                                className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                                placeholder={user.email || 'email@example.com'}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ) : (
                                                     <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
                                                         <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
                                                         <div className="grid md:grid-cols-2 gap-4">
@@ -895,11 +969,19 @@ export default function RescuePage() {
                                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                                         <div>
                                                             <p className="text-gray-400 font-bold">Animal</p>
-                                                            <p className="font-black text-paw-navy">{animalType} - {breed}</p>
+                                                            <p className="font-black text-paw-navy">{animalType} - {breed || 'Unspecified'}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-400 font-bold">Age/Gender</p>
                                                             <p className="font-black text-paw-navy">{ageCategory.split(':')[0]} / {gender}</p>
+                                                        </div>
+                                                        <div className="col-span-2 pt-2 border-t border-paw-orange/10">
+                                                            <p className="text-gray-400 font-bold">Reporter Contact</p>
+                                                            <p className="font-black text-paw-navy">
+                                                                {contactName || (user ? user.name : 'Guest')}
+                                                                {contactPhone ? ` · ${contactPhone}` : ''}
+                                                                {contactEmail ? ` · ${contactEmail}` : (user?.email ? ` · ${user.email}` : '')}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1112,12 +1194,25 @@ export default function RescuePage() {
 
                                         </div>
 
-                                        <button
-                                            onClick={handleReset}
-                                            className="w-full bg-paw-navy text-white py-6 rounded-[24px] font-black text-xl hover:bg-paw-orange transition-all shadow-xl flex items-center justify-center gap-3"
-                                        >
-                                            IDENTIFY ANOTHER ANIMAL
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row gap-4">
+                                            <button
+                                                onClick={() => {
+                                                    setMode('ai-full');
+                                                    setWizardStep(2);
+                                                    toast.info('Switched to full rescue report mode with your AI findings.');
+                                                }}
+                                                className="flex-1 bg-paw-orange text-white py-6 rounded-[24px] font-black text-lg hover:bg-orange-600 transition-all shadow-xl flex items-center justify-center gap-3"
+                                            >
+                                                <Siren size={24} />
+                                                SUBMIT RESCUE REPORT FOR THIS ANIMAL
+                                            </button>
+                                            <button
+                                                onClick={handleReset}
+                                                className="sm:w-auto px-8 bg-paw-navy text-white py-6 rounded-[24px] font-black text-lg hover:bg-gray-800 transition-all shadow-xl flex items-center justify-center gap-3"
+                                            >
+                                                IDENTIFY ANOTHER ANIMAL
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </motion.div>
@@ -1346,8 +1441,56 @@ export default function RescuePage() {
                                             <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to detect your address</p>
                                         </div>
 
-                                        {/* Guest Contact Details */}
-                                        {!user && (
+                                        {/* Contact Details */}
+                                        {user ? (
+                                            <div className="bg-emerald-50/60 p-6 rounded-3xl border-2 border-emerald-500/20 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <ShieldCheck className="text-emerald-600" size={20} />
+                                                        <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">
+                                                            Your Contact Information (Logged In)
+                                                        </h4>
+                                                    </div>
+                                                    <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                                                        Verified Account
+                                                    </span>
+                                                </div>
+                                                <div className="grid md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name</label>
+                                                        <input
+                                                            type="text"
+                                                            value={contactName}
+                                                            onChange={(e) => setContactName(e.target.value)}
+                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                            placeholder={user.name || 'Reporter Name'}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
+                                                            Phone Number (For Responders)
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={contactPhone}
+                                                            onChange={(e) => setContactPhone(e.target.value)}
+                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                            placeholder="e.g. 0912 345 6789"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        value={contactEmail}
+                                                        onChange={(e) => setContactEmail(e.target.value)}
+                                                        className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                        placeholder={user.email || 'email@example.com'}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
                                             <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
                                                 <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
                                                 <div className="grid md:grid-cols-2 gap-4">
