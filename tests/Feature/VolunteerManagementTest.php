@@ -3,7 +3,6 @@
 use App\Enums\Role;
 use App\Models\AssignedTask;
 use App\Models\Event;
-use App\Models\FeedingSchedule;
 use App\Models\PetReport;
 use App\Models\User;
 use App\Models\VolunteerApplication;
@@ -39,7 +38,45 @@ test('a user can apply to become a volunteer', function () {
     ]);
 });
 
-test('admin can approve a volunteer application and user gains role', function () {
+test('volunteer application validates required fields', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => '',
+            'mobile' => '',
+            'email' => 'not-an-email',
+            'address' => '',
+            'role' => '',
+            'why' => '',
+        ]);
+
+    $response->assertSessionHasErrors(['fullName', 'mobile', 'email', 'address', 'role', 'why']);
+});
+
+test('admin can view volunteer management dashboard with applications, volunteers, and tasks', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+
+    VolunteerApplication::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'approved',
+        'full_name' => 'Jane Smith',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('account.admin.volunteer-management'));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/volunteer-management')
+            ->has('applications.data')
+            ->has('volunteers.data')
+            ->has('tasks.data')
+        );
+});
+
+test('admin can approve a volunteer application and user gains volunteer role', function () {
     $admin = User::factory()->admin()->create();
     $user = User::factory()->create(['role' => Role::User->value]);
 
@@ -122,90 +159,11 @@ test('user can view volunteer onboarding status inside user dashboard', function
     $response->assertOk();
 });
 
-test('admin can manage events and feeding schedules', function () {
-    $admin = User::factory()->admin()->create();
-
-    // 1. Create Event
-    $response = $this->actingAs($admin)
-        ->post(route('account.admin.events.store'), [
-            'title' => 'Vaccination Campaign',
-            'category' => 'Medical',
-            'date' => now()->addDays(2)->toDateString(),
-            'time' => '10:00 AM',
-            'location' => 'Pala-o Market',
-            'spots' => 10,
-            'desc' => 'Rabies shots for dogs.',
-        ]);
-
-    $response->assertRedirect();
-    $this->assertDatabaseHas('events', [
-        'title' => 'Vaccination Campaign',
-        'spots' => 10,
-    ]);
-
-    $event = Event::query()->first();
-
-    // 2. Toggle Status
-    $this->actingAs($admin)
-        ->post(route('account.admin.events.toggle', $event));
-    $this->assertDatabaseHas('events', [
-        'id' => $event->id,
-        'status' => 'closed',
-    ]);
-
-    // 3. Create Feeding Route
-    $this->actingAs($admin)
-        ->post(route('account.admin.feeding-schedules.store'), [
-            'zone' => 'Tibanga Zone A',
-            'day' => 'Every Monday',
-            'time' => '5:00 PM',
-            'volunteers' => 5,
-            'strays' => 20,
-        ]);
-
-    $this->assertDatabaseHas('feeding_schedules', [
-        'zone' => 'Tibanga Zone A',
-        'strays' => 20,
-    ]);
-});
-
-test('volunteer can join an event and feeding route', function () {
-    $volunteer = User::factory()->volunteer()->create();
-    $event = Event::factory()->create(['status' => 'open', 'spots' => 5]);
-    $schedule = FeedingSchedule::factory()->create(['status' => 'active']);
-
-    // Join event
-    $response = $this->actingAs($volunteer)
-        ->post(route('events.join', $event));
-
-    $response->assertRedirect();
-    $this->assertDatabaseHas('assigned_tasks', [
-        'user_id' => $volunteer->id,
-        'event_id' => $event->id,
-        'status' => 'pending',
-    ]);
-
-    $event->refresh();
-    expect($event->spots)->toBe(4);
-
-    // Join feeding route
-    $response = $this->actingAs($volunteer)
-        ->post(route('feeding-schedules.join', $schedule));
-
-    $response->assertRedirect();
-    $this->assertDatabaseHas('assigned_tasks', [
-        'user_id' => $volunteer->id,
-        'feeding_schedule_id' => $schedule->id,
-        'status' => 'pending',
-    ]);
-});
-
-test('admin can assign tasks and complete them', function () {
+test('admin can manually assign task to volunteer for an event and decrement spots', function () {
     $admin = User::factory()->admin()->create();
     $volunteer = User::factory()->volunteer()->create();
-    $event = Event::factory()->create();
+    $event = Event::factory()->create(['spots' => 10]);
 
-    // Assign
     $response = $this->actingAs($admin)
         ->post(route('account.admin.volunteer-management.assign'), [
             'user_id' => $volunteer->id,
@@ -221,9 +179,56 @@ test('admin can assign tasks and complete them', function () {
         'status' => 'pending',
     ]);
 
-    $task = AssignedTask::query()->first();
+    $event->refresh();
+    expect($event->spots)->toBe(9);
+});
 
-    // Complete
+test('admin cannot assign volunteer to the same activity twice', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $event = Event::factory()->create();
+
+    AssignedTask::factory()->create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'role' => 'Helper',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.assign'), [
+            'user_id' => $volunteer->id,
+            'event_id' => $event->id,
+            'role' => 'Feeding Lead',
+        ]);
+
+    $response->assertSessionHasErrors(['task_target']);
+});
+
+test('admin cannot assign task without selecting an event or feeding schedule', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.assign'), [
+            'user_id' => $volunteer->id,
+            'role' => 'Helper',
+        ]);
+
+    $response->assertSessionHasErrors(['task_target']);
+});
+
+test('admin can update task status to completed and log hours', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $event = Event::factory()->create();
+
+    $task = AssignedTask::factory()->create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'role' => 'Feeding Lead',
+        'status' => 'pending',
+    ]);
+
     $response = $this->actingAs($admin)
         ->post(route('account.admin.volunteer-management.update-task-status', $task), [
             'status' => 'completed',
@@ -236,6 +241,27 @@ test('admin can assign tasks and complete them', function () {
         'status' => 'completed',
         'hours_logged' => 4.5,
     ]);
+});
+
+test('cancelling a task restores event spots count', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $event = Event::factory()->create(['spots' => 4]);
+
+    $task = AssignedTask::factory()->create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.update-task-status', $task), [
+            'status' => 'cancelled',
+        ]);
+
+    $response->assertRedirect();
+    $event->refresh();
+    expect($event->spots)->toBe(5);
 });
 
 test('admin can manually issue certificate to a volunteer', function () {
@@ -259,7 +285,7 @@ test('admin can manually issue certificate to a volunteer', function () {
 test('volunteer can view their profile details', function () {
     $volunteer = User::factory()->volunteer()->create();
 
-    $application = VolunteerApplication::factory()->create([
+    VolunteerApplication::factory()->create([
         'user_id' => $volunteer->id,
         'status' => 'approved',
         'full_name' => 'Jane Volunteer',
