@@ -31,13 +31,21 @@ class VerifyEmailOtpNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $timezone = config('app.timezone', 'UTC');
+        $formattedExpiry = $this->expiresAt->timezone($timezone)->format('g:i A (T)');
+        $recipientName = $notifiable->name ?? 'Valued Member';
+
         return (new MailMessage)
-            ->subject('Verify your Pawlse email')
-            ->greeting('Welcome to Pawlse!')
-            ->line('Use this 6-digit code to verify your email address:')
-            ->line($this->otp)
-            ->line('This code expires at '.$this->expiresAt->timezone(config('app.timezone'))->format('g:i A').'.')
-            ->line('If you did not create an account, no further action is required.');
+            ->subject('Your Pawlse Verification Code: '.$this->otp)
+            ->greeting("Hello {$recipientName},")
+            ->line('Welcome to **Pawlse** — the community platform connecting animal rescues, loving pet adoptions, and volunteer care.')
+            ->line('To complete your account verification and ensure the security of your profile, please use the following 6-digit verification code:')
+            ->line('## **'.$this->otp.'**')
+            ->line('**Security & Verification Details:**')
+            ->line("• **Validity:** This code will expire at **{$formattedExpiry}** (10-minute window).")
+            ->line('• **Security Alert:** For your protection, never share this code with anyone. Pawlse staff will never ask for your one-time code.')
+            ->line('• **Assistance:** If you did not create an account on Pawlse, no further action is required and you can safely ignore this message.')
+            ->salutation("Warm regards,\nThe Pawlse Community & Security Team");
     }
 
     /**

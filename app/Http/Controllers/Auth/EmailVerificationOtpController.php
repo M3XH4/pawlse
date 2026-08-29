@@ -19,6 +19,10 @@ class EmailVerificationOtpController extends Controller
             return redirect()->route('dashboard');
         }
 
+        if ($request->user()->email_verification_otp_hash === null || $request->user()->emailVerificationOtpExpired()) {
+            $request->user()->sendEmailVerificationNotification();
+        }
+
         return Inertia::render('auth/verify-email', [
             'status' => $request->session()->get('status'),
             'email' => $request->user()->email,
