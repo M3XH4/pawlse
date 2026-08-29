@@ -8,6 +8,7 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { SubmissionReceipt } from '@/components/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { TransparencyAuditModal, type AuditRecord } from '@/components/transparency-audit-modal';
 
 interface DonateProps {
     wishlist?: Array<{
@@ -31,6 +32,7 @@ interface DonateProps {
         type: string;
         receipt: string;
     }>;
+    auditRecords?: AuditRecord[];
     progressStats?: {
         total: number;
         goal: number;
@@ -43,6 +45,7 @@ interface DonateProps {
 export default function Donate({
     wishlist = [],
     recentDonations = [],
+    auditRecords = [],
     progressStats = { total: 0, goal: 50000, percentage: 0 },
     donationSuccess = false,
     successRef = ''
@@ -616,75 +619,12 @@ export default function Donate({
                 )}
             </AnimatePresence>
 
-            {/* Audit History Modal */}
-            <AnimatePresence>
-                {showAuditModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowAuditModal(false)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[24px] md:rounded-[40px] max-w-4xl w-full max-h-[80vh] overflow-hidden relative z-10 shadow-2xl flex flex-col"
-                        >
-                            {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-paw-navy to-paw-blue text-white p-6 md:p-8 z-20 flex justify-between items-center">
-                                <div>
-                                    <h3 className="text-xl md:text-3xl font-black">Transparency Public Log</h3>
-                                    <p className="text-xs md:text-sm font-bold text-white/80">List of verified cash & sponsorship contributions</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowAuditModal(false)}
-                                    className="p-2 hover:bg-white/20 rounded-xl transition-colors cursor-pointer"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            {/* Audit Records */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                                {recentDonations.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-                                        <p className="text-gray-500 font-bold">No public records found</p>
-                                    </div>
-                                ) : (
-                                    recentDonations.map((record, index) => (
-                                        <div
-                                            key={index}
-                                            className="bg-white border-2 border-gray-100 rounded-2xl p-6 flex justify-between items-center"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-paw-orange/10 rounded-xl flex items-center justify-center">
-                                                    <Heart className="text-paw-orange" size={24} />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-black text-paw-navy text-lg">{record.name}</h4>
-                                                    <p className="text-xs font-bold text-gray-400">{record.time} • Reference: {record.receipt}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-xs font-black bg-blue-50 text-paw-blue px-3 py-1 rounded-full uppercase tracking-wider mr-3">
-                                                    {record.type}
-                                                </span>
-                                                <span className="text-2xl font-black text-paw-orange">
-                                                    {record.amount}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            {/* Transparency Audit History Modal */}
+            <TransparencyAuditModal
+                isOpen={showAuditModal}
+                onClose={() => setShowAuditModal(false)}
+                records={auditRecords}
+            />
 
             {/* Animal Wishlist Modal */}
             <AnimatePresence>

@@ -47,22 +47,77 @@ class DonateController extends Controller
             ];
         });
 
-        // 2. Fetch Recent public verified/completed donations
-        $recentDonations = Donation::query()
+        // 2. Fetch Verified & Completed Donations for Public Transparency Audit Log
+        $publicDonations = Donation::query()
+            ->with(['inKindDonation', 'feedingSponsorship'])
             ->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])
-            ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
             ->latest('id')
-            ->limit(10)
-            ->get()
-            ->map(function ($donation) {
-                return [
-                    'name' => $donation->anonymous ? 'Anonymous' : $donation->donor_name,
-                    'amount' => '₱'.number_format($donation->amount),
-                    'time' => $donation->created_at->diffForHumans(),
-                    'type' => $donation->type === DonationType::FeedingSponsorship->value ? 'Feeding Sponsor' : 'Cash',
-                    'receipt' => $donation->public_reference,
-                ];
-            });
+            ->get();
+
+        $auditRecords = $publicDonations->map(function ($donation) {
+            $typeLabel = match ($donation->type) {
+                DonationType::Cash->value => 'Cash',
+                DonationType::InKind->value => 'In-Kind',
+                DonationType::FeedingSponsorship->value => 'Sponsor Feeding',
+                default => ucfirst((string) $donation->type),
+            };
+
+            $purpose = $donation->purpose;
+            $displayAmount = $donation->amount ? '₱'.number_format($donation->amount) : null;
+            $inKindQuantity = null;
+
+            if ($donation->type === DonationType::InKind->value && $donation->inKindDonation) {
+                $inKindQuantity = $donation->inKindDonation->quantity;
+                if (! $purpose) {
+                    $purpose = 'In-Kind drop-off: '.$donation->inKindDonation->description;
+                }
+            } elseif ($donation->type === DonationType::FeedingSponsorship->value && $donation->feedingSponsorship) {
+                $sponsor = $donation->feedingSponsorship;
+                $details = [];
+                if ($sponsor->occasion) {
+                    $details[] = 'Occasion: '.$sponsor->occasion;
+                }
+                if ($sponsor->message) {
+                    $details[] = '"'.$sponsor->message.'"';
+                }
+                if (! $purpose) {
+                    $purpose = 'Full route stray feeding day on '.$sponsor->preferred_date.($details ? ' • '.implode(' • ', $details) : '');
+                }
+            }
+
+            if (! $purpose) {
+                $purpose = 'Veterinary care, rescue operations, and stray feeding support';
+            }
+
+            return [
+                'id' => $donation->id,
+                'name' => $donation->anonymous ? 'Anonymous' : ($donation->donor_name ?: 'Anonymous'),
+                'donor_name' => $donation->anonymous ? 'Anonymous Donor' : ($donation->donor_name ?: 'Anonymous Donor'),
+                'type' => $donation->type,
+                'type_label' => $typeLabel,
+                'amount' => $donation->amount ? (int) $donation->amount : null,
+                'formatted_amount' => $displayAmount,
+                'in_kind_quantity' => $inKindQuantity,
+                'purpose' => $purpose,
+                'receipt' => $donation->public_reference,
+                'status' => $donation->status,
+                'date' => $donation->created_at->format('Y-m-d'),
+                'created_at' => $donation->created_at->toISOString(),
+                'time' => $donation->created_at->diffForHumans(),
+                'year' => (int) $donation->created_at->format('Y'),
+                'month' => (int) $donation->created_at->format('n'),
+            ];
+        });
+
+        $recentDonations = $auditRecords->take(10)->values()->map(function ($record) {
+            return [
+                'name' => $record['name'],
+                'amount' => $record['formatted_amount'] ?? ($record['in_kind_quantity'] ?: 'In-Kind'),
+                'time' => $record['time'],
+                'type' => $record['type_label'],
+                'receipt' => $record['receipt'],
+            ];
+        });
 
         // 3. Current month cash/sponsor total
         $currentMonthTotal = Donation::query()
@@ -75,6 +130,7 @@ class DonateController extends Controller
         return Inertia::render('donate', [
             'wishlist' => $wishlist,
             'recentDonations' => $recentDonations,
+            'auditRecords' => $auditRecords,
             'progressStats' => [
                 'total' => (int) $currentMonthTotal,
                 'goal' => 50000,
