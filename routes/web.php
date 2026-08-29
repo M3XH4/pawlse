@@ -133,6 +133,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
     Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');
+    Route::post('adoption-management/pets/{pet}/needs', [AdoptablePetController::class, 'storeNeed'])->name('adoption-management.pets.needs.store');
+    Route::put('adoption-management/needs/{need}', [AdoptablePetController::class, 'updateNeed'])->name('adoption-management.needs.update');
+    Route::delete('adoption-management/needs/{need}', [AdoptablePetController::class, 'destroyNeed'])->name('adoption-management.needs.destroy');
 
     // Volunteer Management Dashboard
     Route::get('volunteer-management', [VolunteerManagementController::class, 'index'])->name('volunteer-management');
@@ -143,8 +146,14 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate');
 
     Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
+    Route::post('donation-monitoring/donations/{donation}/verify-cash', [DonationMonitoringController::class, 'verifyCash'])->name('donation-monitoring.verify-cash');
+    Route::post('donation-monitoring/donations/{donation}/reject', [DonationMonitoringController::class, 'rejectDonation'])->name('donation-monitoring.reject');
     Route::post('donation-monitoring/in-kind/{donation}/verify', [DonationMonitoringController::class, 'verifyInKind'])->name('donation-monitoring.in-kind.verify');
     Route::post('donation-monitoring/inventory', [DonationMonitoringController::class, 'storeInventoryItem'])->name('donation-monitoring.inventory.store');
+    Route::put('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'updateInventoryItem'])->name('donation-monitoring.inventory.update');
+    Route::delete('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'destroyInventoryItem'])->name('donation-monitoring.inventory.destroy');
+    Route::post('donation-monitoring/inventory/{item}/batches', [DonationMonitoringController::class, 'storeBatch'])->name('donation-monitoring.inventory.batches.store');
+    Route::post('donation-monitoring/inventory/batches/{batch}/adjust', [DonationMonitoringController::class, 'adjustBatchStock'])->name('donation-monitoring.inventory.batches.adjust');
     Route::post('donation-monitoring/inventory/{item}/adjust', [DonationMonitoringController::class, 'adjustStock'])->name('donation-monitoring.inventory.adjust');
 
     // Event Management Dashboard

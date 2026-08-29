@@ -4,26 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class InventoryItem extends Model
+class InventoryBatch extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
 
     protected $casts = [
+        'expires_at' => 'date',
+        'received_at' => 'date',
         'quantity' => 'integer',
-        'min_threshold' => 'integer',
-        'has_expiry' => 'boolean',
+        'initial_quantity' => 'integer',
     ];
 
     /**
-     * @return HasMany<InventoryBatch, $this>
+     * @return BelongsTo<InventoryItem, $this>
      */
-    public function batches(): HasMany
+    public function item(): BelongsTo
     {
-        return $this->hasMany(InventoryBatch::class);
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
 
     /**

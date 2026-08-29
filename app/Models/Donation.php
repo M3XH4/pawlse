@@ -55,4 +55,9 @@ class Donation extends Model
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
+
+    public function proofs(): HasMany
+    {
+        return $this->hasMany(PaymentProof::class);
+    }
 }

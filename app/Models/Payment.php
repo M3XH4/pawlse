@@ -21,4 +21,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Donation::class);
     }
+
+    public function proof()
+    {
+        return $this->hasOne(PaymentProof::class);
+    }
 }

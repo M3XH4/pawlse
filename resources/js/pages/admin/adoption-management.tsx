@@ -1,6 +1,6 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare } from 'lucide-react';
+import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
@@ -71,6 +71,14 @@ interface Application {
   files: ApplicationFile[];
 }
 
+interface PetNeed {
+  id: number;
+  item: string;
+  quantity: string;
+  priority: string;
+  status: string;
+}
+
 interface Pet {
   id: number;
   name: string;
@@ -87,6 +95,7 @@ interface Pet {
   vaccinated: boolean;
   shelterDays: number;
   status: string;
+  needs?: PetNeed[];
 }
 
 interface AdoptionManagementProps {
@@ -101,6 +110,16 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [selectedPetForNeeds, setSelectedPetForNeeds] = useState<Pet | null>(null);
+  const [editingNeed, setEditingNeed] = useState<PetNeed | null>(null);
+
+  // Need Form State
+  const [needForm, setNeedForm] = useState({
+    item: '',
+    quantity: '1 unit',
+    priority: 'Medium',
+    status: 'open',
+  });
 
   // Application Filters & Search
   const [appSearch, setAppSearch] = useState('');
@@ -132,6 +151,7 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
     vaccinated: false,
     admittedAt: '',
     photo: null as File | null,
+    initial_needs: [] as Array<{ item: string; quantity: string; priority: string }>,
   });
 
   // Filtered Applications
@@ -410,11 +430,28 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                     <div className="p-4">
                       <h4 className="font-black text-paw-navy dark:text-white text-base truncate">{pet.name}</h4>
                       <p className="text-xs text-gray-400 font-bold mb-2 uppercase">{pet.breed}</p>
-                      <div className="flex gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                      <div className="flex gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-3">
                         <span>{pet.gender}</span>
                         <span>•</span>
                         <span>{pet.age}</span>
                       </div>
+
+                      {/* Wishlist / Needs Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedPetForNeeds(pet);
+                          setEditingNeed(null);
+                          setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
+                        }}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          pet.needs && pet.needs.length > 0
+                            ? 'bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-paw-orange hover:text-white'
+                        }`}
+                      >
+                        <Gift size={13} />
+                        <span>{pet.needs?.length ? `${pet.needs.length} Needs` : '+ Add Needs'}</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -918,6 +955,80 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                   </div>
                 </div>
 
+                {/* Initial Wishlist Needs */}
+                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-gray-500">Initial Wishlist Needs (Optional)</label>
+                      <p className="text-[11px] text-gray-400">Add items this pet urgently or specifically needs from donors.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPetData('initial_needs', [
+                          ...petData.initial_needs,
+                          { item: '', quantity: '1 unit', priority: 'Medium' }
+                        ]);
+                      }}
+                      className="px-3 py-1.5 bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white rounded-xl text-xs font-black transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      <span>Add Item</span>
+                    </button>
+                  </div>
+
+                  {petData.initial_needs.map((need, idx) => (
+                    <div key={idx} className="flex gap-2 items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl">
+                      <input
+                        type="text"
+                        placeholder="Item (e.g. Puppy Kibble)"
+                        value={need.item}
+                        onChange={(e) => {
+                          const updated = [...petData.initial_needs];
+                          updated[idx].item = e.target.value;
+                          setPetData('initial_needs', updated);
+                        }}
+                        className="flex-1 bg-white dark:bg-gray-900 px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Qty (e.g. 2 bags)"
+                        value={need.quantity}
+                        onChange={(e) => {
+                          const updated = [...petData.initial_needs];
+                          updated[idx].quantity = e.target.value;
+                          setPetData('initial_needs', updated);
+                        }}
+                        className="w-28 bg-white dark:bg-gray-900 px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      />
+                      <select
+                        value={need.priority}
+                        onChange={(e) => {
+                          const updated = [...petData.initial_needs];
+                          updated[idx].priority = e.target.value;
+                          setPetData('initial_needs', updated);
+                        }}
+                        className="w-28 bg-white dark:bg-gray-900 px-2 py-2 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      >
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = petData.initial_needs.filter((_, i) => i !== idx);
+                          setPetData('initial_needs', updated);
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     type="button"
@@ -935,6 +1046,269 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Wishlist / Needs Management Drawer */}
+      <AnimatePresence>
+        {selectedPetForNeeds && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedPetForNeeds(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-gray-900 rounded-[36px] max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10 relative shadow-2xl p-6 sm:p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between pb-6 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden shadow bg-gray-100 shrink-0">
+                    {selectedPetForNeeds.img ? (
+                      <ImageWithFallback src={formatPhotoUrl(selectedPetForNeeds.img)} alt={selectedPetForNeeds.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300"><Heart size={24} /></div>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-paw-orange uppercase tracking-widest block">In-Kind Donation Wishlist</span>
+                    <h3 className="text-2xl font-black text-paw-navy dark:text-white">{selectedPetForNeeds.name}'s Needs</h3>
+                    <p className="text-xs text-gray-400 font-bold uppercase">{selectedPetForNeeds.breed} • {selectedPetForNeeds.age}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPetForNeeds(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors cursor-pointer"
+                >
+                  <X size={22} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Existing Needs List */}
+              <div className="py-6 space-y-4">
+                <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest">Active & Listed Needs</h4>
+                {(!selectedPetForNeeds.needs || selectedPetForNeeds.needs.length === 0) ? (
+                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <Gift className="mx-auto text-gray-300 mb-2" size={32} />
+                    <p className="text-xs font-bold text-gray-400">No wishlist needs listed for this animal yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedPetForNeeds.needs.map((need) => (
+                      <div
+                        key={need.id}
+                        className="bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              router.put(route('account.admin.adoption-management.needs.update', need.id), {
+                                item: need.item,
+                                quantity: need.quantity,
+                                priority: need.priority,
+                                status: need.status === 'open' ? 'fulfilled' : 'open',
+                              }, {
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                  if (selectedPetForNeeds.needs) {
+                                    const updated = selectedPetForNeeds.needs.map(n => n.id === need.id ? { ...n, status: n.status === 'open' ? 'fulfilled' : 'open' } : n);
+                                    setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
+                                  }
+                                }
+                              });
+                            }}
+                            title="Click to toggle Open / Fulfilled"
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                              need.status === 'fulfilled'
+                                ? 'bg-paw-green text-white'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:text-paw-navy hover:bg-gray-300'
+                            }`}
+                          >
+                            <Check size={14} />
+                          </button>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h5 className={`font-black text-sm ${need.status === 'fulfilled' ? 'line-through text-gray-400' : 'text-paw-navy dark:text-white'}`}>
+                                {need.item}
+                              </h5>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                need.priority === 'Urgent' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                need.priority === 'High' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                              }`}>
+                                {need.priority}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                need.status === 'fulfilled' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                                {need.status}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-gray-400 mt-0.5">Quantity needed: {need.quantity}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            onClick={() => {
+                              setEditingNeed(need);
+                              setNeedForm({
+                                item: need.item,
+                                quantity: need.quantity,
+                                priority: need.priority,
+                                status: need.status,
+                              });
+                            }}
+                            className="p-2 text-gray-400 hover:text-paw-orange hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer"
+                            title="Edit need"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove "${need.item}" from wishlist?`)) {
+                                router.delete(route('account.admin.adoption-management.needs.destroy', need.id), {
+                                  preserveScroll: true,
+                                  onSuccess: () => {
+                                    if (selectedPetForNeeds.needs) {
+                                      const updated = selectedPetForNeeds.needs.filter(n => n.id !== need.id);
+                                      setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
+                                    }
+                                  }
+                                });
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer"
+                            title="Delete need"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add or Edit Need Form */}
+              <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest">
+                    {editingNeed ? `Edit Wishlist Item: ${editingNeed.item}` : 'Add New Wishlist Need'}
+                  </h4>
+                  {editingNeed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingNeed(null);
+                        setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
+                      }}
+                      className="text-xs font-bold text-gray-400 hover:text-gray-600 underline cursor-pointer"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (editingNeed) {
+                      router.put(route('account.admin.adoption-management.needs.update', editingNeed.id), needForm, {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                          setEditingNeed(null);
+                          setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
+                          if (selectedPetForNeeds.needs) {
+                            const updated = selectedPetForNeeds.needs.map(n => n.id === editingNeed.id ? { ...n, ...needForm } : n);
+                            setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
+                          }
+                        }
+                      });
+                    } else {
+                      router.post(route('account.admin.adoption-management.pets.needs.store', selectedPetForNeeds.id), needForm, {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                          setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
+                        }
+                      });
+                    }
+                  }}
+                  className="space-y-4 bg-gray-50 dark:bg-gray-800/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-800"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Item Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Kitten Milk Replacer, 5kg Kibble"
+                        value={needForm.item}
+                        onChange={(e) => setNeedForm({ ...needForm, item: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Quantity Needed *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 2 cans / 5 kg / 1 vial"
+                        value={needForm.quantity}
+                        onChange={(e) => setNeedForm({ ...needForm, quantity: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Priority Level</label>
+                      <select
+                        value={needForm.priority}
+                        onChange={(e) => setNeedForm({ ...needForm, priority: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      >
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Status</label>
+                      <select
+                        value={needForm.status}
+                        onChange={(e) => setNeedForm({ ...needForm, status: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
+                      >
+                        <option value="open">Open (Accepting Donations)</option>
+                        <option value="fulfilled">Fulfilled</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Plus size={14} />
+                      <span>{editingNeed ? 'Save Changes' : 'Add Item to Wishlist'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}

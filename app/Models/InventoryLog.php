@@ -21,6 +21,14 @@ class InventoryLog extends Model
     }
 
     /**
+     * @return BelongsTo<InventoryBatch, $this>
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(InventoryBatch::class, 'inventory_batch_id');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

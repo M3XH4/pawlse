@@ -88,7 +88,8 @@ class AdoptionManagementController extends Controller
                 ];
             });
 
-        $pets = ShelterAnimal::latest()
+        $pets = ShelterAnimal::with('needs')
+            ->latest()
             ->get()
             ->map(function ($pet) {
                 return [
@@ -107,6 +108,15 @@ class AdoptionManagementController extends Controller
                     'vaccinated' => (bool) $pet->vaccinated,
                     'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 0,
                     'status' => $pet->status->value,
+                    'needs' => $pet->needs->map(function ($need) {
+                        return [
+                            'id' => $need->id,
+                            'item' => $need->item,
+                            'quantity' => $need->quantity,
+                            'priority' => $need->priority,
+                            'status' => $need->status,
+                        ];
+                    }),
                 ];
             });
 

@@ -3,6 +3,7 @@
 use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
+use App\Models\AnimalDonationNeed;
 use App\Models\ShelterAnimal;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -112,4 +113,91 @@ test('admin can add a new shelter pet', function () {
     $pet = ShelterAnimal::where('name', 'Rocky')->first();
     expect($pet->photo_url)->not->toBeNull();
     Storage::disk('public')->assertExists(str_replace('/storage/', '', $pet->photo_url));
+});
+
+test('admin can add a new shelter pet with initial wishlist needs', function () {
+    Storage::fake('public');
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.pets.store'), [
+            'name' => 'Max',
+            'type' => 'dog',
+            'breed' => 'Golden Retriever',
+            'age' => '1 yr',
+            'ageCategory' => 'young',
+            'gender' => 'male',
+            'color' => 'Golden',
+            'behavior' => 'Playful and gentle',
+            'story' => 'Found wandering in the neighborhood.',
+            'vaccinated' => 1,
+            'admittedAt' => '2026-08-10',
+            'initial_needs' => [
+                ['item' => 'Puppy Kibble', 'quantity' => '2 bags', 'priority' => 'High'],
+                ['item' => 'Anti-Rabies Vaccine', 'quantity' => '1 vial', 'priority' => 'Urgent'],
+            ],
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $pet = ShelterAnimal::where('name', 'Max')->first();
+    expect($pet)->not->toBeNull();
+    expect($pet->needs)->toHaveCount(2);
+
+    $this->assertDatabaseHas('animal_donation_needs', [
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Puppy Kibble',
+        'quantity' => '2 bags',
+        'priority' => 'High',
+        'status' => 'open',
+    ]);
+});
+
+test('admin can add, update and delete a wishlist need for an existing shelter pet', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['name' => 'Bella']);
+
+    // 1. Add need
+    $addResponse = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.pets.needs.store', $pet), [
+            'item' => 'Cat Carrier',
+            'quantity' => '1 unit',
+            'priority' => 'High',
+            'status' => 'open',
+        ]);
+
+    $addResponse->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('animal_donation_needs', [
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Cat Carrier',
+        'quantity' => '1 unit',
+        'priority' => 'High',
+        'status' => 'open',
+    ]);
+
+    $need = AnimalDonationNeed::where('item', 'Cat Carrier')->first();
+
+    // 2. Update need
+    $updateResponse = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => 'Heavy Duty Cat Carrier',
+            'quantity' => '2 units',
+            'priority' => 'Urgent',
+            'status' => 'fulfilled',
+        ]);
+
+    $updateResponse->assertSessionHasNoErrors();
+    $need->refresh();
+    expect($need->item)->toBe('Heavy Duty Cat Carrier');
+    expect($need->quantity)->toBe('2 units');
+    expect($need->priority)->toBe('Urgent');
+    expect($need->status)->toBe('fulfilled');
+
+    // 3. Delete need
+    $deleteResponse = $this->actingAs($admin)
+        ->delete(route('account.admin.adoption-management.needs.destroy', $need));
+
+    $deleteResponse->assertSessionHasNoErrors();
+    $this->assertDatabaseMissing('animal_donation_needs', [
+        'id' => $need->id,
+    ]);
 });
