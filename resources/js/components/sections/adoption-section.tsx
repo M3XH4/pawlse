@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Heart, Info, ArrowRight, CheckCircle2, User, Clock, Sparkles, Dog, Cat } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
@@ -7,7 +7,7 @@ import { AdoptionWizard } from '@/components/adoption-wizard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/BookmarkContext';
 
-const pets = [
+const defaultPets = [
   {
     id: 1,
     name: 'Luna',
@@ -17,9 +17,9 @@ const pets = [
     gender: 'Female',
     behavior: 'Sweet, Energetic, Loves Kids',
     story: 'Luna was found tied to a post near the market. She was malnourished and scared, but with lots of love and food, she is now the happiest dog in the shelter.',
-    mainImg: 'https://www.foundanimals.org/wp-content/uploads/2023/02/twenty20_b4e89a76-af70-4567-b92a-9c3bbf335cb3.jpg',
-    beforeImg: 'https://assets-api.kathmandupost.com/thumb.php?src=https://assets-cdn.kathmandupost.com/uploads/source/news/2020/lifestyle/0729E827-1164-4D78-84F2-EDB6AF46A7DC.jpg&w=900&height=601',
-    afterImg: 'https://paws.org.ph/wp-content/uploads/2022/08/Shelter-Feeding-JCE.jpg'
+    mainImg: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=500&q=80',
+    beforeImg: 'https://images.unsplash.com/photo-1596797882942-f441d7f56c0e?w=400&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80'
   },
   {
     id: 2,
@@ -30,9 +30,9 @@ const pets = [
     gender: 'Male',
     behavior: 'Calm, Observant, Lap Cat',
     story: 'Oliver was a survivor of a house fire. Despite his rough start, he is extremely affectionate and looking for a quiet home to relax in.',
-    mainImg: 'https://www.pd.com.au/wp-content/uploads/2021/08/Ginger-cat-peeks-at-the-camera-scaled.jpg',
-    beforeImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR95kkIPYWZcUS9wI6ixVviOOmKWRV2E5Lkt6D9RQjZ5TzU6kBnkqNSOkdO&s=10',
-    afterImg: 'https://www.gccfcats.org/wp-content/uploads/2021/11/getting-started.jpg'
+    mainImg: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=500&q=80',
+    beforeImg: 'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=80'
   },
   {
     id: 3,
@@ -43,52 +43,26 @@ const pets = [
     gender: 'Male',
     behavior: 'Protective, Loyal, Intelligent',
     story: 'Cooper was the leader of a small pack in Tibanga. After a car accident, he was rescued by our volunteers. He is now fully recovered and ready for a leader of his own.',
-    mainImg: 'https://paws.org.ph/wp-content/uploads/2023/05/IMG_20230515_110226-scaled-e1684202693703-1024x1024.jpg',
-    beforeImg: 'https://animalfoundation.com/wp-content/uploads/2025/07/Vaccine_Photo.jpg',
-    afterImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvJySAm2UEZapxk2-ofEGZ8c2hqNVMHe7A7ZCIYcijpVzfogcsLuK9iw8&s=10'
-  },
-  {
-    id: 4,
-    name: 'Daisy',
-    type: 'Dog',
-    breed: 'Labrador Mix',
-    age: '3 Years',
-    gender: 'Female',
-    behavior: 'Playful, Friendly, Great with Kids',
-    story: 'Daisy was abandoned when her family moved away. She waited by their old house for weeks before volunteers brought her to safety. She deserves a family who will never leave her.',
-    mainImg: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&q=80',
-    beforeImg: 'https://images.unsplash.com/photo-1534361960057-19889db9621e?w=400&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=500&q=80'
-  },
-  {
-    id: 5,
-    name: 'Simba',
-    type: 'Cat',
-    breed: 'Orange Tabby',
-    age: '2 Years',
-    gender: 'Male',
-    behavior: 'Confident, Vocal, Loves Cuddles',
-    story: 'Simba was found as a tiny kitten in a storm drain. He has grown into a confident and vocal cat who loves attention and will chat with you all day.',
-    mainImg: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=500&q=80',
-    beforeImg: 'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500&q=80'
-  },
-  {
-    id: 6,
-    name: 'Pepper',
-    type: 'Cat',
-    breed: 'Tuxedo Cat',
-    age: '1.5 Years',
-    gender: 'Female',
-    behavior: 'Independent, Smart, Playful',
-    story: 'Pepper was rescued from the streets where she was fending for herself. She is smart and independent but loves interactive play sessions.',
-    mainImg: 'https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=500&q=80',
-    beforeImg: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
-    afterImg: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=500&q=80'
+    mainImg: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80',
+    beforeImg: 'https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=400&q=80',
+    afterImg: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=80'
   }
 ];
 
-export function AdoptionSection() {
+export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
+    const displayPets = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => ({
+        id: p.id || idx,
+        name: p.name,
+        type: p.type || 'Dog',
+        breed: p.breed || 'Mixed Breed',
+        age: p.age || '1 year',
+        gender: p.gender || 'Unknown',
+        behavior: p.behavior || 'Friendly & Loving',
+        story: p.story || 'Rescued and looking for a forever home.',
+        mainImg: p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80',
+        beforeImg: p.beforeImg || p.before_img || 'https://images.unsplash.com/photo-1596797882942-f441d7f56c0e?w=400&q=80',
+        afterImg: p.afterImg || p.after_img || p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80',
+    })) : defaultPets;
     const [flippedCard, setFlippedCard] = useState<number | null>(null);
     const [applyingPet, setApplyingPet] = useState<any | null>(null);
     const navigate = router.visit;
@@ -153,7 +127,7 @@ export function AdoptionSection() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-10">
-                    {pets.slice(0, 9).map((pet) => (
+                    {displayPets.slice(0, 9).map((pet) => (
                         <div key={pet.id} className="h-[400px] perspective-1000">
                             <motion.div
                                 className="relative w-full h-full transition-all duration-700 preserve-3d cursor-pointer"
@@ -197,64 +171,68 @@ export function AdoptionSection() {
                                         </div>
                                     </div>
                                 {/* Back Side */}
-                                <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] p-6 rotate-y-180 overflow-y-auto text-paw-navy shadow-2xl">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-paw-orange">{pet.name}'s Story</h3>
-                                        <div className="bg-paw-orange/10 p-2 rounded-xl text-paw-orange">
-                                            {pet.type === 'Dog' ? <Dog size={18} /> : <Cat size={18} />}
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-500 font-bold leading-relaxed mb-4 italic text-xs">\"{pet.story}\"</p>
-                                    <div className="space-y-3 mb-4">
-                                        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Behavior</span>
-                                            <span className="text-xs font-black text-paw-navy">{pet.behavior}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Vaccinated</span>
-                                            <span className="text-xs font-black text-paw-green flex items-center gap-1">
-                                                <CheckCircle2 size={12} /> YES
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 mb-4">
-                                        <div className="space-y-1">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">When Rescued</span>
-                                            <div className="aspect-square rounded-xl overflow-hidden border-2 border-gray-50">
-                                                <ImageWithFallback src={pet.beforeImg} alt="Before" className="w-full h-full object-cover grayscale opacity-50" />
+                                <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] overflow-hidden rotate-y-180 text-paw-navy shadow-2xl flex flex-col p-1.5">
+                                    <div className="h-full overflow-y-auto overflow-x-hidden p-5 scrollbar-snapped rounded-[2rem] flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2.5">
+                                                <h3 className="text-xl font-black italic uppercase tracking-tighter text-paw-orange pt-1">{pet.name}'s Story</h3>
+                                                <div className="bg-paw-orange/10 p-2 rounded-xl text-paw-orange">
+                                                    {pet.type === 'Dog' ? <Dog size={18} /> : <Cat size={18} />}
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-500 font-bold leading-relaxed mb-3 italic text-xs">"{pet.story}"</p>
+                                            <div className="space-y-2 mb-3">
+                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Behavior</span>
+                                                    <span className="text-xs font-black text-paw-navy">{pet.behavior}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Vaccinated</span>
+                                                    <span className="text-xs font-black text-paw-green flex items-center gap-1">
+                                                        <CheckCircle2 size={12} /> YES
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">When Rescued</span>
+                                                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-gray-50 bg-gray-100">
+                                                        <ImageWithFallback src={pet.beforeImg} alt="Before" className="w-full h-full object-cover grayscale opacity-60" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Healthy Now</span>
+                                                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-paw-green/20 bg-gray-100">
+                                                        <ImageWithFallback src={pet.afterImg} alt="After" className="w-full h-full object-cover" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Healthy Now</span>
-                                            <div className="aspect-square rounded-xl overflow-hidden border-2 border-paw-green/20">
-                                                <ImageWithFallback src={pet.afterImg} alt="After" className="w-full h-full object-cover" />
-                                            </div>
-                                        </div>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleApply(pet);
+                                            }}
+                                            className="w-full bg-paw-navy text-white py-3 rounded-xl font-black text-xs tracking-widest uppercase hover:bg-paw-orange active:scale-[0.98] transition-all shadow-xl flex items-center justify-center gap-2 group mt-1"
+                                        >
+                                            APPLY FOR ADOPTION
+                                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        </button>
                                     </div>
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleApply(pet);
-                                        }}
-                                        className="w-full bg-paw-navy text-white py-3 rounded-xl font-black text-sm tracking-widest uppercase hover:bg-paw-orange transition-all shadow-xl flex items-center justify-center gap-2 group"
-                                    >
-                                        APPLY FOR ADOPTION
-                                        <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
-                                    </button>
                                 </div>
                             </motion.div>
                         </div>
                     ))}
                 </div>
                 <div className="mt-20 flex justify-center">
-                    <button 
-                        onClick={() => navigate('/adopt')}
-                        className="flex items-center gap-3 text-white/40 hover:text-white transition-all font-black uppercase tracking-widest text-xs group"
+                    <Link 
+                        href="/adopt"
+                        className="flex items-center gap-3 text-white/60 hover:text-white transition-all font-black uppercase tracking-widest text-xs group py-3 px-6 rounded-full hover:bg-white/10"
                     >
-                        <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
+                        <Sparkles size={18} className="group-hover:rotate-12 transition-transform text-paw-yellow" />
                         LOAD MORE RESCUES
-                        <ArrowRight size={18} />
-                    </button>
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
                 </div>
             </div>
             {/* Application Wizard */}

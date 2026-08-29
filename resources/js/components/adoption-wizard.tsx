@@ -173,24 +173,24 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-sm overflow-hidden">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0"
       />
 
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="relative w-full max-w-4xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl my-8"
+        className="relative w-full max-w-4xl max-h-[92vh] md:max-h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col overflow-hidden my-auto z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 rounded-t-3xl border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6 relative z-20">
           <button
             onClick={onClose}
             className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
@@ -244,7 +244,7 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
         </div>
 
         {/* Content */}
-        <div className="p-6 md:p-8 max-h-[60vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <AnimatePresence mode="wait">
             {/* Step 1: Applicant Information */}
             {currentStep === 1 && (
@@ -315,27 +315,11 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <div className="relative">
                       <input
                         required
-                        type="text"
-                        value={data.birthDate}
-                        onChange={(e) => setData('birthDate', e.target.value)}
-                        placeholder="YYYY-MM-DD"
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 pr-12 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      />
-                      <input
                         type="date"
-                        id="date-picker-hidden"
                         value={data.birthDate}
                         onChange={(e) => setData('birthDate', e.target.value)}
-                        className="hidden"
+                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white cursor-pointer"
                       />
-                      <button
-                        type="button"
-                        onClick={() => (document.getElementById('date-picker-hidden') as HTMLInputElement | null)?.showPicker?.()}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-paw-orange transition-colors"
-                        title="Open calendar picker"
-                      >
-                        <Calendar size={20} />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -904,28 +888,12 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
                     <div className="relative">
                       <input
                         required
-                        type="text"
-                        value={data.preferredDate}
-                        onChange={(e) => setData('preferredDate', e.target.value)}
-                        placeholder="YYYY-MM-DD"
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 pr-12 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      />
-                      <input
                         type="date"
-                        id="interview-date-picker-hidden"
                         value={data.preferredDate}
                         onChange={(e) => setData('preferredDate', e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="hidden"
+                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white cursor-pointer"
                       />
-                      <button
-                        type="button"
-                        onClick={() => (document.getElementById('interview-date-picker-hidden') as HTMLInputElement)?.showPicker?.()}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-paw-orange transition-colors"
-                        title="Open calendar picker"
-                      >
-                        <Calendar size={20} />
-                      </button>
                     </div>
                   </div>
 
@@ -991,7 +959,7 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-6 rounded-b-3xl flex justify-between gap-4">
+        <div className="shrink-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 sm:p-6 flex justify-between items-center gap-4 relative z-20">
           {currentStep > 1 && (
             <button
               onClick={handleBack}

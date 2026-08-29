@@ -320,90 +320,116 @@
     transform: rotateY(180deg);
   }
 
-  /* Custom Thin Scrollbar Styling */
-  * {
+  /* ==========================================================================
+     Modern Premium Scrollbar (Global & Components)
+     ========================================================================== */
+
+  /* Standard CSS (Firefox) */
+  html, body {
     scrollbar-width: thin;
-    scrollbar-color: #F59E0B #f3f4f6;
+    scrollbar-color: #F59E0B transparent;
   }
 
-  /* Webkit browsers (Chrome, Safari, Edge) */
-  *::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+  /* WebKit (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
   }
 
-  *::-webkit-scrollbar-track {
-    background: #f3f4f6;
-    border-radius: 10px;
+  /* Hide old-fashioned up/down arrow buttons */
+  ::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
-  *::-webkit-scrollbar-thumb {
-    background: #F59E0B;
-    border-radius: 10px;
+  /* Transparent floating track */
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  *::-webkit-scrollbar-thumb:hover {
-    background: #d97706;
+  /* Sleek floating pill thumb with vibrant orange pop */
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: all 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FBBF24 0%, #EA580C 100%);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #C2410C;
+  }
+
+  /* Corner */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Custom Snapped Thin Scrollbar Styling for Modals & Cards */
+  .scrollbar-snapped,
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #F59E0B transparent;
+  }
+
+  .scrollbar-snapped::-webkit-scrollbar,
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-snapped::-webkit-scrollbar-track,
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-snapped::-webkit-scrollbar-thumb,
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-snapped::-webkit-scrollbar-thumb:hover,
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FBBF24 0%, #EA580C 100%);
   }
 
   /* Dark mode scrollbar */
-  .dark * {
-    scrollbar-color: #F59E0B #374151;
+  .dark,
+  .dark html,
+  .dark body {
+    scrollbar-color: #F59E0B transparent;
   }
 
-  .dark *::-webkit-scrollbar-track {
-    background: #374151;
+  .dark ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
   }
 
-  .dark *::-webkit-scrollbar-thumb {
-    background: #F59E0B;
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FBBF24 0%, #EA580C 100%);
   }
 
-  .dark *::-webkit-scrollbar-thumb:hover {
-    background: #FBBF24;
+  .dark .scrollbar-snapped,
+  .dark .scrollbar-thin {
+    scrollbar-color: #F59E0B transparent;
   }
 
-  /* Blue scrollbar for volunteer pages */
-  .scrollbar-blue {
-    scrollbar-color: #38BDF8 #f3f4f6;
+  .dark .scrollbar-snapped::-webkit-scrollbar-thumb,
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
   }
 
-  .scrollbar-blue::-webkit-scrollbar-thumb {
-    background: #38BDF8;
-  }
-
-  .scrollbar-blue::-webkit-scrollbar-thumb:hover {
-    background: #0EA5E9;
-  }
-
-  .dark .scrollbar-blue {
-    scrollbar-color: #38BDF8 #374151;
-  }
-
-  /* Custom scrollbar for contact modal */
-  .contact-modal-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #F59E0B #f3f4f6;
-  }
-
-  .contact-modal-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .contact-modal-scroll::-webkit-scrollbar-track {
-    background: #f3f4f6;
-    border-radius: 10px;
-  }
-
-  .contact-modal-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #F59E0B 0%, #d97706 100%);
-    border-radius: 10px;
-    transition: all 200ms ease;
-  }
-
-  .contact-modal-scroll::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 100%);
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+  .dark .scrollbar-snapped::-webkit-scrollbar-thumb:hover,
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FBBF24 0%, #EA580C 100%);
   }
 
   /* Hide scrollbar for horizontal auto-scroll */
@@ -414,6 +440,25 @@
 
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Rounded container clipping so scrollbar stays inside corner radius */
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .overflow-auto {
+    border-radius: inherit;
+  }
+
+  /* Modernized native datepicker calendar icon */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: opacity(0.7);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    transform: scale(1.1);
   }
 }
 

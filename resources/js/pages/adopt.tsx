@@ -340,9 +340,13 @@ export default function Adopt({ pets = [] }: AdoptProps) {
                     <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500">
                       <Calendar size={10} className="text-paw-blue shrink-0" />
                       <span>
-                        {pet.shelterDays < 30
-                          ? `${pet.shelterDays} days in shelter`
-                          : `${Math.floor(pet.shelterDays / 30)} ${Math.floor(pet.shelterDays / 30) === 1 ? 'month' : 'months'} in shelter`}
+                        {(() => {
+                          const days = Math.max(0, pet.shelterDays || 0);
+                          if (days === 0) return 'Admitted today';
+                          if (days < 30) return `${days} ${days === 1 ? 'day' : 'days'} in shelter`;
+                          const months = Math.floor(days / 30);
+                          return `${months} ${months === 1 ? 'month' : 'months'} in shelter`;
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -361,7 +365,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
       {/* Pet Detail Modal (Flip simulation with Expand) */}
       <AnimatePresence>
         {selectedPet && activeSelectedPet && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -371,7 +375,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
             />
             <motion.div
               layoutId={`pet-${selectedPet}`}
-              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[20px] md:rounded-[40px] z-10 relative shadow-2xl"
+              className="bg-white w-full max-w-4xl max-h-[92vh] md:max-h-[90vh] overflow-y-auto rounded-[20px] md:rounded-[40px] z-10 relative shadow-2xl my-auto"
             >
               <button
                 onClick={() => setSelectedPet(null)}
@@ -422,10 +426,12 @@ export default function Adopt({ pets = [] }: AdoptProps) {
                       <p className="font-black text-paw-blue flex items-center gap-2">
                         <Calendar size={16} />
                         {(() => {
-                          const days = activeSelectedPet.shelterDays || 0;
+                          const days = Math.max(0, activeSelectedPet.shelterDays || 0);
 
-                          if (days < 30) {
-                            return `${days} days`;
+                          if (days === 0) {
+                            return 'Admitted today';
+                          } else if (days < 30) {
+                            return `${days} ${days === 1 ? 'day' : 'days'}`;
                           } else {
                             const months = Math.floor(days / 30);
 

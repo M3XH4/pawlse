@@ -26,6 +26,23 @@ class User extends Authenticatable implements MustVerifyEmailContract
     use HasFactory, HasRoles, MustVerifyEmail, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['avatar'];
+
+    /**
+     * Get the default profile avatar URL.
+     */
+    public function getAvatarAttribute(): string
+    {
+        $name = urlencode($this->name ?? 'User');
+
+        return "https://ui-avatars.com/api/?name={$name}&background=FF750F&color=ffffff&bold=true";
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

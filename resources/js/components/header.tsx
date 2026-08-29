@@ -130,6 +130,26 @@ export function Header() {
     return '/account/user';
   };
 
+  const getAccountSettingsPath = () => {
+    if (!user) {
+      return '/settings/profile';
+    }
+
+    if (user.role === 'super-admin') {
+      return '/account/super-admin/account-settings';
+    }
+
+    if (user.role === 'admin') {
+      return '/account/admin/account-settings';
+    }
+
+    if (user.role === 'volunteer') {
+      return '/account/volunteer/account-settings';
+    }
+
+    return '/account/user/account-settings';
+  };
+
   return (
     <header className="w-full relative z-[100] font-quicksand">
       {/* Top Info Bar */}
@@ -166,30 +186,30 @@ export function Header() {
       </div>
 
       {/* Main Navigation */}
-      <nav className={`bg-white/95 backdrop-blur-md shadow-xl shadow-paw-navy/5 px-4 md:px-10 py-5 dark:bg-gray-900/95 dark:text-white transition-colors ${scrolled ? 'bg-white/95 dark:bg-gray-900/95' : ''}`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-paw-orange/20 group-hover:scale-110 transition-transform bg-transparent">
+      <nav className={`bg-white/95 backdrop-blur-md shadow-xl shadow-paw-navy/5 px-4 md:px-6 lg:px-8 py-4 dark:bg-gray-900/95 dark:text-white transition-colors ${scrolled ? 'bg-white/95 dark:bg-gray-900/95' : ''}`}>
+        <div className="w-full max-w-full mx-auto flex flex-nowrap items-center justify-between gap-2 lg:gap-4">
+          <Link href="/" className="flex flex-nowrap items-center gap-3 group shrink-0" style={{ whiteSpace: 'nowrap' }}>
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-paw-orange/20 group-hover:scale-110 transition-transform bg-transparent shrink-0">
               <img src={logo} alt="Iligan Stray Feeders Logo" className="w-full h-full object-contain" />
-              {/* style={{ mixBlendMode: 'multiply' }} */}
             </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tighter text-paw-navy dark:text-white leading-none">ILIGAN</h1>
-              <p className="text-[10px] font-black text-paw-orange tracking-[0.2em] leading-none uppercase">Stray Feeders</p>
+            <div className="shrink-0" style={{ whiteSpace: 'nowrap' }}>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter text-paw-navy dark:text-white leading-none" style={{ whiteSpace: 'nowrap' }}>ILIGAN</h1>
+              <p className="text-[10px] font-black text-paw-orange tracking-[0.2em] leading-none uppercase" style={{ whiteSpace: 'nowrap' }}>Stray Feeders</p>
             </div>
           </Link>
 
-          <div className="hidden xl:flex items-center gap-8 text-sm font-black text-paw-navy/80 dark:text-white/80 uppercase tracking-widest">
+          <div className="hidden xl:flex flex-nowrap items-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-6 text-xs xl:text-xs 2xl:text-sm font-black text-paw-navy/80 dark:text-white/80 uppercase tracking-wider shrink-0" style={{ whiteSpace: 'nowrap' }}>
             <Link
               href="/"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="hover:text-paw-orange transition-colors"
+              className="hover:text-paw-orange transition-colors shrink-0"
+              style={{ whiteSpace: 'nowrap' }}
             >
               Home
             </Link>
-            <Link href="/about" className="hover:text-paw-orange transition-colors">About</Link>
-            <div className="relative" onMouseEnter={() => setHoveredNav('/adopt')} onMouseLeave={() => setHoveredNav(null)}>
-              <Link href="/adopt" className="hover:text-paw-orange transition-colors">Adopt</Link>
+            <Link href="/about" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>About</Link>
+            <div className="relative shrink-0" style={{ whiteSpace: 'nowrap' }} onMouseEnter={() => setHoveredNav('/adopt')} onMouseLeave={() => setHoveredNav(null)}>
+              <Link href="/adopt" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Adopt</Link>
               <AnimatePresence>
                 {hoveredNav === '/adopt' && navPreviews['/adopt'] && (
                   <motion.div
@@ -212,8 +232,8 @@ export function Header() {
                 )}
               </AnimatePresence>
             </div>
-            <div className="relative" onMouseEnter={() => setHoveredNav('/donate')} onMouseLeave={() => setHoveredNav(null)}>
-              <Link href="/donate" className="hover:text-paw-orange transition-colors">Donate</Link>
+            <div className="relative shrink-0" style={{ whiteSpace: 'nowrap' }} onMouseEnter={() => setHoveredNav('/donate')} onMouseLeave={() => setHoveredNav(null)}>
+              <Link href="/donate" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Donate</Link>
               <AnimatePresence>
                 {hoveredNav === '/donate' && navPreviews['/donate'] && (
                   <motion.div
@@ -236,8 +256,8 @@ export function Header() {
                 )}
               </AnimatePresence>
             </div>
-            <div className="relative" onMouseEnter={() => setHoveredNav('/volunteer')} onMouseLeave={() => setHoveredNav(null)}>
-              <Link href="/volunteer" className="hover:text-paw-orange transition-colors">Volunteer</Link>
+            <div className="relative shrink-0" style={{ whiteSpace: 'nowrap' }} onMouseEnter={() => setHoveredNav('/volunteer')} onMouseLeave={() => setHoveredNav(null)}>
+              <Link href="/volunteer" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Volunteer</Link>
               <AnimatePresence>
                 {hoveredNav === '/volunteer' && navPreviews['/volunteer'] && (
                   <motion.div
@@ -260,8 +280,10 @@ export function Header() {
                 )}
               </AnimatePresence>
             </div>
-            <div className="relative" onMouseEnter={() => setHoveredNav('/rescue')} onMouseLeave={() => setHoveredNav(null)}>
-              <Link href="/rescue" className="hover:text-paw-orange transition-colors">AI Rescue</Link>
+            <div className="relative shrink-0" style={{ whiteSpace: 'nowrap' }} onMouseEnter={() => setHoveredNav('/rescue')} onMouseLeave={() => setHoveredNav(null)}>
+              <Link href="/rescue" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>
+                <span style={{ whiteSpace: 'nowrap', display: 'inline-block' }}>AI Rescue</span>
+              </Link>
               <AnimatePresence>
                 {hoveredNav === '/rescue' && navPreviews['/rescue'] && (
                   <motion.div
@@ -284,38 +306,39 @@ export function Header() {
                 )}
               </AnimatePresence>
             </div>
-            <Link href="/events" className="hover:text-paw-orange transition-colors">Events</Link>
-            <Link href="/missing" className="hover:text-paw-orange transition-colors text-red-500 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" /> Missing
+            <Link href="/events" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Events</Link>
+            <Link href="/missing" className="hover:text-paw-orange transition-colors text-red-500 flex flex-nowrap items-center gap-1.5 shrink-0" style={{ whiteSpace: 'nowrap' }}>
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shrink-0" />
+              <span style={{ whiteSpace: 'nowrap', display: 'inline-block' }}>Missing</span>
             </Link>
-            <Link href="/sos" className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center gap-2">
-               <Siren size={14} className="animate-bounce" /> SOS REPORT
+            <Link href="/sos" className="bg-red-600 text-white px-3.5 xl:px-4 py-2 rounded-full hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex flex-nowrap items-center gap-1.5 shrink-0 text-xs" style={{ whiteSpace: 'nowrap' }}>
+               <Siren size={14} className="animate-bounce shrink-0" />
+               <span style={{ whiteSpace: 'nowrap', display: 'inline-block' }}>SOS REPORT</span>
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
             {isAuthenticated && user ? (
-              <div className="relative flex items-center gap-2" data-profile-menu>
-                <Link
-                  href={getAccountPath()}
-                  className="flex items-center gap-3 font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-transparent hover:border-paw-orange/20 transition-all group"
-                  title="Go to your account"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border-2 border-white shadow-md group-hover:scale-110 transition-transform">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="hidden sm:inline text-xs uppercase tracking-widest truncate max-w-[120px]">{user.name.split(' ')[0]}</span>
-                </Link>
+              <div className="relative flex items-center shrink-0" data-profile-menu>
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="p-2 hover:bg-paw-bg dark:hover:bg-gray-800 rounded-lg transition-all"
-                  title="Open menu"
+                  className="flex items-center gap-2 font-black text-paw-navy dark:text-white hover:text-paw-orange transition-all bg-paw-bg dark:bg-gray-800 px-3 py-2 rounded-xl border-2 border-transparent hover:border-paw-orange/20 cursor-pointer group whitespace-nowrap shrink-0"
+                  title="Open user menu"
                 >
-                  <ChevronDown size={16} className={`transition-transform text-paw-navy dark:text-white ${profileMenuOpen ? 'rotate-180' : ''}`} />
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                    <img
+                      src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=FF750F&color=fff&bold=true`}
+                      alt={user.name || 'User'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=FF750F&color=fff&bold=true`;
+                      }}
+                    />
+                  </div>
+                  <span className="hidden sm:inline text-xs uppercase tracking-widest truncate max-w-[80px] whitespace-nowrap">
+                    {user.name ? user.name.split(' ')[0] : 'Account'}
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform text-paw-navy dark:text-white shrink-0 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 <AnimatePresence>
@@ -335,9 +358,12 @@ export function Header() {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border-2 border-white shadow-md">
                             <img
-                              src={user.avatar}
+                              src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=FF750F&color=fff&bold=true`}
                               alt={user.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=FF750F&color=fff&bold=true`;
+                              }}
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -350,7 +376,7 @@ export function Header() {
 
                       <div className="p-2">
                         <Link
-                          href="/profile-settings"
+                          href="/settings/profile"
                           onClick={() => setProfileMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group"
                         >
@@ -359,7 +385,7 @@ export function Header() {
                         </Link>
 
                         <Link
-                          href={getAccountPath()}
+                          href={getAccountSettingsPath()}
                           onClick={() => setProfileMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group"
                         >
@@ -369,7 +395,7 @@ export function Header() {
 
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400 group"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400 group cursor-pointer"
                         >
                           <LogOut size={18} className="text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300 transition-colors" />
                           <span className="font-bold text-sm">Log Out</span>

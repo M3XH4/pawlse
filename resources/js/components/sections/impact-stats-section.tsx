@@ -3,12 +3,12 @@ import { motion } from 'motion/react';
 import React from 'react';
 
 
-export function ImpactStats() {
+export function ImpactStats({ stats: propsStats }: { stats?: { rescued: number; adopted: number; volunteers: number; feedings: number } }) {
   const stats = [
-    { label: 'Meals Served', val: '12,450+', icon: <Utensils size={24} />, color: 'bg-paw-orange', number: 12450 },
-    { label: 'Pets Rescued', val: '482', icon: <Heart size={24} />, color: 'bg-red-500', number: 482 },
-    { label: 'Volunteers', val: '520', icon: <Users size={24} />, color: 'bg-paw-blue', number: 520 },
-    { label: 'Success Rate', val: '94%', icon: <ShieldCheck size={24} />, color: 'bg-green-500', number: 94 },
+    { label: 'Meals Served', val: `${(propsStats?.feedings || 320) * 15}+`, icon: <Utensils size={24} />, color: 'bg-paw-orange', number: (propsStats?.feedings || 320) * 15 },
+    { label: 'Pets Rescued', val: `${propsStats?.rescued || 150}`, icon: <Heart size={24} />, color: 'bg-red-500', number: propsStats?.rescued || 150 },
+    { label: 'Volunteers', val: `${propsStats?.volunteers || 42}`, icon: <Users size={24} />, color: 'bg-paw-blue', number: propsStats?.volunteers || 42 },
+    { label: 'Adoptions Completed', val: `${propsStats?.adopted || 85}`, icon: <ShieldCheck size={24} />, color: 'bg-green-500', number: propsStats?.adopted || 85 },
   ];
 
   const [counts, setCounts] = React.useState([0, 0, 0, 0]);

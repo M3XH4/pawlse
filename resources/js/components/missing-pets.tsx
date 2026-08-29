@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Search, MapPin, Calendar, Phone, MessageCircle, X, CheckCircle2, AlertTriangle, Zap, User, Heart, Plus, Mail, Facebook, PawPrint, FileText, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo } from 'react';
@@ -193,7 +193,36 @@ const missingPetsData = [
     }
 ];
 
-export function MissingPets() {
+export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
+    const petsList = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => ({
+        id: p.id || idx,
+        name: p.pet_name || 'Missing Pet',
+        type: p.species || 'Dog',
+        breed: p.breed || 'Mixed Breed',
+        age: 'Unknown Age',
+        gender: 'Unknown',
+        color: 'Mixed',
+        size: 'Medium',
+        status: p.status === 'resolved' ? 'FOUND' : 'STILL SEARCHING',
+        lastSeen: p.last_seen_location || 'Iligan City',
+        lastSeenDetails: p.description || 'Reported missing pet.',
+        date: p.last_seen_date || 'Recently',
+        exactDate: p.last_seen_date || 'Recently',
+        reward: null,
+        description: p.description || 'No description provided.',
+        distinguishingFeatures: 'N/A',
+        medicalConditions: 'None',
+        img: p.photo_url || 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
+        statusColor: p.status === 'resolved' ? 'bg-paw-green' : 'bg-red-500',
+        owner: {
+            name: 'Pet Owner',
+            facebook: 'Iligan Stray Feeders',
+            phone: p.contact_number || '0912 345 6789',
+            email: 'help@iliganstrayfeeders.org',
+            address: p.last_seen_location || 'Iligan City'
+        }
+    })) : missingPetsData;
+
     const [filter, setFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -202,7 +231,6 @@ export function MissingPets() {
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;
     const isAuthenticated = !!user;
-    const navigate = router.visit;
 
     const handleBookmark = (e: React.MouseEvent, pet: typeof missingPetsData[0]) => {
         e.stopPropagation();
@@ -212,7 +240,7 @@ export function MissingPets() {
                 description: 'Create an account or log in to save alerts for missing pets and help reunite them with their families.',
                 action: {
                     label: 'Log In',
-                    onClick: () => navigate('/login')
+                    onClick: () => router.visit('/login')
                 }
             });
 
@@ -248,7 +276,7 @@ export function MissingPets() {
         setShowSuggestions(false);
     };
 
-    const filteredPets = missingPetsData.filter(pet => {
+    const filteredPets = petsList.filter(pet => {
         const matchesFilter = filter === 'ALL' || pet.status === filter;
         const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             pet.lastSeen.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -341,10 +369,9 @@ export function MissingPets() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <motion.button
-                        onClick={() => navigate('/missing')}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        className="bg-white rounded-[3rem] p-8 border-4 border-dashed border-gray-100 flex flex-col items-center justify-center text-center gap-6 group hover:border-paw-blue transition-all"
+                    <Link
+                        href="/missing"
+                        className="bg-white rounded-[3rem] p-8 border-4 border-dashed border-gray-100 flex flex-col items-center justify-center text-center gap-6 group hover:border-paw-blue hover:scale-[1.02] hover:-translate-y-1 transition-all cursor-pointer shadow-sm hover:shadow-xl"
                     >
                         <div className="bg-paw-blue/10 p-6 rounded-3xl text-paw-blue group-hover:scale-110 group-hover:bg-paw-blue group-hover:text-white transition-all shadow-xl">
                             <Plus size={40} />
@@ -353,7 +380,7 @@ export function MissingPets() {
                             <h3 className="text-xl font-black text-paw-navy uppercase leading-none">REPORT MISSING</h3>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed italic">Lost your pet? <br /> Post a report now.</p>
                         </div>
-                    </motion.button>
+                    </Link>
 
                     <AnimatePresence mode="popLayout">
                         {filteredPets.map((pet, i) => (

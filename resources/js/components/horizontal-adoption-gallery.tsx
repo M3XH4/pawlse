@@ -206,7 +206,23 @@ const allPets = [
 
 const filterOptions = ['All', 'Dogs', 'Cats', 'Puppies', 'Special Care'];
 
-export function HorizontalAdoptionGallery() {
+export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] }) {
+  const displayPets = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => ({
+    id: p.id || idx,
+    name: p.name,
+    type: p.type,
+    category: p.type === 'Cat' ? 'Cats' : 'Dogs',
+    estimatedAge: p.age,
+    gender: p.gender,
+    foundLocation: 'Iligan City Shelter',
+    rescueStory: p.story || 'Rescued and ready for adoption.',
+    behavior: p.behavior || 'Friendly & Loving',
+    healthStatus: p.vaccinated ? 'Vaccinated' : 'In Care',
+    mainImg: p.mainImg || p.img,
+    beforeImg: p.mainImg || p.img,
+    afterImg: p.mainImg || p.img
+  })) : allPets;
+
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
   const [applyingPet, setApplyingPet] = useState<any | null>(null);
@@ -216,11 +232,11 @@ export function HorizontalAdoptionGallery() {
 
   // Filter pets
   const filteredPets = selectedFilter === 'All'
-    ? allPets
-    : allPets.filter(pet => pet.category === selectedFilter);
+    ? displayPets
+    : displayPets.filter(pet => pet.category === selectedFilter);
 
   // Duplicate pets array for seamless infinite loop
-  const displayPets = [...filteredPets, ...filteredPets];
+  const loopPets = [...filteredPets, ...filteredPets];
 
   // Auto-scroll animation
   useAnimationFrame((t, delta) => {
@@ -306,7 +322,7 @@ export function HorizontalAdoptionGallery() {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          {displayPets.map((pet, index) => (
+          {loopPets.map((pet, index) => (
             <motion.div
               key={`${pet.id}-${index}`}
               whileHover={{ scale: 1.03, y: -8 }}
@@ -368,7 +384,7 @@ export function HorizontalAdoptionGallery() {
 
                 {/* Back of Card */}
                 <div
-                  className="absolute inset-0 backface-hidden rounded-[3rem] overflow-hidden shadow-2xl bg-white p-8"
+                  className="absolute inset-0 backface-hidden rounded-[3rem] overflow-hidden shadow-2xl bg-white p-2 flex flex-col"
                   style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
                   <button
@@ -378,9 +394,9 @@ export function HorizontalAdoptionGallery() {
                     <X size={20} className="text-gray-600" />
                   </button>
 
-                  <div className="h-full overflow-y-auto scrollbar-thin space-y-6">
-                    <div>
-                      <h3 className="text-4xl font-black text-paw-navy mb-2 italic">{pet.name}'s Story</h3>
+                  <div className="h-full overflow-y-auto overflow-x-hidden scrollbar-snapped p-6 md:p-7 space-y-4 pb-2 pt-3 rounded-[2.5rem]">
+                    <div className="pr-10 pt-1">
+                      <h3 className="text-3xl font-black text-paw-navy mb-1 italic leading-normal pt-1">{pet.name}'s Story</h3>
                       <div className="flex items-center gap-2 text-paw-orange">
                         <MapPin size={16} />
                         <span className="text-sm font-bold">{pet.foundLocation}</span>
@@ -388,49 +404,55 @@ export function HorizontalAdoptionGallery() {
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Rescue Story</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">{pet.rescueStory}</p>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1.5">Rescue Story</h4>
+                      <p className="text-xs md:text-sm text-gray-600 leading-relaxed font-bold">{pet.rescueStory}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Before</h4>
-                        <ImageWithFallback 
-                          src={pet.beforeImg} 
-                          alt="Before" 
-                          className="w-full aspect-square object-cover rounded-2xl"
-                        />
+                        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1.5">Before</h4>
+                        <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
+                          <ImageWithFallback 
+                            src={pet.beforeImg} 
+                            alt="Before" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       </div>
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">After</h4>
-                        <ImageWithFallback 
-                          src={pet.afterImg} 
-                          alt="After" 
-                          className="w-full aspect-square object-cover rounded-2xl"
-                        />
+                        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1.5">After</h4>
+                        <div className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
+                          <ImageWithFallback 
+                            src={pet.afterImg} 
+                            alt="After" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Behavior</h4>
-                      <p className="text-sm text-gray-600">{pet.behavior}</p>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Behavior</h4>
+                      <p className="text-xs md:text-sm text-gray-600 font-bold">{pet.behavior}</p>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Health Status</h4>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Health Status</h4>
                       <div className="flex items-center gap-2 text-paw-green">
                         <CheckCircle2 size={16} />
-                        <span className="text-sm font-bold">{pet.healthStatus}</span>
+                        <span className="text-xs md:text-sm font-bold">{pet.healthStatus}</span>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleApply(pet)}
-                      className="w-full bg-paw-green text-white py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2"
-                    >
-                      <Heart size={18} fill="white" />
-                      APPLY TO ADOPT
-                    </button>
+                    <div className="pt-2">
+                      <button
+                        onClick={() => handleApply(pet)}
+                        className="w-full bg-paw-green text-white py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <Heart size={18} fill="white" />
+                        APPLY TO ADOPT
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -452,21 +474,22 @@ export function HorizontalAdoptionGallery() {
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-[3rem] p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white rounded-[3rem] max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col p-2 md:p-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h3 className="text-4xl font-black text-paw-navy mb-2 italic">Adopt {applyingPet.name}</h3>
-                <p className="text-gray-500 font-bold">Complete this form to begin the adoption process</p>
+            <div className="overflow-y-auto overflow-x-hidden p-6 md:p-8 scrollbar-snapped flex-1 rounded-[2.5rem]">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h3 className="text-4xl font-black text-paw-navy mb-2 italic">Adopt {applyingPet.name}</h3>
+                  <p className="text-gray-500 font-bold">Complete this form to begin the adoption process</p>
+                </div>
+                <button
+                  onClick={() => setApplyingPet(null)}
+                  className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <X size={24} className="text-gray-600" />
+                </button>
               </div>
-              <button
-                onClick={() => setApplyingPet(null)}
-                className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                <X size={24} className="text-gray-600" />
-              </button>
-            </div>
 
             <form
               onSubmit={(e) => {
@@ -550,12 +573,13 @@ export function HorizontalAdoptionGallery() {
 
               <button
                 type="submit"
-                className="w-full bg-paw-green text-white py-5 rounded-2xl font-black text-lg tracking-widest uppercase hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-3"
+                className="w-full bg-paw-green text-white py-5 rounded-2xl font-black text-lg tracking-widest uppercase hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-3"
               >
                 <Heart size={20} fill="white" />
                 SUBMIT APPLICATION
               </button>
             </form>
+            </div>
           </motion.div>
         </motion.div>
       )}

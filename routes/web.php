@@ -17,6 +17,7 @@ use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\Settings\AccountSettingsController;
@@ -33,7 +34,6 @@ use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
 $userDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::User)];
@@ -41,9 +41,8 @@ $volunteerDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role:
 $adminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using([Role::Admin, Role::SuperAdmin])];
 $superAdminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::SuperAdmin)];
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::get('/', HomeController::class)->name('home');
+
 Route::inertia('/about', 'about')->name('about');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');

@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Wallet, TrendingUp, History, Info, Filter, ArrowRight, ShieldCheck, User, Clock, Heart, Plus, Camera, FileText, Phone, Mail } from 'lucide-react';
+import { Gift, Wallet, TrendingUp, History, Info, Filter, ArrowRight, ShieldCheck, User, Clock, Heart, Plus, Minus, Camera, FileText, Phone, Mail } from 'lucide-react';
 import React, { useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { SubmissionReceipt } from '@/components/submission-receipt';
@@ -87,7 +87,27 @@ const animalWishlist = [
   }
 ];
 
-export function DonationDashboard() {
+interface DonationStatsProp {
+  totalRaised?: number;
+  goal?: number;
+  donorCount?: number;
+  monthName?: string;
+  daysRemaining?: number;
+  chartData?: Array<{ id: string; name: string; amount: number }>;
+  recentDonations?: Array<{ id: number; user: string; amount: string; type: string; date: string; msg: string }>;
+  wishlist?: any[];
+}
+
+export function DonationDashboard({ stats: propsStats }: { stats?: DonationStatsProp }) {
+  const totalRaised = propsStats?.totalRaised ?? 53420;
+  const goal = propsStats?.goal ?? 100000;
+  const percentage = Math.min(100, Math.round((totalRaised / goal) * 100));
+  const displayMonthName = propsStats?.monthName || 'Monthly';
+  const displayDaysRemaining = propsStats?.daysRemaining ?? 11;
+  const activeChartData = (propsStats?.chartData && propsStats.chartData.length > 0) ? propsStats.chartData : chartData;
+  const activeHistory = (propsStats?.recentDonations && propsStats.recentDonations.length > 0) ? propsStats.recentDonations : history;
+  const activeWishlist = (propsStats?.wishlist && propsStats.wishlist.length > 0) ? propsStats.wishlist : animalWishlist;
+
   const navigate = (url: string) => router.visit(url);
   const [activeTab, setActiveTab] = useState<'TRANS' | 'NEEDS' | 'HISTORY'>('TRANS');
   const [donationAmount, setDonationAmount] = useState('100');
@@ -144,8 +164,8 @@ export function DonationDashboard() {
   };
 
   const filteredHistory = filterType === 'All'
-    ? history
-    : history.filter(h => h.type === filterType);
+    ? activeHistory
+    : activeHistory.filter((h: any) => h.type === filterType);
 
   return (
     <>
@@ -471,28 +491,29 @@ export function DonationDashboard() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white rounded-[3.5rem] max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col p-2 md:p-3"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-10">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-4 py-2 rounded-full mb-4 border border-paw-orange/20">
-                    <Gift size={18} className="text-paw-orange" />
-                    <span className="text-xs font-black tracking-widest uppercase text-paw-orange">Animal-Specific Needs</span>
+              <div className="overflow-y-auto overflow-x-hidden p-6 md:p-10 scrollbar-snapped flex-1 rounded-[2.5rem]">
+                <div className="flex justify-between items-center mb-10">
+                  <div>
+                    <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-4 py-2 rounded-full mb-4 border border-paw-orange/20">
+                      <Gift size={18} className="text-paw-orange" />
+                      <span className="text-xs font-black tracking-widest uppercase text-paw-orange">Animal-Specific Needs</span>
+                    </div>
+                    <h3 className="text-4xl font-black italic uppercase tracking-tighter text-paw-navy">In-Kind Donation Wishlist</h3>
+                    <p className="text-gray-500 font-bold mt-2 font-quicksand">These animals need your help. Each item makes a real difference.</p>
                   </div>
-                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-paw-navy">In-Kind Donation Wishlist</h3>
-                  <p className="text-gray-500 font-bold mt-2 font-quicksand">These animals need your help. Each item makes a real difference.</p>
+                  <button
+                    onClick={() => setShowWishlist(false)}
+                    className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors shrink-0"
+                  >
+                    <Plus size={24} className="rotate-45" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowWishlist(false)}
-                  className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors shrink-0"
-                >
-                  <Plus size={24} className="rotate-45" />
-                </button>
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {animalWishlist.map((animal) => (
+                {activeWishlist.map((animal: any) => (
                   <motion.div
                     key={animal.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -522,7 +543,7 @@ export function DonationDashboard() {
 
                     <div className="space-y-3">
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Urgent Needs:</span>
-                      {animal.needs.map((need) => (
+                      {animal.needs.map((need: any) => (
                         <div
                           key={need.id}
                           onClick={() => handleSponsorClick(animal.name, animal.photo, need)}
@@ -533,7 +554,7 @@ export function DonationDashboard() {
                             need.priority === 'High' ? 'bg-paw-orange/10 text-paw-orange' :
                             'bg-paw-blue/10 text-paw-blue'
                           }`}>
-                            {need.icon}
+                            {need.icon || <Plus size={16} />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
@@ -572,6 +593,7 @@ export function DonationDashboard() {
                     </p>
                   </div>
                 </div>
+              </div>
               </div>
             </motion.div>
           </motion.div>
@@ -625,34 +647,39 @@ export function DonationDashboard() {
                 exit={{ opacity: 0, y: -20 }}
                 className="bg-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl border border-gray-100"
               >
-                <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-xl lg:text-3xl font-black italic uppercase tracking-tighter text-paw-navy">July Fundraising Progress</h3>
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-xl lg:text-3xl font-black italic uppercase tracking-tighter text-paw-navy">
+                    {displayMonthName} Fundraising Progress
+                  </h3>
                   <div className="text-right">
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Goal</span>
-                    <span className="text-xl font-black text-paw-navy">₱100,000</span>
+                    <span className="text-xl font-black text-paw-navy">₱{goal.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div className="relative h-12 bg-gray-100 rounded-full mb-4 overflow-hidden shadow-inner">
+                <div className="relative h-12 bg-gray-100 rounded-full mb-4 overflow-hidden shadow-inner flex items-center">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: '53%' }}
+                    animate={{ width: `${Math.max(percentage, 6)}%` }}
                     transition={{ duration: 1, ease: 'easeOut' }}
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-paw-green to-paw-blue flex items-center justify-end px-6 shadow-lg"
-                  >
-                    <span className="text-white font-black text-xs tracking-widest uppercase">53% REACHED</span>
-                  </motion.div>
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-paw-green to-paw-blue rounded-full shadow-lg"
+                  />
+                  <div className="relative z-10 w-full px-6 flex justify-between items-center pointer-events-none">
+                    <span className={`font-black text-xs tracking-widest uppercase transition-colors ${percentage >= 25 ? 'text-white drop-shadow-sm' : 'text-paw-navy'}`}>
+                      {percentage}% REACHED
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="flex justify-between items-center mb-12">
-                  <span className="text-2xl lg:text-4xl font-black text-paw-green italic">₱53,420 <span className="text-gray-200 text-lg not-italic">Collected</span></span>
-                  <span className="text-sm font-black text-gray-400 uppercase tracking-widest italic">11 Days Remaining</span>
+                  <span className="text-2xl lg:text-4xl font-black text-paw-green italic">₱{totalRaised.toLocaleString()} <span className="text-gray-400 text-lg not-italic font-bold">Collected</span></span>
+                  <span className="text-sm font-black text-gray-400 uppercase tracking-widest italic">{displayDaysRemaining} Days Remaining</span>
                 </div>
 
                 <div className="h-[300px] w-full mb-12 relative">
                   {isMounted ? (
                         <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart key={`area-chart-${activeTab}`} data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <AreaChart key={`area-chart-${activeTab}`} data={activeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs key="defs">
                             <linearGradient key="gradient" id={`donation-gradient-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#22C55E" stopOpacity={0.1}/>
@@ -840,32 +867,70 @@ export function DonationDashboard() {
               <h3 className="text-4xl font-black italic uppercase tracking-tighter mb-4 leading-none">Instant <br /> Impact.</h3>
               <p className="text-white/80 font-bold mb-10 font-quicksand leading-relaxed">Your donation goes directly to animal care. No administrative bloat.</p>
               
-              <div className="flex flex-wrap gap-3 mb-10">
+              <div className="flex flex-wrap gap-2.5 mb-8">
                 {['50', '100', '500', '1000'].map((amt) => (
                   <button 
                     key={amt} 
+                    type="button"
                     onClick={() => setDonationAmount(amt)}
-                    className={`px-5 py-3 rounded-xl font-black text-xs tracking-widest uppercase transition-all shadow-md ${donationAmount === amt ? 'bg-white text-paw-orange scale-110' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                    className={`px-5 py-3 rounded-xl font-black text-xs tracking-widest uppercase transition-all shadow-md ${
+                      donationAmount === amt 
+                        ? 'bg-white text-paw-orange scale-105 shadow-lg' 
+                        : 'bg-white/15 text-white hover:bg-white/25 border border-white/10'
+                    }`}
                   >
                     ₱{amt}
                   </button>
                 ))}
               </div>
 
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest">Custom Amount</span>
-                  <Wallet size={16} />
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 mb-8 border border-white/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Custom Amount</span>
+                  <div className="flex items-center gap-1.5 text-white/80 text-xs font-bold">
+                    <Wallet size={14} />
+                    <span>PHP</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black">₱</span>
-                  <input 
-                    type="number" 
-                    value={donationAmount}
-                    onChange={(e) => setDonationAmount(e.target.value)}
-                    className="bg-transparent border-none outline-none text-4xl font-black w-full placeholder:text-white/40" 
-                    placeholder="0.00"
-                  />
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = parseInt(donationAmount || '0', 10) || 0;
+                      const step = current > 100 ? 100 : 50;
+                      setDonationAmount(String(Math.max(50, current - step)));
+                    }}
+                    aria-label="Decrease amount"
+                    className="w-12 h-12 rounded-xl bg-white/15 hover:bg-white/30 active:scale-95 text-white flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-sm border border-white/10"
+                  >
+                    <Minus size={20} strokeWidth={3} />
+                  </button>
+                  
+                  <div className="flex-1 flex items-center justify-center gap-1">
+                    <span className="text-3xl font-black text-white/90">₱</span>
+                    <input 
+                      type="number" 
+                      min="1"
+                      step="50"
+                      value={donationAmount}
+                      onChange={(e) => setDonationAmount(e.target.value)}
+                      className="bg-transparent border-none outline-none text-4xl font-black text-center w-full max-w-[160px] text-white placeholder:text-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                      placeholder="100"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = parseInt(donationAmount || '0', 10) || 0;
+                      const step = current >= 100 ? 100 : 50;
+                      setDonationAmount(String(current + step));
+                    }}
+                    aria-label="Increase amount"
+                    className="w-12 h-12 rounded-xl bg-white/15 hover:bg-white/30 active:scale-95 text-white flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-sm border border-white/10"
+                  >
+                    <Plus size={20} strokeWidth={3} />
+                  </button>
                 </div>
               </div>
 

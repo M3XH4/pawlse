@@ -30,7 +30,7 @@ class AdoptController extends Controller
                     'img' => $pet->photo_url,
                     'mainImg' => $pet->photo_url,
                     'vaccinated' => (bool) $pet->vaccinated,
-                    'shelterDays' => $pet->admitted_at ? now()->diffInDays($pet->admitted_at) : 0,
+                    'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 0,
                 ];
             });
 
