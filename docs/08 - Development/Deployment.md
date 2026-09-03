@@ -87,6 +87,8 @@ redirect_stderr=true
 ---
 
 ## 🔗 Related Documentation
+- [[Container Architecture]]
+- [[Docker Development]]
 - [[Development Setup]]
 - [[Development Workflow]]
 - [[Technology Stack]]

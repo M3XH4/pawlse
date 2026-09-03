@@ -29,7 +29,7 @@ class SystemSettingSeeder extends Seeder
         ]);
 
         SystemSetting::setValue('backup_settings', [
-            'auto_enabled' => false,
+            'auto_enabled' => true,
             'interval' => 'daily',
             'retention_days' => 30,
         ]);
