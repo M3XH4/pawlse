@@ -1,0 +1,141 @@
+{
+  "name": "PAWLSE - Backup - Health Monitor & Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule (6AM PST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/backup-status' }}",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Backup Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node[\"Fetch Backup Status\"].json[\"is_healthy\"] }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Is Backup Healthy?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log('[n8n][PAWLSE] Backup health check passed. System healthy.');\nreturn items;"
+      },
+      "name": "Log Healthy",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        910,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'security@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'admin@pawlse.org' }}",
+        "subject": "=🚨 URGENT: Pawlse Database Backup System Unhealthy",
+        "text": "=CRITICAL BACKUP HEALTH ALERT\\n\\nMessage: {{ $node[\"Fetch Backup Status\"].json[\"message\"] }}\\nTimestamp: {{ $node[\"Fetch Backup Status\"].json[\"timestamp\"] }}\\n\\nPlease inspect the Super Admin dashboard immediately at https://pawlse.test/account/super-admin/dashboard",
+        "options": {}
+      },
+      "name": "Send Unhealthy Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule (6AM PST)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Backup Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Backup Status": {
+      "main": [
+        [
+          {
+            "node": "Is Backup Healthy?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Backup Healthy?": {
+      "main": [
+        [
+          {
+            "node": "Log Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Unhealthy Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

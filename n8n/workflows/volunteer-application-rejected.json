@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Volunteer - Rejected",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/volunteer-rejected",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-volunteer-rejected"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nconst reason = data.rejection_reason || 'Application criteria not met at this time';\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    applicantName: data.full_name,\n    applicantEmail: data.email,\n    referenceNumber: data.reference_number,\n    role: data.role,\n    reason: reason,\n    reviewedAt: data.reviewed_at\n  }\n}];"
+      },
+      "name": "Format Rejection Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'volunteers@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Rejection Data\"].json[\"applicantEmail\"] }}",
+        "subject": "=Update regarding your Pawlse Volunteer Application [{{ $node[\"Format Rejection Data\"].json[\"referenceNumber\"] }}]",
+        "text": "=Dear {{ $node[\"Format Rejection Data\"].json[\"applicantName\"] }},\n\nThank you for your interest in volunteering with Pawlse as a {{ $node[\"Format Rejection Data\"].json[\"role\"] }}.\n\nAfter reviewing your application, our team is unable to move forward at this time.\nReason / Feedback: {{ $node[\"Format Rejection Data\"].json[\"reason\"] }}\n\nYou are welcome to apply again in the future or support our mission through community sharing and donations.\n\nWarm regards,\nThe Pawlse Team",
+        "options": {}
+      },
+      "name": "Send Rejection Notice",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Volunteer rejection notice sent to ${items[0].json.applicantEmail}`);\nreturn items;"
+      },
+      "name": "Log Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Rejection Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Rejection Data": {
+      "main": [
+        [
+          {
+            "node": "Send Rejection Notice",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Rejection Notice": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

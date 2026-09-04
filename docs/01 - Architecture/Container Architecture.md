@@ -75,15 +75,16 @@ The application image uses a multi-stage Docker build pipeline:
 
 ```mermaid
 flowchart LR
-    subgraph Stage1 ["Stage 1: Frontend Build"]
-        Node["node:22-alpine"] --> NPM_CI["npm ci"]
-        NPM_CI --> Vite["npm run build\n(Vite + Wayfinder + Tailwind)"]
-        Vite --> Assets["public/build"]
-    end
-
-    subgraph Stage2 ["Stage 2: Composer Build"]
+    subgraph Stage1 ["Stage 1: Composer Build"]
         Composer["composer:2"] --> CompInstall["composer install --no-dev\n--optimize-autoloader"]
         CompInstall --> Vendor["vendor/"]
+    end
+
+    subgraph Stage2 ["Stage 2: Frontend Build"]
+        Node["node:22-slim (glibc) + php-cli"] --> NPM_Install["npm install"]
+        NPM_Install --> Vite["npm run build\n(Vite + Wayfinder + Tailwind)"]
+        Vendor --> Vite
+        Vite --> Assets["public/build"]
     end
 
     subgraph Stage3 ["Stage 3: Production Runtime"]

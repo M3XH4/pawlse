@@ -18,8 +18,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE:-pawlse}
-      DB_USERNAME: ${DB_USERNAME:-pawlse_user}
-      DB_PASSWORD: ${DB_PASSWORD:-pawlse_secret}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
@@ -61,19 +61,18 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-pawlse}
-      MYSQL_USER: ${DB_USERNAME:-pawlse_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-pawlse_secret}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-${DB_ROOT_PASSWORD:-root_secret}}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - pawlse-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_secret}"]
-      interval: 10s
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --silent"]
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 25s
+      retries: 10
+      start_period: 30s
 
   redis:
     image: redis:7-alpine
@@ -104,8 +103,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE:-pawlse}
-      DB_USERNAME: ${DB_USERNAME:-pawlse_user}
-      DB_PASSWORD: ${DB_PASSWORD:-pawlse_secret}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
@@ -137,8 +136,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE:-pawlse}
-      DB_USERNAME: ${DB_USERNAME:-pawlse_user}
-      DB_PASSWORD: ${DB_PASSWORD:-pawlse_secret}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
@@ -156,6 +155,29 @@ services:
     networks:
       - pawlse-network
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_N8N_PORT:-5678}:5678"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      - GENERIC_TIMEZONE=Asia/Manila
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_HIRING_BANNER_ENABLED=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+    networks:
+      - pawlse-network
+
 networks:
   pawlse-network:
     driver: bridge
@@ -166,4 +188,6 @@ volumes:
   redis_data:
     driver: local
   app_storage:
+    driver: local
+  n8n_data:
     driver: local

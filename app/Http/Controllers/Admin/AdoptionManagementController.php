@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
+use App\Events\AdoptionApplicationStatusUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AuditLog;
@@ -151,6 +152,8 @@ class AdoptionManagementController extends Controller
         }
 
         $application->user?->notify(new AdoptionApplicationStatusUpdatedNotification($application));
+
+        AdoptionApplicationStatusUpdatedEvent::dispatch($application);
 
         AuditLog::log('adoption_application_update', "Updated status of adoption application ID {$application->id} to {$validated['status']}");
 

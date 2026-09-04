@@ -1,0 +1,115 @@
+{
+  "name": "PAWLSE - Admin - Scheduled Operations Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Weekly Schedule (Mon 8AM PST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/statistics' }}",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Platform Statistics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const stats = items[0].json.summary || {};\n\nconst reportText = `PAWLSE WEEKLY OPERATIONS REPORT\\n` +\n  `Generated: ${new Date().toISOString()}\\n\\n` +\n  `📊 RESCUES:\\n` +\n  `• Total Reports: ${stats.rescues?.total || 0}\\n` +\n  `• Pending: ${stats.rescues?.pending || 0}\\n` +\n  `• In Progress: ${stats.rescues?.in_progress || 0}\\n` +\n  `• Resolved: ${stats.rescues?.resolved || 0}\\n\\n` +\n  `🐾 ADOPTIONS:\\n` +\n  `• Total Applications: ${stats.adoptions?.total_applications || 0}\\n` +\n  `• Pending: ${stats.adoptions?.pending || 0}\\n` +\n  `• Approved: ${stats.adoptions?.approved || 0}\\n\\n` +\n  `💰 DONATIONS:\\n` +\n  `• Total Cash Raised: ₱${(stats.donations?.total_cash_amount || 0).toLocaleString()}\\n` +\n  `• Cash Donations Count: ${stats.donations?.verified_cash_count || 0}\\n` +\n  `• In-Kind Donations: ${stats.donations?.verified_inkind_count || 0}\\n\\n` +\n  `🤝 VOLUNTEERS:\\n` +\n  `• Active Volunteers: ${stats.volunteers?.active_count || 0}\\n` +\n  `• Pending Applications: ${stats.volunteers?.pending_applications || 0}\\n\\n` +\n  `🏠 SHELTER ANIMALS:\\n` +\n  `• In Shelter: ${stats.shelter_animals?.total || 0}\\n` +\n  `• Available for Adoption: ${stats.shelter_animals?.available || 0}\\n` +\n  `• Total Adopted: ${stats.shelter_animals?.adopted || 0}`;\n\nreturn [{\n  json: {\n    subject: `Pawlse Weekly Operations Report - ${new Date().toLocaleDateString('en-PH')}`,\n    body: reportText\n  }\n}];"
+      },
+      "name": "Format Summary Digest",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'reports@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_REPORT_EMAIL || 'admin@pawlse.org' }}",
+        "subject": "={{ $node[\"Format Summary Digest\"].json[\"subject\"] }}",
+        "text": "={{ $node[\"Format Summary Digest\"].json[\"body\"] }}",
+        "options": {}
+      },
+      "name": "Send Executive Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly Schedule (Mon 8AM PST)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Platform Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Platform Statistics": {
+      "main": [
+        [
+          {
+            "node": "Format Summary Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Summary Digest": {
+      "main": [
+        [
+          {
+            "node": "Send Executive Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

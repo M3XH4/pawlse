@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
+use App\Events\VolunteerApplicationApprovedEvent;
+use App\Events\VolunteerApplicationRejectedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
@@ -107,6 +109,8 @@ class VolunteerManagementController extends Controller
 
         $user->notify(new VolunteerApplicationReviewedNotification($application));
 
+        VolunteerApplicationApprovedEvent::dispatch($application);
+
         AuditLog::log('volunteer_application_approve', "Approved volunteer application for {$application->full_name}");
 
         Inertia::flash('toast', [
@@ -132,6 +136,8 @@ class VolunteerManagementController extends Controller
         ]);
 
         $application->user?->notify(new VolunteerApplicationReviewedNotification($application));
+
+        VolunteerApplicationRejectedEvent::dispatch($application);
 
         AuditLog::log('volunteer_application_reject', "Rejected volunteer application for {$application->full_name}");
 

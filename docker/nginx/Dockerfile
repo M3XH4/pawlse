@@ -1,20 +1,19 @@
 # ==============================================================================
-# Stage 1: Frontend Asset Compilation (Node.js 22 LTS)
+# Stage 1: Frontend Asset Compilation (Node.js 22 LTS - glibc)
 # ==============================================================================
-FROM node:22-alpine AS frontend-builder
+FROM node:22-slim AS frontend-builder
 
 WORKDIR /app
 
 # Install npm dependencies using lockfile
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund
 
-# Copy application assets and TypeScript configs for Vite
-COPY vite.config.ts tsconfig.json components.json ./
-COPY resources ./resources
-COPY routes ./routes
-COPY app ./app
-COPY config ./config
+# Copy full application codebase
+COPY . .
+
+# Set DOCKER_BUILD flag so Wayfinder utilizes generated types during asset bundling
+ENV DOCKER_BUILD=1
 
 # Build production assets into public/build
 RUN npm run build

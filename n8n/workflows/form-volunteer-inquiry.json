@@ -1,0 +1,156 @@
+{
+  "name": "PAWLSE - Form - Public Volunteer Inquiry & Feedback",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "pawlse-volunteer-inquiry",
+        "formTitle": "Pawlse Volunteer & Community Inquiry Form",
+        "formDescription": "Have questions about volunteering, shelter visits, or community animal feeding? Send us your message.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Your Full Name",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Email Address",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Contact Phone Number",
+              "fieldType": "string",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Subject / Topic",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Message / Question",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "n8n Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-volunteer-inquiry-form"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/external-intake' }}",
+        "method": "POST",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"volunteer_inquiry\",\n  \"name\": \"{{ $node[\"n8n Form Trigger\"].json[\"Your Full Name\"] }}\",\n  \"email\": \"{{ $node[\"n8n Form Trigger\"].json[\"Your Email Address\"] }}\",\n  \"phone\": \"{{ $node[\"n8n Form Trigger\"].json[\"Contact Phone Number\"] }}\",\n  \"message\": \"{{ $node[\"n8n Form Trigger\"].json[\"Subject / Topic\"] }}: {{ $node[\"n8n Form Trigger\"].json[\"Your Message / Question\"] }}\"\n}",
+        "options": {}
+      },
+      "name": "Record In Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'info@pawlse.org' }}",
+        "toEmail": "={{ $node[\"n8n Form Trigger\"].json[\"Your Email Address\"] }}",
+        "subject": "=Pawlse: We received your inquiry",
+        "text": "=Hello {{ $node[\"n8n Form Trigger\"].json[\"Your Full Name\"] }},\n\nThank you for reaching out to Pawlse (Iligan Stray Feeders)!\n\nWe have received your message regarding: \"{{ $node[\"n8n Form Trigger\"].json[\"Subject / Topic\"] }}\". A team member will respond to you within 24-48 business hours.\n\nWarm regards,\nThe Pawlse Team",
+        "options": {}
+      },
+      "name": "Send Acknowledgment Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        690,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Thank you for reaching out to Pawlse! Your inquiry has been submitted and our team will get back to you shortly."
+      },
+      "name": "Respond to Submitter",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "n8n Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Record In Laravel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record In Laravel": {
+      "main": [
+        [
+          {
+            "node": "Send Acknowledgment Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Submitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Acknowledgment Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Submitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

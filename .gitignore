@@ -14,6 +14,8 @@
 .DS_Store
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
 .env.backup
 .env.production
@@ -32,3 +34,4 @@ yarn-error.log
 .cursor/
 .gemini/
 .obsidian/
+.n8n/

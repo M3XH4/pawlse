@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Volunteer - Approved",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/volunteer-approved",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-volunteer-approved"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    applicantName: data.full_name,\n    applicantEmail: data.email,\n    referenceNumber: data.reference_number,\n    role: data.role,\n    status: data.status,\n    reviewedAt: data.reviewed_at,\n    loginUrl: 'https://pawlse.test/account/volunteer'\n  }\n}];"
+      },
+      "name": "Format Approval Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'volunteers@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Approval Data\"].json[\"applicantEmail\"] }}",
+        "subject": "=Congratulations! Your Pawlse Volunteer Application is Approved",
+        "text": "=Dear {{ $node[\"Format Approval Data\"].json[\"applicantName\"] }},\n\nWe are thrilled to inform you that your volunteer application (Ref: {{ $node[\"Format Approval Data\"].json[\"referenceNumber\"] }}) for the role of {{ $node[\"Format Approval Data\"].json[\"role\"] }} has been approved!\n\nYou can now access your Volunteer Dashboard at:\n{{ $node[\"Format Approval Data\"].json[\"loginUrl\"] }}\n\nWelcome to the Pawlse volunteer network!\n\nWarm regards,\nThe Pawlse Team",
+        "options": {}
+      },
+      "name": "Send Approval Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Approval email sent to ${items[0].json.applicantEmail}`);\nreturn items;"
+      },
+      "name": "Log Approval Complete",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Approval Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Approval Data": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Approval Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approval Email": {
+      "main": [
+        [
+          {
+            "node": "Log Approval Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

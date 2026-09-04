@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Adoption - Application Submitted",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/adoption-submitted",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-adoption-submitted"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    applicationId: data.application_id,\n    applicantName: data.applicant_name,\n    applicantEmail: data.applicant_email,\n    applicantPhone: data.applicant_phone,\n    petName: data.pet_name,\n    petBreed: data.pet_breed,\n    preferredDate: data.preferred_date,\n    submittedAt: data.submitted_at\n  }\n}];"
+      },
+      "name": "Format Application Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'adoptions@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Application Data\"].json[\"applicantEmail\"] }}",
+        "subject": "=Pawlse Adoption Application Received for {{ $node[\"Format Application Data\"].json[\"petName\"] }}",
+        "text": "=Dear {{ $node[\"Format Application Data\"].json[\"applicantName\"] }},\n\nThank you for submitting an adoption application for {{ $node[\"Format Application Data\"].json[\"petName\"] }} ({{ $node[\"Format Application Data\"].json[\"petBreed\"] }}).\n\nOur shelter team will review your application and conduct the initial verification. If you requested a shelter visit on {{ $node[\"Format Application Data\"].json[\"preferredDate\"] }}, our coordinator will confirm shortly.\n\nWarm regards,\nThe Pawlse Adoption Team",
+        "options": {}
+      },
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Adoption application logged for ${items[0].json.applicantName} wishing to adopt ${items[0].json.petName}`);\nreturn items;"
+      },
+      "name": "Log Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Application Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Application Data": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

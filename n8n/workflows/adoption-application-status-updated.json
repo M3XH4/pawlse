@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Adoption - Status Updated",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/adoption-status-updated",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-adoption-status-updated"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nconst status = data.status || 'updated';\nlet emailSubject = `Pawlse Adoption Application Update for ${data.pet_name}`;\nlet emailBody = `Dear ${data.applicant_name},\\n\\nYour adoption application for ${data.pet_name} has been updated to: ${status.toUpperCase()}.`;\n\nif (status === 'approved') {\n  emailSubject = `Congratulations! Your Adoption Application for ${data.pet_name} is Approved!`;\n  emailBody += `\\n\\nPlease proceed to your dashboard or shelter to complete the adoption handover.`;\n} else if (status === 'scheduled') {\n  emailSubject = `Pawlse: Shelter Interview Scheduled for ${data.pet_name}`;\n  emailBody += `\\n\\nYour shelter visit and interview have been scheduled.`;\n} else if (status === 'rejected') {\n  emailSubject = `Pawlse: Update on your Adoption Application for ${data.pet_name}`;\n  if (data.rejection_reason) {\n    emailBody += `\\n\\nReason: ${data.rejection_reason}`;\n  }\n}\n\nemailBody += `\\n\\nWarm regards,\\nThe Pawlse Adoption Team`;\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    applicantName: data.applicant_name,\n    applicantEmail: data.applicant_email,\n    petName: data.pet_name,\n    status: status,\n    emailSubject: emailSubject,\n    emailBody: emailBody,\n    updatedAt: data.updated_at\n  }\n}];"
+      },
+      "name": "Format Status Update",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'adoptions@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Status Update\"].json[\"applicantEmail\"] }}",
+        "subject": "={{ $node[\"Format Status Update\"].json[\"emailSubject\"] }}",
+        "text": "={{ $node[\"Format Status Update\"].json[\"emailBody\"] }}",
+        "options": {}
+      },
+      "name": "Send Status Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Adoption update sent to ${items[0].json.applicantEmail} for pet ${items[0].json.petName} (Status: ${items[0].json.status})`);\nreturn items;"
+      },
+      "name": "Log Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Status Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Status Update": {
+      "main": [
+        [
+          {
+            "node": "Send Status Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Status Email": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

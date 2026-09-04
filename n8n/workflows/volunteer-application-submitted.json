@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Volunteer - Application Submitted",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/volunteer-submitted",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-volunteer-submitted"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    referenceNumber: data.reference_number,\n    applicantName: data.full_name,\n    applicantEmail: data.email,\n    role: data.role,\n    submittedAt: data.submitted_at,\n    summary: `Volunteer application received from ${data.full_name} (${data.email}) for role '${data.role}'. Ref: ${data.reference_number}`\n  }\n}];"
+      },
+      "name": "Format Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'volunteers@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Payload\"].json[\"applicantEmail\"] }}",
+        "subject": "=Pawlse Volunteer Application Received [{{ $node[\"Format Payload\"].json[\"referenceNumber\"] }}]",
+        "text": "=Dear {{ $node[\"Format Payload\"].json[\"applicantName\"] }},\n\nThank you for applying to volunteer with Pawlse as a {{ $node[\"Format Payload\"].json[\"role\"] }}.\n\nYour application has been received and is currently under review by our administration team.\nYour application reference number is: {{ $node[\"Format Payload\"].json[\"referenceNumber\"] }}\n\nWarm regards,\nThe Pawlse Team",
+        "options": {}
+      },
+      "name": "Send Applicant Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Volunteer application logged for ${items[0].json.applicantName} (${items[0].json.referenceNumber})`);\nreturn items;"
+      },
+      "name": "Log Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Payload": {
+      "main": [
+        [
+          {
+            "node": "Send Applicant Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Applicant Email": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

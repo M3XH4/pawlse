@@ -1,0 +1,161 @@
+{
+  "name": "PAWLSE - Form - Corporate Sponsor Pledge",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "pawlse-sponsor-pledge",
+        "formTitle": "Corporate & Benefactor Sponsor-a-Feeding-Day Pledge",
+        "formDescription": "Pledge your sponsorship for a full stray feeding day in Iligan City (₱3,500 feeds up to 100 community animals across feeding zones).",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Organization or Sponsor Name",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Contact Person",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Official Email Address",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Contact Number",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Date / Month for Feeding Day",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Special Occasion or Dedication Message",
+              "fieldType": "textarea",
+              "requiredField": false
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "n8n Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-sponsor-pledge-form"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/external-intake' }}",
+        "method": "POST",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"corporate_sponsor_pledge\",\n  \"name\": \"{{ $node[\"n8n Form Trigger\"].json[\"Organization or Sponsor Name\"] }}\",\n  \"email\": \"{{ $node[\"n8n Form Trigger\"].json[\"Official Email Address\"] }}\",\n  \"phone\": \"{{ $node[\"n8n Form Trigger\"].json[\"Contact Number\"] }}\",\n  \"message\": \"Feeding day pledge for: {{ $node[\"n8n Form Trigger\"].json[\"Target Date / Month for Feeding Day\"] }}. Dedication: {{ $node[\"n8n Form Trigger\"].json[\"Special Occasion or Dedication Message\"] }}\"\n}",
+        "options": {}
+      },
+      "name": "Record Pledge In Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'sponsors@pawlse.org' }}",
+        "toEmail": "={{ $node[\"n8n Form Trigger\"].json[\"Official Email Address\"] }}",
+        "subject": "=Thank You for Pledging to Sponsor a Feeding Day with Pawlse",
+        "text": "=Dear {{ $node[\"n8n Form Trigger\"].json[\"Contact Person\"] }} ({{ $node[\"n8n Form Trigger\"].json[\"Organization or Sponsor Name\"] }}),\n\nThank you for pledging to sponsor a full stray feeding day in Iligan City!\n\nTarget Date: {{ $node[\"n8n Form Trigger\"].json[\"Target Date / Month for Feeding Day\"] }}\nDedication: {{ $node[\"n8n Form Trigger\"].json[\"Special Occasion or Dedication Message\"] || 'General Stray Feeding' }}\n\nOur sponsorship coordinator will contact you shortly to coordinate payment processing and logistics.\n\nWarm regards,\nThe Pawlse Sponsorship Team",
+        "options": {}
+      },
+      "name": "Email Pledge Receipt",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        690,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Thank you for your generous pledge! Your submission has been received and our sponsorship coordinator will reach out shortly."
+      },
+      "name": "Thank You Screen",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "n8n Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Record Pledge In Laravel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Pledge In Laravel": {
+      "main": [
+        [
+          {
+            "node": "Email Pledge Receipt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Thank You Screen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Pledge Receipt": {
+      "main": [
+        [
+          {
+            "node": "Thank You Screen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

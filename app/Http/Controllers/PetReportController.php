@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Events\PetRescueSubmittedEvent;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
@@ -65,6 +66,8 @@ class PetReportController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
+
+        PetRescueSubmittedEvent::dispatch($report);
 
         AuditLog::log('rescue_report_submit', "Submitted rescue report at {$validated['location']}");
 

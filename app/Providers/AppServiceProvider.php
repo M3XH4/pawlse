@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Listeners\DispatchN8nPlatformWebhooks;
+use App\Listeners\DispatchN8nVolunteerWebhook;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
 use App\Models\User;
@@ -42,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
             Failed::class,
             LogFailedLogin::class
         );
+
+        Event::subscribe(DispatchN8nVolunteerWebhook::class);
+        Event::subscribe(DispatchN8nPlatformWebhooks::class);
     }
 
     /**

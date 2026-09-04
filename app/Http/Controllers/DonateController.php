@@ -7,6 +7,7 @@ use App\Enums\DonationType;
 use App\Enums\InKindStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
+use App\Events\DonationReceivedEvent;
 use App\Models\AuditLog;
 use App\Models\Donation;
 use App\Models\Event;
@@ -186,6 +187,8 @@ class DonateController extends Controller
             Notification::send($admins, new DonationReceivedNotification($donation));
         }
 
+        DonationReceivedEvent::dispatch($donation);
+
         AuditLog::log('donation_cash_create', 'Initiated cash donation of ₱'.number_format($validated['amount'])." with ref {$ref}");
 
         return redirect()->route('donate.checkout', $ref);
@@ -253,6 +256,8 @@ class DonateController extends Controller
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
+
+            DonationReceivedEvent::dispatch($donation);
         });
 
         AuditLog::log('donation_inkind_create', "Scheduled in-kind donation with ref {$ref}");
@@ -317,6 +322,8 @@ class DonateController extends Controller
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
+
+            DonationReceivedEvent::dispatch($donation);
         });
 
         AuditLog::log('donation_sponsor_create', "Initiated feeding sponsorship of ₱3,500 with ref {$ref}");

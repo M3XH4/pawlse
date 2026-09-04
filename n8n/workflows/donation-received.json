@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Donation - Contribution Received & Receipted",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/donation-received",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-donation-received"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nconst formattedAmount = data.amount ? `₱${Number(data.amount).toLocaleString()}` : 'In-Kind Items';\nconst receiptSubject = `Thank You for Your Donation to Pawlse [Ref: ${data.reference_number || 'N/A'}]`;\nconst receiptBody = `Dear ${data.donor_name || 'Kind Donor'},\\n\\nThank you for your generous contribution to the animals of Pawlse!\\n\\nDonation Details:\\n• Reference: ${data.reference_number || 'N/A'}\\n• Type: ${data.type || 'Donation'}\\n• Contribution: ${formattedAmount}\\n• Date: ${data.submitted_at}\\n\\nYour compassion helps provide food, shelter, and medical care for rescued animals in need.\\n\\nWarm regards,\\nThe Pawlse Team`;\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    donationId: data.donation_id,\n    donorName: data.donor_name,\n    donorEmail: data.donor_email,\n    amount: formattedAmount,\n    receiptSubject: receiptSubject,\n    receiptBody: receiptBody\n  }\n}];"
+      },
+      "name": "Format Donation Receipt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'donations@pawlse.org' }}",
+        "toEmail": "={{ $node[\"Format Donation Receipt\"].json[\"donorEmail\"] }}",
+        "subject": "={{ $node[\"Format Donation Receipt\"].json[\"receiptSubject\"] }}",
+        "text": "={{ $node[\"Format Donation Receipt\"].json[\"receiptBody\"] }}",
+        "options": {}
+      },
+      "name": "Send Donor Receipt",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Donation receipt sent to ${items[0].json.donorEmail} for ${items[0].json.amount}`);\nreturn items;"
+      },
+      "name": "Log Receipt Sent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Donation Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Donation Receipt": {
+      "main": [
+        [
+          {
+            "node": "Send Donor Receipt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Receipt Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Donor Receipt": {
+      "main": [
+        [
+          {
+            "node": "Log Receipt Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

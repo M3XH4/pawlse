@@ -1,0 +1,97 @@
+{
+  "name": "PAWLSE - System - Centralized Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const err = items[0].json.execution || {};\nconst workflow = items[0].json.workflow || {};\n\nconst failedWorkflowName = workflow.name || 'Unknown Workflow';\nconst errorMessage = err.error?.message || 'Unspecified execution failure';\nconst executionId = err.id || 'N/A';\nconst retryCount = err.retryOf ? 1 : 0;\n\nreturn [{\n  json: {\n    workflowName: failedWorkflowName,\n    workflowId: workflow.id,\n    executionId: executionId,\n    errorMessage: errorMessage,\n    timestamp: new Date().toISOString(),\n    alertSubject: `🚨 [n8n Automation Failure] ${failedWorkflowName}`,\n    alertBody: `AUTOMATION WORKFLOW INCIDENT REPORT\\n\\nWorkflow: ${failedWorkflowName}\\nExecution ID: ${executionId}\\nError: ${errorMessage}\\nTimestamp: ${new Date().toISOString()}\\n\\nPlease inspect the n8n execution log at http://localhost:5678/execution/${executionId}`\n  }\n}];"
+      },
+      "name": "Format Error Incident",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'system@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'devops@pawlse.org' }}",
+        "subject": "={{ $node[\"Format Error Incident\"].json[\"alertSubject\"] }}",
+        "text": "={{ $node[\"Format Error Incident\"].json[\"alertBody\"] }}",
+        "options": {}
+      },
+      "name": "Dispatch Incident Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.error(`[n8n][PAWLSE][INCIDENT] Workflow '${items[0].json.workflowName}' failed with error: ${items[0].json.errorMessage}`);\nreturn items;"
+      },
+      "name": "Log Incident",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Incident": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Incident Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Incident Email": {
+      "main": [
+        [
+          {
+            "node": "Log Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

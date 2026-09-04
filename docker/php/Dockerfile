@@ -1,26 +1,5 @@
 # ==============================================================================
-# Stage 1: Frontend Asset Compilation (Node.js 22 LTS)
-# ==============================================================================
-FROM node:22-alpine AS frontend-builder
-
-WORKDIR /app
-
-# Install npm dependencies using lockfile
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copy application assets, TypeScript configs, and PHP routes/templates for Wayfinder/Vite
-COPY vite.config.ts tsconfig.json components.json ./
-COPY resources ./resources
-COPY routes ./routes
-COPY app ./app
-COPY config ./config
-
-# Build production frontend bundle into public/build
-RUN npm run build
-
-# ==============================================================================
-# Stage 2: Composer Dependency Installation
+# Stage 1: Composer Dependency Installation
 # ==============================================================================
 FROM composer:2 AS composer-builder
 
@@ -35,6 +14,26 @@ RUN composer install \
     --optimize-autoloader \
     --no-scripts \
     --ignore-platform-reqs
+
+# ==============================================================================
+# Stage 2: Frontend Asset Compilation (Node.js 22 LTS - glibc)
+# ==============================================================================
+FROM node:22-slim AS frontend-builder
+
+WORKDIR /app
+
+# Install npm dependencies using lockfile
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund
+
+# Copy full application codebase (including generated wayfinder routes and actions)
+COPY . .
+
+# Set DOCKER_BUILD flag so Wayfinder utilizes generated types during asset bundling
+ENV DOCKER_BUILD=1
+
+# Build production frontend bundle into public/build
+RUN npm run build
 
 # ==============================================================================
 # Stage 3: Production PHP-FPM Runtime Image
@@ -56,13 +55,12 @@ RUN apk add --no-cache \
         exif \
         gd \
         intl \
-        mbstring \
-        opcache \
         pcntl \
         pdo_mysql \
         pdo_sqlite \
         redis \
-        zip
+        zip \
+    && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy PHP and PHP-FPM configuration
 COPY docker/php/php.ini $PHP_INI_DIR/conf.d/99-pawlse.ini

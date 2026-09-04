@@ -1,0 +1,142 @@
+{
+  "name": "PAWLSE - Feeding - Scheduled Route Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Morning Schedule (6AM PST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/feeding/upcoming' }}",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Today's Feeding Routes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $node[\"Fetch Today's Feeding Routes\"].json[\"total_routes\"] }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Has Routes Scheduled Today?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'feeding@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'volunteers@pawlse.org' }}",
+        "subject": "=Pawlse Morning Brief: Today's Feeding Routes ({{ $node[\"Fetch Today's Feeding Routes\"].json[\"day\"] }})",
+        "text": "=GOOD MORNING FEEDING COORDINATORS & VOLUNTEERS\\n\\nScheduled Routes for {{ $node[\"Fetch Today's Feeding Routes\"].json[\"day\"] }}: {{ $node[\"Fetch Today's Feeding Routes\"].json[\"total_routes\"] }} active zones.\\n\\nPlease check your Pawlse volunteer app for assigned feeding locations and stray feeding targets.\\n\\nHave a safe and impactful feeding run!",
+        "options": {}
+      },
+      "name": "Send Feeding Route Brief",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        910,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log('[n8n][PAWLSE] No active feeding routes scheduled for today.');\nreturn items;"
+      },
+      "name": "Log No Routes",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Morning Schedule (6AM PST)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today's Feeding Routes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today's Feeding Routes": {
+      "main": [
+        [
+          {
+            "node": "Has Routes Scheduled Today?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Routes Scheduled Today?": {
+      "main": [
+        [
+          {
+            "node": "Send Feeding Route Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log No Routes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

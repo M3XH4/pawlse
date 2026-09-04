@@ -1,0 +1,141 @@
+{
+  "name": "PAWLSE - Inventory - Low Stock & Expiry Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule (7AM PST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/inventory-alerts' }}",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Inventory Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node[\"Fetch Inventory Alerts\"].json[\"has_alerts\"] }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Has Low Stock / Expiring?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log('[n8n][PAWLSE] Inventory check complete: All stock levels healthy.');\nreturn items;"
+      },
+      "name": "Log Healthy Inventory",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        910,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'inventory@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'shelter-admin@pawlse.org' }}",
+        "subject": "=Pawlse Supply Alert: Low Stock or Expiring Items Detected",
+        "text": "=SHELTER INVENTORY ALERT\\n\\nLow Stock Items Count: {{ $node[\"Fetch Inventory Alerts\"].json[\"low_stock_count\"] }}\\nExpiring Batches Count: {{ $node[\"Fetch Inventory Alerts\"].json[\"expiring_batches_count\"] }}\\n\\nPlease review your inventory monitoring dashboard to reorder food and medical supplies.",
+        "options": {}
+      },
+      "name": "Send Inventory Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule (7AM PST)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Inventory Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Inventory Alerts": {
+      "main": [
+        [
+          {
+            "node": "Has Low Stock / Expiring?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Low Stock / Expiring?": {
+      "main": [
+        [
+          {
+            "node": "Send Inventory Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Healthy Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

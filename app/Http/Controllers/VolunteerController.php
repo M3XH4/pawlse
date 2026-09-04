@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Events\VolunteerApplicationSubmittedEvent;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\VolunteerApplication;
@@ -88,6 +89,8 @@ class VolunteerController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new VolunteerApplicationSubmittedNotification($application));
         }
+
+        VolunteerApplicationSubmittedEvent::dispatch($application);
 
         AuditLog::log('volunteer_apply', "Submitted volunteer application (ref: {$referenceNumber})");
 

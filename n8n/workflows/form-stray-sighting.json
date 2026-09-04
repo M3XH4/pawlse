@@ -1,0 +1,161 @@
+{
+  "name": "PAWLSE - Form - External Stray Sighting Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "pawlse-stray-sighting",
+        "formTitle": "Community Stray Sighting Report",
+        "formDescription": "Report a stray animal spotted in your barangay or neighborhood in Iligan City for rescue assessment and feeding route inclusion.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Reporter Name",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reporter Email",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reporter Phone",
+              "fieldType": "string",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Exact Location / Landmark",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Animal Type",
+              "fieldType": "string",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Condition & Details",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "n8n Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-stray-sighting-form"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PAWLSE_API_URL || 'http://nginx/api/automation/external-intake' }}",
+        "method": "POST",
+        "authentication": "none",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{ $env.AUTOMATION_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"stray_sighting\",\n  \"name\": \"{{ $node[\"n8n Form Trigger\"].json[\"Reporter Name\"] }}\",\n  \"email\": \"{{ $node[\"n8n Form Trigger\"].json[\"Reporter Email\"] }}\",\n  \"phone\": \"{{ $node[\"n8n Form Trigger\"].json[\"Reporter Phone\"] }}\",\n  \"message\": \"Stray {{ $node[\"n8n Form Trigger\"].json[\"Animal Type\"] }} at {{ $node[\"n8n Form Trigger\"].json[\"Exact Location / Landmark\"] }}. Details: {{ $node[\"n8n Form Trigger\"].json[\"Condition & Details\"] }}\"\n}",
+        "options": {}
+      },
+      "name": "Sync Sighting to Pawlse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'rescues@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'rescue-team@pawlse.org' }}",
+        "subject": "=Community Sighting Intake: {{ $node[\"n8n Form Trigger\"].json[\"Animal Type\"] }} at {{ $node[\"n8n Form Trigger\"].json[\"Exact Location / Landmark\"] }}",
+        "text": "=COMMUNITY STRAY SIGHTING SUBMISSION\\n\\nReporter: {{ $node[\"n8n Form Trigger\"].json[\"Reporter Name\"] }} ({{ $node[\"n8n Form Trigger\"].json[\"Reporter Email\"] }}, {{ $node[\"n8n Form Trigger\"].json[\"Reporter Phone\"] }})\\nLocation: {{ $node[\"n8n Form Trigger\"].json[\"Exact Location / Landmark\"] }}\\nAnimal: {{ $node[\"n8n Form Trigger\"].json[\"Animal Type\"] }}\\nDetails: {{ $node[\"n8n Form Trigger\"].json[\"Condition & Details\"] }}\\n\\nRecorded via Pawlse Public Intake Form.",
+        "options": {}
+      },
+      "name": "Alert Rescue Coordinators",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        690,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Thank you! Your stray sighting report has been submitted to the Pawlse volunteer rescue team."
+      },
+      "name": "Show Confirmation Screen",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "n8n Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sync Sighting to Pawlse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Sighting to Pawlse": {
+      "main": [
+        [
+          {
+            "node": "Alert Rescue Coordinators",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Show Confirmation Screen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Rescue Coordinators": {
+      "main": [
+        [
+          {
+            "node": "Show Confirmation Screen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

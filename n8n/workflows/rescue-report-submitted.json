@@ -1,0 +1,102 @@
+{
+  "name": "PAWLSE - Rescue - Emergency Report Dispatched",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawlse/rescue-submitted",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "pawlse-rescue-submitted"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || items[0].json;\nconst data = body.data || {};\n\nconst alertSubject = `[URGENT RESCUE] ${data.animal_type || 'Animal'} reported at ${data.location || 'Unknown Location'}`;\nconst alertBody = `🚨 NEW RESCUE / SOS REPORT SUBMITTED\\n\\nReport ID: #${data.report_id}\\nAnimal: ${data.animal_type || 'Unknown'} (${data.breed || 'Mixed Breed'})\\nLocation: ${data.location}\\nReporter: ${data.contact_name || 'Anonymous'} (Phone: ${data.contact_phone || 'N/A'}, Email: ${data.contact_email || 'N/A'})\\nTime: ${data.submitted_at}\\n\\nPlease review in the Admin Rescue Management dashboard.`;\n\nreturn [{\n  json: {\n    eventId: body.event_id,\n    reportId: data.report_id,\n    animalType: data.animal_type,\n    location: data.location,\n    reporterEmail: data.contact_email,\n    alertSubject: alertSubject,\n    alertBody: alertBody\n  }\n}];"
+      },
+      "name": "Format Alert Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.MAIL_FROM_ADDRESS || 'alerts@pawlse.org' }}",
+        "toEmail": "={{ $env.ADMIN_ALERT_EMAIL || 'rescue-team@pawlse.org' }}",
+        "subject": "={{ $node[\"Format Alert Payload\"].json[\"alertSubject\"] }}",
+        "text": "={{ $node[\"Format Alert Payload\"].json[\"alertBody\"] }}",
+        "options": {}
+      },
+      "name": "Notify Rescue Team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        700,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "console.log(`[n8n][PAWLSE] Rescue alert dispatched for report #${items[0].json.reportId} at ${items[0].json.location}`);\nreturn items;"
+      },
+      "name": "Log Alert Sent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        920,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Alert Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert Payload": {
+      "main": [
+        [
+          {
+            "node": "Notify Rescue Team",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Rescue Team": {
+      "main": [
+        [
+          {
+            "node": "Log Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}
