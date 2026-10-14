@@ -102,6 +102,7 @@ export default function AiValidation({
 
   // Detail Modal State
   const [selectedReport, setSelectedReport] = useState<PetReport | null>(null);
+  const [activeAiAnimalIdx, setActiveAiAnimalIdx] = useState(0);
   
   // Correction Form States
   const [isCorrecting, setIsCorrecting] = useState(false);
@@ -132,6 +133,7 @@ export default function AiValidation({
 
   const openValidationModal = (report: PetReport) => {
     setSelectedReport(report);
+    setActiveAiAnimalIdx(0);
     setIsCorrecting(false);
     
     // Prefill correction form with current report details
@@ -535,61 +537,128 @@ export default function AiValidation({
                     </div>
                   )}
 
-                  {/* Side-by-side details table */}
-                  <div>
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Details Comparison</h4>
-                    <div className="border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden text-xs">
-                      <div className="grid grid-cols-4 bg-gray-50 dark:bg-slate-900/60 p-2.5 font-black text-gray-400 border-b border-gray-100 dark:border-slate-800">
-                        <span>Property</span>
-                        <span className="col-span-2">AI Suggestion</span>
-                        <span>User Submitted</span>
-                      </div>
-                      
-                      {[
-                        { 
-                          prop: 'Species', 
-                          ai: selectedReport.ai_prediction_log?.output_data?.species 
-                            ? (selectedReport.ai_prediction_log.output_data.species === 'dog' ? 'Dog' : 'Cat') 
-                            : 'N/A', 
-                          usr: selectedReport.animal_type 
-                        },
-                        { 
-                          prop: 'Breed', 
-                          ai: selectedReport.ai_prediction_log?.output_data?.breed || 'N/A', 
-                          usr: selectedReport.breed || 'Unknown' 
-                        },
-                        { 
-                          prop: 'Age Category', 
-                          ai: selectedReport.ai_prediction_log?.output_data?.age_group || 'N/A', 
-                          usr: selectedReport.age_category || 'Unknown' 
-                        },
-                        { 
-                          prop: 'Gender', 
-                          ai: selectedReport.ai_prediction_log?.output_data?.gender || 'N/A', 
-                          usr: selectedReport.gender || 'Unknown' 
-                        },
-                        { 
-                          prop: 'Suggested Name', 
-                          ai: (Array.isArray(selectedReport.ai_prediction_log?.output_data?.neutral_names) 
-                            ? selectedReport.ai_prediction_log.output_data.neutral_names[0] 
-                            : selectedReport.ai_prediction_log?.output_data?.neutral_names || selectedReport.ai_prediction_log?.output_data?.suggested_name) || 'N/A', 
-                          usr: selectedReport.name || 'Unnamed' 
-                        },
-                      ].map((item, idx) => {
-                        const isMatch = item.ai.toString().toLowerCase() === item.usr.toString().toLowerCase() 
-                          || (item.ai === 'N/A')
-                          || (item.prop === 'Suggested Name' && !selectedReport.name);
-                        
-                        return (
-                          <div key={idx} className="grid grid-cols-4 p-2.5 border-b border-gray-100 dark:border-slate-800/80 items-center last:border-b-0">
-                            <span className="font-bold text-gray-400">{item.prop}</span>
-                            <span className="col-span-2 font-bold text-[#0B2340] dark:text-blue-300 italic">{item.ai}</span>
-                            <span className={`font-black ${isMatch ? 'text-green-600' : 'text-amber-600'}`}>{item.usr}</span>
+                  {/* Multi-Species / Multi-Animal Breakdown */}
+                  {(() => {
+                    const aiAnimals = selectedReport.ai_prediction_log?.output_data?.animals || [];
+                    const hasMultipleAiAnimals = aiAnimals.length > 1;
+                    const activeAiAnimal = hasMultipleAiAnimals && aiAnimals[activeAiAnimalIdx]
+                      ? aiAnimals[activeAiAnimalIdx]
+                      : null;
+
+                    const currentAiSpecies = activeAiAnimal
+                      ? (activeAiAnimal.species === 'dog' ? 'Dog' : 'Cat')
+                      : (selectedReport.ai_prediction_log?.output_data?.species 
+                          ? (selectedReport.ai_prediction_log.output_data.species === 'dog' ? 'Dog' : 'Cat') 
+                          : 'N/A');
+
+                    const currentAiBreed = activeAiAnimal
+                      ? activeAiAnimal.breed
+                      : (selectedReport.ai_prediction_log?.output_data?.breed || 'N/A');
+
+                    const currentAiAge = activeAiAnimal
+                      ? (activeAiAnimal.age_group || 'N/A')
+                      : (selectedReport.ai_prediction_log?.output_data?.age_group || 'N/A');
+
+                    const currentAiGender = selectedReport.ai_prediction_log?.output_data?.gender || 'N/A';
+
+                    const currentAiName = activeAiAnimal
+                      ? (activeAiAnimal.suggested_names?.[0] || activeAiAnimal.neutral_names?.[0] || 'N/A')
+                      : ((Array.isArray(selectedReport.ai_prediction_log?.output_data?.neutral_names) 
+                          ? selectedReport.ai_prediction_log.output_data.neutral_names[0] 
+                          : selectedReport.ai_prediction_log?.output_data?.neutral_names || selectedReport.ai_prediction_log?.output_data?.suggested_name) || 'N/A');
+
+                    return (
+                      <div className="space-y-4">
+                        {hasMultipleAiAnimals && (
+                          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[#0B2340] dark:text-white flex items-center gap-1.5">
+                                <Sparkles size={12} className="text-paw-orange" />
+                                Multi-Species Analysis ({aiAnimals.length} Animals Detected)
+                              </span>
+                              <span className="text-[10px] font-bold text-gray-400">Click to compare animal</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {aiAnimals.map((an: any, i: number) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setActiveAiAnimalIdx(i)}
+                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
+                                    activeAiAnimalIdx === i
+                                      ? 'bg-paw-orange text-white border-paw-orange shadow-sm'
+                                      : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-paw-orange/40'
+                                  }`}
+                                >
+                                  <span>🐾 #{i + 1}: {an.species === 'dog' ? 'Dog' : 'Cat'} ({an.breed})</span>
+                                  <span className="text-[9px] opacity-80">({Math.round((an.confidence ?? 0) * 100)}%)</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        )}
+
+                        {/* Side-by-side details table */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Details Comparison</h4>
+                            {hasMultipleAiAnimals && (
+                              <span className="text-[10px] font-bold text-paw-orange">
+                                Comparing AI Animal #{activeAiAnimalIdx + 1}
+                              </span>
+                            )}
+                          </div>
+                          <div className="border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden text-xs">
+                            <div className="grid grid-cols-4 bg-gray-50 dark:bg-slate-900/60 p-2.5 font-black text-gray-400 border-b border-gray-100 dark:border-slate-800">
+                              <span>Property</span>
+                              <span className="col-span-2">AI Suggestion</span>
+                              <span>User Submitted</span>
+                            </div>
+                            
+                            {[
+                              { 
+                                prop: 'Species', 
+                                ai: currentAiSpecies, 
+                                usr: selectedReport.animal_type 
+                              },
+                              { 
+                                prop: 'Breed', 
+                                ai: currentAiBreed, 
+                                usr: selectedReport.breed || 'Unknown' 
+                              },
+                              { 
+                                prop: 'Age Category', 
+                                ai: currentAiAge, 
+                                usr: selectedReport.age_category || 'Unknown' 
+                              },
+                              { 
+                                prop: 'Gender', 
+                                ai: currentAiGender, 
+                                usr: selectedReport.gender || 'Unknown' 
+                              },
+                              { 
+                                prop: 'Suggested Name', 
+                                ai: currentAiName, 
+                                usr: selectedReport.name || 'Unnamed' 
+                              },
+                            ].map((item, idx) => {
+                              const isMatch = item.ai.toString().toLowerCase() === item.usr.toString().toLowerCase() 
+                                || (item.ai === 'N/A')
+                                || (item.prop === 'Suggested Name' && !selectedReport.name);
+                              
+                              return (
+                                <div key={idx} className="grid grid-cols-4 p-2.5 border-b border-gray-100 dark:border-slate-800/80 items-center last:border-b-0">
+                                  <span className="font-bold text-gray-400">{item.prop}</span>
+                                  <span className="col-span-2 font-bold text-[#0B2340] dark:text-blue-300 italic">{item.ai}</span>
+                                  <span className={`font-black ${isMatch ? 'text-green-600' : 'text-amber-600'}`}>{item.usr}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Actions & Form */}
                   {selectedReport.ai_validation_status === 'pending' ? (

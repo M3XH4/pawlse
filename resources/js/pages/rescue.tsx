@@ -15,6 +15,29 @@ type BreedPrediction = {
     image?: string | null;
 };
 
+type AnimalPrediction = {
+    index: number;
+    species: 'cat' | 'dog';
+    species_confidence?: number;
+    breed: string;
+    raw_breed?: string;
+    confidence: number;
+    confidence_level?: string;
+    is_confident?: boolean;
+    confidence_message?: string;
+    is_mixed_breed?: boolean;
+    mixed_confidence?: number;
+    age_group?: string;
+    age_confidence?: number;
+    age_reason?: string;
+    suggested_names?: string[];
+    neutral_names?: string[];
+    box?: number[];
+    detection_confidence?: number;
+    breeds?: BreedPrediction[];
+    similar_breeds?: BreedPrediction[];
+};
+
 type AIResult = {
     species: 'cat' | 'dog';
     breed: string;
@@ -22,7 +45,7 @@ type AIResult = {
     gender: string;
     suggestedName: string;
 
-    rawBreed: string,
+    rawBreed: string;
 
     confidence: number;
     confidenceLevel: string;
@@ -34,6 +57,27 @@ type AIResult = {
 
     breeds: BreedPrediction[];
     similarBreeds: BreedPrediction[];
+
+    totalAnimalsDetected?: number;
+    animals?: AnimalPrediction[];
+};
+
+export type AnimalReviewItem = {
+    index: number;
+    species: 'Dog' | 'Cat';
+    breed: string;
+    rawBreed?: string;
+    ageCategory: string;
+    gender: string;
+    suggestedName: string;
+    confidence: number;
+    confidenceLevel?: string;
+    isConfident?: boolean;
+    confidenceMessage?: string;
+    isMixedBreed?: boolean;
+    mixedConfidence?: number;
+    box?: number[];
+    included: boolean;
 };
 
 type ReportMode = 'selection' | 'ai-full' | 'ai-only' | 'manual' | 'success';
@@ -56,10 +100,33 @@ export default function RescuePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [imageUploaded, setImageUploaded] = useState(false);
     const [predictionLogId, setPredictionLogId] = useState<number | null>(null);
+    const [selectedAnimalIdx, setSelectedAnimalIdx] = useState(0);
+    const [animalReviews, setAnimalReviews] = useState<AnimalReviewItem[]>([]);
 
     // File upload state
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+
+    const mapAgeCategory = (ageGroup: string | undefined, speciesType: 'Dog' | 'Cat') => {
+        const ag = (ageGroup || '').toLowerCase();
+        if (speciesType === 'Dog') {
+            if (ag.includes('puppy') || ag.includes('kitten') || ag.includes('young')) {
+                return 'Puppy: Birth to 6–7 months';
+            }
+            if (ag.includes('senior') || ag.includes('geriatric')) {
+                return 'Senior: 8+ years (large breeds), 11+ years (small breeds)';
+            }
+            return 'Adult: 1 to 7 years';
+        } else {
+            if (ag.includes('kitten') || ag.includes('puppy') || ag.includes('young')) {
+                return 'Kitten: Birth to 6 months';
+            }
+            if (ag.includes('senior') || ag.includes('geriatric')) {
+                return 'Senior: 11 to 14 years';
+            }
+            return 'Prime (Young Adult): 3 to 6 years';
+        }
+    };
 
     // Form fields
     const [animalType, setAnimalType] = useState<'Dog' | 'Cat'>('Dog');
@@ -162,6 +229,7 @@ export default function RescuePage() {
                 toast.error(data.message ?? 'Image cannot be processed.');
                 setAiResult(null);
                 setEditedResult(null);
+                setAnimalReviews([]);
                 setImageUploaded(false);
                 setAnalyzing(false);
                 return;
@@ -178,11 +246,14 @@ export default function RescuePage() {
                     ? data.neutral_names[0]
                     : data.neutral_names ?? data.suggested_name ?? '';
 
+            const detectedAnimal = (data.species === 'dog' ? 'Dog' : 'Cat') as 'Dog' | 'Cat';
+            const mappedAge = mapAgeCategory(data.age_group, detectedAnimal);
+
             const suggestions: AIResult = {
                 species: data.species,
                 breed: data.breed,
                 rawBreed: data.raw_breed,
-                ageCategory: data.age_group ?? 'Unknown',
+                ageCategory: mappedAge,
                 gender: data.gender ?? 'Unknown',
                 suggestedName,
                 confidence: Math.round((data.confidence ?? 0) * 100),
@@ -193,11 +264,55 @@ export default function RescuePage() {
                 mixedConfidence: data.mixed_confidence ?? 0,
                 breeds: data.breeds ?? [],
                 similarBreeds: data.similar_breeds ?? [],
+                totalAnimalsDetected: data.total_animals_detected ?? (data.animals?.length ?? 1),
+                animals: data.animals ?? [],
             };
             setAiResult(suggestions);
             setEditedResult(suggestions);
+            setSelectedAnimalIdx(0);
 
-            const detectedAnimal = suggestions.species === 'dog' ? 'Dog' : 'Cat';
+            // Populate animalReviews list for multi-species review
+            const reviews: AnimalReviewItem[] = (data.animals && data.animals.length > 0)
+                ? data.animals.map((a: AnimalPrediction, i: number) => {
+                    const sp = (a.species === 'dog' ? 'Dog' : 'Cat') as 'Dog' | 'Cat';
+                    const ageCat = mapAgeCategory(a.age_group, sp);
+                    const name = a.suggested_names?.[0] ?? a.neutral_names?.[0] ?? '';
+                    return {
+                        index: i,
+                        species: sp,
+                        breed: a.breed,
+                        rawBreed: a.raw_breed,
+                        ageCategory: ageCat,
+                        gender: 'Unknown',
+                        suggestedName: name,
+                        confidence: Math.round((a.confidence ?? 0) * 100),
+                        confidenceLevel: a.confidence_level ?? 'High',
+                        isConfident: a.is_confident ?? true,
+                        confidenceMessage: a.confidence_message ?? '',
+                        isMixedBreed: a.is_mixed_breed ?? false,
+                        mixedConfidence: a.mixed_confidence ?? 0,
+                        box: a.box,
+                        included: true,
+                    };
+                })
+                : [{
+                    index: 0,
+                    species: detectedAnimal,
+                    breed: suggestions.breed,
+                    rawBreed: suggestions.rawBreed,
+                    ageCategory: suggestions.ageCategory,
+                    gender: suggestions.gender,
+                    suggestedName: suggestions.suggestedName,
+                    confidence: suggestions.confidence,
+                    confidenceLevel: suggestions.confidenceLevel,
+                    isConfident: suggestions.isConfident,
+                    confidenceMessage: suggestions.confidenceMessage,
+                    isMixedBreed: suggestions.isMixedBreed,
+                    mixedConfidence: suggestions.mixedConfidence,
+                    included: true,
+                }];
+            setAnimalReviews(reviews);
+
             setAnimalType(detectedAnimal);
             setBreed(suggestions.breed);
             setAgeCategory(suggestions.ageCategory);
@@ -208,7 +323,11 @@ export default function RescuePage() {
                 setWizardStep(2);
             }
 
-            toast.success('AI identification complete!');
+            if ((data.total_animals_detected ?? 1) > 1) {
+                toast.success(`AI detected ${data.total_animals_detected} animals in this photo! Multi-animal review activated.`);
+            } else {
+                toast.success('AI identification complete!');
+            }
         } catch (error) {
             console.error(error);
             toast.error('AI identification failed. Please try again.');
@@ -216,6 +335,51 @@ export default function RescuePage() {
         } finally {
             setAnalyzing(false);
         }
+    };
+
+    const handleSelectAnimal = (idx: number) => {
+        setSelectedAnimalIdx(idx);
+        const animal = animalReviews[idx];
+        if (!animal) return;
+
+        setAnimalType(animal.species);
+        setBreed(animal.breed);
+        setAgeCategory(animal.ageCategory);
+        setGender(animal.gender);
+        setSuggestedName(animal.suggestedName);
+
+        const updatedAiResult: AIResult = {
+            species: animal.species.toLowerCase() as 'dog' | 'cat',
+            breed: animal.breed,
+            rawBreed: animal.rawBreed || '',
+            ageCategory: animal.ageCategory,
+            gender: animal.gender,
+            suggestedName: animal.suggestedName,
+            confidence: animal.confidence,
+            confidenceLevel: animal.confidenceLevel ?? 'High',
+            isConfident: animal.isConfident ?? true,
+            confidenceMessage: animal.confidenceMessage ?? '',
+            isMixedBreed: animal.isMixedBreed ?? false,
+            mixedConfidence: animal.mixedConfidence ?? 0,
+            breeds: aiResult?.breeds ?? [],
+            similarBreeds: aiResult?.similarBreeds ?? [],
+            totalAnimalsDetected: animalReviews.length,
+            animals: aiResult?.animals,
+        };
+        setAiResult(updatedAiResult);
+        setEditedResult(updatedAiResult);
+        toast.info(`Reviewing Animal #${idx + 1}: ${animal.species} (${animal.breed})`);
+    };
+
+    const handleToggleIncludeAnimal = (idx: number) => {
+        setAnimalReviews(prev => prev.map((item, i) => {
+            if (i === idx) {
+                const newIncluded = !item.included;
+                toast.info(`Animal #${idx + 1} ${newIncluded ? 'included in' : 'excluded from'} report`);
+                return { ...item, included: newIncluded };
+            }
+            return item;
+        }));
     };
 
     const handleDetectLocation = () => {
@@ -260,6 +424,12 @@ export default function RescuePage() {
             return;
         }
 
+        const includedAnimals = animalReviews.filter(a => a.included);
+        if (animalReviews.length > 0 && includedAnimals.length === 0) {
+            toast.error('Please select at least one animal to include in the rescue report.');
+            return;
+        }
+
         setSubmitting(true);
 
         const formData = new FormData();
@@ -289,6 +459,10 @@ export default function RescuePage() {
             formData.append('ai_prediction_log_id', predictionLogId.toString());
         }
 
+        if (includedAnimals.length > 0) {
+            formData.append('animals', JSON.stringify(includedAnimals));
+        }
+
         uploadedFiles.forEach((file) => {
             formData.append('images[]', file);
         });
@@ -314,6 +488,7 @@ export default function RescuePage() {
         setSubmittedMode('');
         setAiResult(null);
         setEditedResult(null);
+        setAnimalReviews([]);
         setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
@@ -336,6 +511,7 @@ export default function RescuePage() {
         setWizardStep(1);
         setAiResult(null);
         setEditedResult(null);
+        setAnimalReviews([]);
         setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
@@ -359,6 +535,7 @@ export default function RescuePage() {
         setImageUploaded(false);
         setAnalyzing(false);
         setAiResult(null);
+        setAnimalReviews([]);
         setUploadedFiles([]);
         setFilePreviews([]);
     };
@@ -370,10 +547,25 @@ export default function RescuePage() {
             setAgeCategory(editedResult.ageCategory);
             setGender(editedResult.gender);
             setSuggestedName(editedResult.suggestedName);
+
+            // Synchronize with active animalReview item
+            setAnimalReviews(prev => prev.map((item, idx) => {
+                if (idx === selectedAnimalIdx) {
+                    return {
+                        ...item,
+                        species: animalType,
+                        breed: editedResult.breed,
+                        ageCategory: editedResult.ageCategory,
+                        gender: editedResult.gender,
+                        suggestedName: editedResult.suggestedName,
+                    };
+                }
+                return item;
+            }));
         }
 
         setIsEditing(false);
-        toast.success('Details updated!');
+        toast.success(`Animal #${selectedAnimalIdx + 1} details updated!`);
     };
 
     return (
@@ -674,6 +866,69 @@ export default function RescuePage() {
                                                     </button>
                                                 </div>
 
+                                                {/* Multi-Animal Detected Selector */}
+                                                {animalReviews.length > 1 && (
+                                                    <div className="bg-white/95 backdrop-blur rounded-2xl p-4 border-2 border-paw-orange/30 space-y-3 shadow-sm">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-black uppercase tracking-wider text-paw-navy flex items-center gap-2">
+                                                                <Brain size={16} className="text-paw-orange" />
+                                                                Multi-Species Detection ({animalReviews.length} Animals Detected)
+                                                            </span>
+                                                            <span className="text-[11px] font-bold text-paw-orange bg-orange-50 px-2.5 py-0.5 rounded-full border border-paw-orange/20">
+                                                                {animalReviews.filter(a => a.included).length} of {animalReviews.length} selected for rescue
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid sm:grid-cols-2 gap-2">
+                                                            {animalReviews.map((animal, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    onClick={() => handleSelectAnimal(idx)}
+                                                                    className={`p-3 rounded-2xl cursor-pointer transition-all border-2 flex items-center justify-between gap-2 ${
+                                                                        selectedAnimalIdx === idx
+                                                                            ? 'bg-orange-50/80 border-paw-orange shadow-md shadow-paw-orange/10'
+                                                                            : 'bg-white border-gray-100 hover:border-paw-orange/30'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs ${
+                                                                            selectedAnimalIdx === idx ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
+                                                                        }`}>
+                                                                            #{idx + 1}
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs font-black text-paw-navy flex items-center gap-1.5">
+                                                                                <span>{animal.species}: {animal.breed}</span>
+                                                                                {selectedAnimalIdx === idx && (
+                                                                                    <span className="text-[9px] bg-paw-orange text-white px-1.5 py-0.2 rounded-md font-bold">
+                                                                                        Active
+                                                                                    </span>
+                                                                                )}
+                                                                            </p>
+                                                                            <p className="text-[10px] text-gray-400 font-bold">
+                                                                                {animal.ageCategory.split(':')[0]} &middot; {animal.confidence}% conf
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleToggleIncludeAnimal(idx);
+                                                                        }}
+                                                                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg border transition-all ${
+                                                                            animal.included
+                                                                                ? 'bg-green-500 text-white border-green-600'
+                                                                                : 'bg-gray-100 text-gray-400 border-gray-200'
+                                                                        }`}
+                                                                    >
+                                                                        {animal.included ? '✓ Included' : '+ Excluded'}
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <AnimatePresence mode="wait">
                                                     {!isEditing ? (
                                                         <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-3">
@@ -965,25 +1220,57 @@ export default function RescuePage() {
                                                 )}
 
                                                 {/* Summary */}
-                                                <div className="bg-gradient-to-br from-paw-orange/5 to-orange-50/30 rounded-2xl p-5 border-2 border-paw-orange/10">
-                                                    <h4 className="font-black text-paw-navy mb-3 text-sm">Report Summary</h4>
-                                                    <div className="grid grid-cols-2 gap-3 text-xs">
-                                                        <div>
-                                                            <p className="text-gray-400 font-bold">Animal</p>
-                                                            <p className="font-black text-paw-navy">{animalType} - {breed || 'Unspecified'}</p>
+                                                <div className="bg-gradient-to-br from-paw-orange/5 to-orange-50/30 rounded-2xl p-5 border-2 border-paw-orange/10 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="font-black text-paw-navy text-sm">Report Summary</h4>
+                                                        {animalReviews.filter(a => a.included).length > 1 && (
+                                                            <span className="text-[10px] font-black uppercase tracking-wider bg-paw-orange text-white px-2.5 py-0.5 rounded-full">
+                                                                🐾 {animalReviews.filter(a => a.included).length} Animals in Report
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {animalReviews.filter(a => a.included).length > 1 ? (
+                                                        <div className="space-y-2 border-b border-paw-orange/10 pb-3">
+                                                            {animalReviews.filter(a => a.included).map((an, i) => (
+                                                                <div key={i} className="bg-white p-3 rounded-xl border border-paw-orange/20 flex items-center justify-between text-xs">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="w-5 h-5 bg-paw-orange/10 text-paw-orange rounded-md flex items-center justify-center font-black text-[10px]">
+                                                                            #{i + 1}
+                                                                        </span>
+                                                                        <div>
+                                                                            <p className="font-black text-paw-navy">{an.species} · {an.breed}</p>
+                                                                            <p className="text-[10px] text-gray-400 font-bold">{an.ageCategory.split(':')[0]} · {an.gender}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    {an.suggestedName && (
+                                                                        <span className="text-[11px] font-bold text-paw-navy bg-paw-bg px-2 py-1 rounded-lg">
+                                                                            "{an.suggestedName}"
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                        <div>
-                                                            <p className="text-gray-400 font-bold">Age/Gender</p>
-                                                            <p className="font-black text-paw-navy">{ageCategory.split(':')[0]} / {gender}</p>
+                                                    ) : (
+                                                        <div className="grid grid-cols-2 gap-3 text-xs">
+                                                            <div>
+                                                                <p className="text-gray-400 font-bold">Animal</p>
+                                                                <p className="font-black text-paw-navy">{animalType} - {breed || 'Unspecified'}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-gray-400 font-bold">Age/Gender</p>
+                                                                <p className="font-black text-paw-navy">{ageCategory.split(':')[0]} / {gender}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="col-span-2 pt-2 border-t border-paw-orange/10">
-                                                            <p className="text-gray-400 font-bold">Reporter Contact</p>
-                                                            <p className="font-black text-paw-navy">
-                                                                {contactName || (user ? user.name : 'Guest')}
-                                                                {contactPhone ? ` · ${contactPhone}` : ''}
-                                                                {contactEmail ? ` · ${contactEmail}` : (user?.email ? ` · ${user.email}` : '')}
-                                                            </p>
-                                                        </div>
+                                                    )}
+
+                                                    <div className="pt-2 border-t border-paw-orange/10 text-xs">
+                                                        <p className="text-gray-400 font-bold">Reporter Contact</p>
+                                                        <p className="font-black text-paw-navy">
+                                                            {contactName || (user ? user.name : 'Guest')}
+                                                            {contactPhone ? ` · ${contactPhone}` : ''}
+                                                            {contactEmail ? ` · ${contactEmail}` : (user?.email ? ` · ${user.email}` : '')}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1122,6 +1409,57 @@ export default function RescuePage() {
                                                 })}
                                             </div>
                                         )}
+
+                                        {/* Multi-Animal Detected Selector in AI-Only Mode */}
+                                        {animalReviews.length > 1 && (
+                                            <div className="bg-white rounded-3xl p-4 border-2 border-paw-navy/20 space-y-3 shadow-md">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-paw-navy flex items-center gap-2">
+                                                        <Brain size={16} className="text-paw-orange" />
+                                                        Multi-Species Identification ({animalReviews.length} Animals Detected)
+                                                    </span>
+                                                    <span className="text-[11px] font-bold text-paw-navy bg-blue-50 px-2.5 py-0.5 rounded-full border border-paw-navy/10">
+                                                        Click an animal to inspect
+                                                    </span>
+                                                </div>
+                                                <div className="grid sm:grid-cols-2 gap-2">
+                                                    {animalReviews.map((animal, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            onClick={() => handleSelectAnimal(idx)}
+                                                            className={`p-3 rounded-2xl transition-all border-2 text-left flex items-center justify-between gap-2 ${
+                                                                selectedAnimalIdx === idx
+                                                                    ? 'bg-blue-50 border-paw-navy shadow-md shadow-paw-navy/10'
+                                                                    : 'bg-white border-gray-100 hover:border-paw-navy/30'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs ${
+                                                                    selectedAnimalIdx === idx ? 'bg-paw-navy text-white' : 'bg-gray-100 text-gray-500'
+                                                                }`}>
+                                                                    #{idx + 1}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-black text-paw-navy">
+                                                                        {animal.species}: {animal.breed}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-gray-400 font-bold">
+                                                                        {animal.ageCategory.split(':')[0]} &middot; {animal.confidence}% conf
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {selectedAnimalIdx === idx && (
+                                                                <span className="text-[9px] bg-paw-navy text-white px-2 py-0.5 rounded-md font-bold">
+                                                                    Viewing
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* AI Result Card */}
                                         <div className="bg-gradient-to-br from-white to-blue-50/60 rounded-[40px] p-8 shadow-2xl shadow-paw-navy/10 border-2 border-paw-navy/20">
                                             <div className="flex items-center gap-3 mb-6">

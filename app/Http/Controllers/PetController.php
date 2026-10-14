@@ -37,33 +37,41 @@ class PetController extends Controller
             'image' => ['required', 'image', 'max:10240'],
         ]);
 
-        $response = Http::timeout(120)
-            ->attach(
-                'file',
-                file_get_contents($request->file('image')),
-                $request->file('image')->getClientOriginalName()
-            )
-            ->post(config('services.ai.url').'/predict');
+        try {
+            $response = Http::timeout(120)
+                ->attach(
+                    'file',
+                    file_get_contents($request->file('image')),
+                    $request->file('image')->getClientOriginalName()
+                )
+                ->post(config('services.ai.url').'/predict');
 
-        if ($response->failed()) {
+            if ($response->failed()) {
+                return response()->json([
+                    'accepted' => false,
+                    'message' => 'AI service encountered an error processing the image.',
+                    'error' => $response->json(),
+                ], 500);
+            }
+
+            $data = $response->json();
+            $confidence = $data['confidence'] ?? $data['score'] ?? ($data['predictions'][0]['confidence'] ?? null);
+
+            $log = AiPredictionLog::create([
+                'feature' => 'pet_prediction',
+                'input_data' => ['image_name' => $request->file('image')->getClientOriginalName()],
+                'output_data' => $data,
+                'confidence' => $confidence,
+                'is_accurate' => null,
+            ]);
+
+            return response()->json(array_merge($data, ['prediction_log_id' => $log->id]));
+        } catch (\Throwable $e) {
             return response()->json([
-                'message' => 'AI service failed',
-                'error' => $response->json(),
-            ], 500);
+                'accepted' => false,
+                'message' => 'AI service is currently unavailable or unreachable.',
+            ], 503);
         }
-
-        $data = $response->json();
-        $confidence = $data['confidence'] ?? $data['score'] ?? ($data['predictions'][0]['confidence'] ?? null);
-
-        $log = AiPredictionLog::create([
-            'feature' => 'pet_prediction',
-            'input_data' => ['image_name' => $request->file('image')->getClientOriginalName()],
-            'output_data' => $data,
-            'confidence' => $confidence,
-            'is_accurate' => null,
-        ]);
-
-        return response()->json(array_merge($data, ['prediction_log_id' => $log->id]));
     }
 
     public function generateNames(Request $request)
@@ -85,22 +93,30 @@ class PetController extends Controller
             'gender' => ['required', 'in:male,female,neutral,unknown'],
         ]);
 
-        $response = Http::timeout(60)->post(config('services.ai.url').'/generate-names', [
-            'species' => $request->species,
-            'gender' => $request->gender,
-        ]);
+        try {
+            $response = Http::timeout(60)->post(config('services.ai.url').'/generate-names', [
+                'species' => $request->species,
+                'gender' => $request->gender,
+            ]);
 
-        $data = $response->json();
+            $data = $response->json();
 
-        AiPredictionLog::create([
-            'feature' => 'name_generation',
-            'input_data' => $request->only(['species', 'gender']),
-            'output_data' => $data,
-            'confidence' => null,
-            'is_accurate' => null,
-        ]);
+            AiPredictionLog::create([
+                'feature' => 'name_generation',
+                'input_data' => $request->only(['species', 'gender']),
+                'output_data' => $data,
+                'confidence' => null,
+                'is_accurate' => null,
+            ]);
 
-        return response()->json($data);
+            return response()->json($data);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'species' => $request->species,
+                'gender' => $request->gender,
+                'names' => ['Buddy', 'Luna', 'Milo', 'Coco', 'Shadow'],
+            ]);
+        }
     }
 
     // public function predict(Request $request) {

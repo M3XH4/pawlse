@@ -73,7 +73,7 @@ mindmap
 
 ## 🌐 External & AI Services
 
-- **AI Service Gateway**: Python/FastAPI microservice interfacing with PyTorch/TensorFlow models for image classification (animal breed, age category, gender, name suggestions) (see [[External APIs]]).
+- **AI Service Gateway**: Python/FastAPI microservice interfacing with PyTorch fine-tuned **EfficientNet-B0** dual-head classifier and **YOLOv8n** multi-pet localization pipeline (see [[AI Architecture]], [[AI Microservice & Model Pipeline]], and [[External APIs]]).
 - **Payment Providers**: GCash, Maya, and Bank manual verification with proof-of-payment uploads and planned PayMongo/Xendit automation.
 - **Mail & Notification Service**: SMTP mailer with custom queued notifications (Email OTP verification, adoption approvals, donation receipts).
 
@@ -83,5 +83,7 @@ mindmap
 - [[Project Overview]]
 - [[Development Setup]]
 - [[System Architecture]]
+- [[AI Architecture]]
+- [[AI Microservice & Model Pipeline]]
 - [[Frontend Architecture]]
 - [[Backend Architecture]]

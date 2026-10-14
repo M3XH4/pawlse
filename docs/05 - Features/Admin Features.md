@@ -40,6 +40,7 @@ graph TD
 ### 3. AI Classification Validation
 - **Page**: `resources/js/pages/admin/ai-validation.tsx`
 - **Controller**: `Admin\AiValidationController`
+- **Architecture & Workflow**: See [[AI Architecture]] and [[AI Rescue & Multi-Species Identification]]
 - **Capabilities**:
   - Inspect AI breed, age, and gender predictions against user-uploaded images.
   - Approve AI findings into verified animal records or reject/override inaccuracies to train future telemetry.
@@ -86,6 +87,8 @@ graph TD
 
 ## 🔗 Related Documentation
 - [[Dashboard]]
+- [[AI Rescue & Multi-Species Identification]]
+- [[AI Architecture]]
 - [[Volunteer Features]]
 - [[Super Admin Features]]
 - [[AdoptionStatusTransition|Services]]

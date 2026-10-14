@@ -9,6 +9,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -38,18 +39,22 @@ test('system overview dashboard is reachable and receives stats & audit feed', f
         );
 });
 
-test('user management can list, create, update, soft-delete and restore users', function () {
-    // 1. List users
+test('user management can list, create, update, soft-delete and restore users with roles and permissions', function () {
+    // 1. List users with roles & permission catalog
     $this->actingAs($this->superAdmin)
         ->get(route('account.super-admin.user-management'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('super-admin/user-management')
             ->has('users.data')
+            ->has('roles_detail')
+            ->has('permission_catalog')
             ->has('stats.total')
+            ->has('stats.total_roles')
+            ->has('stats.total_permissions')
         );
 
-    // 2. Create user
+    // 2. Create user with role and custom direct permissions
     $this->actingAs($this->superAdmin)
         ->post(route('account.super-admin.user-management.store'), [
             'name' => 'John Doe',
@@ -57,6 +62,7 @@ test('user management can list, create, update, soft-delete and restore users', 
             'password' => 'Password123!',
             'role' => 'volunteer',
             'verified' => true,
+            'permissions' => ['adoptions.review', 'donations.export'],
         ])
         ->assertRedirect();
 
@@ -68,6 +74,8 @@ test('user management can list, create, update, soft-delete and restore users', 
 
     $createdUser = User::where('email', 'john@example.test')->first();
     expect($createdUser->hasRole('volunteer'))->toBeTrue();
+    expect($createdUser->hasDirectPermission('adoptions.review'))->toBeTrue();
+    expect($createdUser->hasDirectPermission('donations.export'))->toBeTrue();
     expect($createdUser->email_verified_at)->not->toBeNull();
 
     // Verify audit log created
@@ -75,19 +83,21 @@ test('user management can list, create, update, soft-delete and restore users', 
         'action' => 'user_create',
     ]);
 
-    // 3. Update user
+    // 3. Update user details, role and permissions
     $this->actingAs($this->superAdmin)
         ->put(route('account.super-admin.user-management.update', $createdUser->id), [
             'name' => 'John Updated',
             'email' => 'john@example.test',
             'role' => 'admin',
             'verified' => true,
+            'permissions' => ['ai_config.manage'],
         ])
         ->assertRedirect();
 
     $createdUser->refresh();
     expect($createdUser->name)->toBe('John Updated');
     expect($createdUser->hasRole('admin'))->toBeTrue();
+    expect($createdUser->hasDirectPermission('ai_config.manage'))->toBeTrue();
 
     // 4. Soft delete user
     $this->actingAs($this->superAdmin)
@@ -106,6 +116,48 @@ test('user management can list, create, update, soft-delete and restore users', 
     $this->assertDatabaseHas('users', [
         'id' => $createdUser->id,
         'deleted_at' => null,
+    ]);
+});
+
+test('super admin can update role permission matrix and manage custom roles', function () {
+    // 1. Update role permissions
+    $this->actingAs($this->superAdmin)
+        ->put(route('account.super-admin.roles.permissions.update', 'volunteer'), [
+            'permissions' => ['pets.view', 'rescues.view', 'adoptions.review'],
+        ])
+        ->assertRedirect();
+
+    $volunteerRole = Role::where('name', 'volunteer')->first();
+    expect($volunteerRole->hasPermissionTo('adoptions.review'))->toBeTrue();
+
+    // 2. Create custom role
+    $this->actingAs($this->superAdmin)
+        ->post(route('account.super-admin.roles.store'), [
+            'name' => 'field-coordinator',
+            'permissions' => ['rescues.view', 'rescues.assign'],
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('roles', [
+        'name' => 'field-coordinator',
+    ]);
+
+    // 3. Delete custom role
+    $this->actingAs($this->superAdmin)
+        ->delete(route('account.super-admin.roles.destroy', 'field-coordinator'))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('roles', [
+        'name' => 'field-coordinator',
+    ]);
+
+    // 4. Attempting to delete a default system role fails
+    $this->actingAs($this->superAdmin)
+        ->delete(route('account.super-admin.roles.destroy', 'admin'))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('roles', [
+        'name' => 'admin',
     ]);
 });
 

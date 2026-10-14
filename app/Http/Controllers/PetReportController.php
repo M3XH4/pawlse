@@ -32,7 +32,7 @@ class PetReportController extends Controller
             'age_category' => ['nullable', 'string', 'max:255'],
             'gender' => ['nullable', 'string', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:2500'],
             'location' => ['required', 'string', 'max:255'],
             'contact_name' => [$user ? 'nullable' : 'required', 'string', 'max:255'],
             'contact_phone' => [$user ? 'nullable' : 'required', 'string', 'max:255'],
@@ -40,7 +40,28 @@ class PetReportController extends Controller
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],
             'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
+            'animals' => ['nullable'],
         ]);
+
+        $description = $validated['description'] ?? null;
+        $animalsInput = $request->input('animals');
+        if (is_string($animalsInput)) {
+            $animalsInput = json_decode($animalsInput, true);
+        }
+
+        if (is_array($animalsInput) && count($animalsInput) > 1) {
+            $multiBreakdown = "\n\n🐾 [Multi-Animal Incident - ".count($animalsInput)." Animals Reviewed]:\n";
+            foreach ($animalsInput as $idx => $animal) {
+                $num = $idx + 1;
+                $sp = $animal['species'] ?? $animal['animal_type'] ?? 'Unknown';
+                $br = $animal['breed'] ?? 'Unknown Breed';
+                $ag = $animal['ageCategory'] ?? $animal['age_category'] ?? ($animal['age_group'] ?? 'Unknown Age');
+                $gn = $animal['gender'] ?? 'Unknown';
+                $nm = ! empty($animal['suggestedName'] ?? $animal['name'] ?? null) ? ' (Name: '.($animal['suggestedName'] ?? $animal['name']).')' : '';
+                $multiBreakdown .= "• Animal #{$num}: {$sp} · {$br} | {$ag} | {$gn}{$nm}\n";
+            }
+            $description = trim(($description ?? '').$multiBreakdown);
+        }
 
         $report = PetReport::create([
             'user_id' => $user ? $user->id : null,
@@ -51,7 +72,7 @@ class PetReportController extends Controller
             'age_category' => $validated['age_category'] ?? null,
             'gender' => $validated['gender'] ?? null,
             'name' => $validated['name'] ?? null,
-            'description' => $validated['description'] ?? null,
+            'description' => $description,
             'location' => $validated['location'],
             'contact_name' => ! empty($validated['contact_name']) ? $validated['contact_name'] : ($user ? $user->name : 'Anonymous'),
             'contact_phone' => ! empty($validated['contact_phone']) ? $validated['contact_phone'] : null,

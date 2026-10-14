@@ -6,22 +6,30 @@ This document details the external microservices, payment gateways, and third-pa
 
 ## 🤖 1. AI Vision & Identification Microservice
 
+PAWLSE communicates with the **PAWLSE-AI** microservice via REST HTTP calls (see [[AI Architecture]] and [[AI Microservice & Model Pipeline]]).
+
 ```mermaid
 sequenceDiagram
     participant Laravel as 🐘 PAWLSE Backend (PetController)
     participant FastAPI as 🐍 Python AI Microservice (FastAPI)
-    participant Model as 🧠 ResNet / Vision Transformer Model
+    participant YOLO as 🎯 YOLOv8n (Pet Localization)
+    participant Model as 🔬 EfficientNet-B0 Dual-Head Model
 
     Laravel->>FastAPI: POST /predict (Multipart image stream)
-    FastAPI->>Model: Tensor image preprocessing & forward pass
-    Model-->>FastAPI: Raw probabilities [species, breed, age, gender]
-    FastAPI-->>Laravel: JSON { species, breed, age_category, confidence }
+    FastAPI->>YOLO: Detect and localize cat & dog crops
+    loop For Each Detected Animal
+        FastAPI->>Model: Tensor image preprocessing & forward pass
+        Model-->>FastAPI: Raw probabilities [species, breed]
+        FastAPI->>FastAPI: Estimate visual age group & generate name suggestions
+    end
+    FastAPI-->>Laravel: JSON { total_animals_detected, animals: [...] }
     Laravel->>Laravel: Record AiPredictionLog & Link to PetReport
 ```
 
-### Configuration (`config/services.php`)
-- `services.ai.url`: Endpoint URL of the Python AI service (e.g. `http://127.0.0.1:8000`).
+### Configuration (`config/services.php` & `.env`)
+- `services.ai.url`: Endpoint URL of the Python AI service (default: `http://127.0.0.1:8000`).
 - **Timeout**: 120 seconds configured in `Http::timeout(120)`.
+- **System Settings Guard**: Governed by `ai_enabled`, `ai_reporting_enabled`, and `ai_confidence_threshold`.
 
 ---
 
@@ -47,7 +55,10 @@ PAWLSE supports both direct manual receipt verification and prepared automated w
 ---
 
 ## 🔗 Related Documentation
+- [[AI Architecture]]
+- [[AI Microservice & Model Pipeline]]
+- [[AI Rescue & Multi-Species Identification]]
 - [[API Overview]]
 - [[Email & Notifications]]
 - [[Donation Monitoring|Admin Features]]
-- [[AiValidationController|Controllers]]
+- [[Controllers]]

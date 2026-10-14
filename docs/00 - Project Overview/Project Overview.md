@@ -49,13 +49,13 @@ graph TD
 
 ### 📚 Core Sections
 - **Overview & Stack**: [[Project Overview]] | [[Technology Stack]] | [[Development Setup]]
-- **Architecture**: [[System Architecture]] | [[Backend Architecture]] | [[Frontend Architecture]] | [[Request Flow]]
+- **Architecture**: [[System Architecture]] | [[AI Architecture]] | [[Backend Architecture]] | [[Frontend Architecture]] | [[Request Flow]]
 - **Backend**: [[Laravel Structure]] | [[Routes]] | [[Controllers]] | [[Models]] | [[Middleware]] | [[Services]] | [[Validation]]
 - **Frontend**: [[React Structure]] | [[Inertia Architecture]] | [[Pages]] | [[Components]] | [[Layouts]] | [[TypeScript]] | [[State Management]]
 - **Database**: [[Database Overview]] | [[Schema]] | [[Tables]] | [[Relationships]] | [[Migrations]]
-- **Features & Modules**: [[Authentication]] | [[Authorization & RBAC]] | [[Dashboard]] | [[User Features]] | [[Volunteer Features]] | [[Admin Features]] | [[Super Admin Features]]
+- **Features & Modules**: [[Authentication]] | [[Authorization & RBAC]] | [[Dashboard]] | [[User Features]] | [[AI Rescue & Multi-Species Identification]] | [[Volunteer Features]] | [[Admin Features]] | [[Super Admin Features]]
 - **UI & UX**: [[Design System]] | [[Colors & Themes]] | [[Typography]] | [[Components|UI Components]] | [[Responsive Design]]
-- **APIs & Integrations**: [[API Overview]] | [[External APIs]] | [[Email & Notifications]]
+- **APIs & Integrations**: [[API Overview]] | [[AI Microservice & Model Pipeline]] | [[External APIs]] | [[Email & Notifications]]
 - **Development & Ops**: [[Development Workflow]] | [[Git Workflow]] | [[Testing]] | [[Deployment]]
 - **Troubleshooting & Support**: [[Common Errors]] | [[Laravel Errors]] | [[React Errors]] | [[Inertia Errors]] | [[Database Errors]]
 - **Decisions**: [[Architecture Decisions]]

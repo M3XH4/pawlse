@@ -74,6 +74,8 @@ graph TB
 ## 🔗 Related Documentation
 - [[Backend Architecture]]
 - [[Frontend Architecture]]
+- [[AI Architecture]]
+- [[AI Rescue & Multi-Species Identification]]
 - [[Request Flow]]
 - [[Database Overview]]
 - [[Authorization & RBAC]]

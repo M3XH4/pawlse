@@ -181,6 +181,9 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::put('user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');
     Route::delete('user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
     Route::post('user-management/{id}/restore', [UserManagementController::class, 'restore'])->name('user-management.restore');
+    Route::post('roles', [UserManagementController::class, 'storeRole'])->name('roles.store');
+    Route::put('roles/{role}/permissions', [UserManagementController::class, 'updateRolePermissions'])->name('roles.permissions.update');
+    Route::delete('roles/{role}', [UserManagementController::class, 'destroyRole'])->name('roles.destroy');
 
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
 

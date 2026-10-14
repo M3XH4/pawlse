@@ -81,4 +81,6 @@ graph LR
 - [[Models]]
 - [[Services]]
 - [[Validation]]
+- [[AI Microservice & Model Pipeline]]
+- [[AI Rescue & Multi-Species Identification]]
 - [[Inertia Architecture]]

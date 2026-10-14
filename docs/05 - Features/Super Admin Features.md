@@ -66,6 +66,7 @@ graph TD
 ### 6. AI Model Configuration Panel
 - **Page**: `resources/js/pages/super-admin/ai-configuration.tsx`
 - **Controller**: `SuperAdmin\AiConfigController`
+- **Architecture & Workflow**: See [[AI Architecture]] and [[AI Rescue & Multi-Species Identification]]
 - **Capabilities**:
   - Configure AI confidence threshold (e.g. `0.70`).
   - Toggle feature switches: Master AI toggle (`ai_enabled`), AI reporting toggle (`ai_reporting_enabled`), Pet identification toggle (`ai_identifying_enabled`), and Auto-validation toggle (`ai_auto_validation`).
@@ -81,6 +82,8 @@ graph TD
 
 ## 🔗 Related Documentation
 - [[Dashboard]]
+- [[AI Architecture]]
+- [[AI Rescue & Multi-Species Identification]]
 - [[Admin Features]]
 - [[Authorization & RBAC]]
 - [[Database Overview]]
