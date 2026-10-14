@@ -30,6 +30,14 @@ export function AdminSidebar({
     const currentUrl = page.url.split('?')[0] ?? page.url;
     const userName = auth.user?.name ?? 'Admin User';
     const initials = initialsFromName(userName) || 'AU';
+    const isFosterParent = Boolean(page.props.is_foster_parent);
+
+    const displayedNavItems = adminNavItems.filter((item) => {
+        if (item.title === 'My Foster Pets' && !isFosterParent) {
+            return false;
+        }
+        return true;
+    });
 
     return (
         <aside
@@ -90,7 +98,7 @@ export function AdminSidebar({
                 )}
                 aria-label="Admin sections"
             >
-                {adminNavItems.map((item) => {
+                {displayedNavItems.map((item) => {
                     const Icon = item.icon;
 
                     return (

@@ -16,6 +16,17 @@ class VolunteerApplication extends Model
     protected $guarded = [];
 
     /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'foster_capacity' => 'integer',
+            'transport_has_license' => 'boolean',
+        ];
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

@@ -43,6 +43,12 @@ class VolunteerController extends Controller
                 'role' => $application->role,
                 'why' => $application->why,
                 'experience' => $application->experience,
+                'foster_capacity' => $application->foster_capacity,
+                'foster_preference' => $application->foster_preference,
+                'foster_needs' => $application->foster_needs,
+                'medic_experience' => $application->medic_experience,
+                'medic_certifications' => $application->medic_certifications,
+                'transport_has_license' => $application->transport_has_license,
                 'reference_number' => $application->reference_number,
                 'rejection_reason' => $application->rejection_reason,
             ] : null,
@@ -68,6 +74,16 @@ class VolunteerController extends Controller
             'role' => ['required', 'string', 'max:255'],
             'why' => ['required', 'string', 'max:5000'],
             'experience' => ['nullable', 'string', 'max:5000'],
+            'foster_capacity' => ['nullable', 'required_if:role,Foster Volunteer', 'integer', 'min:1', 'max:20'],
+            'foster_preference' => ['nullable', 'required_if:role,Foster Volunteer', 'in:cats,dogs,both'],
+            'foster_needs' => ['nullable', 'string', 'max:5000'],
+            'medic_experience' => ['nullable', 'string', 'max:5000'],
+            'medic_certifications' => ['nullable', 'required_if:role,Medic Volunteer', 'string', 'min:3', 'max:5000'],
+            'transport_has_license' => ['nullable', 'boolean', function ($attribute, $value, $fail) use ($request) {
+                if ($request->input('role') === 'Transport' && ! $value) {
+                    $fail('You must declare that you have a valid driver\'s license and vehicle registration.');
+                }
+            }],
         ]);
 
         $referenceNumber = 'VOL-'.time().'-'.random_int(100, 999);
@@ -81,6 +97,12 @@ class VolunteerController extends Controller
             'role' => $validated['role'],
             'why' => $validated['why'],
             'experience' => $validated['experience'] ?? null,
+            'foster_capacity' => $validated['foster_capacity'] ?? null,
+            'foster_preference' => $validated['foster_preference'] ?? null,
+            'foster_needs' => $validated['foster_needs'] ?? null,
+            'medic_experience' => $validated['medic_experience'] ?? null,
+            'medic_certifications' => $validated['medic_certifications'] ?? null,
+            'transport_has_license' => (bool) ($validated['transport_has_license'] ?? false),
             'status' => 'pending',
             'reference_number' => $referenceNumber,
         ]);

@@ -61,6 +61,9 @@ class HandleInertiaRequests extends Middleware
             'can_switch_to_volunteer' => $request->user()
                 ? $request->user()->volunteerApplications()->where('status', 'approved')->exists()
                 : false,
+            'is_foster_parent' => $request->user()
+                ? $request->user()->isApprovedFosterParent()
+                : false,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'dashboardRole' => $dashboardRole,
             'dashboardNotifications' => $dashboardNotifications,

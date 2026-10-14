@@ -20,6 +20,12 @@ interface VolunteerApplicationModel {
     role: string;
     why: string;
     experience: string | null;
+    foster_capacity?: number | null;
+    foster_preference?: string | null;
+    foster_needs?: string | null;
+    medic_experience?: string | null;
+    medic_certifications?: string | null;
+    transport_has_license?: boolean;
     status: string;
     reference_number: string;
     rejection_reason: string | null;
@@ -94,7 +100,7 @@ export default function VolunteerManagement({
     const [assignActivityType, setAssignActivityType] = useState<'event' | 'feeding'>('event');
     const [assignEventId, setAssignEventId] = useState('');
     const [assignScheduleId, setAssignScheduleId] = useState('');
-    const [assignRole, setAssignRole] = useState('Food Carrier');
+    const [assignRole, setAssignRole] = useState('Feeding');
 
     // Complete Task modal state
     const [completingTask, setCompletingTask] = useState<TaskModel | null>(null);
@@ -333,7 +339,35 @@ export default function VolunteerManagement({
                                                     <p className="font-bold text-[#0B2340] dark:text-white">{app.full_name}</p>
                                                     <p className="text-xs text-gray-400">{app.email}</p>
                                                 </td>
-                                                <td className="py-4 font-bold">{app.role}</td>
+                                                <td className="py-4">
+                                                    <p className="font-bold">{app.role}</p>
+                                                    {app.role === 'Foster Volunteer' && (
+                                                        <div className="mt-1 flex flex-wrap gap-1">
+                                                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                                                                Cap: {app.foster_capacity ?? 2}
+                                                            </span>
+                                                            {app.foster_preference && (
+                                                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-200">
+                                                                    {app.foster_preference}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {app.role === 'Medic Volunteer' && (
+                                                        <div className="mt-1">
+                                                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-700 truncate max-w-[160px] inline-block" title={app.medic_certifications || ''}>
+                                                                Cert: {app.medic_certifications || 'None'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {app.role === 'Transport' && (
+                                                        <div className="mt-1">
+                                                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-teal-100 text-teal-700">
+                                                                Licensed Driver ✓
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td className="py-4">
                                                     <p>{app.mobile}</p>
                                                     <p className="text-xs text-gray-400 font-bold">{app.address}</p>

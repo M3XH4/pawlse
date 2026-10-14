@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AiValidationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
+use App\Http\Controllers\Admin\FosterManagementController;
 use App\Http\Controllers\Admin\ReportsAnalyticsController;
 use App\Http\Controllers\Admin\RescueManagementController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FosterCareController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
@@ -117,12 +119,27 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
     Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');
     Route::post('rescue-reports/{report}/status', [PetReportController::class, 'updateStatus'])->name('rescue-reports.update-status');
+    Route::get('foster-care', [FosterCareController::class, 'index'])->name('foster-care');
+    Route::post('foster-care/{placement}/updates', [FosterCareController::class, 'storeUpdate'])->name('foster-care.updates.store');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
 
 Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboardMiddleware)->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Foster Home Management Dashboard
+    Route::get('foster-management', [FosterManagementController::class, 'index'])->name('foster-management');
+    Route::post('foster-management/assign', [FosterManagementController::class, 'assign'])->name('foster-management.assign');
+    Route::post('foster-management/placements/{placement}/transfer', [FosterManagementController::class, 'transfer'])->name('foster-management.transfer');
+    Route::post('foster-management/placements/{placement}/end', [FosterManagementController::class, 'endPlacement'])->name('foster-management.end');
+    Route::post('foster-management/placements/{placement}/instructions', [FosterManagementController::class, 'updateInstructions'])->name('foster-management.instructions');
+    Route::post('foster-management/foster-parents', [FosterManagementController::class, 'storeFosterParent'])->name('foster-management.foster-parents.store');
+    Route::put('foster-management/foster-parents/{fosterParent}', [FosterManagementController::class, 'updateFosterParent'])->name('foster-management.foster-parents.update');
+    Route::post('foster-management/updates/{update}/acknowledge', [FosterManagementController::class, 'acknowledgeUpdate'])->name('foster-management.updates.acknowledge');
+    Route::get('my-foster-pets', [FosterCareController::class, 'index'])->name('my-foster-pets');
+    Route::post('my-foster-pets/{placement}/updates', [FosterCareController::class, 'storeUpdate'])->name('my-foster-pets.updates.store');
+
     Route::get('rescue-management', [RescueManagementController::class, 'index'])->name('rescue-management');
     Route::post('rescue-management/{report}/assign', [RescueManagementController::class, 'assignVolunteer'])->name('rescue-management.assign');
     Route::post('rescue-management/{report}/status', [RescueManagementController::class, 'updateStatus'])->name('rescue-management.update-status');

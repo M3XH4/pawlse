@@ -11,6 +11,7 @@ use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
+use App\Models\FosterParent;
 use App\Models\User;
 use App\Models\VolunteerApplication;
 use App\Notifications\VolunteerApplicationReviewedNotification;
@@ -108,6 +109,19 @@ class VolunteerManagementController extends Controller
         $user->syncRoles([Role::Volunteer]);
 
         $user->notify(new VolunteerApplicationReviewedNotification($application));
+
+        if ($application->role === 'Foster Volunteer') {
+            FosterParent::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'status' => 'approved',
+                    'capacity' => $application->foster_capacity ?? 2,
+                    'notes' => trim(($application->foster_preference ? 'Preference: '.ucfirst($application->foster_preference).'. ' : '').($application->foster_needs ?? '')),
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]
+            );
+        }
 
         VolunteerApplicationApprovedEvent::dispatch($application);
 

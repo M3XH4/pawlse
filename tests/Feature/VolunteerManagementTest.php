@@ -54,6 +54,153 @@ test('volunteer application validates required fields', function () {
     $response->assertSessionHasErrors(['fullName', 'mobile', 'email', 'address', 'role', 'why']);
 });
 
+test('foster volunteer application validates capacity and preference', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Foster Jane',
+            'mobile' => '09123456789',
+            'email' => 'jane@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Foster Volunteer',
+            'why' => 'I love fostering kittens.',
+            'foster_capacity' => '',
+            'foster_preference' => '',
+        ]);
+
+    $response->assertSessionHasErrors(['foster_capacity', 'foster_preference']);
+});
+
+test('foster volunteer can apply with valid capacity, preference, and needs', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Foster Jane',
+            'mobile' => '09123456789',
+            'email' => 'jane@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Foster Volunteer',
+            'why' => 'I have a large house with a secure yard.',
+            'foster_capacity' => 3,
+            'foster_preference' => 'cats',
+            'foster_needs' => 'Need 1 crate and kitten milk formula.',
+        ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('volunteer_applications', [
+        'user_id' => $user->id,
+        'role' => 'Foster Volunteer',
+        'foster_capacity' => 3,
+        'foster_preference' => 'cats',
+        'foster_needs' => 'Need 1 crate and kitten milk formula.',
+    ]);
+});
+
+test('approving a foster volunteer application creates a foster parent directory record', function () {
+    $admin = User::factory()->admin()->create();
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $application = VolunteerApplication::factory()->create([
+        'user_id' => $user->id,
+        'full_name' => 'Alice Foster',
+        'role' => 'Foster Volunteer',
+        'foster_capacity' => 4,
+        'foster_preference' => 'dogs',
+        'foster_needs' => 'Fenced yard, experience with rescue dogs.',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.approve', $application));
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('foster_parents', [
+        'user_id' => $user->id,
+        'status' => 'approved',
+        'capacity' => 4,
+    ]);
+});
+
+test('medic volunteer application fails without certifications', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Doc John',
+            'mobile' => '09123456789',
+            'email' => 'doc@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Medic Volunteer',
+            'why' => 'I want to provide medical triage.',
+            'medic_certifications' => '',
+        ]);
+
+    $response->assertSessionHasErrors(['medic_certifications']);
+});
+
+test('medic volunteer application succeeds with certifications and medical experience', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Doc John',
+            'mobile' => '09123456789',
+            'email' => 'doc@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Medic Volunteer',
+            'why' => 'I want to provide medical triage.',
+            'medic_certifications' => 'Doctor of Veterinary Medicine (PRC #123456)',
+            'medic_experience' => '3 years clinic surgery and stray rehabilitation',
+        ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('volunteer_applications', [
+        'user_id' => $user->id,
+        'role' => 'Medic Volunteer',
+        'medic_certifications' => 'Doctor of Veterinary Medicine (PRC #123456)',
+        'medic_experience' => '3 years clinic surgery and stray rehabilitation',
+    ]);
+});
+
+test('transport volunteer application requires driver license declaration', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    // Fails when transport_has_license is false
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Driver Bob',
+            'mobile' => '09123456789',
+            'email' => 'bob@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Transport',
+            'why' => 'I own a pickup truck.',
+            'transport_has_license' => false,
+        ]);
+
+    $response->assertSessionHasErrors(['transport_has_license']);
+
+    // Succeeds when transport_has_license is true
+    $successResponse = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Driver Bob',
+            'mobile' => '09123456789',
+            'email' => 'bob@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Transport',
+            'why' => 'I own a pickup truck.',
+            'transport_has_license' => true,
+        ]);
+
+    $successResponse->assertRedirect();
+    $this->assertDatabaseHas('volunteer_applications', [
+        'user_id' => $user->id,
+        'role' => 'Transport',
+        'transport_has_license' => true,
+    ]);
+});
+
 test('admin can view volunteer management dashboard with applications, volunteers, and tasks', function () {
     $admin = User::factory()->admin()->create();
     $volunteer = User::factory()->volunteer()->create();

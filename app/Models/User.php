@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -170,5 +171,30 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    /**
+     * @return HasOne<FosterParent, $this>
+     */
+    public function fosterParentProfile(): HasOne
+    {
+        return $this->hasOne(FosterParent::class);
+    }
+
+    /**
+     * @return HasMany<FosterPlacement, $this>
+     */
+    public function fosterPlacements(): HasMany
+    {
+        return $this->hasMany(FosterPlacement::class, 'foster_parent_user_id');
+    }
+
+    public function isApprovedFosterParent(): bool
+    {
+        if ($this->relationLoaded('fosterParentProfile')) {
+            return $this->fosterParentProfile !== null && $this->fosterParentProfile->isApproved();
+        }
+
+        return $this->fosterParentProfile()->where('status', 'approved')->exists();
     }
 }

@@ -51,6 +51,11 @@ class RoleSeeder extends Seeder
             'events.view' => 'Browse shelter community events',
             'events.manage' => 'Create and manage outreach events',
         ],
+        'Foster Care & Placements' => [
+            'foster.view' => 'View foster management dashboard and roster',
+            'foster.manage' => 'Assign, transfer, and manage foster home placements',
+            'foster.care' => 'Provide foster care and submit care logs',
+        ],
         'System & Security' => [
             'audit_logs.view' => 'Access system audit trails',
             'archives.manage' => 'Restore or purge archived records',
@@ -93,6 +98,7 @@ class RoleSeeder extends Seeder
             'volunteers.view', 'volunteers.approve', 'volunteers.assign_tasks', 'volunteers.certify',
             'donations.view', 'donations.manage', 'donations.export',
             'events.view', 'events.manage',
+            'foster.view', 'foster.manage',
             'audit_logs.view',
         ];
         $adminRole->syncPermissions($adminPermissions);

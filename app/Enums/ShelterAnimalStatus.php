@@ -7,6 +7,7 @@ enum ShelterAnimalStatus: string
     case Available = 'available';
     case Pending = 'pending';
     case Adopted = 'adopted';
+    case Foster = 'foster';
 
     /**
      * @return list<string>

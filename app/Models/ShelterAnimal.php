@@ -10,6 +10,7 @@ use Database\Factories\ShelterAnimalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ShelterAnimal extends Model
@@ -42,5 +43,29 @@ class ShelterAnimal extends Model
     public function needs(): HasMany
     {
         return $this->hasMany(AnimalDonationNeed::class);
+    }
+
+    /**
+     * @return HasMany<FosterPlacement, $this>
+     */
+    public function fosterPlacements(): HasMany
+    {
+        return $this->hasMany(FosterPlacement::class);
+    }
+
+    /**
+     * @return HasOne<FosterPlacement, $this>
+     */
+    public function activeFosterPlacement(): HasOne
+    {
+        return $this->hasOne(FosterPlacement::class)->where('status', 'active');
+    }
+
+    /**
+     * @return HasMany<FosterCareUpdate, $this>
+     */
+    public function fosterCareUpdates(): HasMany
+    {
+        return $this->hasMany(FosterCareUpdate::class);
     }
 }

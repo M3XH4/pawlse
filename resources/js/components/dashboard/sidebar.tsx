@@ -35,7 +35,15 @@ export function DashboardSidebar({
     const initials = initialsFromName(userName) || fallbackName.slice(0, 2).toUpperCase();
 
     const canSwitchToVolunteer = page.props.can_switch_to_volunteer as boolean;
-    const displayedNavItems = [...navItems];
+    const isFosterParent = Boolean(page.props.is_foster_parent);
+
+    const displayedNavItems = navItems.filter((item) => {
+        if (item.title === 'My Foster Pets' && !isFosterParent) {
+            return false;
+        }
+        return true;
+    });
+
     if (theme === 'user' && canSwitchToVolunteer) {
         displayedNavItems.push({
             title: 'Volunteer Dashboard',
