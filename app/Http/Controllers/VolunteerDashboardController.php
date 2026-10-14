@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\Certificate;
+use App\Models\FosterParent;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,8 @@ class VolunteerDashboardController extends Controller
             ->where('user_id', $user->id)
             ->latest()
             ->first();
+
+        $fosterParent = FosterParent::where('user_id', $user->id)->first();
 
         // Calculate statistics
         $totalHours = AssignedTask::query()
@@ -49,6 +52,17 @@ class VolunteerDashboardController extends Controller
                 'role' => $application->role,
                 'reference_number' => $application->reference_number,
                 'created_at' => $application->created_at->toDateString(),
+            ] : null,
+            'fosterParent' => $fosterParent ? [
+                'id' => $fosterParent->id,
+                'status' => $fosterParent->status,
+                'capacity' => $fosterParent->capacity,
+                'location' => $fosterParent->location,
+                'pet_preference' => $fosterParent->pet_preference,
+                'housing_type' => $fosterParent->housing_type,
+                'notes' => $fosterParent->notes,
+                'approved_at' => $fosterParent->approved_at ? $fosterParent->approved_at->toDateString() : null,
+                'created_at' => $fosterParent->created_at ? $fosterParent->created_at->toDateString() : null,
             ] : null,
             'stats' => [
                 'total_hours' => (float) $totalHours,

@@ -114,8 +114,8 @@ class AdoptionManagementController extends Controller
                             'id' => $need->id,
                             'item' => $need->item,
                             'quantity' => $need->quantity,
-                            'priority' => $need->priority,
-                            'status' => $need->status,
+                            'priority' => ucfirst(strtolower($need->priority ?? 'Medium')),
+                            'status' => strtolower($need->status ?? 'open'),
                         ];
                     }),
                 ];

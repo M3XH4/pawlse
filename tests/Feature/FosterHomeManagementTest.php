@@ -544,3 +544,77 @@ test('ending foster placement never hard deletes historical records', function (
         ->and($freshPlacement->status)->toBe('ended')
         ->and($freshPlacement->end_reason)->toBe('Successful trial run complete.');
 });
+
+test('admin can authorize foster parent with location and preferences', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+
+    $response = $this->actingAs($admin)->post(route('account.admin.foster-management.foster-parents.store'), [
+        'user_id' => $volunteer->id,
+        'capacity' => 2,
+        'location' => 'BGC, Taguig City, Metro Manila',
+        'pet_preference' => 'dogs',
+        'housing_type' => 'House with fenced yard',
+        'notes' => 'Experienced with large rescue dogs.',
+        'status' => 'approved',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $fosterParent = FosterParent::where('user_id', $volunteer->id)->first();
+    expect($fosterParent)->not->toBeNull()
+        ->and($fosterParent->location)->toBe('BGC, Taguig City, Metro Manila')
+        ->and($fosterParent->pet_preference)->toBe('dogs')
+        ->and($fosterParent->housing_type)->toBe('House with fenced yard')
+        ->and($fosterParent->status)->toBe('approved');
+});
+
+test('volunteer can apply to become foster parent with location and preferences', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $response = $this->actingAs($volunteer)->post(route('account.volunteer.apply-foster'), [
+        'capacity' => 3,
+        'location' => 'Salcedo Village, Makati City',
+        'pet_preference' => 'cats',
+        'housing_type' => 'Pet-friendly condo with balcony mesh',
+        'notes' => 'Can foster mother cat and kittens.',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $applicant = FosterParent::where('user_id', $volunteer->id)->first();
+    expect($applicant)->not->toBeNull()
+        ->and($applicant->status)->toBe('pending')
+        ->and($applicant->capacity)->toBe(3)
+        ->and($applicant->location)->toBe('Salcedo Village, Makati City')
+        ->and($applicant->pet_preference)->toBe('cats')
+        ->and($applicant->housing_type)->toBe('Pet-friendly condo with balcony mesh');
+
+    expect(AuditLog::where('action', 'foster_application_submit')->exists())->toBeTrue();
+});
+
+test('admin can approve a pending foster parent application and retain location', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $fosterParent = FosterParent::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'pending',
+        'location' => 'Quezon City',
+        'capacity' => 2,
+    ]);
+
+    $response = $this->actingAs($admin)->put(route('account.admin.foster-management.foster-parents.update', $fosterParent), [
+        'capacity' => 2,
+        'location' => 'Quezon City (Verified)',
+        'status' => 'approved',
+        'notes' => 'Home inspection passed successfully.',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $fosterParent->refresh();
+    expect($fosterParent->status)->toBe('approved')
+        ->and($fosterParent->location)->toBe('Quezon City (Verified)')
+        ->and($fosterParent->approved_by)->toBe($admin->id);
+});

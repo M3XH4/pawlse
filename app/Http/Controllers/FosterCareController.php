@@ -132,6 +132,9 @@ class FosterCareController extends Controller
                 'id' => $fosterParent->id,
                 'status' => $fosterParent->status,
                 'capacity' => $fosterParent->capacity,
+                'location' => $fosterParent->location,
+                'pet_preference' => $fosterParent->pet_preference,
+                'housing_type' => $fosterParent->housing_type,
                 'active_count' => $activePlacements->count(),
                 'remaining_capacity' => max(0, $fosterParent->capacity - $activePlacements->count()),
                 'notes' => $fosterParent->notes,
@@ -206,6 +209,47 @@ class FosterCareController extends Controller
             'message' => $update->isEmergency()
                 ? 'Emergency alert logged and coordinators notified immediately.'
                 : 'Care report submitted successfully.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Submit an application to become a Foster Parent from the volunteer dashboard.
+     */
+    public function applyFoster(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'capacity' => ['required', 'integer', 'min:1', 'max:10'],
+            'location' => ['required', 'string', 'min:3', 'max:255'],
+            'pet_preference' => ['required', 'string', 'in:dogs,cats,both'],
+            'housing_type' => ['required', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $fosterParent = FosterParent::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'status' => 'pending',
+                'capacity' => $validated['capacity'],
+                'location' => $validated['location'],
+                'pet_preference' => $validated['pet_preference'],
+                'housing_type' => $validated['housing_type'],
+                'notes' => $validated['notes'] ?? null,
+            ]
+        );
+
+        AuditLog::log(
+            'foster_application_submit',
+            "Volunteer {$user->name} submitted an application to become a foster parent (Location: {$validated['location']}, Capacity: {$validated['capacity']})",
+            ['foster_parent_id' => $fosterParent->id, 'user_id' => $user->id, 'location' => $validated['location']]
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Your foster parent application has been submitted! Our shelter coordinators will review your home details and reach out shortly.',
         ]);
 
         return redirect()->back();

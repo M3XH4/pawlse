@@ -34,7 +34,47 @@ class ShelterAnimalFactory extends Factory
             'photo_url' => fake()->imageUrl(640, 480, 'animals', true),
             'vaccinated' => fake()->boolean(),
             'admitted_at' => fake()->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
-            'status' => fake()->randomElement(ShelterAnimalStatus::values()),
+            'status' => fake()->randomElement([
+                ShelterAnimalStatus::Available,
+                ShelterAnimalStatus::Foster,
+                ShelterAnimalStatus::Adopted,
+            ]),
+            'current_location' => fake()->randomElement(['Main Shelter - Kennel A1', 'Main Shelter - Cattery B', 'Quarantine Ward 2', 'Clinic Recovery Room']),
+            'microchip_id' => '985'.fake()->numerify('############'),
+            'weight' => fake()->randomFloat(1, 2, 30).' kg',
+            'intake_type' => fake()->randomElement(['rescue', 'surrender', 'stray']),
+            'rescue_date' => fake()->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'rescue_location' => fake()->city(),
+            'rescue_story' => fake()->paragraph(),
         ];
+    }
+
+    public function deceased(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ShelterAnimalStatus::Deceased,
+            'deceased_at' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
+            'deceased_notes' => 'Passed away peacefully due to natural old age complications. Surrounded by loving care staff.',
+        ]);
+    }
+
+    public function adopted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ShelterAnimalStatus::Adopted,
+            'adoption_date' => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
+            'adopter_name' => fake()->name(),
+            'adopter_email' => fake()->safeEmail(),
+            'adopter_phone' => fake()->phoneNumber(),
+            'adoption_notes' => 'Adopted by a loving family with a spacious backyard.',
+        ]);
+    }
+
+    public function foster(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ShelterAnimalStatus::Foster,
+            'current_location' => 'Foster Home Care',
+        ]);
     }
 }

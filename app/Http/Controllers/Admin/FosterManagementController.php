@@ -120,6 +120,9 @@ class FosterManagementController extends Controller
                     'user_role' => $fp->user?->role ?? 'user',
                     'status' => $fp->status,
                     'capacity' => $fp->capacity,
+                    'location' => $fp->location,
+                    'pet_preference' => $fp->pet_preference,
+                    'housing_type' => $fp->housing_type,
                     'active_count' => $activeCount,
                     'remaining_capacity' => max(0, $fp->capacity - $activeCount),
                     'is_at_capacity' => $activeCount >= $fp->capacity,
@@ -251,6 +254,9 @@ class FosterManagementController extends Controller
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id', 'unique:foster_parents,user_id'],
             'capacity' => ['required', 'integer', 'min:1', 'max:20'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'pet_preference' => ['nullable', 'string', 'in:dogs,cats,both'],
+            'housing_type' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'status' => ['required', 'in:approved,pending'],
         ]);
@@ -261,6 +267,9 @@ class FosterManagementController extends Controller
             'user_id' => $user->id,
             'status' => $validated['status'],
             'capacity' => $validated['capacity'],
+            'location' => $validated['location'] ?? null,
+            'pet_preference' => $validated['pet_preference'] ?? null,
+            'housing_type' => $validated['housing_type'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'approved_by' => $validated['status'] === 'approved' ? $request->user()->id : null,
             'approved_at' => $validated['status'] === 'approved' ? now() : null,
@@ -268,8 +277,8 @@ class FosterManagementController extends Controller
 
         AuditLog::log(
             'foster_parent_authorize',
-            "Authorized {$user->name} as a foster parent with capacity of {$validated['capacity']}",
-            ['foster_parent_id' => $fosterParent->id, 'user_id' => $user->id, 'capacity' => $validated['capacity']]
+            "Authorized {$user->name} as a foster parent at ".($validated['location'] ?? 'unspecified location')." with capacity of {$validated['capacity']}",
+            ['foster_parent_id' => $fosterParent->id, 'user_id' => $user->id, 'capacity' => $validated['capacity'], 'location' => $validated['location'] ?? null]
         );
 
         Inertia::flash('toast', [
@@ -281,12 +290,15 @@ class FosterManagementController extends Controller
     }
 
     /**
-     * Update foster parent profile (capacity, status, notes).
+     * Update foster parent profile (capacity, status, location, notes).
      */
     public function updateFosterParent(Request $request, FosterParent $fosterParent): RedirectResponse
     {
         $validated = $request->validate([
             'capacity' => ['required', 'integer', 'min:1', 'max:20'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'pet_preference' => ['nullable', 'string', 'in:dogs,cats,both'],
+            'housing_type' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:approved,pending,suspended,inactive'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -301,6 +313,9 @@ class FosterManagementController extends Controller
         $oldStatus = $fosterParent->status;
         $fosterParent->update([
             'capacity' => $validated['capacity'],
+            'location' => array_key_exists('location', $validated) ? $validated['location'] : $fosterParent->location,
+            'pet_preference' => array_key_exists('pet_preference', $validated) ? $validated['pet_preference'] : $fosterParent->pet_preference,
+            'housing_type' => array_key_exists('housing_type', $validated) ? $validated['housing_type'] : $fosterParent->housing_type,
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,
             'approved_by' => ($oldStatus !== 'approved' && $validated['status'] === 'approved') ? $request->user()->id : $fosterParent->approved_by,

@@ -25,6 +25,7 @@ import {
     ChevronRight,
     MessageSquare,
     ExternalLink,
+    MapPin,
 } from 'lucide-react';
 
 interface PaginatedData<T> {
@@ -84,6 +85,9 @@ interface FosterParentItem {
     user_role: string;
     status: string;
     capacity: number;
+    location?: string | null;
+    pet_preference?: string | null;
+    housing_type?: string | null;
     active_count: number;
     remaining_capacity: number;
     is_at_capacity: boolean;
@@ -224,11 +228,17 @@ export default function FosterManagement({
     // Authorize Parent Form State
     const [authUserId, setAuthUserId] = useState<number | string>(eligibleUsers.length > 0 ? eligibleUsers[0].id : '');
     const [authCapacity, setAuthCapacity] = useState(2);
+    const [authLocation, setAuthLocation] = useState('');
+    const [authPetPreference, setAuthPetPreference] = useState('both');
+    const [authHousingType, setAuthHousingType] = useState('Single Family Home with Yard');
     const [authNotes, setAuthNotes] = useState('');
     const [authStatus, setAuthStatus] = useState('approved');
 
     // Edit Parent Form State
     const [editCapacity, setEditCapacity] = useState(2);
+    const [editLocation, setEditLocation] = useState('');
+    const [editPetPreference, setEditPetPreference] = useState('both');
+    const [editHousingType, setEditHousingType] = useState('');
     const [editStatus, setEditStatus] = useState('approved');
     const [editNotes, setEditNotes] = useState('');
 
@@ -275,6 +285,9 @@ export default function FosterManagement({
     const openEditParentModal = (parent: FosterParentItem) => {
         setSelectedParent(parent);
         setEditCapacity(parent.capacity);
+        setEditLocation(parent.location || '');
+        setEditPetPreference(parent.pet_preference || 'both');
+        setEditHousingType(parent.housing_type || '');
         setEditStatus(parent.status);
         setEditNotes(parent.notes || '');
         setShowEditParentModal(true);
@@ -385,6 +398,9 @@ export default function FosterManagement({
             {
                 user_id: authUserId,
                 capacity: authCapacity,
+                location: authLocation || null,
+                pet_preference: authPetPreference || null,
+                housing_type: authHousingType || null,
                 notes: authNotes || null,
                 status: authStatus,
             },
@@ -392,6 +408,8 @@ export default function FosterManagement({
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowAuthorizeModal(false);
+                    setAuthLocation('');
+                    setAuthNotes('');
                     toast.success('Foster parent authorized successfully.');
                 },
                 onError: (err) => {
@@ -410,6 +428,9 @@ export default function FosterManagement({
             `/account/admin/foster-management/foster-parents/${selectedParent.id}`,
             {
                 capacity: editCapacity,
+                location: editLocation || null,
+                pet_preference: editPetPreference || null,
+                housing_type: editHousingType || null,
                 status: editStatus,
                 notes: editNotes || null,
             },
@@ -572,76 +593,78 @@ export default function FosterManagement({
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-2 gap-y-1 border-b border-gray-200 dark:border-gray-800 pb-1 sm:pb-0">
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('placements')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        currentTab === 'placements'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Active Placements ({placements.total})
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('available_pets')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        currentTab === 'available_pets'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Available Shelter Pets ({availablePets.length})
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('foster_parents')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        currentTab === 'foster_parents'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Foster Parents Directory ({fosterParents.length})
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('care_updates')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-                        currentTab === 'care_updates'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Care Reports & Updates ({careUpdates.length})
-                    {careUpdates.some((u) => !u.is_acknowledged && (u.urgency === 'critical' || u.urgency === 'high')) && (
-                        <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
-                    )}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('history')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        currentTab === 'history'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Placement Archive
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCurrentTab('audit')}
-                    className={`pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                        currentTab === 'audit'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Audit Trail ({auditLogs.length})
-                </button>
+            <div className="w-full overflow-x-auto scrollbar-thin">
+                <div className="flex min-w-full flex-nowrap items-center gap-x-1 sm:gap-x-2 border-b border-gray-200 dark:border-gray-800 pb-1 sm:pb-0">
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('placements')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            currentTab === 'placements'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Active Placements ({placements.total})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('available_pets')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            currentTab === 'available_pets'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Available Shelter Pets ({availablePets.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('foster_parents')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            currentTab === 'foster_parents'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Foster Parents Directory ({fosterParents.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('care_updates')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5 -mb-px ${
+                            currentTab === 'care_updates'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Care Reports & Updates ({careUpdates.length})
+                        {careUpdates.some((u) => !u.is_acknowledged && (u.urgency === 'critical' || u.urgency === 'high')) && (
+                            <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('history')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            currentTab === 'history'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Placement Archive
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentTab('audit')}
+                        className={`shrink-0 pb-2.5 sm:pb-3 px-3 sm:px-3.5 text-[11px] sm:text-xs font-black uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            currentTab === 'audit'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Audit Trail ({auditLogs.length})
+                    </button>
+                </div>
             </div>
 
             {/* TAB 1: PLACEMENTS TABLE */}
@@ -881,24 +904,78 @@ export default function FosterManagement({
                                             className="h-12 w-12 rounded-full border border-gray-200 dark:border-gray-700 object-cover"
                                         />
                                         <div>
-                                            <h4 className="font-bold text-sm text-[#0B2340] dark:text-white flex items-center gap-1.5">
-                                                {parent.name}
-                                            </h4>
+                                            <div className="flex items-center gap-1.5">
+                                                <h4 className="font-bold text-sm text-[#0B2340] dark:text-white">
+                                                    {parent.name}
+                                                </h4>
+                                                <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${
+                                                    parent.status === 'approved'
+                                                        ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
+                                                        : parent.status === 'pending'
+                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                                                }`}>
+                                                    {parent.status}
+                                                </span>
+                                            </div>
                                             <p className="text-xs text-gray-400">{parent.email}</p>
-                                            <span className="inline-block mt-1 text-[10px] uppercase font-black px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
-                                                Role: {parent.user_role}
-                                            </span>
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 mt-1 font-semibold">
+                                                <MapPin size={13} className="text-paw-orange shrink-0" />
+                                                <span>{parent.location || 'Location not specified'}</span>
+                                            </div>
+                                            {(parent.pet_preference || parent.housing_type) && (
+                                                <div className="flex flex-wrap gap-1 mt-1.5 text-[10px] font-bold text-gray-500">
+                                                    {parent.pet_preference && (
+                                                        <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
+                                                            Prefers: {parent.pet_preference.toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                    {parent.housing_type && (
+                                                        <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
+                                                            {parent.housing_type}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => openEditParentModal(parent)}
-                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white border border-gray-200 dark:border-gray-700"
-                                        title="Configure Capacity & Status"
-                                    >
-                                        <Settings2 size={15} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        {parent.status === 'pending' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    router.put(
+                                                        `/account/admin/foster-management/foster-parents/${parent.id}`,
+                                                        {
+                                                            capacity: parent.capacity,
+                                                            status: 'approved',
+                                                            location: parent.location,
+                                                            pet_preference: parent.pet_preference,
+                                                            housing_type: parent.housing_type,
+                                                            notes: parent.notes,
+                                                        },
+                                                        {
+                                                            preserveScroll: true,
+                                                            onSuccess: () => toast.success(`${parent.name} approved as foster parent.`),
+                                                        },
+                                                    );
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-green-600 hover:bg-green-700 text-white shadow-xs transition-colors"
+                                                title="Approve foster application"
+                                            >
+                                                Approve
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditParentModal(parent)}
+                                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white border border-gray-200 dark:border-gray-700"
+                                            title="Configure Capacity & Status"
+                                        >
+                                            <Settings2 size={15} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Capacity Bar */}
@@ -1177,7 +1254,7 @@ export default function FosterManagement({
                                             value={parent.id}
                                             disabled={parent.status !== 'approved' || parent.is_at_capacity}
                                         >
-                                            {parent.name} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
+                                            {parent.name}{parent.location ? ` [📍 ${parent.location}]` : ''} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
                                             {parent.is_at_capacity ? ' [AT CAPACITY]' : ''}
                                         </option>
                                     ))}
@@ -1303,7 +1380,7 @@ export default function FosterManagement({
                                                 value={parent.id}
                                                 disabled={parent.status !== 'approved' || parent.is_at_capacity}
                                             >
-                                                {parent.name} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
+                                                {parent.name}{parent.location ? ` [📍 ${parent.location}]` : ''} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
                                                 {parent.is_at_capacity ? ' [AT CAPACITY]' : ''}
                                             </option>
                                         ))}
@@ -1514,6 +1591,53 @@ export default function FosterManagement({
                             </div>
 
                             <div>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                                    <MapPin size={13} className="text-paw-orange" /> Foster Home Location / Address *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={authLocation}
+                                    onChange={(e) => setAuthLocation(e.target.value)}
+                                    placeholder="e.g. Barangay San Antonio, Pasig City / 123 Maple St."
+                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Pet Preference
+                                    </label>
+                                    <select
+                                        value={authPetPreference}
+                                        onChange={(e) => setAuthPetPreference(e.target.value)}
+                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="both">Any / Both Dogs & Cats</option>
+                                        <option value="dogs">Dogs Only</option>
+                                        <option value="cats">Cats Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Housing Environment
+                                    </label>
+                                    <select
+                                        value={authHousingType}
+                                        onChange={(e) => setAuthHousingType(e.target.value)}
+                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="Single Family Home with Yard">House with Fenced Yard</option>
+                                        <option value="Townhouse">Townhouse</option>
+                                        <option value="Apartment / Condo">Pet-Friendly Apartment / Condo</option>
+                                        <option value="Rural / Farm">Rural / Farm Setting</option>
+                                        <option value="Other">Other Residential</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Home Environment & Experience Notes
                                 </label>
@@ -1601,6 +1725,48 @@ export default function FosterManagement({
                                         <option value="suspended">Suspended</option>
                                         <option value="inactive">Inactive</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                                    <MapPin size={13} className="text-paw-orange" /> Foster Home Location / Address
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editLocation}
+                                    onChange={(e) => setEditLocation(e.target.value)}
+                                    placeholder="e.g. Barangay San Antonio, Pasig City / 123 Maple St."
+                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Pet Preference
+                                    </label>
+                                    <select
+                                        value={editPetPreference}
+                                        onChange={(e) => setEditPetPreference(e.target.value)}
+                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="both">Any / Both Dogs & Cats</option>
+                                        <option value="dogs">Dogs Only</option>
+                                        <option value="cats">Cats Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Housing Environment
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editHousingType}
+                                        onChange={(e) => setEditHousingType(e.target.value)}
+                                        placeholder="e.g. House with yard, Apartment..."
+                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                    />
                                 </div>
                             </div>
 

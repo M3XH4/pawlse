@@ -12,11 +12,13 @@ import {
     Settings,
     Sparkles,
     User,
+    PawPrint,
 } from 'lucide-react';
 import {
     accountSettings,
     adoptionManagement,
     aiValidation,
+    animalRecords,
     dashboard,
     donationMonitoring,
     events,
@@ -41,6 +43,12 @@ export const adminNavItems: AdminNavItem[] = [
         href: dashboard.url(),
         match: dashboard.url(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Animal Master Records',
+        href: animalRecords.url(),
+        match: animalRecords.url(),
+        icon: PawPrint,
     },
     {
         title: 'Rescue Management',

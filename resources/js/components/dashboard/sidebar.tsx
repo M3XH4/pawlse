@@ -37,12 +37,22 @@ export function DashboardSidebar({
     const canSwitchToVolunteer = page.props.can_switch_to_volunteer as boolean;
     const isFosterParent = Boolean(page.props.is_foster_parent);
 
-    const displayedNavItems = navItems.filter((item) => {
-        if (item.title === 'My Foster Pets' && !isFosterParent) {
-            return false;
-        }
-        return true;
-    });
+    const displayedNavItems = navItems
+        .map((item) => {
+            if (item.title === 'My Foster Pets' && !isFosterParent) {
+                if (theme === 'volunteer') {
+                    return {
+                        title: 'Apply to Foster',
+                        href: '/account/volunteer/status?tab=foster',
+                        match: '/account/volunteer/status?tab=foster',
+                        icon: item.icon,
+                    };
+                }
+                return null;
+            }
+            return item;
+        })
+        .filter(Boolean) as typeof navItems;
 
     if (theme === 'user' && canSwitchToVolunteer) {
         displayedNavItems.push({

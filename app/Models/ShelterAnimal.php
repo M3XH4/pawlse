@@ -9,6 +9,7 @@ use App\Enums\ShelterAnimalStatus;
 use Database\Factories\ShelterAnimalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -27,6 +28,9 @@ class ShelterAnimal extends Model
         'status' => ShelterAnimalStatus::class,
         'vaccinated' => 'boolean',
         'admitted_at' => 'date',
+        'rescue_date' => 'date',
+        'adoption_date' => 'date',
+        'deceased_at' => 'date',
     ];
 
     /**
@@ -67,5 +71,63 @@ class ShelterAnimal extends Model
     public function fosterCareUpdates(): HasMany
     {
         return $this->hasMany(FosterCareUpdate::class);
+    }
+
+    /**
+     * @return BelongsTo<PetReport, $this>
+     */
+    public function petReport(): BelongsTo
+    {
+        return $this->belongsTo(PetReport::class);
+    }
+
+    /**
+     * @return HasMany<AnimalMedicalRecord, $this>
+     */
+    public function medicalRecords(): HasMany
+    {
+        return $this->hasMany(AnimalMedicalRecord::class)->latest('performed_date');
+    }
+
+    /**
+     * @return HasMany<AnimalMedicalRecord, $this>
+     */
+    public function vaccinationRecords(): HasMany
+    {
+        return $this->hasMany(AnimalMedicalRecord::class)
+            ->where('record_type', 'vaccination')
+            ->latest('performed_date');
+    }
+
+    /**
+     * Get computed current location for display.
+     */
+    public function getComputedLocationAttribute(): string
+    {
+        if ($this->status === ShelterAnimalStatus::Foster && $this->relationLoaded('activeFosterPlacement') && $this->activeFosterPlacement) {
+            $parent = $this->activeFosterPlacement->fosterParent;
+            if ($parent && ! empty($parent->location)) {
+                return 'Foster Home ('.$parent->location.')';
+            }
+            if ($parent && $parent->relationLoaded('user') && $parent->user) {
+                return 'Foster: '.$parent->user->name;
+            }
+
+            return 'Foster Care';
+        }
+
+        if (! empty($this->current_location)) {
+            return $this->current_location;
+        }
+
+        if ($this->status === ShelterAnimalStatus::Adopted) {
+            return ! empty($this->adopter_name) ? 'Adopted ('.$this->adopter_name.')' : 'Adopted Home';
+        }
+
+        if ($this->status === ShelterAnimalStatus::Deceased) {
+            return 'Deceased (Shelter Memorial)';
+        }
+
+        return 'Main Shelter - Kennel Area';
     }
 }

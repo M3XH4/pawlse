@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
 use App\Http\Controllers\Admin\AiValidationController;
+use App\Http\Controllers\Admin\AnimalMasterRecordController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
@@ -121,6 +122,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('rescue-reports/{report}/status', [PetReportController::class, 'updateStatus'])->name('rescue-reports.update-status');
     Route::get('foster-care', [FosterCareController::class, 'index'])->name('foster-care');
     Route::post('foster-care/{placement}/updates', [FosterCareController::class, 'storeUpdate'])->name('foster-care.updates.store');
+    Route::post('apply-foster', [FosterCareController::class, 'applyFoster'])->name('apply-foster');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });
@@ -147,6 +149,14 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::get('ai-validation', [AiValidationController::class, 'index'])->name('ai-validation');
     Route::post('ai-validation/{report}/approve', [AiValidationController::class, 'approve'])->name('ai-validation.approve');
     Route::post('ai-validation/{report}/reject', [AiValidationController::class, 'reject'])->name('ai-validation.reject');
+    // Animal Master Records
+    Route::get('animal-records', [AnimalMasterRecordController::class, 'index'])->name('animal-records');
+    Route::post('animal-records', [AnimalMasterRecordController::class, 'store'])->name('animal-records.store');
+    Route::put('animal-records/{animal}', [AnimalMasterRecordController::class, 'update'])->name('animal-records.update');
+    Route::delete('animal-records/{animal}', [AnimalMasterRecordController::class, 'destroy'])->name('animal-records.destroy');
+    Route::post('animal-records/{animal}/medical', [AnimalMasterRecordController::class, 'storeMedicalRecord'])->name('animal-records.medical.store');
+    Route::delete('animal-records/medical/{medicalRecord}', [AnimalMasterRecordController::class, 'deleteMedicalRecord'])->name('animal-records.medical.destroy');
+
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
     Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');

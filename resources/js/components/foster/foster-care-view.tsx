@@ -256,29 +256,31 @@ export function FosterCareView({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-800 gap-2">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('current')}
-                    className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors ${
-                        activeTab === 'current'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Current Active Placements ({activePlacements.length})
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('history')}
-                    className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors ${
-                        activeTab === 'history'
-                            ? 'border-paw-orange text-paw-orange'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Placement History ({historyPlacements.length})
-                </button>
+            <div className="w-full overflow-x-auto scrollbar-thin">
+                <div className="flex min-w-full flex-nowrap items-center border-b border-gray-200 dark:border-gray-800 gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('current')}
+                        className={`shrink-0 pb-3 px-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            activeTab === 'current'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        Current Active Placements ({activePlacements.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('history')}
+                        className={`shrink-0 pb-3 px-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap cursor-pointer -mb-px ${
+                            activeTab === 'history'
+                                ? 'border-paw-orange text-paw-orange'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        Placement History ({historyPlacements.length})
+                    </button>
+                </div>
             </div>
 
             {/* Current Active Placements */}

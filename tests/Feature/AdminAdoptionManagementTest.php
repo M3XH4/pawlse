@@ -152,52 +152,211 @@ test('admin can add a new shelter pet with initial wishlist needs', function () 
     ]);
 });
 
-test('admin can add, update and delete a wishlist need for an existing shelter pet', function () {
+test('admin can add a new wishlist need for a pet (add changes)', function () {
     $admin = User::factory()->admin()->create();
     $pet = ShelterAnimal::factory()->create(['name' => 'Bella']);
 
-    // 1. Add need
-    $addResponse = $this->actingAs($admin)
+    $response = $this->actingAs($admin)
         ->post(route('account.admin.adoption-management.pets.needs.store', $pet), [
-            'item' => 'Cat Carrier',
-            'quantity' => '1 unit',
+            'item' => 'Kitten Milk Replacer',
+            'quantity' => '3 cans',
             'priority' => 'High',
             'status' => 'open',
         ]);
 
-    $addResponse->assertSessionHasNoErrors();
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
     $this->assertDatabaseHas('animal_donation_needs', [
         'shelter_animal_id' => $pet->id,
-        'item' => 'Cat Carrier',
-        'quantity' => '1 unit',
+        'item' => 'Kitten Milk Replacer',
+        'quantity' => '3 cans',
         'priority' => 'High',
         'status' => 'open',
     ]);
+});
 
-    $need = AnimalDonationNeed::where('item', 'Cat Carrier')->first();
+test('admin can save changes to an existing wishlist need (save changes)', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['name' => 'Charlie']);
+    $need = AnimalDonationNeed::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Kibble',
+        'quantity' => '1 bag',
+        'priority' => 'Medium',
+        'status' => 'open',
+    ]);
 
-    // 2. Update need
-    $updateResponse = $this->actingAs($admin)
+    $response = $this->actingAs($admin)
         ->put(route('account.admin.adoption-management.needs.update', $need), [
-            'item' => 'Heavy Duty Cat Carrier',
-            'quantity' => '2 units',
+            'item' => 'Premium Kibble 10kg',
+            'quantity' => '5 bags',
             'priority' => 'Urgent',
+            'status' => 'open',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $need->refresh();
+    expect($need->item)->toBe('Premium Kibble 10kg');
+    expect($need->quantity)->toBe('5 bags');
+    expect($need->priority)->toBe('Urgent');
+    expect($need->status)->toBe('open');
+});
+
+test('admin can toggle a wishlist need status between open and fulfilled via checkmark', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['name' => 'Luna']);
+    $need = AnimalDonationNeed::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Deworming Tablet',
+        'quantity' => '2 doses',
+        'priority' => 'Urgent',
+        'status' => 'open',
+    ]);
+
+    // 1. Checkmark toggle: open -> fulfilled
+    $response = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => $need->item,
+            'quantity' => $need->quantity,
+            'priority' => $need->priority,
             'status' => 'fulfilled',
         ]);
 
-    $updateResponse->assertSessionHasNoErrors();
+    $response->assertSessionHasNoErrors();
     $need->refresh();
-    expect($need->item)->toBe('Heavy Duty Cat Carrier');
-    expect($need->quantity)->toBe('2 units');
-    expect($need->priority)->toBe('Urgent');
     expect($need->status)->toBe('fulfilled');
 
-    // 3. Delete need
-    $deleteResponse = $this->actingAs($admin)
+    // 2. Checkmark toggle: fulfilled -> open
+    $response2 = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => $need->item,
+            'quantity' => $need->quantity,
+            'priority' => $need->priority,
+            'status' => 'open',
+        ]);
+
+    $response2->assertSessionHasNoErrors();
+    $need->refresh();
+    expect($need->status)->toBe('open');
+});
+
+test('admin can toggle checkmark and save changes on a need with lowercase priority such as urgent', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['name' => 'Coco']);
+    // Seeded needs often have lowercase 'urgent' from NeedPriority::Urgent->value
+    $need = AnimalDonationNeed::create([
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Kitten Formula',
+        'quantity' => '3 cans',
+        'priority' => 'urgent',
+        'status' => 'open',
+    ]);
+
+    // 1. Checkmark toggle should succeed even if priority is lowercase 'urgent'
+    $toggleResponse = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => $need->item,
+            'quantity' => $need->quantity,
+            'priority' => 'urgent',
+            'status' => 'fulfilled',
+        ]);
+
+    $toggleResponse->assertSessionHasNoErrors();
+    $need->refresh();
+    expect($need->status)->toBe('fulfilled');
+    expect($need->priority)->toBe('Urgent');
+
+    // 2. Save changes should accept lowercase or uppercase and normalize to Urgent
+    $saveResponse = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => 'Premium Kitten Formula',
+            'quantity' => '5 cans',
+            'priority' => 'urgent',
+            'status' => 'open',
+        ]);
+
+    $saveResponse->assertSessionHasNoErrors();
+    $need->refresh();
+    expect($need->item)->toBe('Premium Kitten Formula');
+    expect($need->priority)->toBe('Urgent');
+    expect($need->status)->toBe('open');
+});
+
+test('admin can delete a wishlist need', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['name' => 'Milo']);
+    $need = AnimalDonationNeed::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'item' => 'Chew Toy',
+        'quantity' => '1 pc',
+    ]);
+
+    $response = $this->actingAs($admin)
         ->delete(route('account.admin.adoption-management.needs.destroy', $need));
 
-    $deleteResponse->assertSessionHasNoErrors();
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
     $this->assertDatabaseMissing('animal_donation_needs', [
         'id' => $need->id,
     ]);
+});
+
+test('wishlist need validation fails when required fields are missing or invalid', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create();
+
+    // 1. Missing item and quantity
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.pets.needs.store', $pet), [
+            'item' => '',
+            'quantity' => '',
+            'priority' => 'InvalidPriority',
+            'status' => 'invalid_status',
+        ]);
+
+    $response->assertSessionHasErrors(['item', 'quantity', 'priority', 'status']);
+
+    // 2. Update with invalid priority and status
+    $need = AnimalDonationNeed::factory()->create(['shelter_animal_id' => $pet->id]);
+    $updateResponse = $this->actingAs($admin)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => 'Valid Item',
+            'quantity' => '1 unit',
+            'priority' => 'NotAValidPriority',
+            'status' => 'not_open_or_fulfilled',
+        ]);
+
+    $updateResponse->assertSessionHasErrors(['priority', 'status']);
+});
+
+test('non-admin cannot add, update or delete wishlist needs', function () {
+    $user = User::factory()->user()->create();
+    $pet = ShelterAnimal::factory()->create();
+    $need = AnimalDonationNeed::factory()->create(['shelter_animal_id' => $pet->id]);
+
+    $this->actingAs($user)
+        ->post(route('account.admin.adoption-management.pets.needs.store', $pet), [
+            'item' => 'Leash',
+            'quantity' => '1 pc',
+            'priority' => 'Low',
+            'status' => 'open',
+        ])
+        ->assertStatus(403);
+
+    $this->actingAs($user)
+        ->put(route('account.admin.adoption-management.needs.update', $need), [
+            'item' => 'Updated Leash',
+            'quantity' => '2 pcs',
+            'priority' => 'High',
+            'status' => 'fulfilled',
+        ])
+        ->assertStatus(403);
+
+    $this->actingAs($user)
+        ->delete(route('account.admin.adoption-management.needs.destroy', $need))
+        ->assertStatus(403);
 });

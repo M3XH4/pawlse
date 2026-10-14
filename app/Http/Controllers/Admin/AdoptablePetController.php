@@ -36,7 +36,7 @@ class AdoptablePetController extends Controller
             'initial_needs' => ['nullable', 'array'],
             'initial_needs.*.item' => ['required_with:initial_needs', 'string', 'max:255'],
             'initial_needs.*.quantity' => ['required_with:initial_needs', 'string', 'max:255'],
-            'initial_needs.*.priority' => ['required_with:initial_needs', 'string', 'in:Urgent,High,Medium,Low'],
+            'initial_needs.*.priority' => ['required_with:initial_needs', 'string', 'in:Urgent,High,Medium,Low,urgent,high,medium,low'],
         ]);
 
         $photoUrl = null;
@@ -69,7 +69,7 @@ class AdoptablePetController extends Controller
                             'shelter_animal_id' => $pet->id,
                             'item' => $needData['item'],
                             'quantity' => $needData['quantity'] ?? '1 unit',
-                            'priority' => $needData['priority'] ?? 'Medium',
+                            'priority' => ucfirst(strtolower($needData['priority'] ?? 'Medium')),
                             'status' => 'open',
                         ]);
                     }
@@ -92,16 +92,16 @@ class AdoptablePetController extends Controller
         $validated = $request->validate([
             'item' => ['required', 'string', 'max:255'],
             'quantity' => ['required', 'string', 'max:255'],
-            'priority' => ['required', 'string', 'in:Urgent,High,Medium,Low'],
-            'status' => ['required', 'string', 'in:open,fulfilled'],
+            'priority' => ['required', 'string', 'in:Urgent,High,Medium,Low,urgent,high,medium,low'],
+            'status' => ['required', 'string', 'in:open,fulfilled,Open,Fulfilled'],
         ]);
 
         $need = AnimalDonationNeed::create([
             'shelter_animal_id' => $pet->id,
             'item' => $validated['item'],
             'quantity' => $validated['quantity'],
-            'priority' => $validated['priority'],
-            'status' => $validated['status'],
+            'priority' => ucfirst(strtolower($validated['priority'])),
+            'status' => strtolower($validated['status']),
         ]);
 
         AuditLog::log('pet_need_create', "Added wishlist need '{$need->item}' for pet '{$pet->name}'");
@@ -119,11 +119,16 @@ class AdoptablePetController extends Controller
         $validated = $request->validate([
             'item' => ['required', 'string', 'max:255'],
             'quantity' => ['required', 'string', 'max:255'],
-            'priority' => ['required', 'string', 'in:Urgent,High,Medium,Low'],
-            'status' => ['required', 'string', 'in:open,fulfilled'],
+            'priority' => ['required', 'string', 'in:Urgent,High,Medium,Low,urgent,high,medium,low'],
+            'status' => ['required', 'string', 'in:open,fulfilled,Open,Fulfilled'],
         ]);
 
-        $need->update($validated);
+        $need->update([
+            'item' => $validated['item'],
+            'quantity' => $validated['quantity'],
+            'priority' => ucfirst(strtolower($validated['priority'])),
+            'status' => strtolower($validated['status']),
+        ]);
 
         $animalName = $need->animal ? $need->animal->name : 'pet';
         AuditLog::log('pet_need_update', "Updated wishlist need '{$need->item}' for pet '{$animalName}'");
