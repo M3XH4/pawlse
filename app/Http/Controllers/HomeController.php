@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
+use App\Models\CareSustainability;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
@@ -198,6 +199,7 @@ class HomeController extends Controller
                 'volunteers' => max($volunteersCount, 42),
                 'feedings' => max($feedingCount, 320),
             ],
+            'careSustainability' => CareSustainability::current()->toPublicArray(),
         ]);
     }
 }

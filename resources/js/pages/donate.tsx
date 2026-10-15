@@ -10,6 +10,8 @@ import { SubmissionReceipt } from '@/components/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { TransparencyAuditModal, type AuditRecord } from '@/components/transparency-audit-modal';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
+import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 interface DonateProps {
     wishlist?: Array<{
@@ -39,6 +41,7 @@ interface DonateProps {
         goal: number;
         percentage: number;
     };
+    careSustainability?: CareSustainabilityData;
     donationSuccess?: boolean;
     successRef?: string;
 }
@@ -48,6 +51,7 @@ export default function Donate({
     recentDonations = [],
     auditRecords = [],
     progressStats = { total: 0, goal: 50000, percentage: 0 },
+    careSustainability,
     donationSuccess = false,
     successRef = ''
 }: DonateProps) {
@@ -192,7 +196,7 @@ export default function Donate({
 
             <main className="py-12 pb-24">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-8">
                         <span className="bg-paw-orange/10 text-paw-orange px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-4 inline-block">Support Our Cause</span>
                         <h1 className="text-4xl md:text-6xl font-black text-paw-navy mb-4 leading-tight">Your Support Saves Lives</h1>
                         <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">
@@ -201,7 +205,10 @@ export default function Donate({
                         </p>
                     </div>
 
-                    <div className="grid lg:grid-cols-3 gap-12 items-start">
+                    {/* Care Sustainability Live Countdown Banner */}
+                    <CareTimerBanner sustainability={careSustainability} />
+
+                    <div className="grid lg:grid-cols-3 gap-12 items-start" id="donation-form">
                         {/* Left Column: Donation Form */}
                         <div className="lg:col-span-2">
                             <div className="bg-white rounded-[40px] shadow-2xl shadow-paw-navy/5 overflow-hidden">

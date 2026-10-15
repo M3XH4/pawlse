@@ -17,6 +17,8 @@ import { Hero } from '@/components/sections/hero-section';
 import { ImpactStats } from '@/components/sections/impact-stats-section';   
 import { KineticTextDivider } from '@/components/sections/kinetic-text-divider-section';
 import { MissionQuote } from '@/components/sections/mission-quote-section';
+import { CareTimerDrawer } from '@/components/care-sustainability/care-timer-drawer';
+import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 interface WelcomeProps {
     pets?: any[];
@@ -24,9 +26,10 @@ interface WelcomeProps {
     events?: any[];
     donationStats?: any;
     impactStats?: any;
+    careSustainability?: CareSustainabilityData;
 }
 
-export default function Welcome({ pets = [], missingPets = [], events = [], donationStats, impactStats }: WelcomeProps) {
+export default function Welcome({ pets = [], missingPets = [], events = [], donationStats, impactStats, careSustainability }: WelcomeProps) {
     const { scrollYProgress } = useScroll();
     const scaleX = useSpring(scrollYProgress, {
         stiffness: 100,
@@ -92,6 +95,8 @@ export default function Welcome({ pets = [], missingPets = [], events = [], dona
             </main>
 
             <Footer />
+
+            <CareTimerDrawer sustainability={careSustainability} />
 
             <ScrollToTopButton />
         </div>

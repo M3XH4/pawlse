@@ -7,9 +7,11 @@ import {
     TrendingUp, Plus, Upload, Clock, AlertCircle, Search, ChevronLeft, 
     ChevronRight, ArrowUpDown, RefreshCw, Layers, Boxes, Package, 
     AlertTriangle, CalendarDays, Edit2, Trash2, ShieldAlert, Sparkles,
-    Eye, MapPin, XCircle, Printer, ExternalLink, CheckCircle
+    Eye, MapPin, XCircle, Printer, ExternalLink, CheckCircle, HeartHandshake
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SustainabilityAdminTab } from '@/components/care-sustainability/sustainability-admin-tab';
+import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface DonationRecord {
     id: number;
@@ -88,6 +90,8 @@ interface InventoryItemData {
     unit: string;
     category: string;
     min_threshold: number;
+    daily_usage_rate?: number | null;
+    days_of_supply?: number | null;
     storage_location: string | null;
     has_expiry: boolean;
     stock_status: 'in_stock' | 'low_stock' | 'expiring_soon' | 'expired' | 'out_of_stock';
@@ -137,6 +141,8 @@ interface DonationMonitoringProps {
     inventory: PaginatedData<InventoryItemData>;
     inventoryLogs: PaginatedData<InventoryLog>;
     inventoryStats?: InventoryStats;
+    sustainability: CareSustainabilityData;
+    sustainabilityHistory: CareSustainabilityHistoryItem[];
     filters: {
         search?: string;
         type?: string;
@@ -207,10 +213,12 @@ export default function DonationMonitoring({
     inventory,
     inventoryLogs,
     inventoryStats,
+    sustainability,
+    sustainabilityHistory,
     filters,
     stats
 }: DonationMonitoringProps) {
-    const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs'>('donations');
+    const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs' | 'sustainability'>('donations');
     
     // Filters State
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -245,6 +253,8 @@ export default function DonationMonitoring({
         batch_number: '',
         expires_at: '',
         storage_location: '',
+        estimated_value: '',
+        extend_care_timer: true,
     });
 
     const [addItemForm, setAddItemForm] = useState({
@@ -252,6 +262,7 @@ export default function DonationMonitoring({
         unit: 'pcs',
         category: 'Food',
         min_threshold: 5,
+        daily_usage_rate: '',
         storage_location: '',
         has_expiry: false,
         initial_quantity: 0,
@@ -265,6 +276,7 @@ export default function DonationMonitoring({
         unit: 'pcs',
         category: 'Food',
         min_threshold: 5,
+        daily_usage_rate: '',
         storage_location: '',
         has_expiry: false,
     });
@@ -348,6 +360,8 @@ export default function DonationMonitoring({
             batch_number: 'DON-' + donation.public_reference.slice(-4),
             expires_at: '',
             storage_location: 'Main Storage Room',
+            estimated_value: '',
+            extend_care_timer: true,
         });
     };
 
@@ -355,7 +369,11 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!verifyingInKind) return;
 
-        router.post(`/account/admin/donation-monitoring/in-kind/${verifyingInKind.id}/verify`, verifyForm, {
+        router.post(`/account/admin/donation-monitoring/in-kind/${verifyingInKind.id}/verify`, {
+            ...verifyForm,
+            estimated_value: verifyForm.estimated_value ? parseFloat(verifyForm.estimated_value) : null,
+            extend_care_timer: verifyForm.extend_care_timer,
+        }, {
             onSuccess: () => {
                 setVerifyingInKind(null);
                 toast.success('In-kind drop-off verified and inventory batch registered.');
@@ -400,7 +418,10 @@ export default function DonationMonitoring({
 
     const submitAddItem = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/account/admin/donation-monitoring/inventory', addItemForm, {
+        router.post('/account/admin/donation-monitoring/inventory', {
+            ...addItemForm,
+            daily_usage_rate: addItemForm.daily_usage_rate ? parseFloat(addItemForm.daily_usage_rate) : null,
+        }, {
             onSuccess: () => {
                 setShowAddItemModal(false);
                 setAddItemForm({
@@ -408,6 +429,7 @@ export default function DonationMonitoring({
                     unit: 'pcs',
                     category: 'Food',
                     min_threshold: 5,
+                    daily_usage_rate: '',
                     storage_location: '',
                     has_expiry: false,
                     initial_quantity: 0,
@@ -427,7 +449,10 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!editingItem) return;
 
-        router.put(`/account/admin/donation-monitoring/inventory/${editingItem.id}`, editItemForm, {
+        router.put(`/account/admin/donation-monitoring/inventory/${editingItem.id}`, {
+            ...editItemForm,
+            daily_usage_rate: editItemForm.daily_usage_rate ? parseFloat(editItemForm.daily_usage_rate) : null,
+        }, {
             onSuccess: () => {
                 setEditingItem(null);
                 toast.success('Inventory item details updated.');
@@ -568,7 +593,7 @@ export default function DonationMonitoring({
             </div>
 
             {/* Tabs control */}
-            <div className="bg-white dark:bg-[#111827] border border-gray-100 dark:border-gray-800 rounded-3xl p-2 flex gap-2">
+            <div className="bg-white dark:bg-[#111827] border border-gray-100 dark:border-gray-800 rounded-3xl p-2 flex flex-wrap md:flex-nowrap gap-2">
                 <button
                     onClick={() => setActiveTab('donations')}
                     className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all cursor-pointer ${activeTab === 'donations' ? 'bg-paw-navy text-white' : 'text-gray-450 hover:bg-gray-50 dark:hover:bg-gray-900/50'}`}
@@ -586,6 +611,13 @@ export default function DonationMonitoring({
                     className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all cursor-pointer ${activeTab === 'logs' ? 'bg-paw-navy text-white' : 'text-gray-450 hover:bg-gray-50 dark:hover:bg-gray-900/50'}`}
                 >
                     Inventory Audit Logs ({inventoryLogs.total})
+                </button>
+                <button
+                    onClick={() => setActiveTab('sustainability')}
+                    className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeTab === 'sustainability' ? 'bg-paw-navy text-white' : 'text-gray-450 hover:bg-gray-50 dark:hover:bg-gray-900/50'}`}
+                >
+                    <TrendingUp size={16} />
+                    Sustainability Calculation
                 </button>
             </div>
 
@@ -890,6 +922,7 @@ export default function DonationMonitoring({
                                             <th className="px-6 py-4">Item & Location</th>
                                             <th className="px-6 py-4">Category</th>
                                             <th className="px-6 py-4">Total Stock</th>
+                                            <th className="px-6 py-4">Daily Rate & Runout</th>
                                             <th className="px-6 py-4">Batches & Expiry</th>
                                             <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4 text-center">Actions</th>
@@ -898,7 +931,7 @@ export default function DonationMonitoring({
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
                                         {filteredInventory.length === 0 ? (
                                             <tr>
-                                                <td colSpan={6} className="text-center py-12 text-gray-400 font-bold">
+                                                <td colSpan={7} className="text-center py-12 text-gray-400 font-bold">
                                                     No inventory items match current search or filters.
                                                 </td>
                                             </tr>
@@ -940,6 +973,36 @@ export default function DonationMonitoring({
                                                         <div className="text-[10px] text-gray-400 font-bold">
                                                             Threshold: {item.min_threshold} {item.unit}
                                                         </div>
+                                                    </td>
+
+                                                    {/* Daily Rate & Runout / Option C */}
+                                                    <td className="px-6 py-4">
+                                                        {item.daily_usage_rate && item.daily_usage_rate > 0 ? (
+                                                            <div>
+                                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black ${
+                                                                    item.days_of_supply === null || item.days_of_supply === undefined
+                                                                        ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                                                        : item.days_of_supply <= 3
+                                                                            ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+                                                                            : item.days_of_supply <= 7
+                                                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                                                                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                                }`}>
+                                                                    <Clock size={11} />
+                                                                    {item.days_of_supply !== null && item.days_of_supply !== undefined
+                                                                        ? `${item.days_of_supply}d supply`
+                                                                        : 'N/A'}
+                                                                </span>
+                                                                <div className="text-[11px] text-gray-400 font-bold mt-1">
+                                                                    {item.daily_usage_rate} {item.unit}/day
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <span className="text-xs text-gray-400 font-bold">No burn rate</span>
+                                                                <div className="text-[10px] text-gray-300 dark:text-gray-600 font-bold mt-0.5">Edit item to set</div>
+                                                            </div>
+                                                        )}
                                                     </td>
 
                                                     {/* Batches & Expiry */}
@@ -1032,6 +1095,7 @@ export default function DonationMonitoring({
                                                                         unit: item.unit,
                                                                         category: item.category,
                                                                         min_threshold: item.min_threshold,
+                                                                        daily_usage_rate: item.daily_usage_rate !== null && item.daily_usage_rate !== undefined ? String(item.daily_usage_rate) : '',
                                                                         storage_location: item.storage_location || '',
                                                                         has_expiry: item.has_expiry,
                                                                     });
@@ -1142,6 +1206,14 @@ export default function DonationMonitoring({
                             itemName="audit logs"
                         />
                     </div>
+                )}
+
+                {/* CARE SUSTAINABILITY CALCULATION TAB */}
+                {activeTab === 'sustainability' && (
+                    <SustainabilityAdminTab
+                        sustainability={sustainability}
+                        history={sustainabilityHistory}
+                    />
                 )}
             </div>
 
@@ -1586,6 +1658,64 @@ export default function DonationMonitoring({
                                 </div>
                             </div>
 
+                            {/* Option C: Care Sustainability Timer Contribution */}
+                            <div className="p-4 bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-2xl space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <HeartHandshake size={16} className="text-paw-orange" />
+                                        <div>
+                                            <div className="text-xs font-black text-paw-navy dark:text-white uppercase tracking-wider">
+                                                Extend Care Timer
+                                            </div>
+                                            <div className="text-[10px] text-gray-400 font-bold">
+                                                Credit estimated value to shelter survival days
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={verifyForm.extend_care_timer}
+                                            onChange={(e) => setVerifyForm({ ...verifyForm, extend_care_timer: e.target.checked })}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-paw-orange"></div>
+                                    </label>
+                                </div>
+
+                                {verifyForm.extend_care_timer && (
+                                    <div className="space-y-2 pt-1 border-t border-orange-200/50 dark:border-orange-900/30">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">
+                                                Estimated Donation Value (₱)
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₱</span>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={verifyForm.estimated_value}
+                                                    onChange={(e) => setVerifyForm({ ...verifyForm, estimated_value: e.target.value })}
+                                                    placeholder="e.g. 2500"
+                                                    className="w-full pl-8 pr-3 py-2.5 bg-white dark:bg-gray-900 border border-orange-200 dark:border-orange-800 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {sustainability && verifyForm.estimated_value && parseFloat(verifyForm.estimated_value) > 0 && (
+                                            <div className="text-[11px] text-paw-navy dark:text-orange-200 font-bold bg-white/90 dark:bg-gray-900/80 p-2.5 rounded-xl border border-orange-200/60 flex items-center justify-between">
+                                                <span>Live Care Timer Extension:</span>
+                                                <span className="text-paw-orange font-black">
+                                                    +{((parseFloat(verifyForm.estimated_value) / (sustainability.daily_shelter_cost || 5000)) * 24).toFixed(1)} hrs
+                                                    {' '}(+{(parseFloat(verifyForm.estimated_value) / (sustainability.daily_shelter_cost || 5000)).toFixed(2)} days)
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex gap-4 pt-4">
                                 <button
                                     type="button"
@@ -1666,15 +1796,28 @@ export default function DonationMonitoring({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Storage Location</label>
+                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Daily Usage Rate</label>
                                     <input
-                                        type="text"
-                                        value={addItemForm.storage_location}
-                                        onChange={(e) => setAddItemForm({ ...addItemForm, storage_location: e.target.value })}
+                                        type="number"
+                                        min={0}
+                                        step="0.01"
+                                        value={addItemForm.daily_usage_rate}
+                                        onChange={(e) => setAddItemForm({ ...addItemForm, daily_usage_rate: e.target.value })}
                                         className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
-                                        placeholder="e.g. Clinic Fridge A"
+                                        placeholder={`e.g. 2.5 ${addItemForm.unit || 'units'}/day`}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Storage Location</label>
+                                <input
+                                    type="text"
+                                    value={addItemForm.storage_location}
+                                    onChange={(e) => setAddItemForm({ ...addItemForm, storage_location: e.target.value })}
+                                    className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                    placeholder="e.g. Clinic Fridge A"
+                                />
                             </div>
 
                             {/* Initial Batch Setup */}
@@ -1792,14 +1935,28 @@ export default function DonationMonitoring({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Storage Location</label>
+                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Daily Usage Rate</label>
                                     <input
-                                        type="text"
-                                        value={editItemForm.storage_location}
-                                        onChange={(e) => setEditItemForm({ ...editItemForm, storage_location: e.target.value })}
+                                        type="number"
+                                        min={0}
+                                        step="0.01"
+                                        value={editItemForm.daily_usage_rate}
+                                        onChange={(e) => setEditItemForm({ ...editItemForm, daily_usage_rate: e.target.value })}
                                         className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                        placeholder={`e.g. 2.5 ${editItemForm.unit || 'units'}/day`}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Storage Location</label>
+                                <input
+                                    type="text"
+                                    value={editItemForm.storage_location}
+                                    onChange={(e) => setEditItemForm({ ...editItemForm, storage_location: e.target.value })}
+                                    className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                    placeholder="e.g. Clinic Fridge A"
+                                />
                             </div>
 
                             <div className="flex gap-4 pt-4">

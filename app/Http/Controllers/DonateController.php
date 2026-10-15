@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\Role;
 use App\Events\DonationReceivedEvent;
 use App\Models\AuditLog;
+use App\Models\CareSustainability;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSponsorship;
@@ -142,6 +143,7 @@ class DonateController extends Controller
                 'goal' => 50000,
                 'percentage' => (int) min(100, round(($currentMonthTotal / 50000) * 100)),
             ],
+            'careSustainability' => CareSustainability::current()->toPublicArray(),
             'donationSuccess' => session('donation_success'),
             'successRef' => session('success_ref'),
         ]);
@@ -400,6 +402,16 @@ class DonateController extends Controller
                     'reason' => 'Simulated checkout payment successful.',
                     'created_at' => now(),
                 ]);
+
+                // Auto-extend care sustainability timer
+                if ($donation->amount && (float) $donation->amount > 0) {
+                    CareSustainability::current()->extendByAmount(
+                        amount: (float) $donation->amount,
+                        notes: "Care timer auto-extended by donation #{$donation->public_reference} (₱".number_format((float) $donation->amount, 2).')',
+                        user: auth()->user(),
+                        donation: $donation
+                    );
+                }
 
                 // If feeding sponsorship, approve and schedule event!
                 if ($donation->type === DonationType::FeedingSponsorship->value && $donation->feedingSponsorship) {

@@ -7,6 +7,7 @@ use App\Enums\DonationType;
 use App\Enums\InKindStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\CareSustainability;
 use App\Models\Donation;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
@@ -123,6 +124,8 @@ class DonationMonitoringController extends Controller
                 'unit' => $item->unit,
                 'category' => $item->category,
                 'min_threshold' => $item->min_threshold,
+                'daily_usage_rate' => $item->daily_usage_rate ? (float) $item->daily_usage_rate : null,
+                'days_of_supply' => $item->estimated_days_of_supply,
                 'storage_location' => $item->storage_location,
                 'has_expiry' => (bool) $item->has_expiry,
                 'stock_status' => $stockStatus,
@@ -213,6 +216,32 @@ class DonationMonitoringController extends Controller
             ->whereDate('expires_at', '<', $today)
             ->count();
 
+        // Sustainability config & live history
+        $sustainabilityModel = CareSustainability::current();
+        $sustainability = $sustainabilityModel->toPublicArray();
+        $sustainabilityHistory = $sustainabilityModel->histories()
+            ->with(['user', 'donation'])
+            ->latest('id')
+            ->take(30)
+            ->get()
+            ->map(function ($h) {
+                return [
+                    'id' => $h->id,
+                    'action' => $h->action,
+                    'funds_amount' => $h->funds_amount !== null ? (float) $h->funds_amount : null,
+                    'daily_cost' => (float) $h->daily_cost,
+                    'amount_added' => (float) $h->amount_added,
+                    'days_added' => (float) $h->days_added,
+                    'endpoint_before' => $h->endpoint_before ? $h->endpoint_before->format('M j, Y, g:i A') : 'None / Depleted',
+                    'endpoint_after' => $h->endpoint_after ? $h->endpoint_after->format('M j, Y, g:i A') : 'Depleted',
+                    'notes' => $h->notes,
+                    'performed_by' => $h->performed_by ?: ($h->user ? $h->user->name : 'System'),
+                    'donation_ref' => $h->donation ? $h->donation->public_reference : null,
+                    'created_at' => $h->created_at ? $h->created_at->format('M j, Y, g:i A') : '',
+                    'time_ago' => $h->created_at ? $h->created_at->diffForHumans() : '',
+                ];
+            });
+
         return Inertia::render('admin/donation-monitoring', [
             'donations' => $donations,
             'inventory' => $inventoryPaginator,
@@ -224,6 +253,8 @@ class DonationMonitoringController extends Controller
                 'expiringSoonCount' => $expiringSoonCount,
                 'expiredCount' => $expiredCount,
             ],
+            'sustainability' => $sustainability,
+            'sustainabilityHistory' => $sustainabilityHistory,
             'filters' => $request->all(),
             'stats' => [
                 'totalCash' => (int) $totalCash,
@@ -243,6 +274,8 @@ class DonationMonitoringController extends Controller
             'batch_number' => 'nullable|string|max:255',
             'expires_at' => 'nullable|date',
             'storage_location' => 'nullable|string|max:255',
+            'estimated_value' => 'nullable|numeric|min:0',
+            'extend_care_timer' => 'nullable|boolean',
         ]);
 
         $donationType = $donation->type instanceof DonationType ? $donation->type->value : $donation->type;
@@ -310,7 +343,19 @@ class DonationMonitoringController extends Controller
                 'verified_by' => auth()->id(),
             ]);
 
-            AuditLog::log('donation_inkind_verify', "Verified in-kind donation ref {$donation->public_reference}");
+            // Extend care timer if opted-in and estimated value provided
+            $shouldExtendTimer = ! empty($validated['extend_care_timer']) && ! empty($validated['estimated_value']) && (float) $validated['estimated_value'] > 0;
+            if ($shouldExtendTimer) {
+                $estimatedVal = (float) $validated['estimated_value'];
+                CareSustainability::current()->extendByAmount(
+                    amount: $estimatedVal,
+                    notes: "Care timer extended from in-kind donation #{$donation->public_reference} ({$validated['quantity']} {$validated['unit']} {$validated['itemName']}, estimated value: ₱".number_format($estimatedVal, 2).')',
+                    user: auth()->user(),
+                    donation: $donation
+                );
+            }
+
+            AuditLog::log('donation_inkind_verify', "Verified in-kind donation ref {$donation->public_reference}".($shouldExtendTimer ? " (extended care timer by ₱{$validated['estimated_value']})" : ''));
 
             // Audit Logs
             DB::table('donation_audit_logs')->insert([
@@ -319,7 +364,7 @@ class DonationMonitoringController extends Controller
                 'old_status' => $oldStatus,
                 'new_status' => DonationStatus::Completed->value,
                 'performed_by' => auth()->id(),
-                'notes' => 'In-kind donation verified and received into inventory: '.$validated['quantity'].' '.$validated['unit'].' of '.$validated['itemName'],
+                'notes' => 'In-kind donation verified and received into inventory: '.$validated['quantity'].' '.$validated['unit'].' of '.$validated['itemName'].($shouldExtendTimer ? " (Care timer extended by ₱{$validated['estimated_value']})" : ''),
                 'created_at' => now(),
             ]);
 
@@ -347,6 +392,7 @@ class DonationMonitoringController extends Controller
             'unit' => 'required|string|max:50',
             'category' => 'required|string|in:Food,Medicine,Supplies,Other',
             'min_threshold' => 'nullable|integer|min:0',
+            'daily_usage_rate' => 'nullable|numeric|min:0',
             'storage_location' => 'nullable|string|max:255',
             'has_expiry' => 'nullable|boolean',
             'initial_quantity' => 'nullable|integer|min:0',
@@ -365,6 +411,7 @@ class DonationMonitoringController extends Controller
                 'unit' => $validated['unit'],
                 'category' => $validated['category'],
                 'min_threshold' => $validated['min_threshold'] ?? 5,
+                'daily_usage_rate' => isset($validated['daily_usage_rate']) && $validated['daily_usage_rate'] !== null && $validated['daily_usage_rate'] !== '' ? (float) $validated['daily_usage_rate'] : null,
                 'storage_location' => $validated['storage_location'] ?? null,
                 'has_expiry' => $hasExpiry,
             ]);
@@ -408,6 +455,7 @@ class DonationMonitoringController extends Controller
             'unit' => 'required|string|max:50',
             'category' => 'required|string|in:Food,Medicine,Supplies,Other',
             'min_threshold' => 'nullable|integer|min:0',
+            'daily_usage_rate' => 'nullable|numeric|min:0',
             'storage_location' => 'nullable|string|max:255',
             'has_expiry' => 'nullable|boolean',
         ]);
@@ -417,6 +465,7 @@ class DonationMonitoringController extends Controller
             'unit' => $validated['unit'],
             'category' => $validated['category'],
             'min_threshold' => $validated['min_threshold'] ?? $item->min_threshold,
+            'daily_usage_rate' => isset($validated['daily_usage_rate']) && $validated['daily_usage_rate'] !== null && $validated['daily_usage_rate'] !== '' ? (float) $validated['daily_usage_rate'] : null,
             'storage_location' => $validated['storage_location'] ?? null,
             'has_expiry' => (bool) ($validated['has_expiry'] ?? $item->has_expiry),
         ]);
@@ -636,6 +685,15 @@ class DonationMonitoringController extends Controller
                 'created_at' => now(),
             ]);
 
+            if ($donation->amount && (float) $donation->amount > 0) {
+                CareSustainability::current()->extendByAmount(
+                    amount: (float) $donation->amount,
+                    notes: "Care timer auto-extended by verified donation #{$donation->public_reference}",
+                    user: auth()->user(),
+                    donation: $donation
+                );
+            }
+
             $userToNotify = $donation->user ?? ($donation->user_id ? \App\Models\User::find($donation->user_id) : null);
             if ($userToNotify) {
                 $userToNotify->notify(new DonationVerifiedNotification($donation));
@@ -643,6 +701,82 @@ class DonationMonitoringController extends Controller
         });
 
         return redirect()->back()->with('success', "Donation {$donation->public_reference} marked as verified and completed.");
+    }
+
+    public function recalculateSustainability(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'verified_funds' => 'required|numeric|min:0',
+            'daily_cost' => 'required|numeric|min:0.01',
+            'resource_category' => 'required|string|max:255',
+            'calculation_notes' => 'nullable|string|max:1000',
+            'threshold_stable_days' => 'nullable|numeric|min:0',
+            'threshold_needs_support_days' => 'nullable|numeric|min:0',
+            'threshold_urgent_days' => 'nullable|numeric|min:0',
+            'threshold_critical_days' => 'nullable|numeric|min:0',
+        ]);
+
+        $sustainability = CareSustainability::current();
+
+        if (isset($validated['threshold_stable_days'])) {
+            $sustainability->updateConfigOnly([
+                'daily_cost' => $validated['daily_cost'],
+                'resource_category' => $validated['resource_category'],
+                'threshold_stable_days' => $validated['threshold_stable_days'],
+                'threshold_needs_support_days' => $validated['threshold_needs_support_days'] ?? 3,
+                'threshold_urgent_days' => $validated['threshold_urgent_days'] ?? 1,
+                'threshold_critical_days' => $validated['threshold_critical_days'] ?? 0.25,
+            ], auth()->user());
+        }
+
+        $sustainability->recalculate(
+            funds: (float) $validated['verified_funds'],
+            dailyCost: (float) $validated['daily_cost'],
+            category: $validated['resource_category'],
+            notes: $validated['calculation_notes'] ?? null,
+            user: auth()->user()
+        );
+
+        AuditLog::log('sustainability_recalculate', "Recalculated care sustainability timer. Funds: ₱{$validated['verified_funds']}, Daily: ₱{$validated['daily_cost']}");
+
+        return redirect()->back()->with('success', 'Care sustainability recalculated successfully.');
+    }
+
+    public function updateSustainabilityConfig(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'daily_cost' => 'required|numeric|min:0.01',
+            'resource_category' => 'required|string|max:255',
+            'calculation_notes' => 'nullable|string|max:1000',
+            'threshold_stable_days' => 'required|numeric|min:0',
+            'threshold_needs_support_days' => 'required|numeric|min:0',
+            'threshold_urgent_days' => 'required|numeric|min:0',
+            'threshold_critical_days' => 'required|numeric|min:0',
+        ]);
+
+        CareSustainability::current()->updateConfigOnly($validated, auth()->user());
+
+        AuditLog::log('sustainability_config_update', 'Updated care sustainability configuration parameters and thresholds');
+
+        return redirect()->back()->with('success', 'Sustainability configuration saved.');
+    }
+
+    public function extendSustainabilityTimer(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        CareSustainability::current()->extendByAmount(
+            amount: (float) $validated['amount'],
+            notes: $validated['notes'] ?? 'Manual timer extension by administrator.',
+            user: auth()->user()
+        );
+
+        AuditLog::log('sustainability_extend', "Care sustainability timer extended by ₱{$validated['amount']}");
+
+        return redirect()->back()->with('success', 'Care timer extended successfully.');
     }
 
     public function rejectDonation(Request $request, Donation $donation): RedirectResponse

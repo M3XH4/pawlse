@@ -182,6 +182,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('donation-monitoring/inventory/{item}/batches', [DonationMonitoringController::class, 'storeBatch'])->name('donation-monitoring.inventory.batches.store');
     Route::post('donation-monitoring/inventory/batches/{batch}/adjust', [DonationMonitoringController::class, 'adjustBatchStock'])->name('donation-monitoring.inventory.batches.adjust');
     Route::post('donation-monitoring/inventory/{item}/adjust', [DonationMonitoringController::class, 'adjustStock'])->name('donation-monitoring.inventory.adjust');
+    Route::post('donation-monitoring/sustainability/recalculate', [DonationMonitoringController::class, 'recalculateSustainability'])->name('donation-monitoring.sustainability.recalculate');
+    Route::post('donation-monitoring/sustainability/config', [DonationMonitoringController::class, 'updateSustainabilityConfig'])->name('donation-monitoring.sustainability.config');
+    Route::post('donation-monitoring/sustainability/extend', [DonationMonitoringController::class, 'extendSustainabilityTimer'])->name('donation-monitoring.sustainability.extend');
 
     // Event Management Dashboard
     Route::get('events', [EventManagementController::class, 'index'])->name('events');

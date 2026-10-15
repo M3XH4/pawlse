@@ -16,7 +16,20 @@ class InventoryItem extends Model
         'quantity' => 'integer',
         'min_threshold' => 'integer',
         'has_expiry' => 'boolean',
+        'daily_usage_rate' => 'float',
     ];
+
+    /**
+     * Estimated days of supply based on daily consumption rate.
+     */
+    public function getEstimatedDaysOfSupplyAttribute(): ?float
+    {
+        if ($this->daily_usage_rate && $this->daily_usage_rate > 0) {
+            return round($this->quantity / $this->daily_usage_rate, 1);
+        }
+
+        return null;
+    }
 
     /**
      * @return HasMany<InventoryBatch, $this>
