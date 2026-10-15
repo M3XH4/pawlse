@@ -176,7 +176,7 @@ function TablePagination({
                 Showing {count} of {total} {itemName}
             </span>
             
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5">
                 {links.map((link, idx) => {
                     const isPrev = link.label.includes('Previous');
                     const isNext = link.label.includes('Next');
@@ -683,7 +683,7 @@ export default function DonationMonitoring({
 
                         {/* Donations list */}
                         <div className="bg-white dark:bg-[#111827] border border-gray-100 dark:border-gray-800 rounded-[32px] overflow-hidden shadow-sm">
-                            <div className="overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -843,6 +843,139 @@ export default function DonationMonitoring({
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Mobile Donations Cards View */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                                {donations.data.length === 0 ? (
+                                    <div className="text-center py-12 px-4 text-gray-400 font-bold">
+                                        No donations registered or matching current filter inputs.
+                                    </div>
+                                ) : (
+                                    donations.data.map((donation) => {
+                                        const isCompleted = donation.status === 'completed' || donation.status === 'verified';
+                                        const isPendingVerify = donation.status === 'pending_verification';
+                                        const isPendingPayment = donation.status === 'pending_payment';
+                                        const isInKind = donation.type === 'in_kind';
+
+                                        return (
+                                            <div key={donation.id} className="p-4 space-y-3 hover:bg-gray-50/30 dark:hover:bg-gray-900/5 transition-colors">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <span className="font-black text-sm text-paw-navy dark:text-white">
+                                                            {donation.public_reference}
+                                                        </span>
+                                                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                            <span className="font-bold text-xs text-paw-navy dark:text-[#CBD5E1]">
+                                                                {donation.donor_name}
+                                                            </span>
+                                                            {Boolean(donation.anonymous) && (
+                                                                <span className="text-[10px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950/40 px-1.5 py-0.2 rounded-full">
+                                                                    Anon
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-[11px] text-gray-400 font-medium">{donation.donor_email}</div>
+                                                    </div>
+
+                                                    <span className={`inline-block shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full capitalize ${
+                                                        isCompleted
+                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                            : donation.status === 'rejected'
+                                                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                                                    }`}>
+                                                        {donation.status.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+
+                                                <div className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl flex items-center justify-between gap-2">
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">
+                                                            {donation.type.replace('_', ' ')}
+                                                        </span>
+                                                        {isInKind ? (
+                                                            <div>
+                                                                <p className="font-bold text-xs text-paw-navy dark:text-[#CBD5E1]">
+                                                                    {donation.in_kind_donation?.description}
+                                                                </p>
+                                                                {donation.in_kind_donation?.need?.animal && (
+                                                                    <p className="text-[10px] text-paw-orange font-bold flex items-center gap-1 mt-0.5">
+                                                                        <Heart size={10} />
+                                                                        <span>For: {donation.in_kind_donation.need.animal.name}</span>
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <span className="font-black text-paw-orange text-sm">
+                                                                    ₱{Number(donation.amount || 0).toLocaleString()}
+                                                                </span>
+                                                                {donation.purpose && (
+                                                                    <p className="text-[10px] text-gray-400 font-medium">{donation.purpose}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <span className="text-[11px] font-medium text-gray-400 shrink-0">
+                                                        {new Date(donation.created_at).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+
+                                                {/* Mobile Actions */}
+                                                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                                    <button
+                                                        onClick={() => setSelectedDonationDetails(donation)}
+                                                        className="flex-1 py-2 px-3 bg-gray-100 hover:bg-paw-navy hover:text-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Eye size={14} /> Details
+                                                    </button>
+
+                                                    {isCompleted && (
+                                                        <button
+                                                            onClick={() => setSelectedDonationReceipt(donation)}
+                                                            className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5"
+                                                        >
+                                                            <FileText size={14} /> Receipt
+                                                        </button>
+                                                    )}
+
+                                                    {isInKind && !isCompleted && donation.status !== 'rejected' && (
+                                                        <button
+                                                            onClick={() => handleVerifyClick(donation)}
+                                                            className="flex-1 py-2 px-3 bg-orange-50 hover:bg-paw-orange hover:text-white text-paw-orange dark:bg-orange-950/30 dark:text-orange-400 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5"
+                                                        >
+                                                            <Gift size={14} /> Verify Drop-off
+                                                        </button>
+                                                    )}
+
+                                                    {!isInKind && (isPendingVerify || isPendingPayment) && (
+                                                        <button
+                                                            onClick={() => setVerifyingCashDonation(donation)}
+                                                            className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5"
+                                                        >
+                                                            <CheckCircle2 size={14} /> Verify Payment
+                                                        </button>
+                                                    )}
+
+                                                    {!isCompleted && donation.status !== 'rejected' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setRejectingDonation(donation);
+                                                                setRejectReason('');
+                                                            }}
+                                                            className="p-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-500 dark:bg-red-950/30 dark:text-red-400 rounded-xl transition-colors cursor-pointer"
+                                                            title="Reject / Cancel Donation"
+                                                        >
+                                                            <XCircle size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
 
                             {/* Pagination */}

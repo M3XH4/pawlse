@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\CareSustainability;
+use App\Services\NotificationPayloadFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Middleware;
@@ -69,13 +70,13 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'dashboardRole' => $dashboardRole,
             'dashboardNotifications' => $dashboardNotifications,
-            'dashboardNotificationActions' => $request->user() === null
+            'dashboardNotificationActions' => ($request->user() === null || $dashboardRole === null)
                 ? null
                 : [
                     'markAllReadUrl' => route('account.notifications.read-all'),
                     'clearAllUrl' => route('account.notifications.clear-all'),
                 ],
-            'unreadNotificationCount' => $request->user()?->unreadNotifications()->count() ?? 0,
+            'unreadNotificationCount' => $dashboardRole === null ? 0 : ($request->user()?->unreadNotifications()->count() ?? 0),
             'dashboardChrome' => $dashboardChrome,
             'adminNotifications' => $dashboardNotifications,
             'adminChrome' => $dashboardChrome,
@@ -108,19 +109,7 @@ class HandleInertiaRequests extends Middleware
             ->latest()
             ->limit(30)
             ->get()
-            ->map(fn (DatabaseNotification $notification): array => [
-                'id' => $notification->id,
-                'title' => (string) ($notification->data['title'] ?? 'Notification'),
-                'description' => (string) ($notification->data['message'] ?? $notification->data['description'] ?? ''),
-                'time' => $notification->created_at?->diffForHumans() ?? '',
-                'url' => (string) ($notification->data['url'] ?? url()->current()),
-                'icon' => (string) ($notification->data['icon'] ?? 'system'),
-                'category' => (string) ($notification->data['category'] ?? $notification->data['icon'] ?? 'system'),
-                'read' => $notification->read(),
-                'readUrl' => route('account.notifications.read', $notification),
-                'deleteUrl' => route('account.notifications.destroy', $notification),
-                'createdAt' => $notification->created_at?->toIso8601String(),
-            ])
+            ->map(fn (DatabaseNotification $notification): array => NotificationPayloadFormatter::format($notification))
             ->all();
     }
 }

@@ -10,9 +10,17 @@ export function useCareCountdown(data?: CareSustainabilityData | null) {
         return Math.max(0, diff);
     };
 
-    const [secondsLeft, setSecondsLeft] = useState<number>(calculateSecondsRemaining);
+    // Use server snapshot during initial render so client hydration matches
+    // the server-rendered HTML perfectly, preventing hydration mismatch errors.
+    const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+        if (typeof data?.seconds_remaining === 'number') {
+            return data.seconds_remaining;
+        }
+        return calculateSecondsRemaining();
+    });
 
     useEffect(() => {
+        // Once hydrated on client, immediately update to live client time
         setSecondsLeft(calculateSecondsRemaining());
 
         if (!data?.sustainability_endpoint) return;
@@ -26,7 +34,7 @@ export function useCareCountdown(data?: CareSustainabilityData | null) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [data?.sustainability_endpoint]);
+    }, [data?.sustainability_endpoint, data?.seconds_remaining]);
 
     const formatted = useMemo(() => {
         const days = Math.floor(secondsLeft / 86400);

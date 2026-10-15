@@ -171,12 +171,12 @@ export function DashboardNotificationsPage() {
                     </div>
 
                     {/* Header Actions */}
-                    <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <div className="flex w-full sm:w-auto flex-wrap items-center gap-2 self-start sm:self-auto">
                         {unreadCount > 0 && (
                             <button
                                 type="button"
                                 onClick={markAllRead}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] shadow-xs transition-colors hover:bg-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50 dark:border-[#1E293B] dark:bg-[#111827] dark:text-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                                className="inline-flex flex-1 sm:flex-none justify-center items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] shadow-xs transition-colors hover:bg-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50 dark:border-[#1E293B] dark:bg-[#111827] dark:text-[#F8FAFC] dark:hover:bg-[#1E293B]"
                             >
                                 <CheckCheck className="h-4 w-4 text-[var(--dashboard-primary)]" />
                                 Mark all as read
@@ -186,7 +186,7 @@ export function DashboardNotificationsPage() {
                             <button
                                 type="button"
                                 onClick={clearAllRead}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 shadow-xs transition-colors hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                                className="inline-flex flex-1 sm:flex-none justify-center items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 shadow-xs transition-colors hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/40"
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Clear read
@@ -220,7 +220,7 @@ export function DashboardNotificationsPage() {
 
                     {/* Category Filter Tabs spanning full maximum width */}
                     <div
-                        className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
+                        className="grid w-full grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2"
                         role="group"
                         aria-label="Filter notifications by category"
                     >

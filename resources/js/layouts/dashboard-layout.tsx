@@ -20,12 +20,18 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(
-        () =>
-            typeof window !== 'undefined' &&
-            localStorage.getItem(COLLAPSED_STORAGE_KEY) === 'true',
-    );
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const config = dashboardThemes[theme];
+
+    useEffect(() => {
+        try {
+            if (localStorage.getItem(COLLAPSED_STORAGE_KEY) === 'true') {
+                setSidebarCollapsed(true);
+            }
+        } catch {
+            // Ignore storage access errors
+        }
+    }, []);
 
     const contextValue = useMemo<DashboardContextValue>(
         () => ({

@@ -19,6 +19,7 @@ declare module '@inertiajs/core' {
             dashboardChrome: DashboardChrome | null;
             adminNotifications: AdminNotification[];
             adminChrome: DashboardChrome | null;
+            unreadNotificationCount: number;
             [key: string]: unknown;
         };
     }

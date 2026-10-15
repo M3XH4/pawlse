@@ -336,7 +336,8 @@ export default function RescueManagement({
 
       {/* Reports Table Card */}
       <AdminCard className="overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-gray-400 font-bold uppercase tracking-wider">
@@ -428,9 +429,86 @@ export default function RescueManagement({
           </table>
         </div>
 
+        {/* Mobile Cards View */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+          {reports.data.length === 0 ? (
+            <div className="p-8 text-center text-gray-400 font-bold">
+              No reports found matching the criteria.
+            </div>
+          ) : (
+            reports.data.map((report) => (
+              <div
+                key={report.id}
+                className={`p-4 space-y-3 ${report.is_duplicate ? 'opacity-75 bg-gray-50/20' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-fredoka text-sm font-bold text-paw-navy dark:text-white">
+                      #{report.id}
+                    </span>
+                    {report.is_duplicate && (
+                      <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-black">DUP</span>
+                    )}
+                    {getTypeBadge(report.type)}
+                  </div>
+
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${getStatusStyle(report.status)}`}>
+                    {report.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {report.photos && report.photos.length > 0 ? (
+                    <ImageWithFallback
+                      src={formatPhotoUrl(report.photos[0].path, report.animal_type)}
+                      alt={report.name || 'Pet'}
+                      className="w-12 h-12 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
+                    />
+                  ) : (
+                    <span className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 shrink-0 text-lg">🐾</span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-paw-navy dark:text-white truncate">{report.name || 'Unnamed Stray'}</p>
+                    <p className="text-xs text-gray-400">{report.animal_type} · {report.breed || 'Unknown'}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Reported: {new Date(report.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-slate-900/60 p-2.5 rounded-xl text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                    <MapPin size={12} className="text-paw-orange shrink-0" />
+                    <span className="truncate">{report.location}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100 dark:border-slate-800">
+                    <span className="text-gray-400">Responder:</span>
+                    {report.assigned_volunteer ? (
+                      <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <User size={11} /> {report.assigned_volunteer.name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 italic">Unassigned</span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setUpdateStatusVal(report.status);
+                  }}
+                  className="w-full bg-paw-navy hover:bg-paw-orange text-white py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                >
+                  <Eye size={14} /> Review Report
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Pagination */}
         {reports.last_page > 1 && (
-          <div className="flex justify-center items-center gap-1.5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
+          <div className="flex flex-wrap justify-center items-center gap-1.5 py-4 px-2 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
             {reports.links.map((link, idx) => {
               let label = link.label;
               if (label.includes('Previous')) label = '←';

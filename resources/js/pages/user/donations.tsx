@@ -184,13 +184,13 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                         />
                     </div>
 
-                    {/* Filter Type */}
-                    <div className="flex gap-4">
-                        <div className="relative">
+                    {/* Filter Type & Status */}
+                    <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 sm:flex-none">
                             <select
                                 value={selectedType}
                                 onChange={handleTypeChange}
-                                className="pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[140px]"
+                                className="w-full pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[130px]"
                             >
                                 <option value="">All Types</option>
                                 <option value="cash">Cash</option>
@@ -201,11 +201,11 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                         </div>
 
                         {/* Filter Status */}
-                        <div className="relative">
+                        <div className="relative flex-1 sm:flex-none">
                             <select
                                 value={selectedStatus}
                                 onChange={handleStatusChange}
-                                className="pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[140px]"
+                                className="w-full pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[130px]"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="completed">Completed</option>
@@ -223,88 +223,160 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
             </DashboardCard>
 
             {/* Donation List Card */}
-            <DashboardCard className="overflow-x-auto p-0">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                            <th className="px-6 py-4">Date</th>
-                            <th className="px-6 py-4">Reference</th>
-                            <th className="px-6 py-4">Type</th>
-                            <th className="px-6 py-4">Details</th>
-                            <th className="px-6 py-4">Value</th>
-                            <th className="px-6 py-4">Privacy</th>
-                            <th className="px-6 py-4">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-                        {donations.data.length === 0 ? (
-                            <tr>
-                                <td colSpan={7} className="text-center py-12 text-gray-450 font-bold">
-                                    No donations matched your search or filters.
-                                </td>
+            <DashboardCard className="p-0 overflow-hidden">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                <th className="px-6 py-4">Date</th>
+                                <th className="px-6 py-4">Reference</th>
+                                <th className="px-6 py-4">Type</th>
+                                <th className="px-6 py-4">Details</th>
+                                <th className="px-6 py-4">Value</th>
+                                <th className="px-6 py-4">Privacy</th>
+                                <th className="px-6 py-4">Status</th>
                             </tr>
-                        ) : (
-                            donations.data.map((donation) => (
-                                <tr key={donation.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-900/5 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-gray-500 whitespace-nowrap">
-                                        {new Date(donation.created_at).toLocaleDateString(undefined, {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+                            {donations.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="text-center py-12 text-gray-450 font-bold">
+                                        No donations matched your search or filters.
                                     </td>
-                                    <td className="px-6 py-4 font-black text-[#0B2340] dark:text-white whitespace-nowrap">
-                                        {donation.public_reference}
-                                    </td>
-                                    <td className="px-6 py-4 font-bold text-paw-navy dark:text-[#CBD5E1]">
-                                        <span className="flex items-center gap-1.5">
-                                            {donation.type === 'cash' ? <CreditCard size={14} className="text-green-500" /> : <Gift size={14} className="text-paw-orange" />}
+                                </tr>
+                            ) : (
+                                donations.data.map((donation) => (
+                                    <tr key={donation.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-900/5 transition-colors">
+                                        <td className="px-6 py-4 font-bold text-gray-500 whitespace-nowrap">
+                                            {new Date(donation.created_at).toLocaleDateString(undefined, {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </td>
+                                        <td className="px-6 py-4 font-black text-[#0B2340] dark:text-white whitespace-nowrap">
+                                            {donation.public_reference}
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-paw-navy dark:text-[#CBD5E1]">
+                                            <span className="flex items-center gap-1.5">
+                                                {donation.type === 'cash' ? <CreditCard size={14} className="text-green-500" /> : <Gift size={14} className="text-paw-orange" />}
+                                                {formatType(donation.type)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                                            {donation.type === 'in_kind' && donation.in_kind_donation ? (
+                                                donation.in_kind_donation.description
+                                            ) : (
+                                                donation.purpose || 'General Support'
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 font-black text-paw-orange text-base whitespace-nowrap">
+                                            {donation.type === 'in_kind' && donation.in_kind_donation ? (
+                                                donation.in_kind_donation.quantity || '1 unit'
+                                            ) : (
+                                                `₱${Number(donation.amount || 0).toLocaleString()}`
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {donation.anonymous ? (
+                                                <span className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 text-xs font-black px-2.5 py-1 rounded-full">
+                                                    <EyeOff size={12} />
+                                                    Anonymous
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-bold text-gray-400">Public</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-block text-xs font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
+                                                {donation.status.replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                    {donations.data.length === 0 ? (
+                        <div className="text-center py-12 px-4 text-gray-450 font-bold">
+                            No donations matched your search or filters.
+                        </div>
+                    ) : (
+                        donations.data.map((donation) => (
+                            <div key={donation.id} className="p-4 space-y-2.5 hover:bg-gray-50/30 dark:hover:bg-gray-900/5 transition-colors">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <span className="font-black text-sm text-[#0B2340] dark:text-white">
+                                            {donation.public_reference}
+                                        </span>
+                                        <p className="text-xs font-bold text-gray-400 mt-0.5">
+                                            {new Date(donation.created_at).toLocaleDateString(undefined, {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </p>
+                                    </div>
+
+                                    <span className={`inline-block text-[10px] font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
+                                        {donation.status.replace('_', ' ')}
+                                    </span>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl space-y-1.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="flex items-center gap-1.5 text-xs font-bold text-paw-navy dark:text-[#CBD5E1]">
+                                            {donation.type === 'cash' ? <CreditCard size={13} className="text-green-500" /> : <Gift size={13} className="text-paw-orange" />}
                                             {formatType(donation.type)}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4 font-bold text-gray-600 dark:text-gray-400 max-w-xs truncate">
+
+                                        <span className="font-black text-paw-orange text-sm">
+                                            {donation.type === 'in_kind' && donation.in_kind_donation ? (
+                                                donation.in_kind_donation.quantity || '1 unit'
+                                            ) : (
+                                                `₱${Number(donation.amount || 0).toLocaleString()}`
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                                         {donation.type === 'in_kind' && donation.in_kind_donation ? (
                                             donation.in_kind_donation.description
                                         ) : (
                                             donation.purpose || 'General Support'
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4 font-black text-paw-orange text-base whitespace-nowrap">
-                                        {donation.type === 'in_kind' && donation.in_kind_donation ? (
-                                            donation.in_kind_donation.quantity || '1 unit'
-                                        ) : (
-                                            `₱${Number(donation.amount || 0).toLocaleString()}`
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {donation.anonymous ? (
-                                            <span className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 text-xs font-black px-2.5 py-1 rounded-full">
-                                                <EyeOff size={12} />
-                                                Anonymous
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs font-bold text-gray-400">Public</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-block text-xs font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
-                                            {donation.status.replace('_', ' ')}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center justify-between text-xs pt-0.5">
+                                    <span className="text-gray-400 font-medium">Privacy:</span>
+                                    {donation.anonymous ? (
+                                        <span className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                            <EyeOff size={11} />
+                                            Anonymous
                                         </span>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                    ) : (
+                                        <span className="text-xs font-bold text-gray-500">Public Donor</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
 
                 {/* Pagination */}
                 {donations.total > 0 && donations.links.length > 3 && (
-                    <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
                         <span className="text-xs font-bold text-gray-450">
                             Showing {donations.data.length} of {donations.total} records
                         </span>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5">
                             {donations.links.map((link, idx) => {
                                 // Skip prev/next labels translation details and render icon
                                 const isPrev = link.label.includes('Previous');

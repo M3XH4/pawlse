@@ -24,15 +24,24 @@ export function AdminNotificationPanel({
     return (
         <div
             id={id}
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-[min(100vw-2rem,24rem)] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.12)] dark:border-[#1E293B] dark:bg-[#111827] dark:shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:w-[24rem]"
+            className="max-sm:fixed max-sm:inset-x-3 max-sm:top-14 max-sm:w-auto max-sm:max-w-none sm:absolute sm:right-0 sm:top-[calc(100%+0.5rem)] sm:w-[24rem] z-50 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.12)] dark:border-[#1E293B] dark:bg-[#111827] dark:shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
             role="dialog"
             aria-label="Notifications"
         >
             <div className="flex items-start justify-between border-b border-[#F1F5F9] px-5 pt-4 pb-3 dark:border-[#1E293B]">
                 <div>
-                    <h2 className="text-base font-bold text-[#0B2340] dark:text-[#F8FAFC]">
-                        Notifications
-                    </h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                            Notifications
+                        </h2>
+                        <span
+                            className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                            title="Real-time push notifications active"
+                        >
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Live
+                        </span>
+                    </div>
                     <p className="mt-0.5 text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
                         {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
                     </p>

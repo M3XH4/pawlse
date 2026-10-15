@@ -1,133 +1,77 @@
-import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { notificationStore, isDashboardRoute } from '@/lib/notification-store';
 import type { DashboardNotification, DashboardNotificationActions } from '@/types/dashboard';
 
 export function useDashboardNotifications() {
+    const page = usePage();
     const {
+        dashboardRole = null,
         dashboardNotifications = [],
         dashboardNotificationActions = null,
         adminNotifications = [],
         unreadNotificationCount = 0,
-    } = usePage().props as {
+        auth,
+    } = page.props as {
+        dashboardRole?: string | null;
         dashboardNotifications?: DashboardNotification[];
         dashboardNotificationActions?: DashboardNotificationActions | null;
         adminNotifications?: DashboardNotification[];
         unreadNotificationCount?: number;
+        auth?: { user?: { id?: string | number } | null };
     };
 
-    const initialNotifications: DashboardNotification[] =
-        dashboardNotifications.length > 0 ? dashboardNotifications : adminNotifications;
+    const userId = auth?.user?.id;
+    const isDashboard = isDashboardRoute(page.url, dashboardRole);
 
-    const [optimisticReadIds, setOptimisticReadIds] = useState<string[]>([]);
-    const [deletedIds, setDeletedIds] = useState<string[]>([]);
+    // Sync store with incoming Inertia page props
+    useEffect(() => {
+        notificationStore.initFromProps(
+            userId,
+            dashboardNotifications,
+            adminNotifications,
+            unreadNotificationCount,
+            isDashboard,
+        );
+    }, [userId, dashboardNotifications, adminNotifications, unreadNotificationCount, isDashboard]);
 
-    const notifications = initialNotifications.filter(
-        (notification) => !deletedIds.includes(notification.id),
+    const state = useSyncExternalStore(
+        (listener) => notificationStore.subscribe(listener),
+        () => notificationStore.getState(),
+        () => notificationStore.getState(),
+    );
+
+    const activeNotifications = state.notifications.filter(
+        (notification) => !state.deletedIds.has(notification.id),
     );
 
     const isRead = (notification: DashboardNotification) =>
-        notification.read === true || optimisticReadIds.includes(notification.id);
+        notificationStore.isRead(notification);
 
-    const unreadCount = notifications.filter((notification) => !isRead(notification)).length;
+    const markRead = (notification: DashboardNotification) =>
+        notificationStore.markRead(notification);
 
-    const markRead = (notification: DashboardNotification) => {
-        setOptimisticReadIds((ids) =>
-            ids.includes(notification.id) ? ids : [...ids, notification.id],
-        );
+    const markAllRead = () =>
+        notificationStore.markAllRead(dashboardNotificationActions?.markAllReadUrl);
 
-        if (!notification.readUrl) {
-            return;
-        }
+    const deleteNotification = (notification: DashboardNotification) =>
+        notificationStore.deleteNotification(notification);
 
-        router.patch(
-            notification.readUrl,
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-            },
-        );
-    };
+    const clearAllRead = () =>
+        notificationStore.clearAllRead(dashboardNotificationActions?.clearAllUrl);
 
-    const markAllRead = () => {
-        setOptimisticReadIds((ids) =>
-            Array.from(new Set([...ids, ...notifications.map((n) => n.id)])),
-        );
-
-        if (!dashboardNotificationActions?.markAllReadUrl) {
-            return;
-        }
-
-        router.patch(
-            dashboardNotificationActions.markAllReadUrl,
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-            },
-        );
-    };
-
-    const deleteNotification = (notification: DashboardNotification) => {
-        setDeletedIds((ids) => (ids.includes(notification.id) ? ids : [...ids, notification.id]));
-
-        if (!notification.deleteUrl) {
-            return;
-        }
-
-        router.delete(notification.deleteUrl, {
-            preserveScroll: true,
-            preserveState: true,
-        });
-    };
-
-    const clearAllRead = () => {
-        const readIds = notifications
-            .filter((notification) => isRead(notification))
-            .map((notification) => notification.id);
-
-        setDeletedIds((ids) => Array.from(new Set([...ids, ...readIds])));
-
-        if (!dashboardNotificationActions?.clearAllUrl) {
-            return;
-        }
-
-        router.delete(dashboardNotificationActions.clearAllUrl, {
-            preserveScroll: true,
-            preserveState: true,
-        });
-    };
-
-    const openNotification = (notification: DashboardNotification) => {
-        setOptimisticReadIds((ids) =>
-            ids.includes(notification.id) ? ids : [...ids, notification.id],
-        );
-
-        if (!notification.readUrl || isRead(notification)) {
-            router.visit(notification.url);
-
-            return;
-        }
-
-        router.patch(
-            notification.readUrl,
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onFinish: () => router.visit(notification.url),
-            },
-        );
-    };
+    const openNotification = (notification: DashboardNotification) =>
+        notificationStore.openNotification(notification);
 
     return {
-        notifications,
-        unreadCount,
+        notifications: activeNotifications,
+        unreadCount: state.unreadCount,
         isRead,
         markRead,
         markAllRead,
         deleteNotification,
         clearAllRead,
         openNotification,
+        isConnected: state.isConnected,
     };
 }

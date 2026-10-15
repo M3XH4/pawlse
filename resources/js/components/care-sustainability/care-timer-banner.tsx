@@ -97,26 +97,26 @@ export function CareTimerBanner({ sustainability, onScrollToDonate }: CareTimerB
                     <div className="text-center flex flex-col items-center justify-center py-2 sm:py-0">
                         <div className={`flex items-center justify-center gap-1.5 sm:gap-2.5 whitespace-nowrap font-mono font-black ${theme.timerColor}`}>
                             <div className="flex flex-col items-center min-w-[38px] sm:min-w-[48px]">
-                                <span className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.daysStr}</span>
+                                <span suppressHydrationWarning className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.daysStr}</span>
                                 <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">D</span>
                             </div>
                             <span className="text-xl sm:text-2xl md:text-3xl opacity-40 pb-3 leading-none">:</span>
                             <div className="flex flex-col items-center min-w-[38px] sm:min-w-[48px]">
-                                <span className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.hoursStr}</span>
+                                <span suppressHydrationWarning className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.hoursStr}</span>
                                 <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">H</span>
                             </div>
                             <span className="text-xl sm:text-2xl md:text-3xl opacity-40 pb-3 leading-none">:</span>
                             <div className="flex flex-col items-center min-w-[38px] sm:min-w-[48px]">
-                                <span className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.minutesStr}</span>
+                                <span suppressHydrationWarning className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.minutesStr}</span>
                                 <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">M</span>
                             </div>
                             <span className="text-xl sm:text-2xl md:text-3xl opacity-40 pb-3 leading-none">:</span>
                             <div className="flex flex-col items-center min-w-[38px] sm:min-w-[48px]">
-                                <span className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.secondsStr}</span>
+                                <span suppressHydrationWarning className="text-2xl sm:text-3xl md:text-4xl tracking-tight leading-none">{countdown.secondsStr}</span>
                                 <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">S</span>
                             </div>
                         </div>
-                        <span className={`text-[10px] sm:text-[11px] font-black tracking-widest uppercase mt-2 ${theme.labelColor}`}>
+                        <span suppressHydrationWarning className={`text-[10px] sm:text-[11px] font-black tracking-widest uppercase mt-2 ${theme.labelColor}`}>
                             {countdown.urgencyLabel}
                         </span>
                     </div>
@@ -125,7 +125,7 @@ export function CareTimerBanner({ sustainability, onScrollToDonate }: CareTimerB
                     <div className="flex flex-col md:items-end justify-between space-y-3">
                         <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
                             <span>Care Sustainability</span>
-                            <span className="text-white font-black">{countdown.estDays}d est.</span>
+                            <span suppressHydrationWarning className="text-white font-black">{countdown.estDays}d est.</span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4">

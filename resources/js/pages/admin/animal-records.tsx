@@ -640,7 +640,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
             {/* MASTER RECORDS TABLE */}
             <div className="bg-white dark:bg-[#0B1527] rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-100 dark:border-gray-800/80 bg-gray-50/75 dark:bg-[#070e1c]/60 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -826,6 +827,128 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     </table>
                 </div>
 
+                {/* Mobile Touch Cards View */}
+                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                    {animals.data.length === 0 ? (
+                        <div className="py-12 px-4 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center gap-2">
+                            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-400">
+                                <Search className="h-6 w-6" />
+                            </div>
+                            <span className="font-semibold text-sm">No animal records match your search or filter</span>
+                            <p className="text-xs text-gray-400 max-w-sm">Try clearing your filters or adding a new animal to the master registry.</p>
+                            <button
+                                onClick={resetFilters}
+                                className="mt-2 text-xs font-bold text-paw-orange hover:underline"
+                            >
+                                Clear all filters
+                            </button>
+                        </div>
+                    ) : (
+                        animals.data.map((animal) => {
+                            const isVaccinated = animal.vaccinated;
+                            const isDeceased = animal.status === 'deceased';
+
+                            return (
+                                <div
+                                    key={animal.id}
+                                    className="p-4 space-y-3 hover:bg-gray-50/80 dark:hover:bg-[#0e1b30] transition-colors cursor-pointer"
+                                    onClick={() => handleOpenSidePanel(animal, 'details')}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="relative h-14 w-14 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 shrink-0 shadow-sm">
+                                            <ImageWithFallback
+                                                src={formatPhotoUrl(animal.photo_url, animal.type)}
+                                                alt={animal.name}
+                                                className={`h-full w-full object-cover ${isDeceased ? 'grayscale' : ''}`}
+                                            />
+                                            {isVaccinated && (
+                                                <span
+                                                    title="Vaccinated"
+                                                    className="absolute bottom-0 right-0 bg-emerald-500 text-white p-0.5 rounded-tl-md shadow"
+                                                >
+                                                    <ShieldCheck className="h-3 w-3" />
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h3 className="font-bold text-base text-[#0B2340] dark:text-[#F8FAFC] truncate">
+                                                    {animal.name}
+                                                </h3>
+                                                <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[10px] font-bold border capitalize ${getStatusBadge(animal.status)}`}>
+                                                    {animal.status_label}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                                                <span className="font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-[10px]">
+                                                    {animal.code}
+                                                </span>
+                                                <span>•</span>
+                                                <span>{animal.species}</span>
+                                                <span>•</span>
+                                                <span className="truncate max-w-[120px]">{animal.breed}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                <span className={`font-bold ${
+                                                    animal.gender.toLowerCase() === 'male'
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : 'text-pink-600 dark:text-pink-400'
+                                                }`}>
+                                                    {animal.gender.toLowerCase() === 'male' ? '♂ Male' : '♀ Female'}
+                                                </span>
+                                                <span>•</span>
+                                                <span>{animal.age} ({animal.age_category})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 px-2.5 py-1.5 rounded-lg truncate">
+                                        <MapPin className="h-3.5 w-3.5 text-paw-orange shrink-0" />
+                                        <span className="truncate">{animal.current_location}</span>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center justify-between gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => handleOpenSidePanel(animal, 'details')}
+                                            className="flex-1 py-1.5 px-3 bg-paw-orange/10 hover:bg-paw-orange text-paw-orange hover:text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1"
+                                        >
+                                            <Eye className="h-3.5 w-3.5" /> Full Record
+                                        </button>
+
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                                onClick={() => handleStartEdit(animal)}
+                                                title="Quick Edit Record"
+                                                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition-colors"
+                                            >
+                                                <Edit3 className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleStartMedical(animal)}
+                                                title="Add Vaccine or Medical Checkup"
+                                                className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition-colors"
+                                            >
+                                                <Syringe className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => setAnimalToDelete(animal)}
+                                                title="Archive Record"
+                                                className="p-2 text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition-colors"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
                 {/* PAGINATION BAR */}
                 {animals.total > 0 && (
                     <div className="py-3.5 px-4 bg-gray-50/75 dark:bg-[#070e1c]/60 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -835,7 +958,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                             <span className="font-bold text-gray-700 dark:text-gray-200">{animals.total}</span> animals
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1">
                             {animals.links.map((link, idx) => {
                                 const isLabelNumber = !link.label.includes('Previous') && !link.label.includes('Next');
 

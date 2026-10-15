@@ -509,7 +509,8 @@ export default function UserManagement({
 
                         {/* Users Table */}
                         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            <div className="overflow-x-auto">
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                                     <thead className="bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 dark:bg-slate-800 dark:text-gray-300">
                                         <tr>
@@ -595,6 +596,82 @@ export default function UserManagement({
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Mobile Cards View */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+                                {users.data.length === 0 ? (
+                                    <div className="px-6 py-12 text-center text-sm text-gray-400">
+                                        <Users className="mx-auto h-8 w-8 text-gray-300 mb-2 dark:text-gray-600" />
+                                        No system users found matching the selected criteria.
+                                    </div>
+                                ) : (
+                                    users.data.map((user) => (
+                                        <div key={user.id} className="p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 shrink-0">
+                                                        {user.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="font-bold text-sm text-gray-900 dark:text-white truncate">{user.name}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</div>
+                                                    </div>
+                                                </div>
+
+                                                <span className={`inline-flex shrink-0 items-center rounded-lg px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${getRoleBadgeClasses(user.role)}`}>
+                                                    {user.role}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between text-xs bg-gray-50 dark:bg-slate-800/40 p-2.5 rounded-xl">
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-bold text-gray-400 block">Permissions</span>
+                                                    {user.direct_permissions && user.direct_permissions.length > 0 ? (
+                                                        <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center gap-1">
+                                                            <Key className="h-3 w-3" /> {user.direct_permissions.length} Grants
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-400 italic">Default ({user.all_permissions?.length || 0})</span>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-bold text-gray-400 block text-right">Email Status</span>
+                                                    {user.email_verified_at ? (
+                                                        <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-bold">
+                                                            <Check className="h-3.5 w-3.5" /> Verified
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-amber-500 text-xs font-bold">
+                                                            <Clock className="h-3.5 w-3.5" /> Unverified
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-1">
+                                                <span className="text-[11px] text-gray-400 font-medium">Joined {user.created_at}</span>
+
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        onClick={() => openEditDrawer(user)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 dark:text-indigo-300 transition flex items-center gap-1"
+                                                    >
+                                                        <Edit2 className="h-3.5 w-3.5" /> Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user)}
+                                                        className="p-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 transition"
+                                                        title="Archive user"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
 
                             {/* Pagination */}

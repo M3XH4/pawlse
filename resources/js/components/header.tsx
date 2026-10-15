@@ -589,7 +589,7 @@ export function Header() {
                   </Link>
                 </nav>
 
-                {!isAuthenticated && (
+                {!isAuthenticated ? (
                   <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
                     <Link
                       href="/login"
@@ -599,6 +599,51 @@ export function Header() {
                       <User size={18} />
                       Login
                     </Link>
+                  </div>
+                ) : (
+                  <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-3">
+                    <div className="flex items-center gap-3 px-2 py-1">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border border-white shadow-sm shrink-0">
+                        <img
+                          src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=FF750F&color=fff&bold=true`}
+                          alt={user?.name || 'User'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-black text-sm text-paw-navy dark:text-white truncate">{user?.name}</p>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={getAccountPath()}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white bg-paw-bg dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-700 transition-colors uppercase text-xs tracking-wider"
+                    >
+                      <span>Dashboard</span>
+                      <ChevronRight size={16} className="text-gray-400" />
+                    </Link>
+
+                    <Link
+                      href={getAccountSettingsPath()}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Settings size={16} className="text-gray-400" />
+                      <span>Account Settings</span>
+                    </Link>
+
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-xs uppercase tracking-wider cursor-pointer"
+                    >
+                      <LogOut size={16} />
+                      <span>Log Out</span>
+                    </button>
                   </div>
                 )}
               </div>

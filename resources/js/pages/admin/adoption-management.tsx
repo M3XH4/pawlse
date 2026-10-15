@@ -276,72 +276,125 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
                 <p className="font-bold">No applications found matching the filter criteria.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] uppercase tracking-wider font-black text-gray-400">
-                      <th className="py-4 px-4">Applicant</th>
-                      <th className="py-4 px-4">Pet Details</th>
-                      <th className="py-4 px-4">Submitted Date</th>
-                      <th className="py-4 px-4">Interview Schedule</th>
-                      <th className="py-4 px-4">Status</th>
-                      <th className="py-4 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredApps.map(app => (
-                      <tr key={app.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                        <td className="py-4 px-4">
-                          <p className="font-black text-paw-navy dark:text-white text-sm">{app.full_name}</p>
-                          <p className="text-xs text-gray-400 font-bold">{app.email} • {app.phone}</p>
-                        </td>
-                        <td className="py-4 px-4">
-                          {app.pet ? (
-                            <div className="flex items-center gap-2">
-                              {app.pet.photo_url && (
-                                <ImageWithFallback src={formatPhotoUrl(app.pet.photo_url)} alt={app.pet.name} className="w-8 h-8 rounded-lg object-cover" />
-                              )}
-                              <div>
-                                <p className="font-bold text-sm text-gray-700 dark:text-gray-300">{app.pet.name}</p>
-                                <p className="text-[10px] text-gray-400 font-black uppercase">{app.pet.breed}</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400 italic">Unknown</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4 text-xs font-bold text-gray-500 dark:text-gray-400">
-                          {new Date(app.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-4 text-xs font-bold text-gray-500 dark:text-gray-400">
-                          {app.preferred_date} @ {app.preferred_time}
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
-                            app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
-                            app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
-                            'bg-paw-yellow/10 text-paw-navy'
-                          }`}>
-                            {app.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedApp(app);
-                              setStatusData('notes', app.notes || '');
-                            }}
-                            className="inline-flex items-center gap-1 px-4 py-2 bg-paw-navy text-white rounded-xl text-xs font-black hover:bg-paw-orange transition-colors uppercase tracking-wider"
-                          >
-                            <Eye size={12} /> Review
-                          </button>
-                        </td>
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] uppercase tracking-wider font-black text-gray-400">
+                        <th className="py-4 px-4">Applicant</th>
+                        <th className="py-4 px-4">Pet Details</th>
+                        <th className="py-4 px-4">Submitted Date</th>
+                        <th className="py-4 px-4">Interview Schedule</th>
+                        <th className="py-4 px-4">Status</th>
+                        <th className="py-4 px-4 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filteredApps.map(app => (
+                        <tr key={app.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                          <td className="py-4 px-4">
+                            <p className="font-black text-paw-navy dark:text-white text-sm">{app.full_name}</p>
+                            <p className="text-xs text-gray-400 font-bold">{app.email} • {app.phone}</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            {app.pet ? (
+                              <div className="flex items-center gap-2">
+                                {app.pet.photo_url && (
+                                  <ImageWithFallback src={formatPhotoUrl(app.pet.photo_url)} alt={app.pet.name} className="w-8 h-8 rounded-lg object-cover" />
+                                )}
+                                <div>
+                                  <p className="font-bold text-sm text-gray-700 dark:text-gray-300">{app.pet.name}</p>
+                                  <p className="text-[10px] text-gray-400 font-black uppercase">{app.pet.breed}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">Unknown</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 text-xs font-bold text-gray-500 dark:text-gray-400">
+                            {new Date(app.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-4 px-4 text-xs font-bold text-gray-500 dark:text-gray-400">
+                            {app.preferred_date} @ {app.preferred_time}
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
+                              app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                              app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
+                              'bg-paw-yellow/10 text-paw-navy'
+                            }`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <button
+                              onClick={() => {
+                                setSelectedApp(app);
+                                setStatusData('notes', app.notes || '');
+                              }}
+                              className="inline-flex items-center gap-1 px-4 py-2 bg-paw-navy text-white rounded-xl text-xs font-black hover:bg-paw-orange transition-colors uppercase tracking-wider"
+                            >
+                              <Eye size={12} /> Review
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredApps.map(app => (
+                    <div key={app.id} className="py-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-black text-paw-navy dark:text-white text-base">{app.full_name}</p>
+                          <p className="text-xs text-gray-400 font-bold">{app.email} • {app.phone}</p>
+                        </div>
+                        <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
+                          app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                          app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
+                          'bg-paw-yellow/10 text-paw-navy'
+                        }`}>
+                          {app.status}
+                        </span>
+                      </div>
+
+                      {app.pet && (
+                        <div className="flex items-center gap-2.5 bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                          {app.pet.photo_url && (
+                            <ImageWithFallback src={formatPhotoUrl(app.pet.photo_url)} alt={app.pet.name} className="w-10 h-10 rounded-lg object-cover" />
+                          )}
+                          <div>
+                            <p className="font-bold text-xs text-gray-700 dark:text-gray-300">Applying for: <strong>{app.pet.name}</strong></p>
+                            <p className="text-[10px] text-gray-400 font-black uppercase">{app.pet.breed}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-1">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Interview</span>
+                          <span className="font-bold">{app.preferred_date} @ {app.preferred_time}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedApp(app);
+                            setStatusData('notes', app.notes || '');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-paw-navy text-white rounded-xl text-xs font-black hover:bg-paw-orange transition-colors uppercase tracking-wider"
+                        >
+                          <Eye size={12} /> Review
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </AdminCard>
         )}

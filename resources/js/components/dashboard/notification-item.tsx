@@ -142,7 +142,7 @@ export function NotificationItem({
 
             {/* Actions */}
             {!compact && (
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                <div className="flex shrink-0 items-center gap-1 opacity-0 max-sm:opacity-100 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                     {!read && onMarkRead && (
                         <button
                             type="button"

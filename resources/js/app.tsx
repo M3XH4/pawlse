@@ -10,6 +10,7 @@ import SuperAdminLayout from '@/layouts/super-admin-layout';
 import UserLayout from '@/layouts/user-layout';
 import VolunteerLayout from '@/layouts/volunteer-layout';
 import AuthSplitLayout from './layouts/auth/auth-split-layout';
+import '@/lib/notification-store';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const NULL_PAGES = new Set([

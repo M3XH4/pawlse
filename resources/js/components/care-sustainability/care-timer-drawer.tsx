@@ -17,18 +17,19 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
     const pageProps = usePage().props as { careSustainability?: CareSustainabilityData };
     const sustainability = propSustainability || pageProps.careSustainability;
 
-    const [isOpen, setIsOpen] = useState<boolean>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved !== null) {
-                return saved === 'true';
-            }
-        }
-        return true;
-    });
+    const [isOpen, setIsOpen] = useState<boolean>(true);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved !== null) {
+                setIsOpen(saved === 'true');
+            }
+        } catch {
+            // Ignore storage access errors
+        }
+
         const handleStorage = (e: StorageEvent) => {
             if (e.key === STORAGE_KEY && e.newValue !== null) {
                 setIsOpen(e.newValue === 'true');
@@ -165,26 +166,26 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
                             <div className="mt-5 mb-1">
                                 <div className={`flex items-center justify-start gap-1 sm:gap-2 whitespace-nowrap font-mono font-black ${theme.timerColor}`}>
                                     <div className="flex flex-col items-center min-w-[40px] sm:min-w-[46px]">
-                                        <span className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.daysStr}</span>
+                                        <span suppressHydrationWarning className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.daysStr}</span>
                                         <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">D</span>
                                     </div>
                                     <span className="text-lg sm:text-2xl opacity-40 pb-3 leading-none">:</span>
                                     <div className="flex flex-col items-center min-w-[40px] sm:min-w-[46px]">
-                                        <span className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.hoursStr}</span>
+                                        <span suppressHydrationWarning className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.hoursStr}</span>
                                         <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">H</span>
                                     </div>
                                     <span className="text-lg sm:text-2xl opacity-40 pb-3 leading-none">:</span>
                                     <div className="flex flex-col items-center min-w-[40px] sm:min-w-[46px]">
-                                        <span className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.minutesStr}</span>
+                                        <span suppressHydrationWarning className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.minutesStr}</span>
                                         <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">M</span>
                                     </div>
                                     <span className="text-lg sm:text-2xl opacity-40 pb-3 leading-none">:</span>
                                     <div className="flex flex-col items-center min-w-[40px] sm:min-w-[46px]">
-                                        <span className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.secondsStr}</span>
+                                        <span suppressHydrationWarning className="text-2xl sm:text-3xl tracking-tight leading-none">{countdown.secondsStr}</span>
                                         <span className="text-[10px] sm:text-xs font-black text-gray-400 mt-1 uppercase">S</span>
                                     </div>
                                 </div>
-                                <p className={`text-[10px] sm:text-[11px] font-black tracking-widest uppercase mt-2 ${theme.labelColor}`}>
+                                <p suppressHydrationWarning className={`text-[10px] sm:text-[11px] font-black tracking-widest uppercase mt-2 ${theme.labelColor}`}>
                                     {countdown.urgencyLabel}
                                 </p>
                             </div>
@@ -193,7 +194,7 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
                             <div className="mt-5 space-y-1.5">
                                 <div className="flex justify-between items-center text-[10px] font-bold tracking-wider text-gray-400 uppercase">
                                     <span>Care Sustainability</span>
-                                    <span>{countdown.estDays} est. days</span>
+                                    <span suppressHydrationWarning>{countdown.estDays} est. days</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-gray-800/90 rounded-full overflow-hidden">
                                     <div
@@ -238,7 +239,7 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
                                 <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
                                     Shelter Care Timer
                                 </span>
-                                <span className={`font-mono text-xs font-black ${theme.timerColor}`}>
+                                <span suppressHydrationWarning className={`font-mono text-xs font-black ${theme.timerColor}`}>
                                     {countdown.fullTimer}
                                 </span>
                             </div>
