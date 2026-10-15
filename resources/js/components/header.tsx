@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { CareTimerDrawer } from '@/components/care-sustainability/care-timer-drawer';
 
 
 // Nav link preview images
@@ -605,6 +606,9 @@ export function Header() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Global Bottom-Left Care Timer Drawer */}
+      <CareTimerDrawer />
     </header>
   );
 }

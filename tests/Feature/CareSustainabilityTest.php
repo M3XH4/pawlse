@@ -236,13 +236,27 @@ test('completing payment at checkout automatically extends care timer', function
     expect($current->verified_funds)->toBe($initialFunds + 1500.0);
 });
 
-test('homepage and donate page render with care sustainability data', function () {
+test('homepage and public tabs render with shared care sustainability data', function () {
     $homeResponse = $this->get(route('home'));
     $homeResponse->assertOk();
     $homeResponse->assertInertia(fn ($page) => $page
         ->component('welcome')
         ->has('careSustainability')
         ->where('careSustainability.resource_category', 'General Animal Care')
+    );
+
+    $aboutResponse = $this->get(route('about'));
+    $aboutResponse->assertOk();
+    $aboutResponse->assertInertia(fn ($page) => $page
+        ->component('about')
+        ->has('careSustainability')
+    );
+
+    $adoptResponse = $this->get(route('adopt'));
+    $adoptResponse->assertOk();
+    $adoptResponse->assertInertia(fn ($page) => $page
+        ->component('adopt')
+        ->has('careSustainability')
     );
 
     $donateResponse = $this->get(route('donate'));

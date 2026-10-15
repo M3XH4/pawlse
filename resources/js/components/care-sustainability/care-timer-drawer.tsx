@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, Heart, HelpCircle, ChevronLeft, ChevronRight, Clock, Sparkles } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
 import { useCareCountdown } from '@/hooks/use-care-countdown';
 import { HowCalculatedModal } from './how-calculated-modal';
@@ -10,9 +10,63 @@ interface CareTimerDrawerProps {
     sustainability?: CareSustainabilityData | null;
 }
 
-export function CareTimerDrawer({ sustainability }: CareTimerDrawerProps) {
-    const [isOpen, setIsOpen] = useState(true);
+const STORAGE_KEY = 'pawlse_care_timer_drawer_open';
+
+export function CareTimerDrawer({ sustainability: propSustainability }: CareTimerDrawerProps = {}) {
+    const { url } = usePage();
+    const pageProps = usePage().props as { careSustainability?: CareSustainabilityData };
+    const sustainability = propSustainability || pageProps.careSustainability;
+
+    const [isOpen, setIsOpen] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved !== null) {
+                return saved === 'true';
+            }
+        }
+        return true;
+    });
     const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === STORAGE_KEY && e.newValue !== null) {
+                setIsOpen(e.newValue === 'true');
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
+    const toggleDrawer = (open: boolean) => {
+        setIsOpen(open);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, String(open));
+        }
+    };
+
+    const pathname = (url || '').split('?')[0].replace(/\/+$/, '') || '/';
+
+    const excludedPaths = [
+        '/sos',
+        '/rescue',
+        '/missing',
+        '/volunteer',
+        '/donate',
+        '/checkout',
+        '/account',
+        '/settings',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+    ];
+
+    const isExcluded = excludedPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
+
+    if (isExcluded || !sustainability) {
+        return null;
+    }
 
     const countdown = useCareCountdown(sustainability);
 
@@ -84,7 +138,7 @@ export function CareTimerDrawer({ sustainability }: CareTimerDrawerProps) {
                         >
                             {/* Hide / Collapse Chevron Tab */}
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => toggleDrawer(false)}
                                 title="Minimize care timer"
                                 className="absolute top-4 right-4 w-7 h-7 rounded-xl bg-gray-800/60 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
                             >
@@ -176,7 +230,7 @@ export function CareTimerDrawer({ sustainability }: CareTimerDrawerProps) {
                             exit={{ x: -100, opacity: 0 }}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setIsOpen(true)}
+                            onClick={() => toggleDrawer(true)}
                             className="flex items-center gap-2.5 px-4 py-3 bg-[#12161a] border border-gray-800 rounded-full shadow-2xl shadow-black/60 text-white cursor-pointer group"
                         >
                             <span className={`w-2.5 h-2.5 rounded-full ${theme.dotClass} animate-pulse`} />

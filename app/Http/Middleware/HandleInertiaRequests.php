@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CareSustainability;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Middleware;
@@ -55,6 +56,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
                 'user' => $request->user(),
             ],
