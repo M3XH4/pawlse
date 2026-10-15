@@ -1,4 +1,4 @@
-import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles } from 'lucide-react';
+import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage, Head } from '@inertiajs/react';
@@ -12,6 +12,40 @@ import { TransparencyAuditModal, type AuditRecord } from '@/components/transpare
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
+
+export interface AuditPartner {
+    id: number;
+    name: string;
+    slug?: string;
+    category?: string;
+    badge_title?: string | null;
+    badges?: string[];
+    short_description?: string | null;
+    description?: string | null;
+    address?: string | null;
+    city?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    website_url?: string | null;
+    social_url?: string | null;
+    image_url?: string | null;
+    logo_url?: string | null;
+    is_active?: boolean;
+}
+
+export interface SupportingDocument {
+    id: number;
+    title: string;
+    slug?: string;
+    category?: string;
+    badge?: string | null;
+    description?: string | null;
+    file_name?: string | null;
+    file_size?: string | null;
+    file_type?: string | null;
+    download_count?: number;
+    external_url?: string | null;
+}
 
 interface DonateProps {
     wishlist?: Array<{
@@ -36,6 +70,8 @@ interface DonateProps {
         receipt: string;
     }>;
     auditRecords?: AuditRecord[];
+    auditPartner?: AuditPartner | null;
+    supportingDocuments?: SupportingDocument[];
     progressStats?: {
         total: number;
         goal: number;
@@ -50,6 +86,8 @@ export default function Donate({
     wishlist = [],
     recentDonations = [],
     auditRecords = [],
+    auditPartner = null,
+    supportingDocuments = [],
     progressStats = { total: 0, goal: 50000, percentage: 0 },
     careSustainability,
     donationSuccess = false,
@@ -591,6 +629,273 @@ export default function Donate({
                             </div>
                         </div>
                     </div>
+
+                    {/* Section: Transparency & Accountability */}
+                    <section className="mt-20 pt-16 border-t-2 border-paw-orange/10">
+                        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+                            <span className="inline-block px-4 py-1.5 rounded-full bg-paw-orange/10 text-paw-orange text-[11px] font-black tracking-widest uppercase mb-3">
+                                ACCOUNTABILITY
+                            </span>
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-paw-navy tracking-tight mb-4">
+                                Transparency & Accountability
+                            </h2>
+                            <p className="text-sm sm:text-base text-gray-500 font-medium leading-relaxed">
+                                See how PAWLSE helps ISF present donation records, resource information, and accountability details clearly.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                            {/* Card 1: Audit / Accounting Partner */}
+                            <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10 flex flex-col justify-between hover:shadow-2xl transition-all">
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider">
+                                            TRANSPARENCY
+                                        </span>
+                                        {auditPartner ? (
+                                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <CheckCircle2 size={12} />
+                                                VERIFIED PARTNER
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <Clock size={12} />
+                                                INFORMATION PENDING
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <h3 className="text-xl sm:text-2xl font-black text-paw-navy mb-3">
+                                        Audit / Accounting Partner
+                                    </h3>
+
+                                    {auditPartner ? (
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                                {auditPartner.image_url ? (
+                                                    <img
+                                                        src={auditPartner.image_url}
+                                                        alt={auditPartner.name}
+                                                        className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 rounded-xl bg-paw-navy text-white flex items-center justify-center font-black text-xl shrink-0">
+                                                        {auditPartner.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                        <h4 className="font-black text-paw-navy text-base truncate">{auditPartner.name}</h4>
+                                                        {auditPartner.badge_title && (
+                                                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-paw-blue text-[10px] font-bold uppercase">
+                                                                {auditPartner.badge_title}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {auditPartner.city && (
+                                                        <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mb-1">
+                                                            <MapPin size={12} className="shrink-0 text-gray-400" />
+                                                            {auditPartner.city}
+                                                        </p>
+                                                    )}
+                                                    {auditPartner.short_description && (
+                                                        <p className="text-xs text-gray-600 line-clamp-2">{auditPartner.short_description}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 text-xs text-emerald-900 leading-relaxed font-medium">
+                                                Verified independent partner helping review and authenticate ISF's donation reporting and transparency records.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                                                Accountant / auditor information is currently being finalized. Verified partner information will appear here once provided.
+                                            </p>
+
+                                            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60 text-xs text-amber-900 leading-relaxed font-medium">
+                                                ISF is committed to finding an NGO, accountant, or auditor partner to strengthen financial transparency. ISF will not claim independent audit status until actual audit information is confirmed.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {auditPartner?.website_url && (
+                                    <div className="mt-6 pt-4 border-t border-gray-100">
+                                        <a
+                                            href={auditPartner.website_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-paw-orange hover:text-paw-navy transition-colors"
+                                        >
+                                            <span>Visit Partner Website</span>
+                                            <ExternalLink size={13} />
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Card 2: Donation Transparency */}
+                            <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10 flex flex-col justify-between hover:shadow-2xl transition-all">
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <span className="px-3 py-1 rounded-full bg-blue-50 text-paw-blue text-[10px] font-black uppercase tracking-wider">
+                                            RECORDS
+                                        </span>
+                                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                            <ShieldCheck size={12} />
+                                            PUBLIC LOGS
+                                        </span>
+                                    </div>
+
+                                    <h3 className="text-xl sm:text-2xl font-black text-paw-navy mb-3">
+                                        Donation Transparency
+                                    </h3>
+
+                                    <p className="text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                                        View verified contribution records and donation history. PAWLSE logs verified donations to maintain an honest accountability trail.
+                                    </p>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Verified Donors</p>
+                                            <p className="text-lg font-black text-paw-navy">{auditRecords.length}+ Records</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Current Progress</p>
+                                            <p className="text-lg font-black text-paw-orange">{progressStats.percentage}% Reached</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setShowAuditModal(true)}
+                                    className="w-full py-4 rounded-2xl bg-paw-navy hover:bg-paw-orange text-white font-black text-xs uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-paw-navy/10 active:scale-[0.99]"
+                                >
+                                    <FileText size={16} />
+                                    VIEW CONTRIBUTION RECORDS
+                                </button>
+                            </div>
+
+                            {/* Card 3: Transaction & Fee Information */}
+                            <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10 flex flex-col justify-between hover:shadow-2xl transition-all">
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <span className="px-3 py-1 rounded-full bg-orange-50 text-paw-orange text-[10px] font-black uppercase tracking-wider">
+                                            FEES
+                                        </span>
+                                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                            <Info size={12} />
+                                            POLICY GUIDE
+                                        </span>
+                                    </div>
+
+                                    <h3 className="text-xl sm:text-2xl font-black text-paw-navy mb-4">
+                                        Transaction & Fee Information
+                                    </h3>
+
+                                    <ul className="space-y-3.5 text-xs sm:text-sm text-gray-600 font-medium">
+                                        <li className="flex items-start gap-3">
+                                            <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                                                ✓
+                                            </div>
+                                            <span className="leading-relaxed">
+                                                GCash peer-to-peer transfers within the Philippines are free of charge.
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="w-5 h-5 rounded-full bg-blue-100 text-paw-blue flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                                                ✓
+                                            </div>
+                                            <span className="leading-relaxed">
+                                                International transfers may incur provider fees. ISF receives the net amount after deductions.
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                                                ✓
+                                            </div>
+                                            <span className="leading-relaxed">
+                                                Platform and processing fees vary by payment method and provider.
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
+                                    <span>100% of net donations directly support rescued animals</span>
+                                    <ShieldCheck size={16} className="text-paw-orange" />
+                                </div>
+                            </div>
+
+                            {/* Card 4: Supporting Documents */}
+                            <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10 flex flex-col justify-between hover:shadow-2xl transition-all">
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-[10px] font-black uppercase tracking-wider">
+                                            DOCUMENTS
+                                        </span>
+                                        {supportingDocuments && supportingDocuments.length > 0 ? (
+                                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <FileCheck size={12} />
+                                                {supportingDocuments.length} AVAILABLE
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <Clock size={12} />
+                                                NO DOCUMENTS ON FILE
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <h3 className="text-xl sm:text-2xl font-black text-paw-navy mb-3">
+                                        Supporting Documents
+                                    </h3>
+
+                                    {supportingDocuments && supportingDocuments.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {supportingDocuments.map((doc) => (
+                                                <div
+                                                    key={doc.id}
+                                                    className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-paw-orange/30 transition-colors"
+                                                >
+                                                    <div className="min-w-0 pr-3">
+                                                        <h4 className="font-bold text-paw-navy text-xs sm:text-sm truncate">{doc.title}</h4>
+                                                        <p className="text-[11px] text-gray-500 font-medium">
+                                                            {doc.file_type?.toUpperCase() || 'PDF'} • {doc.file_size || 'N/A'} • {doc.download_count ?? 0} downloads
+                                                        </p>
+                                                    </div>
+                                                    <a
+                                                        href={`/resources/${doc.slug || doc.id}/download`}
+                                                        className="px-3 py-1.5 rounded-xl bg-paw-navy hover:bg-paw-orange text-white text-xs font-black uppercase tracking-wider transition-colors shrink-0 flex items-center gap-1.5"
+                                                    >
+                                                        <Download size={13} />
+                                                        <span>Download</span>
+                                                    </a>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                                                Official reports, audit documents, and financial summaries will be posted here as they become available. ISF is committed to making verified documentation accessible once finalized.
+                                            </p>
+
+                                            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs text-gray-500 leading-relaxed font-medium">
+                                                Audited balance sheets, expenditure breakdowns, and NGO verification forms are currently being cataloged.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
+                                    <span>Verified documentation & public records</span>
+                                    <FileText size={16} className="text-paw-blue" />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </main>
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
 use App\Http\Controllers\Admin\AiValidationController;
@@ -21,19 +22,25 @@ use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FosterCareController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\HonorController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
+use App\Http\Controllers\ResourceDownloadController;
 use App\Http\Controllers\Settings\AccountSettingsController;
 use App\Http\Controllers\SuperAdmin\AiConfigController;
 use App\Http\Controllers\SuperAdmin\AnalyticsController;
 use App\Http\Controllers\SuperAdmin\ArchiveController;
 use App\Http\Controllers\SuperAdmin\AuditLogController;
 use App\Http\Controllers\SuperAdmin\BackupController;
+use App\Http\Controllers\SuperAdmin\CommunityHonorController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\PartnerManagementController;
+use App\Http\Controllers\SuperAdmin\ResourceManagementController;
 use App\Http\Controllers\SuperAdmin\SecurityController;
 use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 use App\Http\Controllers\SuperAdmin\UserManagementController;
 use App\Http\Controllers\UserNotificationController;
+use App\Http\Controllers\VetController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -46,7 +53,10 @@ $superAdminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role
 
 Route::get('/', HomeController::class)->name('home');
 
-Route::inertia('/about', 'about')->name('about');
+Route::get('/about', [AboutController::class, 'index'])->name('about');
+Route::get('/vet', [VetController::class, 'index'])->name('vet');
+Route::get('/honor', [HonorController::class, 'index'])->name('honor');
+Route::get('/resources/{resourceFile}/download', [ResourceDownloadController::class, 'download'])->name('resources.download');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
 
@@ -239,6 +249,26 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
     Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+    Route::get('partners', [PartnerManagementController::class, 'index'])->name('partners');
+    Route::post('partners', [PartnerManagementController::class, 'store'])->name('partners.store');
+    Route::put('partners/{partner}', [PartnerManagementController::class, 'update'])->name('partners.update');
+    Route::delete('partners/{partner}', [PartnerManagementController::class, 'destroy'])->name('partners.destroy');
+    Route::post('partners/{id}/restore', [PartnerManagementController::class, 'restore'])->name('partners.restore');
+    Route::patch('partners/{partner}/toggle-status', [PartnerManagementController::class, 'toggleStatus'])->name('partners.toggle-status');
+
+    Route::get('resources', [ResourceManagementController::class, 'index'])->name('resources');
+    Route::post('resources', [ResourceManagementController::class, 'store'])->name('resources.store');
+    Route::put('resources/{resourceFile}', [ResourceManagementController::class, 'update'])->name('resources.update');
+    Route::delete('resources/{resourceFile}', [ResourceManagementController::class, 'destroy'])->name('resources.destroy');
+    Route::post('resources/{id}/restore', [ResourceManagementController::class, 'restore'])->name('resources.restore');
+    Route::patch('resources/{resourceFile}/toggle-status', [ResourceManagementController::class, 'toggleStatus'])->name('resources.toggle-status');
+
+    Route::get('community-honors', [CommunityHonorController::class, 'index'])->name('community-honors');
+    Route::post('community-honors', [CommunityHonorController::class, 'store'])->name('community-honors.store');
+    Route::put('community-honors/{communityHonor}', [CommunityHonorController::class, 'update'])->name('community-honors.update');
+    Route::delete('community-honors/{communityHonor}', [CommunityHonorController::class, 'destroy'])->name('community-honors.destroy');
+    Route::post('community-honors/stats', [CommunityHonorController::class, 'updateStats'])->name('community-honors.stats');
+
     Route::inertia('notifications', 'super-admin/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
 });

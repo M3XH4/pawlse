@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             AdoptionApplicationSeeder::class,
             AssignedTaskSeeder::class,
             NotificationSeeder::class,
+            PartnerAndResourceSeeder::class,
         ]);
     }
 }

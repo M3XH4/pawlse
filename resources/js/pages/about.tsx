@@ -1,4 +1,5 @@
-import { Heart, Users, Target, Shield, Award, X } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Heart, Users, Target, Shield, Award, X, Stethoscope, Package, Clock, MapPin, AlertCircle, ArrowRight, Star, Gift, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import profile_james_bautista from '@/assets/profiles/james_bautista.jpg';
@@ -115,10 +116,37 @@ const TEAM_MEMBERS = [
   },
 ];
 
-export default function About() {
+interface AboutProps {
+  veterinaryPartners?: any[];
+  foodSupplyPartners?: any[];
+  collaboratorPartners?: any[];
+  sponsorPartners?: any[];
+  featuredSupporters?: any[];
+  networkStats?: {
+    meals_served_display?: string;
+    pets_rescued_display?: string;
+    adoptions_display?: string;
+    active_zones_display?: string;
+  };
+}
+
+export default function About({
+  veterinaryPartners = [],
+  foodSupplyPartners = [],
+  collaboratorPartners = [],
+  sponsorPartners = [],
+  featuredSupporters = [],
+  networkStats = {
+    meals_served_display: '12k+',
+    pets_rescued_display: '450+',
+    adoptions_display: '85+',
+    active_zones_display: '15',
+  }
+}: AboutProps) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   const [showVolunteers, setShowVolunteers] = useState(false);
+  const [partnerTab, setPartnerTab] = useState<'vet' | 'food' | 'collab' | 'sponsor'>('vet');
 
   const currentMilestone = selectedYear ? YEARLY_MILESTONES.find(m => m.year === selectedYear) : null;
 
@@ -495,6 +523,355 @@ export default function About() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Our Partners & Support Network Section (Images 2 & 3) */}
+      <section id="partners-network" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <span className="inline-block px-3.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-[#FFAE33] text-xs font-black uppercase tracking-wider mb-2">
+            Partners & Support Network
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-black text-paw-navy dark:text-white">
+            Our Partners & Support Network
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-2 font-medium">
+            Meet the trusted people, veterinary resources, businesses, and community partners helping Iligan Stray Feeders support rescued animals.
+          </p>
+
+          {/* Partner Category Tabs */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mt-8">
+            <button
+              onClick={() => setPartnerTab('vet')}
+              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                partnerTab === 'vet'
+                  ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
+              }`}
+            >
+              <Stethoscope size={14} />
+              <span>Veterinary Partners</span>
+            </button>
+
+            <button
+              onClick={() => setPartnerTab('food')}
+              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                partnerTab === 'food'
+                  ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
+              }`}
+            >
+              <Package size={14} />
+              <span>Food & Supply Partners</span>
+            </button>
+
+            <button
+              onClick={() => setPartnerTab('collab')}
+              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                partnerTab === 'collab'
+                  ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
+              }`}
+            >
+              <Users size={14} />
+              <span>Collaborators & Organizations</span>
+            </button>
+
+            <button
+              onClick={() => setPartnerTab('sponsor')}
+              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                partnerTab === 'sponsor'
+                  ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
+              }`}
+            >
+              <Heart size={14} />
+              <span>Sponsors & Supporters</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content Container Box */}
+        <div className="bg-white dark:bg-slate-900 rounded-[36px] border border-gray-200/80 dark:border-slate-800 p-6 sm:p-10 shadow-xl shadow-slate-100 dark:shadow-none space-y-6">
+          {/* TAB 1: Veterinary Partners */}
+          {partnerTab === 'vet' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
+                    <Stethoscope size={22} className="text-paw-orange" />
+                    <span>Veterinary Partners</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Veterinary clinics and animal care professionals regularly contacted by Iligan Stray Feeders for rescued animals, medical assistance, and emergency cases.
+                  </p>
+                </div>
+
+                <Link
+                  href="/vet"
+                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
+                >
+                  <span>View All</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+
+              {/* Alert Banner */}
+              <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
+                <AlertCircle size={16} className="text-amber-600 dark:text-[#FFAE33] shrink-0" />
+                <span>Some clinic details are still being collected from ISF and will be updated as information becomes available.</span>
+              </div>
+
+              {/* Clinic Cards Grid */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                {veterinaryPartners.slice(0, 3).map((clinic, idx) => (
+                  <div 
+                    key={clinic.id || idx}
+                    className="p-6 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm shrink-0">
+                          {clinic.logo_url || clinic.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-base text-paw-navy dark:text-white">{clinic.name}</h4>
+                          <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                            <MapPin size={11} className="text-[#FFAE33]" />
+                            <span>{clinic.city || 'Iligan City'}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {clinic.badge_title && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                            {clinic.badge_title}
+                          </span>
+                        )}
+                        {clinic.is_emergency && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-300 text-[10px] font-black uppercase tracking-wider">
+                            Emergency Option
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                        {clinic.short_description || clinic.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 text-center">
+                <Link
+                  href="/vet"
+                  className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider inline-flex items-center gap-1"
+                >
+                  <span>View Veterinary Partners</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Food & Supply Partners */}
+          {partnerTab === 'food' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
+                    <Package size={22} className="text-paw-orange" />
+                    <span>Food & Supply Partners</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Businesses and community supporters helping provide food and essential supplies for animals under the care of Iligan Stray Feeders.
+                  </p>
+                </div>
+
+                <Link
+                  href="/vet"
+                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
+                >
+                  <span>View All</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+
+              {/* Food & Supply Cards Grid */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                {foodSupplyPartners.slice(0, 3).map((item, idx) => (
+                  <div 
+                    key={item.id || idx}
+                    className="p-6 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                          {item.logo_url || (item.name ? item.name.substring(0, 2).toUpperCase() : 'FS')}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-base text-paw-navy dark:text-white">{item.name}</h4>
+                          {item.operating_hours && (
+                            <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                              <Clock size={11} className="text-amber-500" />
+                              <span>{item.operating_hours}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.badge_title && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                            {item.badge_title}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                        {item.short_description || item.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 text-center">
+                <Link
+                  href="/vet"
+                  className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider inline-flex items-center gap-1"
+                >
+                  <span>View Food & Supply Partners</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3 & 4: Collaborators & Sponsors */}
+          {(partnerTab === 'collab' || partnerTab === 'sponsor') && (
+            <div className="py-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto mb-2">
+                <Award size={22} />
+              </div>
+              <h4 className="font-black text-lg text-paw-navy dark:text-white">
+                {partnerTab === 'collab' ? 'Collaborators & Community Organizations' : 'Sponsors & Benefactors'}
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                Organizations, local government units, and sponsors collaborating with ISF to improve animal welfare in Northern Mindanao.
+              </p>
+              <div className="pt-2">
+                <Link 
+                  href="/honor" 
+                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
+                >
+                  <span>Explore Community of Honor</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Together for Every Paw - Community Support Banner (Image 2) */}
+        <div className="mt-12 rounded-[36px] bg-gradient-to-br from-[#1E2235] via-[#1A1D30] to-[#121526] text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          <div className="max-w-2xl mx-auto text-center space-y-4">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-bold uppercase tracking-wider">
+              Community of Support
+            </span>
+
+            <h3 className="text-3xl sm:text-4xl font-black text-white">
+              Together for Every Paw
+            </h3>
+
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              Recognizing the people, volunteers, donors, and supporters who help Iligan Stray Feeders continue its work for stray and rescued animals.
+            </p>
+
+            {/* Supporter Chips Row */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10 text-xs">
+                <div className="w-6 h-6 rounded-full bg-[#FFAE33] text-slate-900 font-black text-[10px] flex items-center justify-center">
+                  MB
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-white text-[11px] leading-tight">Miguel Burton</p>
+                  <p className="text-[9px] text-[#FFAE33]">Feeding Supporter</p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10 text-xs">
+                <div className="w-6 h-6 rounded-full bg-purple-500 text-white font-black text-[10px] flex items-center justify-center">
+                  CD
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-white text-[11px] leading-tight">Councilor Derreck Siao</p>
+                  <p className="text-[9px] text-purple-300">Recurring Supporter</p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10 text-xs">
+                <div className="w-6 h-6 rounded-full bg-blue-500 text-white font-black text-[10px] flex items-center justify-center">
+                  LF
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-white text-[11px] leading-tight">Leilani Fernandez</p>
+                  <p className="text-[9px] text-blue-300">ISF Supporter</p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/5 text-[11px] text-slate-400">
+                &amp; more supporters
+              </div>
+            </div>
+
+            {/* View Community of Support Button */}
+            <div className="pt-4">
+              <Link
+                href="/honor"
+                className="px-8 py-3.5 rounded-full bg-[#FFAE33] hover:bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 inline-flex items-center gap-2 transition-all"
+              >
+                <Star size={14} className="fill-current text-slate-950" />
+                <span>View Our Community of Support</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Impact Stats Strip (Bottom of Image 2) */}
+        <div className="mt-8 rounded-3xl bg-[#151E28] text-white p-6 sm:p-8 shadow-xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
+            <div className="pt-2 md:pt-0">
+              <span className="text-3xl sm:text-4xl font-black text-[#FFAE33] block">
+                {networkStats?.meals_served_display || '12k+'}
+              </span>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Meals Served</p>
+            </div>
+
+            <div className="pt-2 md:pt-0">
+              <span className="text-3xl sm:text-4xl font-black text-[#FFAE33] block">
+                {networkStats?.pets_rescued_display || '450+'}
+              </span>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Pets Rescued</p>
+            </div>
+
+            <div className="pt-2 md:pt-0">
+              <span className="text-3xl sm:text-4xl font-black text-[#FFAE33] block">
+                {networkStats?.adoptions_display || '85+'}
+              </span>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Adoptions</p>
+            </div>
+
+            <div className="pt-2 md:pt-0">
+              <span className="text-3xl sm:text-4xl font-black text-[#FFAE33] block">
+                {networkStats?.active_zones_display || '15'}
+              </span>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Active Zones</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>

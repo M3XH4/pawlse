@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X, Settings, LogOut, MessageCircle, Video, UserCircle, Siren, Instagram } from 'lucide-react';
+import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X, Settings, LogOut, MessageCircle, Video, UserCircle, Siren, Instagram, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -208,6 +208,7 @@ export function Header() {
               Home
             </Link>
             <Link href="/about" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>About</Link>
+            <Link href="/honor" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Honor</Link>
             <div className="relative shrink-0" style={{ whiteSpace: 'nowrap' }} onMouseEnter={() => setHoveredNav('/adopt')} onMouseLeave={() => setHoveredNav(null)}>
               <Link href="/adopt" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Adopt</Link>
               <AnimatePresence>
@@ -307,6 +308,14 @@ export function Header() {
               </AnimatePresence>
             </div>
             <Link href="/events" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Events</Link>
+            <Link
+              href="/vet"
+              className="text-emerald-600 dark:text-emerald-400 hover:text-paw-orange transition-colors flex items-center gap-1.5 shrink-0 font-black"
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Stethoscope size={14} className="shrink-0 transition-colors" />
+              <span style={{ whiteSpace: 'nowrap', display: 'inline-block' }}>Vet</span>
+            </Link>
             <Link href="/missing" className="hover:text-paw-orange transition-colors text-red-500 flex flex-nowrap items-center gap-1.5 shrink-0" style={{ whiteSpace: 'nowrap' }}>
               <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shrink-0" />
               <span style={{ whiteSpace: 'nowrap', display: 'inline-block' }}>Missing</span>
@@ -510,6 +519,13 @@ export function Header() {
                     About
                   </Link>
                   <Link
+                    href="/honor"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 transition-colors uppercase text-sm tracking-widest"
+                  >
+                    Honor
+                  </Link>
+                  <Link
                     href="/adopt"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 transition-colors uppercase text-sm tracking-widest"
@@ -543,6 +559,14 @@ export function Header() {
                     className="block px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 transition-colors uppercase text-sm tracking-widest"
                   >
                     Events
+                  </Link>
+                  <Link
+                    href="/vet"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-3 rounded-xl font-black text-emerald-600 dark:text-emerald-400 hover:text-paw-orange hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors uppercase text-sm tracking-widest flex items-center gap-2"
+                  >
+                    <Stethoscope size={16} className="shrink-0 transition-colors" />
+                    <span>Vet</span>
                   </Link>
 
                   <Link

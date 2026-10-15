@@ -14,7 +14,9 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSponsorship;
 use App\Models\InKindDonation;
+use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\ResourceFile;
 use App\Models\ShelterAnimal;
 use App\Models\User;
 use App\Notifications\DonationReceivedNotification;
@@ -134,10 +136,21 @@ class DonateController extends Controller
             ->whereYear('created_at', now()->year)
             ->sum('amount');
 
+        $auditPartner = Partner::active()
+            ->whereIn('category', ['audit', 'accounting'])
+            ->first();
+
+        $supportingDocuments = ResourceFile::active()
+            ->whereIn('category', ['audit_report', 'financial_audit'])
+            ->orderBy('display_order')
+            ->get();
+
         return Inertia::render('donate', [
             'wishlist' => $wishlist,
             'recentDonations' => $recentDonations,
             'auditRecords' => $auditRecords,
+            'auditPartner' => $auditPartner,
+            'supportingDocuments' => $supportingDocuments,
             'progressStats' => [
                 'total' => (int) $currentMonthTotal,
                 'goal' => 50000,

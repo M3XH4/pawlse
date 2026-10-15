@@ -25,6 +25,8 @@ const NULL_PAGES = new Set([
     'not-found',
     'login',
     'checkout',
+    'vet',
+    'honor'
 ]);
 
 createInertiaApp({
