@@ -396,7 +396,8 @@ export function Footer() {
                 { name: 'Rescue', path: '/rescue' },
                 { name: 'Donate', path: '/donate' },
                 { name: 'Volunteer', path: '/volunteer' },
-                { name: 'Events', path: '/events' }
+                { name: 'Events', path: '/events' },
+                { name: 'Blog & Articles', path: '/blog' }
               ].map((item) => (
                 <li key={item.name}>
                   <Link

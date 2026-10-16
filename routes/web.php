@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
 use App\Http\Controllers\Admin\AiValidationController;
 use App\Http\Controllers\Admin\AnimalMasterRecordController;
+use App\Http\Controllers\Admin\BlogManagementController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\AdoptController;
 use App\Http\Controllers\Adoptions\AdoptionApplicationController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
@@ -83,6 +85,11 @@ Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])-
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::post('/events/{event}/join', [EventController::class, 'joinEvent'])->name('events.join')->middleware('auth');
 Route::post('/feeding-schedules/{schedule}/join', [EventController::class, 'joinFeedingRoute'])->name('feeding-schedules.join')->middleware('auth');
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+Route::post('/blog/{post}/react', [BlogController::class, 'react'])->name('blog.react');
+Route::post('/blog/{post}/share', [BlogController::class, 'share'])->name('blog.share');
 
 Route::get('/missing', [PetReportController::class, 'missingIndex'])->name('missing');
 Route::post('/pet-reports/missing', [PetReportController::class, 'storeMissing'])->name('pet-reports.store-missing');
@@ -216,6 +223,13 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('feeding-schedules', [EventManagementController::class, 'storeFeedingSchedule'])->name('feeding-schedules.store');
     Route::put('feeding-schedules/{schedule}', [EventManagementController::class, 'updateFeedingSchedule'])->name('feeding-schedules.update');
     Route::delete('feeding-schedules/{schedule}', [EventManagementController::class, 'destroyFeedingSchedule'])->name('feeding-schedules.destroy');
+
+    // Blog & Articles Management
+    Route::get('blog-management', [BlogManagementController::class, 'index'])->name('blog-management');
+    Route::post('blog-management', [BlogManagementController::class, 'store'])->name('blog-management.store');
+    Route::put('blog-management/{post}', [BlogManagementController::class, 'update'])->name('blog-management.update');
+    Route::delete('blog-management/{post}', [BlogManagementController::class, 'destroy'])->name('blog-management.destroy');
+    Route::patch('blog-management/{post}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('blog-management.toggle-status');
 
     Route::get('reports-analytics', [ReportsAnalyticsController::class, 'index'])->name('reports-analytics');
     Route::get('reports-analytics/export', [ReportsAnalyticsController::class, 'export'])->name('reports-analytics.export');

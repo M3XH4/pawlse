@@ -33,6 +33,10 @@ const navPreviews: Record<string, { image: string; label: string }> = {
   '/rescue': {
     image: 'https://images.unsplash.com/photo-1661552066736-935e0cad1782?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2clMjByZXNjdWUlMjB0ZWFtJTIwdm9sdW50ZWVyfGVufDF8fHx8MTc3NDQwNzc4Mnww&ixlib=rb-4.1.0&q=80&w=1080',
     label: 'AI Rescue'
+  },
+  '/blog': {
+    image: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
+    label: 'Stories & News'
   }
 };
 
@@ -323,6 +327,7 @@ export function Header() {
               </AnimatePresence>
             </div>
             <Link href="/events" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Events</Link>
+            <Link href="/blog" className="hover:text-paw-orange transition-colors shrink-0" style={{ whiteSpace: 'nowrap' }}>Blog</Link>
             <Link
               href="/vet"
               className="text-emerald-600 dark:text-emerald-400 hover:text-paw-orange transition-colors flex items-center gap-1.5 shrink-0 font-black"
@@ -574,6 +579,13 @@ export function Header() {
                     className="block px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 transition-colors uppercase text-sm tracking-widest"
                   >
                     Events
+                  </Link>
+                  <Link
+                    href="/blog"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white hover:bg-paw-bg dark:hover:bg-gray-800 transition-colors uppercase text-sm tracking-widest"
+                  >
+                    Blog
                   </Link>
                   <Link
                     href="/vet"

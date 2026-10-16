@@ -13,12 +13,14 @@ import {
     Sparkles,
     User,
     PawPrint,
+    Newspaper,
 } from 'lucide-react';
 import {
     accountSettings,
     adoptionManagement,
     aiValidation,
     animalRecords,
+    blogManagement,
     dashboard,
     donationMonitoring,
     events,
@@ -97,6 +99,12 @@ export const adminNavItems: AdminNavItem[] = [
         href: events.url(),
         match: events.url(),
         icon: Calendar,
+    },
+    {
+        title: 'Blog Management',
+        href: blogManagement.url(),
+        match: blogManagement.url(),
+        icon: Newspaper,
     },
     {
         title: 'Reports & Analytics',
