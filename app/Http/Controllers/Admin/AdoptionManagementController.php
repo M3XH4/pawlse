@@ -8,7 +8,10 @@ use App\Events\AdoptionApplicationStatusUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AuditLog;
+use App\Models\PostAdoptionFollowUp;
+use App\Models\RehomingRequest;
 use App\Models\ShelterAnimal;
+use App\Models\ShelterVisit;
 use App\Notifications\AdoptionApplicationStatusUpdatedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -121,9 +124,115 @@ class AdoptionManagementController extends Controller
                 ];
             });
 
+        $postAdoptionFollowUps = PostAdoptionFollowUp::with(['shelterAnimal', 'conductedBy'])
+            ->latest('follow_up_date')
+            ->get()
+            ->map(function (PostAdoptionFollowUp $followUp) {
+                return [
+                    'id' => $followUp->id,
+                    'shelter_animal_id' => $followUp->shelter_animal_id,
+                    'follow_up_date' => $followUp->follow_up_date->format('Y-m-d'),
+                    'method' => $followUp->method,
+                    'status' => $followUp->status,
+                    'pet_condition' => $followUp->pet_condition,
+                    'notes' => $followUp->notes,
+                    'photo_url' => $followUp->photo_url,
+                    'next_follow_up_date' => $followUp->next_follow_up_date?->format('Y-m-d'),
+                    'conducted_by_name' => $followUp->conductedBy?->name ?? 'ISF Staff',
+                    'pet' => $followUp->shelterAnimal ? [
+                        'id' => $followUp->shelterAnimal->id,
+                        'name' => $followUp->shelterAnimal->name,
+                        'type' => $followUp->shelterAnimal->type?->value,
+                        'breed' => $followUp->shelterAnimal->breed,
+                        'photo_url' => $followUp->shelterAnimal->photo_url,
+                        'adopter_name' => $followUp->shelterAnimal->adopter_name,
+                        'adopter_phone' => $followUp->shelterAnimal->adopter_phone,
+                        'adoption_date' => $followUp->shelterAnimal->adoption_date?->format('Y-m-d'),
+                    ] : null,
+                ];
+            });
+
+        $adoptedPets = ShelterAnimal::query()
+            ->where('status', ShelterAnimalStatus::Adopted)
+            ->withCount('postAdoptionFollowUps')
+            ->latest('adoption_date')
+            ->get()
+            ->map(function (ShelterAnimal $pet) {
+                return [
+                    'id' => $pet->id,
+                    'name' => $pet->name,
+                    'type' => $pet->type?->value,
+                    'breed' => $pet->breed,
+                    'photo_url' => $pet->photo_url,
+                    'adopter_name' => $pet->adopter_name,
+                    'adopter_phone' => $pet->adopter_phone,
+                    'adopter_email' => $pet->adopter_email,
+                    'adoption_date' => $pet->adoption_date?->format('Y-m-d'),
+                    'follow_ups_count' => $pet->post_adoption_follow_ups_count,
+                ];
+            });
+
+        $shelterVisits = ShelterVisit::with(['shelterAnimal', 'user', 'confirmedBy'])
+            ->latest('preferred_date')
+            ->get()
+            ->map(function (ShelterVisit $visit) {
+                return [
+                    'id' => $visit->id,
+                    'full_name' => $visit->full_name,
+                    'contact_number' => $visit->contact_number,
+                    'email' => $visit->email,
+                    'preferred_date' => $visit->preferred_date->format('Y-m-d'),
+                    'preferred_time_slot' => $visit->preferred_time_slot,
+                    'number_of_visitors' => $visit->number_of_visitors,
+                    'purpose' => $visit->purpose,
+                    'status' => $visit->status,
+                    'confirmed_date' => $visit->confirmed_date?->format('Y-m-d'),
+                    'confirmed_time_slot' => $visit->confirmed_time_slot,
+                    'additional_notes' => $visit->additional_notes,
+                    'admin_notes' => $visit->admin_notes,
+                    'confirmed_by_name' => $visit->confirmedBy?->name,
+                    'pet' => $visit->shelterAnimal ? [
+                        'id' => $visit->shelterAnimal->id,
+                        'name' => $visit->shelterAnimal->name,
+                        'photo_url' => $visit->shelterAnimal->photo_url,
+                    ] : null,
+                    'created_at' => $visit->created_at->toDateTimeString(),
+                ];
+            });
+
+        $rehomingRequests = RehomingRequest::with(['user', 'reviewedBy'])
+            ->latest()
+            ->get()
+            ->map(function (RehomingRequest $rehoming) {
+                return [
+                    'id' => $rehoming->id,
+                    'full_name' => $rehoming->full_name,
+                    'contact_number' => $rehoming->contact_number,
+                    'email' => $rehoming->email,
+                    'animal_name' => $rehoming->animal_name,
+                    'species' => $rehoming->species,
+                    'breed' => $rehoming->breed,
+                    'gender' => $rehoming->gender,
+                    'age' => $rehoming->age,
+                    'current_location' => $rehoming->current_location,
+                    'reason' => $rehoming->reason,
+                    'health_notes' => $rehoming->health_notes,
+                    'description' => $rehoming->description,
+                    'photo_url' => $rehoming->photo_url,
+                    'status' => $rehoming->status,
+                    'admin_notes' => $rehoming->admin_notes,
+                    'reviewed_by_name' => $rehoming->reviewedBy?->name,
+                    'created_at' => $rehoming->created_at->toDateTimeString(),
+                ];
+            });
+
         return Inertia::render('admin/adoption-management', [
             'applications' => $applications,
             'pets' => $pets,
+            'postAdoptionFollowUps' => $postAdoptionFollowUps,
+            'adoptedPets' => $adoptedPets,
+            'shelterVisits' => $shelterVisits,
+            'rehomingRequests' => $rehomingRequests,
         ]);
     }
 
@@ -144,6 +253,10 @@ class AdoptionManagementController extends Controller
         if ($validated['status'] === 'approved') {
             $application->shelterAnimal->update([
                 'status' => ShelterAnimalStatus::Adopted,
+                'adoption_date' => now(),
+                'adopter_name' => $application->full_name,
+                'adopter_phone' => $application->phone,
+                'adopter_email' => $application->email,
             ]);
         } elseif ($validated['status'] === 'scheduled') {
             $application->shelterAnimal->update([
@@ -160,6 +273,92 @@ class AdoptionManagementController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Application status updated successfully.',
+        ]);
+
+        return redirect()->route('account.admin.adoption-management');
+    }
+
+    public function updateVisitStatus(Request $request, ShelterVisit $visit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:pending,confirmed,completed,cancelled'],
+            'confirmed_date' => ['nullable', 'date'],
+            'confirmed_time_slot' => ['nullable', 'string', 'max:100'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $visit->update([
+            'status' => $validated['status'],
+            'confirmed_date' => $validated['confirmed_date'] ?? $visit->confirmed_date,
+            'confirmed_time_slot' => $validated['confirmed_time_slot'] ?? $visit->confirmed_time_slot,
+            'admin_notes' => $validated['admin_notes'] ?? $visit->admin_notes,
+            'confirmed_by' => $request->user()?->id,
+        ]);
+
+        AuditLog::log('shelter_visit_update', "Updated shelter visit ID {$visit->id} status to {$validated['status']}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Shelter visit updated successfully.',
+        ]);
+
+        return redirect()->route('account.admin.adoption-management');
+    }
+
+    public function updateRehomingStatus(Request $request, RehomingRequest $rehomingRequest): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:pending,reviewed,posted,home_found,declined'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $rehomingRequest->update([
+            'status' => $validated['status'],
+            'admin_notes' => $validated['admin_notes'] ?? $rehomingRequest->admin_notes,
+            'reviewed_by' => $request->user()?->id,
+        ]);
+
+        AuditLog::log('rehoming_request_update', "Updated rehoming request ID {$rehomingRequest->id} status to {$validated['status']}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Rehoming request status updated successfully.',
+        ]);
+
+        return redirect()->route('account.admin.adoption-management');
+    }
+
+    public function storeFollowUp(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'shelter_animal_id' => ['required', 'exists:shelter_animals,id'],
+            'follow_up_date' => ['required', 'date'],
+            'method' => ['required', 'string', 'in:chat,call,photo_update,video,home_visit'],
+            'status' => ['required', 'string', 'in:scheduled,completed,cancelled'],
+            'pet_condition' => ['required', 'string', 'in:Excellent,Good,Fair,Needs Attention'],
+            'notes' => ['required', 'string', 'max:2000'],
+            'next_follow_up_date' => ['nullable', 'date'],
+            'photo' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('follow-ups', 'public');
+        }
+
+        unset($validated['photo']);
+
+        $followUp = PostAdoptionFollowUp::create([
+            ...$validated,
+            'photo_path' => $photoPath,
+            'conducted_by' => $request->user()?->id,
+        ]);
+
+        AuditLog::log('post_adoption_followup', "Recorded post-adoption follow-up for animal ID {$followUp->shelter_animal_id} via {$followUp->method}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Post-adoption follow-up recorded successfully.',
         ]);
 
         return redirect()->route('account.admin.adoption-management');

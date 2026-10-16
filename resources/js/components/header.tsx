@@ -154,35 +154,49 @@ export function Header() {
   return (
     <header className="w-full relative z-[100] font-quicksand">
       {/* Top Info Bar */}
-      <div className="bg-paw-navy text-white text-[10px] md:text-xs py-2 px-4 flex flex-col md:flex-row justify-between items-center gap-2 border-b border-white/5">
-        <div className="flex items-center gap-6">
-          
-          <div className="hidden sm:flex items-center gap-2">
-            <Phone size={12} className="text-paw-yellow" />
-            <span className="font-bold">0912 345 6789</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <Mail size={12} className="text-paw-yellow" />
-            <span className="font-bold uppercase tracking-widest">help@iliganstrayfeeders.org</span>
-          </div>
+      <div className="bg-paw-navy text-white text-[10px] md:text-xs py-1.5 sm:py-2 px-3 sm:px-4 md:px-6 flex flex-row justify-between items-center border-b border-white/5 w-full whitespace-nowrap overflow-hidden">
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <a
+            href="tel:09123456789"
+            className="flex items-center gap-1.5 hover:text-paw-yellow transition-colors font-bold text-[10px] sm:text-xs shrink-0"
+            aria-label="Call 0912 345 6789"
+          >
+            <Phone size={11} className="text-paw-yellow shrink-0" />
+            <span>0912 345 6789</span>
+          </a>
+          <a
+            href="mailto:help@iliganstrayfeeders.org"
+            className="hidden sm:flex items-center gap-1.5 hover:text-paw-yellow transition-colors font-bold uppercase tracking-wider text-[10px] sm:text-xs shrink-0"
+            aria-label="Email help@iliganstrayfeeders.org"
+          >
+            <Mail size={11} className="text-paw-yellow shrink-0" />
+            <span className="truncate max-w-[200px] md:max-w-none">help@iliganstrayfeeders.org</span>
+          </a>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <a
+            href="mailto:help@iliganstrayfeeders.org"
+            className="sm:hidden text-gray-300 hover:text-paw-yellow transition-colors p-0.5"
+            aria-label="Email help@iliganstrayfeeders.org"
+            title="Email us"
+          >
+            <Mail size={13} className="text-paw-yellow" />
+          </a>
           {/* Social Media Links */}
-          <div className="flex items-center gap-2">
-            <a href="https://www.facebook.com/IliganStrayFosterandAdoptionCenter" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors" aria-label="Facebook">
-              <Facebook size={14} />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <a href="https://www.facebook.com/IliganStrayFosterandAdoptionCenter" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors p-0.5" aria-label="Facebook">
+              <Facebook size={13} />
             </a>
-            <a href="https://www.instagram.com/iliganstrayfeeders?igsh=MTg2OWpqZGJ5MWdudw==" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors" aria-label="Instagram">
-              <Instagram size={14} />
+            <a href="https://www.instagram.com/iliganstrayfeeders?igsh=MTg2OWpqZGJ5MWdudw==" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors p-0.5" aria-label="Instagram">
+              <Instagram size={13} />
             </a>
-            <a href="https://www.tiktok.com/@iliganstrayfeeders?_r=1&_t=ZS-95wPLd3kxMo" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors" aria-label="TikTok">
-              <Video size={14} />
+            <a href="https://www.tiktok.com/@iliganstrayfeeders?_r=1&_t=ZS-95wPLd3kxMo" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors p-0.5" aria-label="TikTok">
+              <Video size={13} />
             </a>
-            <a href="https://m.me/IliganStrayFosterandAdoptionCenter" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors" aria-label="Messenger">
-              <MessageCircle size={14} />
+            <a href="https://m.me/IliganStrayFosterandAdoptionCenter" target="_blank" rel="noopener noreferrer" className="hover:text-paw-yellow transition-colors p-0.5" aria-label="Messenger">
+              <MessageCircle size={13} />
             </a>
           </div>
-          
         </div>
       </div>
 

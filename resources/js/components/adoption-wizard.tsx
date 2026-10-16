@@ -245,7 +245,7 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+        <div className="flex-1 overflow-y-auto modal-scroll-area p-4 sm:p-6 md:p-8">
           <AnimatePresence mode="wait">
             {/* Step 1: Applicant Information */}
             {currentStep === 1 && (

@@ -25,8 +25,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HonorController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
+use App\Http\Controllers\RehomingRequestController;
 use App\Http\Controllers\ResourceDownloadController;
 use App\Http\Controllers\Settings\AccountSettingsController;
+use App\Http\Controllers\ShelterVisitController;
 use App\Http\Controllers\SuperAdmin\AiConfigController;
 use App\Http\Controllers\SuperAdmin\AnalyticsController;
 use App\Http\Controllers\SuperAdmin\ArchiveController;
@@ -58,7 +60,10 @@ Route::get('/vet', [VetController::class, 'index'])->name('vet');
 Route::get('/honor', [HonorController::class, 'index'])->name('honor');
 Route::get('/resources/{resourceFile}/download', [ResourceDownloadController::class, 'download'])->name('resources.download');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
+Route::get('/adopt/{pet}', [AdoptController::class, 'show'])->name('adopt.show');
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
+Route::post('/shelter-visits', [ShelterVisitController::class, 'store'])->name('shelter-visits.store');
+Route::post('/rehoming-requests', [RehomingRequestController::class, 'store'])->name('rehoming-requests.store');
 
 Route::get('/donate', [DonateController::class, 'index'])->name('donate');
 Route::post('/donate/cash', [DonateController::class, 'storeCash'])->name('donate.store-cash');
@@ -171,6 +176,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
 
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
+    Route::post('adoption-management/shelter-visits/{visit}/status', [AdoptionManagementController::class, 'updateVisitStatus'])->name('adoption-management.shelter-visits.update-status');
+    Route::post('adoption-management/rehoming-requests/{rehomingRequest}/status', [AdoptionManagementController::class, 'updateRehomingStatus'])->name('adoption-management.rehoming-requests.update-status');
+    Route::post('adoption-management/post-adoption-follow-ups', [AdoptionManagementController::class, 'storeFollowUp'])->name('adoption-management.post-adoption-follow-ups.store');
     Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');
     Route::post('adoption-management/pets/{pet}/needs', [AdoptablePetController::class, 'storeNeed'])->name('adoption-management.pets.needs.store');
     Route::put('adoption-management/needs/{need}', [AdoptablePetController::class, 'updateNeed'])->name('adoption-management.needs.update');

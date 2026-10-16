@@ -6,6 +6,19 @@ import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+import {
+  PostAdoptionTab,
+  PostAdoptionFollowUpData,
+  AdoptedPetData,
+} from '@/components/admin/adoption/post-adoption-tab';
+import {
+  ShelterVisitsTab,
+  ShelterVisitData,
+} from '@/components/admin/adoption/shelter-visits-tab';
+import {
+  RehomingTab,
+  RehomingRequestData,
+} from '@/components/admin/adoption/rehoming-tab';
 
 interface ApplicationFile {
   id: number;
@@ -101,6 +114,10 @@ interface Pet {
 interface AdoptionManagementProps {
   applications: Application[];
   pets: Pet[];
+  postAdoptionFollowUps?: PostAdoptionFollowUpData[];
+  adoptedPets?: AdoptedPetData[];
+  shelterVisits?: ShelterVisitData[];
+  rehomingRequests?: RehomingRequestData[];
 }
 
 function normalizePriority(priority?: string): 'Urgent' | 'High' | 'Medium' | 'Low' {
@@ -112,8 +129,15 @@ function normalizePriority(priority?: string): 'Urgent' | 'High' | 'Medium' | 'L
   return 'Medium';
 }
 
-export default function AdoptionManagement({ applications = [], pets = [] }: AdoptionManagementProps) {
-  const [activeTab, setActiveTab] = useState<'applications' | 'pets'>('applications');
+export default function AdoptionManagement({
+  applications = [],
+  pets = [],
+  postAdoptionFollowUps = [],
+  adoptedPets = [],
+  shelterVisits = [],
+  rehomingRequests = [],
+}: AdoptionManagementProps) {
+  const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
   
   // Modals & drawers state
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -216,10 +240,10 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800">
+        <div className="flex flex-wrap border-b border-gray-200 dark:border-gray-800 gap-1">
           <button
             onClick={() => setActiveTab('applications')}
-            className={`px-6 py-4 font-black text-sm tracking-wider uppercase border-b-4 transition-all ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
               activeTab === 'applications'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -228,8 +252,38 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
             Applications ({applications.length})
           </button>
           <button
+            onClick={() => setActiveTab('follow-ups')}
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+              activeTab === 'follow-ups'
+                ? 'border-paw-orange text-paw-orange'
+                : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
+            }`}
+          >
+            Post-Adoption ({postAdoptionFollowUps.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('shelter-visits')}
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+              activeTab === 'shelter-visits'
+                ? 'border-paw-orange text-paw-orange'
+                : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
+            }`}
+          >
+            Shelter Visits ({shelterVisits.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('rehoming')}
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+              activeTab === 'rehoming'
+                ? 'border-paw-orange text-paw-orange'
+                : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
+            }`}
+          >
+            Rehoming Requests ({rehomingRequests.length})
+          </button>
+          <button
             onClick={() => setActiveTab('pets')}
-            className={`px-6 py-4 font-black text-sm tracking-wider uppercase border-b-4 transition-all ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
               activeTab === 'pets'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -528,6 +582,24 @@ export default function AdoptionManagement({ applications = [], pets = [] }: Ado
               </div>
             )}
           </AdminCard>
+        )}
+
+        {/* Post-Adoption Follow-ups Tab */}
+        {activeTab === 'follow-ups' && (
+          <PostAdoptionTab
+            followUps={postAdoptionFollowUps}
+            adoptedPets={adoptedPets}
+          />
+        )}
+
+        {/* Shelter Visits Tab */}
+        {activeTab === 'shelter-visits' && (
+          <ShelterVisitsTab visits={shelterVisits} />
+        )}
+
+        {/* Rehoming Requests Tab */}
+        {activeTab === 'rehoming' && (
+          <RehomingTab rehomingRequests={rehomingRequests} />
         )}
       </div>
 

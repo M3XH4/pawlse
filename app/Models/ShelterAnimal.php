@@ -100,6 +100,22 @@ class ShelterAnimal extends Model
     }
 
     /**
+     * @return HasMany<ShelterVisit, $this>
+     */
+    public function shelterVisits(): HasMany
+    {
+        return $this->hasMany(ShelterVisit::class);
+    }
+
+    /**
+     * @return HasMany<PostAdoptionFollowUp, $this>
+     */
+    public function postAdoptionFollowUps(): HasMany
+    {
+        return $this->hasMany(PostAdoptionFollowUp::class)->latest('follow_up_date');
+    }
+
+    /**
      * Get computed current location for display.
      */
     public function getComputedLocationAttribute(): string

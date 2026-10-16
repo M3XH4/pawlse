@@ -17,6 +17,7 @@ const NULL_PAGES = new Set([
     'welcome',
     'about',
     'adopt',
+    'adopt/show',
     'rescue',
     'donate',
     'volunteer',
