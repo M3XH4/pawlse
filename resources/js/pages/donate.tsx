@@ -13,6 +13,8 @@ import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
 import { HonorWallTab, type CommunityHonoree, type PartnerShowcaseItem, type RecognitionMetricsData } from '@/components/donation/honor-wall-tab';
+import { ModernDatePicker } from '@/components/donation/modern-date-picker';
+import { InKindWishlistModal, type WishlistAnimal, type WishlistNeed } from '@/components/donation/in-kind-wishlist-modal';
 
 export interface AuditPartner {
     id: number;
@@ -49,20 +51,7 @@ export interface SupportingDocument {
 }
 
 interface DonateProps {
-    wishlist?: Array<{
-        id: number;
-        name: string;
-        type: string;
-        age: string;
-        photo: string;
-        needs: Array<{
-            id: number;
-            item: string;
-            quantity: string;
-            priority: string;
-            status: string;
-        }>;
-    }>;
+    wishlist?: WishlistAnimal[];
     recentDonations?: Array<{
         name: string;
         amount: string;
@@ -117,7 +106,6 @@ export default function Donate({
     const [submitted, setSubmitted] = useState(false);
     const [showAuditModal, setShowAuditModal] = useState(false);
     const [showWishlist, setShowWishlist] = useState(false);
-    const [sponsorItem, setSponsorItem] = useState<{ id: number; animalName: string; animalPhoto: string; item: string; quantity: string; priority: string } | null>(null);
     const [showSponsorForm, setShowSponsorForm] = useState(false);
 
     const [showReceipt, setShowReceipt] = useState(false);
@@ -199,17 +187,32 @@ export default function Donate({
         }
     }, [donationSuccess, successRef]);
 
-    const handleSponsorClick = (animalName: string, animalPhoto: string, need: any) => {
-        setSponsorItem({
-            id: need.id,
-            animalName,
-            animalPhoto,
-            item: need.item,
-            quantity: need.quantity,
-            priority: need.priority
-        });
+    const handleSelectWishlistNeed = (animal: WishlistAnimal, need: WishlistNeed) => {
+        inKindForm.setData(data => ({
+            ...data,
+            animal_donation_need_id: need.id.toString(),
+            description: `Pledging ${need.quantity} of ${need.item} for ${animal.name}`,
+            quantity: need.quantity
+        }));
         setShowWishlist(false);
+        setActiveTab('inkind');
+        toast.success(`Pledged ${need.item} for ${animal.name}! Complete your drop-off details below.`);
     };
+
+    const linkedNeedInfo = React.useMemo(() => {
+        if (!inKindForm.data.animal_donation_need_id) return null;
+        for (const animal of wishlist) {
+            const need = animal.needs?.find(n => String(n.id) === String(inKindForm.data.animal_donation_need_id));
+            if (need) {
+                return { animal, need };
+            }
+        }
+        return null;
+    }, [inKindForm.data.animal_donation_need_id, wishlist]);
+
+    const totalWishlistNeedsCount = React.useMemo(() => {
+        return wishlist.reduce((acc, animal) => acc + (animal.needs?.length || 0), 0);
+    }, [wishlist]);
 
     const submitCash = (e: React.FormEvent) => {
         e.preventDefault();
@@ -222,6 +225,10 @@ export default function Donate({
 
     const submitInKind = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!inKindForm.data.drop_off_date) {
+            toast.error('Please select a drop-off date.');
+            return;
+        }
         inKindForm.post('/donate/in-kind', {
             onSuccess: () => {
                 setSubmitted(true);
@@ -233,8 +240,32 @@ export default function Donate({
         });
     };
 
+    // Close Sponsor Form on Escape key and lock body scroll
+    useEffect(() => {
+        if (!showSponsorForm) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowSponsorForm(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [showSponsorForm]);
+
     const submitSponsor = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!sponsorForm.data.date) {
+            toast.error('Please select a preferred feeding date.');
+            return;
+        }
         sponsorForm.post('/donate/sponsor', {
             onSuccess: () => {
                 setShowSponsorForm(false);
@@ -328,27 +359,27 @@ export default function Donate({
                                                 <form onSubmit={submitCash} className="space-y-8">
                                                     <div>
                                                         <label className="block text-sm font-bold text-gray-700 mb-4 uppercase tracking-widest">Select Amount (PHP)</label>
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                                             {['100', '200', '500', '1000'].map((val) => (
                                                                 <button
                                                                     type="button"
                                                                     key={val}
                                                                     onClick={() => cashForm.setData('amount', val)}
-                                                                    className={`py-4 rounded-2xl font-black text-xl border-2 transition-all ${cashForm.data.amount === val ? 'bg-paw-orange text-white border-paw-orange shadow-lg shadow-paw-orange/20' : 'bg-gray-50 text-paw-navy border-transparent hover:border-paw-orange/30'}`}
+                                                                    className={`py-4 rounded-2xl font-black text-xl border-2 transition-all cursor-pointer ${cashForm.data.amount === val ? 'bg-paw-orange text-white border-paw-orange shadow-lg shadow-paw-orange/20' : 'bg-gray-50 text-paw-navy border-transparent hover:border-paw-orange/30'}`}
                                                                 >
                                                                     ₱{val}
                                                                 </button>
                                                             ))}
-                                                            <div className="col-span-2 relative">
-                                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-xl">₱</span>
-                                                                <input
-                                                                    type="number"
-                                                                    placeholder="Custom Amount"
-                                                                    value={cashForm.data.amount}
-                                                                    onChange={(e) => cashForm.setData('amount', e.target.value)}
-                                                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-black text-xl"
-                                                                />
-                                                            </div>
+                                                        </div>
+                                                        <div className="relative w-full">
+                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-xl">₱</span>
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Custom Amount"
+                                                                value={cashForm.data.amount}
+                                                                onChange={(e) => cashForm.setData('amount', e.target.value)}
+                                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-black text-xl"
+                                                            />
                                                         </div>
                                                     </div>
 
@@ -364,7 +395,9 @@ export default function Donate({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">EMAIL ADDRESS</label>
+                                                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                                EMAIL ADDRESS <span className="text-red-500">*</span>
+                                                            </label>
                                                             <input
                                                                 type="email"
                                                                 required
@@ -373,32 +406,6 @@ export default function Donate({
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
                                                                 placeholder="For receipt"
                                                             />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid md:grid-cols-2 gap-6">
-                                                        <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">MOBILE NUMBER</label>
-                                                            <input
-                                                                type="tel"
-                                                                value={cashForm.data.donor_mobile}
-                                                                onChange={(e) => cashForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
-                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="+63 9XX XXX XXXX"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">PAYMENT METHOD</label>
-                                                            <select
-                                                                value={cashForm.data.payment_method}
-                                                                onChange={(e) => cashForm.setData('payment_method', e.target.value)}
-                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                            >
-                                                                <option value="gcash">GCash Wallet</option>
-                                                                <option value="maya">Maya Wallet</option>
-                                                                <option value="bank_transfer">Debit/Credit Card</option>
-                                                                <option value="paypal">PayPal</option>
-                                                            </select>
                                                         </div>
                                                     </div>
 
@@ -453,30 +460,81 @@ export default function Donate({
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowWishlist(true)}
-                                                            className="w-full bg-paw-orange text-white py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                                            className="w-full bg-paw-orange text-white py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-md shadow-paw-orange/20 cursor-pointer group"
                                                         >
-                                                            <Heart size={18} />
-                                                            VIEW ANIMAL WISHLIST
+                                                            <Heart size={18} className="group-hover:scale-110 transition-transform" />
+                                                            <span>VIEW ANIMAL WISHLIST {totalWishlistNeedsCount > 0 && `(${totalWishlistNeedsCount} ITEMS NEEDED)`}</span>
                                                         </button>
                                                     </div>
 
                                                     {inKindForm.data.animal_donation_need_id && (
-                                                        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex justify-between items-center">
-                                                            <div className="text-sm text-green-800 font-bold">
-                                                                Linked to Shelter Animal Need
+                                                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                {linkedNeedInfo?.animal?.photo ? (
+                                                                    <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-300 shadow-sm shrink-0">
+                                                                        <ImageWithFallback
+                                                                            src={linkedNeedInfo.animal.photo}
+                                                                            alt={linkedNeedInfo.animal.name}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                                                        <Gift size={20} />
+                                                                    </div>
+                                                                )}
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                                                                            Shelter Wishlist Match
+                                                                        </span>
+                                                                        {linkedNeedInfo?.need?.priority && (
+                                                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                                                                linkedNeedInfo.need.priority.toLowerCase() === 'urgent'
+                                                                                    ? 'bg-red-100 text-red-700'
+                                                                                    : 'bg-amber-100 text-amber-700'
+                                                                            }`}>
+                                                                                {linkedNeedInfo.need.priority}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <h5 className="font-black text-paw-navy text-sm sm:text-base truncate mt-0.5">
+                                                                        {linkedNeedInfo 
+                                                                            ? `${linkedNeedInfo.animal.name} — ${linkedNeedInfo.need.item} (${linkedNeedInfo.need.quantity})`
+                                                                            : 'Linked to Shelter Animal Need'}
+                                                                    </h5>
+                                                                </div>
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => inKindForm.setData('animal_donation_need_id', '')}
-                                                                className="text-red-500 hover:text-red-700 font-black text-xs uppercase"
-                                                            >
-                                                                Clear Link
-                                                            </button>
+
+                                                            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowWishlist(true)}
+                                                                    className="text-emerald-700 hover:text-emerald-900 bg-emerald-100/60 hover:bg-emerald-100 font-bold text-xs px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                                                >
+                                                                    Change Item
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        inKindForm.setData(data => ({
+                                                                            ...data,
+                                                                            animal_donation_need_id: '',
+                                                                            quantity: ''
+                                                                        }));
+                                                                    }}
+                                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 font-bold text-xs px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                                                                >
+                                                                    Clear
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
 
                                                     <div>
-                                                        <label className="block text-sm font-bold text-gray-700 mb-2">DESCRIPTION OF DONATION</label>
+                                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                            DESCRIPTION OF DONATION <span className="text-red-500">*</span>
+                                                        </label>
                                                         <textarea
                                                             required
                                                             value={inKindForm.data.description}
@@ -486,56 +544,48 @@ export default function Donate({
                                                         ></textarea>
                                                     </div>
 
-                                                    <div className="grid md:grid-cols-2 gap-6">
-                                                        <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">QUANTITY / ESTIMATE</label>
-                                                            <input
-                                                                type="text"
-                                                                value={inKindForm.data.quantity}
-                                                                onChange={(e) => inKindForm.setData('quantity', e.target.value)}
-                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="e.g. 5 packs, 10 bottles"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">DROP OFF DATE</label>
-                                                            <input
-                                                                type="date"
-                                                                required
-                                                                value={inKindForm.data.drop_off_date}
-                                                                onChange={(e) => inKindForm.setData('drop_off_date', e.target.value)}
-                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                            />
-                                                        </div>
+                                                    <div>
+                                                        <ModernDatePicker
+                                                            value={inKindForm.data.drop_off_date}
+                                                            onChange={(date) => inKindForm.setData('drop_off_date', date)}
+                                                            minDate={new Date().toISOString().split('T')[0]}
+                                                            label="DROP OFF DATE"
+                                                            required
+                                                            helperText="Shelter drop-off hours: 9:00 AM – 5:00 PM"
+                                                        />
                                                     </div>
 
                                                     <div className="grid md:grid-cols-2 gap-6">
                                                         <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">CONTACT PERSON</label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                value={inKindForm.data.contact_person}
-                                                                onChange={(e) => inKindForm.setData('contact_person', e.target.value)}
-                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="Who is dropping this off?"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">DONOR NAME (FOR TRANSPARENCY)</label>
+                                                            <label className="block text-sm font-bold text-gray-700 mb-2">FULL NAME</label>
                                                             <input
                                                                 type="text"
                                                                 value={inKindForm.data.donor_name}
                                                                 onChange={(e) => inKindForm.setData('donor_name', e.target.value)}
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="Optional (Guest if left blank)"
+                                                                placeholder="Optional for anonymous"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <label className="block text-sm font-bold text-gray-700">CONTACT PERSON</label>
+                                                                <span className="text-xs text-gray-400 font-bold">Leave blank if same as donor</span>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={inKindForm.data.contact_person}
+                                                                onChange={(e) => inKindForm.setData('contact_person', e.target.value)}
+                                                                className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
+                                                                placeholder="e.g. Courier or driver (optional)"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="grid md:grid-cols-2 gap-6">
                                                         <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">EMAIL ADDRESS</label>
+                                                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                                EMAIL ADDRESS <span className="text-red-500">*</span>
+                                                            </label>
                                                             <input
                                                                 type="email"
                                                                 required
@@ -546,9 +596,12 @@ export default function Donate({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-bold text-gray-700 mb-2">MOBILE NUMBER</label>
+                                                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                                MOBILE NUMBER <span className="text-red-500">*</span>
+                                                            </label>
                                                             <input
                                                                 type="tel"
+                                                                required
                                                                 value={inKindForm.data.donor_mobile}
                                                                 onChange={(e) => inKindForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
@@ -565,7 +618,7 @@ export default function Donate({
                                                             onChange={(e) => inKindForm.setData('anonymous', e.target.checked)}
                                                             className="w-5 h-5 accent-paw-orange"
                                                         />
-                                                        <label htmlFor="inkind-anon" className="text-sm font-bold text-gray-600">DONATE ANONYMOUSLY (Public log shows Anonymous)</label>
+                                                        <label htmlFor="inkind-anon" className="text-sm font-bold text-gray-600">DONATE ANONYMOUSLY</label>
                                                     </div>
 
                                                     <button
@@ -997,362 +1050,207 @@ export default function Donate({
                 records={auditRecords}
             />
 
-            {/* Animal Wishlist Modal */}
-            <AnimatePresence>
-                {showWishlist && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowWishlist(false)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[40px] max-w-5xl w-full max-h-[90vh] overflow-y-auto z-10 relative shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="sticky top-0 bg-white rounded-t-[40px] p-8 border-b border-gray-100 flex items-center justify-between z-20">
-                                <div>
-                                    <h3 className="text-3xl font-black text-paw-navy">In-Kind Donation Wishlist</h3>
-                                    <p className="text-sm font-bold text-gray-500">Sponsor specific items for animals in need</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowWishlist(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
-                                >
-                                    <X size={24} className="text-gray-400" />
-                                </button>
-                            </div>
-
-                            <div className="p-8 space-y-8">
-                                {wishlist.length === 0 ? (
-                                    <p className="text-center py-12 text-gray-500 font-bold">No active animal needs listed at this moment.</p>
-                                ) : (
-                                    wishlist.map((animal) => (
-                                        <div key={animal.id} className="bg-gradient-to-br from-paw-bg to-white rounded-3xl p-8 border-2 border-gray-100 shadow-lg">
-                                            <div className="flex items-start gap-6 mb-6">
-                                                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-xl border-4 border-white shrink-0">
-                                                    <ImageWithFallback
-                                                        src={animal.photo}
-                                                        alt={animal.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h4 className="text-2xl font-black text-paw-navy mb-1">{animal.name}</h4>
-                                                    <p className="text-sm font-black text-paw-orange uppercase tracking-widest mb-2">{animal.type} • {animal.age}</p>
-                                                    <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-3 py-1 rounded-full">
-                                                        <Heart size={14} className="text-paw-orange" />
-                                                        <span className="text-xs font-black text-paw-orange">{animal.needs.length} Items Needed</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {animal.needs.map((need) => (
-                                                    <div
-                                                        key={need.id}
-                                                        className="bg-white rounded-2xl p-5 border-2 border-gray-100 hover:border-paw-orange/30 transition-all flex flex-col justify-between"
-                                                    >
-                                                        <div>
-                                                            <div className="flex items-start justify-between mb-3">
-                                                                <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${need.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
-                                                                    need.priority === 'High' ? 'bg-orange-100 text-orange-700' :
-                                                                        'bg-blue-100 text-blue-700'
-                                                                }`}>
-                                                                    {need.priority}
-                                                                </span>
-                                                            </div>
-                                                            <h5 className="font-black text-paw-navy text-sm mb-1">{need.item}</h5>
-                                                            <p className="text-xs font-bold text-gray-500 mb-4">Quantity: {need.quantity}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => handleSponsorClick(animal.name, animal.photo, need)}
-                                                            className="w-full bg-paw-orange text-white py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 transition-all cursor-pointer"
-                                                        >
-                                                            Sponsor This Item
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Sponsor Item Modal */}
-            <AnimatePresence>
-                {sponsorItem && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSponsorItem(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[40px] max-w-lg w-full relative z-10 shadow-2xl p-10"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <button
-                                onClick={() => setSponsorItem(null)}
-                                className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
-                            >
-                                <X size={24} className="text-gray-400" />
-                            </button>
-
-                            <div className="text-center">
-                                <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-xl border-4 border-paw-orange/20 mx-auto mb-6">
-                                    <ImageWithFallback
-                                        src={sponsorItem.animalPhoto}
-                                        alt={sponsorItem.animalName}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-
-                                <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-4 py-2 rounded-full mb-4">
-                                    <Heart size={16} className="text-paw-orange" />
-                                    <span className="text-xs font-black tracking-widest uppercase text-paw-orange">Sponsoring Item</span>
-                                </div>
-
-                                <h3 className="text-3xl font-black text-paw-navy mb-2">Help {sponsorItem.animalName}</h3>
-                                <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-                                    <p className="text-sm font-bold text-gray-500 mb-2">You're sponsoring:</p>
-                                    <h4 className="text-xl font-black text-paw-navy mb-1">{sponsorItem.item}</h4>
-                                    <p className="text-sm font-bold text-gray-600">Quantity: {sponsorItem.quantity}</p>
-                                    <span className={`inline-block mt-3 px-3 py-1 rounded-full text-xs font-black ${sponsorItem.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
-                                        sponsorItem.priority === 'High' ? 'bg-orange-100 text-orange-700' :
-                                            'bg-blue-100 text-blue-700'
-                                    }`}>
-                                        Priority: {sponsorItem.priority}
-                                    </span>
-                                </div>
-
-                                <button
-                                    onClick={() => {
-                                        inKindForm.setData(data => ({
-                                            ...data,
-                                            animal_donation_need_id: sponsorItem.id.toString(),
-                                            description: `Sponsoring ${sponsorItem.item} for ${sponsorItem.animalName}`,
-                                            quantity: sponsorItem.quantity
-                                        }));
-                                        setSponsorItem(null);
-                                        setActiveTab('inkind');
-                                        toast.success(`Please complete the drop-off form to sponsor ${sponsorItem.item} for ${sponsorItem.animalName}!`);
-                                    }}
-                                    className="w-full bg-paw-orange text-white py-5 rounded-[24px] font-black text-xl hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20 mb-3 cursor-pointer"
-                                >
-                                    PROCEED TO DROP-OFF
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            {/* Enhanced In-Kind Animal Wishlist Modal */}
+            <InKindWishlistModal
+                isOpen={showWishlist}
+                onClose={() => setShowWishlist(false)}
+                wishlist={wishlist}
+                selectedNeedId={inKindForm.data.animal_donation_need_id}
+                onSelectNeed={handleSelectWishlistNeed}
+            />
 
             {/* Sponsor Feeding Form Modal */}
             <AnimatePresence>
                 {showSponsorForm && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-5">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowSponsorForm(false)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            className="absolute inset-0 bg-paw-navy/75 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.96, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[40px] max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10 relative shadow-2xl"
+                            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col z-10 relative shadow-2xl overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="sticky top-0 bg-gradient-to-br from-paw-yellow to-paw-orange text-white rounded-t-[40px] p-8 z-20">
+                            {/* Modal Header (Golden Yellow to Orange with translucent amount pill & full stray run details) */}
+                            <div className="bg-gradient-to-br from-paw-yellow via-amber-400 to-paw-orange text-white p-6 sm:p-7 shrink-0 relative">
                                 <button
+                                    type="button"
                                     onClick={() => setShowSponsorForm(false)}
-                                    className="absolute top-6 right-6 p-2 hover:bg-white/20 rounded-xl transition-colors cursor-pointer"
+                                    className="absolute top-5 right-5 sm:top-6 sm:right-6 p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
+                                    title="Close (Esc)"
                                 >
-                                    <X size={24} />
+                                    <X size={22} />
                                 </button>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                                        <Users size={32} />
+
+                                <div className="flex items-center gap-3.5 sm:gap-4 mb-4">
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm">
+                                        <Users size={28} />
                                     </div>
-                                    <div>
-                                        <h3 className="text-3xl font-black">Sponsor a Feeding Day</h3>
-                                        <p className="text-sm font-bold text-white/90">Fill out the details below</p>
+                                    <div className="min-w-0 pr-8">
+                                        <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                                            Sponsor a Feeding Day
+                                        </h3>
+                                        <p className="text-xs sm:text-sm font-bold text-white/90 mt-0.5">
+                                            Funds a 100+ stray feeding run with 10kg premium pet food
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold">Total Amount:</span>
-                                        <span className="text-3xl font-black">₱3,500</span>
-                                    </div>
+
+                                {/* Translucent Glass Amount Pill */}
+                                <div className="bg-white/20 backdrop-blur-md rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-sm">
+                                    <span className="text-sm sm:text-base font-bold text-white">Total Amount:</span>
+                                    <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">₱3,500</span>
                                 </div>
                             </div>
 
-                            <form onSubmit={submitSponsor} className="p-8 space-y-6">
-                                <div className="bg-paw-yellow/10 border-2 border-paw-yellow/20 rounded-3xl p-6">
-                                    <h4 className="font-black text-paw-navy mb-4 flex items-center gap-2">
-                                        <Calendar size={20} className="text-paw-yellow" />
-                                        WHAT'S INCLUDED
-                                    </h4>
-                                    <ul className="space-y-3 text-sm font-bold text-gray-700">
-                                        <li className="flex items-start gap-3">
-                                            <Check size={18} className="text-paw-yellow shrink-0 mt-0.5" />
+                            {/* Scrollable Form Body (Scrollbar contained inside form, not cutting through header) */}
+                            <form onSubmit={submitSponsor} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                                {/* What's Included Card (Clean borderless background) */}
+                                <div className="bg-amber-50/80 rounded-2xl p-4 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xs font-black text-paw-navy uppercase tracking-wider flex items-center gap-1.5">
+                                            <Calendar size={14} className="text-amber-600" />
+                                            WHAT'S INCLUDED IN THIS SPONSORSHIP
+                                        </h4>
+                                        <span className="text-[11px] font-bold text-amber-800">Fixed: ₱3,500</span>
+                                    </div>
+                                    <ul className="space-y-1.5 text-xs font-bold text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <Check size={14} className="text-amber-600 shrink-0 mt-0.5" />
                                             <span>5kg premium dog food + 5kg cat food distributed to 100+ strays</span>
                                         </li>
-                                        <li className="flex items-start gap-3">
-                                            <Check size={18} className="text-paw-yellow shrink-0 mt-0.5" />
-                                            <span>Automatically schedules a volunteer feeding day event</span>
+                                        <li className="flex items-start gap-2">
+                                            <Check size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                            <span>Automatically schedules a community volunteer feeding day event</span>
                                         </li>
-                                        <li className="flex items-start gap-3">
-                                            <Check size={18} className="text-paw-yellow shrink-0 mt-0.5" />
-                                            <span>Personalized appreciation on the event details</span>
+                                        <li className="flex items-start gap-2">
+                                            <Check size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                            <span>Personalized appreciation/dedication featured on the public event details</span>
                                         </li>
                                     </ul>
                                 </div>
 
-                                <div className="grid md:grid-cols-2 gap-6">
+                                {/* Full Name & Email */}
+                                <div className="grid sm:grid-cols-2 gap-3.5">
                                     <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            Full Name <span className="text-red-500">*</span>
+                                        <label className="block text-xs font-black text-gray-700 mb-1.5 uppercase tracking-wider">
+                                            FULL NAME <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             required
                                             value={sponsorForm.data.fullName}
                                             onChange={(e) => sponsorForm.setData('fullName', e.target.value)}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm"
                                             placeholder="John Doe"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            Email Address <span className="text-red-500">*</span>
+                                        <label className="block text-xs font-black text-gray-700 mb-1.5 uppercase tracking-wider">
+                                            EMAIL ADDRESS <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="email"
                                             required
                                             value={sponsorForm.data.email}
                                             onChange={(e) => sponsorForm.setData('email', e.target.value)}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm"
                                             placeholder="john@example.com"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid md:grid-cols-2 gap-6">
+                                {/* Mobile Number & Occasion */}
+                                <div className="grid sm:grid-cols-2 gap-3.5">
                                     <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            Mobile Number <span className="text-red-500">*</span>
+                                        <label className="block text-xs font-black text-gray-700 mb-1.5 uppercase tracking-wider">
+                                            MOBILE NUMBER <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="tel"
                                             required
                                             value={sponsorForm.data.mobile}
                                             onChange={(e) => sponsorForm.setData('mobile', formatPhoneNumber(e.target.value))}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm"
                                             placeholder="+63 9XX XXX XXXX"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            PAYMENT METHOD <span className="text-red-500">*</span>
-                                        </label>
-                                        <select
-                                            value={sponsorForm.data.payment_method}
-                                            onChange={(e) => sponsorForm.setData('payment_method', e.target.value)}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                        >
-                                            <option value="gcash">GCash Wallet</option>
-                                            <option value="maya">Maya Wallet</option>
-                                            <option value="paypal">PayPal</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            Preferred Date <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="date"
-                                            required
-                                            value={sponsorForm.data.date}
-                                            onChange={(e) => sponsorForm.setData('date', e.target.value)}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                            min={new Date().toISOString().split('T')[0]}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                            Occasion (Optional)
+                                        <label className="block text-xs font-black text-gray-700 mb-1.5 uppercase tracking-wider">
+                                            OCCASION <span className="text-gray-400 font-normal">(Optional)</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={sponsorForm.data.occasion}
                                             onChange={(e) => sponsorForm.setData('occasion', e.target.value)}
-                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                            placeholder="Birthday, Anniversary, etc."
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm"
+                                            placeholder="Birthday, Memorial, Anniversary..."
                                         />
                                     </div>
                                 </div>
 
+                                {/* Preferred Feeding Date (Single Line Full Width) */}
+                                <div className="w-full">
+                                    <ModernDatePicker
+                                        value={sponsorForm.data.date}
+                                        onChange={(date) => sponsorForm.setData('date', date)}
+                                        minDate={new Date().toISOString().split('T')[0]}
+                                        label="PREFERRED FEEDING DATE"
+                                        required
+                                        helperText="Feeding runs occur between 9:00 AM – 5:00 PM"
+                                    />
+                                </div>
+
+                                {/* Message / Dedication */}
                                 <div>
-                                    <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">
-                                        Personal Message (Optional)
+                                    <label className="block text-xs font-black text-gray-700 mb-1.5 uppercase tracking-wider">
+                                        DEDICATION MESSAGE <span className="text-gray-400 font-normal">(Optional)</span>
                                     </label>
                                     <textarea
                                         value={sponsorForm.data.message}
                                         onChange={(e) => sponsorForm.setData('message', e.target.value)}
-                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold min-h-[100px]"
-                                        placeholder="Share why you're sponsoring this feeding day..."
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm min-h-[75px]"
+                                        placeholder="Share why you're sponsoring this feeding run..."
                                     />
                                 </div>
 
-                                <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-2xl">
+                                {/* Anonymous Checkbox */}
+                                <div className="flex items-center gap-2.5 bg-gray-50/80 p-3 rounded-xl">
                                     <input
                                         type="checkbox"
                                         id="sponsor-anonymous"
                                         checked={sponsorForm.data.anonymous}
                                         onChange={(e) => sponsorForm.setData('anonymous', e.target.checked)}
-                                        className="w-5 h-5 accent-paw-orange mt-1"
+                                        className="w-4 h-4 accent-paw-orange cursor-pointer"
                                     />
-                                    <label htmlFor="sponsor-anonymous" className="text-sm font-bold text-gray-700">
-                                        SPONSOR ANONYMOUSLY (Your name won't appear in public event details)
+                                    <label htmlFor="sponsor-anonymous" className="text-xs font-bold text-gray-700 cursor-pointer select-none">
+                                        SPONSOR ANONYMOUSLY (Public event logs will show Anonymous)
                                     </label>
                                 </div>
 
-                                <div className="flex gap-4">
+                                {/* Buttons */}
+                                <div className="flex items-center gap-3 pt-2">
                                     <button
                                         type="button"
                                         onClick={() => setShowSponsorForm(false)}
-                                        className="flex-1 bg-gray-100 text-gray-700 py-5 rounded-[24px] font-black text-lg hover:bg-gray-200 transition-all cursor-pointer"
+                                        className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all cursor-pointer"
                                     >
-                                        CANCEL
+                                        Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={sponsorForm.processing}
-                                        className="flex-1 bg-paw-orange text-white py-5 rounded-[24px] font-black text-lg hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20 flex items-center justify-center gap-2 cursor-pointer"
+                                        className="flex-[2] bg-paw-orange text-white py-3 rounded-xl font-black text-sm uppercase tracking-wider hover:bg-orange-600 transition-all shadow-md shadow-paw-orange/20 flex items-center justify-center gap-2 cursor-pointer"
                                     >
-                                        PROCEED TO PAYMENT
-                                        <ArrowRight size={20} />
+                                        <span>Proceed to Payment (₱3,500)</span>
+                                        <ArrowRight size={16} />
                                     </button>
                                 </div>
                             </form>

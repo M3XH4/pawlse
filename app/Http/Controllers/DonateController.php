@@ -235,17 +235,18 @@ class DonateController extends Controller
             'donor_email' => 'required|email|max:255',
             'donor_mobile' => 'nullable|string|max:50',
             'anonymous' => 'boolean',
-            'payment_method' => 'required|string|in:gcash,maya,paypal,bank_transfer',
+            'payment_method' => 'nullable|string|in:gcash,maya,paypal,bank_transfer',
         ]);
 
         $ref = 'DON-'.time().'-'.Str::upper(Str::random(4));
+        $paymentMethod = $validated['payment_method'] ?? 'gcash';
 
         $donation = Donation::create([
             'public_reference' => $ref,
             'user_id' => auth()->id(),
             'donor_name' => $validated['donor_name'] ?? 'Guest Donor',
             'donor_email' => $validated['donor_email'],
-            'donor_mobile' => $validated['donor_mobile'],
+            'donor_mobile' => $validated['donor_mobile'] ?? null,
             'anonymous' => $validated['anonymous'] ?? false,
             'type' => DonationType::Cash->value,
             'amount' => $validated['amount'],
@@ -255,8 +256,8 @@ class DonateController extends Controller
 
         Payment::create([
             'donation_id' => $donation->id,
-            'method' => $validated['payment_method'],
-            'provider' => $validated['payment_method'],
+            'method' => $paymentMethod,
+            'provider' => $paymentMethod,
             'amount' => $validated['amount'],
             'payment_reference' => 'PAY-'.Str::upper(Str::random(12)),
             'status' => PaymentStatus::Pending->value,
@@ -279,22 +280,24 @@ class DonateController extends Controller
         $validated = $request->validate([
             'description' => 'required|string',
             'drop_off_date' => 'required|date|after_or_equal:today',
-            'contact_person' => 'required|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
             'quantity' => 'nullable|string|max:255',
             'animal_donation_need_id' => 'nullable|exists:animal_donation_needs,id',
             'donor_name' => 'nullable|string|max:255',
             'donor_email' => 'required|email|max:255',
-            'donor_mobile' => 'nullable|string|max:50',
+            'donor_mobile' => 'required|string|max:50',
             'anonymous' => 'boolean',
         ]);
 
         $ref = 'DON-'.time().'-'.Str::upper(Str::random(4));
+        $donorName = ! empty($validated['donor_name']) ? $validated['donor_name'] : 'Guest Donor';
+        $contactPerson = ! empty($validated['contact_person']) ? $validated['contact_person'] : $donorName;
 
-        DB::transaction(function () use ($validated, $ref) {
+        DB::transaction(function () use ($validated, $ref, $donorName, $contactPerson) {
             $donation = Donation::create([
                 'public_reference' => $ref,
                 'user_id' => auth()->id(),
-                'donor_name' => $validated['donor_name'] ?? 'Guest Donor',
+                'donor_name' => $donorName,
                 'donor_email' => $validated['donor_email'],
                 'donor_mobile' => $validated['donor_mobile'],
                 'anonymous' => $validated['anonymous'] ?? false,
@@ -305,11 +308,11 @@ class DonateController extends Controller
 
             InKindDonation::create([
                 'donation_id' => $donation->id,
-                'animal_donation_need_id' => $validated['animal_donation_need_id'],
+                'animal_donation_need_id' => $validated['animal_donation_need_id'] ?? null,
                 'description' => $validated['description'],
                 'drop_off_date' => $validated['drop_off_date'],
-                'contact_person' => $validated['contact_person'],
-                'quantity' => $validated['quantity'] ?? '1 unit',
+                'contact_person' => $contactPerson,
+                'quantity' => $validated['quantity'] ?? null,
                 'status' => InKindStatus::Scheduled->value,
             ]);
 
@@ -355,13 +358,14 @@ class DonateController extends Controller
             'occasion' => 'nullable|string|max:255',
             'message' => 'nullable|string',
             'anonymous' => 'boolean',
-            'payment_method' => 'required|string|in:gcash,maya,paypal',
+            'payment_method' => 'nullable|string|in:gcash,maya,paypal',
         ]);
 
         $ref = 'DON-'.time().'-'.Str::upper(Str::random(4));
         $amount = 3500; // Sponsor feeding standard amount
+        $paymentMethod = $validated['payment_method'] ?? 'gcash';
 
-        DB::transaction(function () use ($validated, $ref, $amount) {
+        DB::transaction(function () use ($validated, $ref, $amount, $paymentMethod) {
             $donation = Donation::create([
                 'public_reference' => $ref,
                 'user_id' => auth()->id(),
@@ -377,8 +381,8 @@ class DonateController extends Controller
 
             Payment::create([
                 'donation_id' => $donation->id,
-                'method' => $validated['payment_method'],
-                'provider' => $validated['payment_method'],
+                'method' => $paymentMethod,
+                'provider' => $paymentMethod,
                 'amount' => $amount,
                 'payment_reference' => 'PAY-'.Str::upper(Str::random(12)),
                 'status' => PaymentStatus::Pending->value,
@@ -391,8 +395,8 @@ class DonateController extends Controller
                 'donor_email' => $validated['email'],
                 'donor_mobile' => $validated['mobile'],
                 'preferred_date' => $validated['date'],
-                'occasion' => $validated['occasion'],
-                'message' => $validated['message'],
+                'occasion' => $validated['occasion'] ?? null,
+                'message' => $validated['message'] ?? null,
                 'anonymous' => $validated['anonymous'] ?? false,
                 'amount' => $amount,
                 'status' => 'pending',
