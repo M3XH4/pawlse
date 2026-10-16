@@ -10,6 +10,7 @@ use App\Enums\Role;
 use App\Events\DonationReceivedEvent;
 use App\Models\AuditLog;
 use App\Models\CareSustainability;
+use App\Models\CommunityHonor;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSponsorship;
@@ -18,6 +19,7 @@ use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\ResourceFile;
 use App\Models\ShelterAnimal;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\DonationReceivedNotification;
 use App\Notifications\DonationVerifiedNotification;
@@ -145,12 +147,75 @@ class DonateController extends Controller
             ->orderBy('display_order')
             ->get();
 
+        $communityHonors = CommunityHonor::public()
+            ->orderBy('display_order')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($honor) {
+                return [
+                    'id' => $honor->id,
+                    'name' => $honor->name,
+                    'category' => $honor->category,
+                    'tier' => $honor->tier,
+                    'role_title' => $honor->role_title,
+                    'description' => $honor->description,
+                    'badges' => $honor->badges ?? [],
+                    'initials' => $honor->initials,
+                    'avatar_url' => $honor->avatar_url,
+                    'is_featured' => (bool) $honor->is_featured,
+                    'display_order' => $honor->display_order,
+                ];
+            });
+
+        $partners = Partner::active()
+            ->orderBy('display_order')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($partner) {
+                return [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'slug' => $partner->slug,
+                    'category' => $partner->category,
+                    'badge_title' => $partner->badge_title,
+                    'badges' => $partner->badges ?? [],
+                    'short_description' => $partner->short_description,
+                    'description' => $partner->description,
+                    'address' => $partner->address,
+                    'city' => $partner->city,
+                    'phone' => $partner->phone,
+                    'email' => $partner->email,
+                    'website_url' => $partner->website_url,
+                    'social_url' => $partner->social_url,
+                    'operating_hours' => $partner->operating_hours,
+                    'services' => $partner->services ?? [],
+                    'image_url' => $partner->image_url,
+                    'logo_url' => $partner->logo_url,
+                    'is_emergency' => (bool) $partner->is_emergency,
+                    'is_featured' => (bool) $partner->is_featured,
+                ];
+            });
+
+        $recognitionMetrics = SystemSetting::getValue('community_honor_stats', [
+            'core_members_count' => 15,
+            'active_volunteers_count' => 42,
+            'on_call_volunteers_count' => 28,
+            'meals_served_display' => '12k+',
+            'pets_rescued_display' => '450+',
+            'adoptions_display' => '85+',
+            'active_zones_display' => '15',
+        ]);
+
         return Inertia::render('donate', [
             'wishlist' => $wishlist,
             'recentDonations' => $recentDonations,
             'auditRecords' => $auditRecords,
             'auditPartner' => $auditPartner,
             'supportingDocuments' => $supportingDocuments,
+            'communityHonors' => $communityHonors,
+            'partners' => $partners,
+            'recognitionMetrics' => $recognitionMetrics,
+            'defaultTab' => $request->query('tab', 'cash'),
             'progressStats' => [
                 'total' => (int) $currentMonthTotal,
                 'goal' => 50000,

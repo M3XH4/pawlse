@@ -1,4 +1,4 @@
-import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin } from 'lucide-react';
+import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage, Head } from '@inertiajs/react';
@@ -12,6 +12,7 @@ import { TransparencyAuditModal, type AuditRecord } from '@/components/transpare
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
+import { HonorWallTab, type CommunityHonoree, type PartnerShowcaseItem, type RecognitionMetricsData } from '@/components/donation/honor-wall-tab';
 
 export interface AuditPartner {
     id: number;
@@ -72,6 +73,10 @@ interface DonateProps {
     auditRecords?: AuditRecord[];
     auditPartner?: AuditPartner | null;
     supportingDocuments?: SupportingDocument[];
+    communityHonors?: CommunityHonoree[];
+    partners?: PartnerShowcaseItem[];
+    recognitionMetrics?: RecognitionMetricsData;
+    defaultTab?: 'cash' | 'inkind' | 'sponsor' | 'honor';
     progressStats?: {
         total: number;
         goal: number;
@@ -88,6 +93,10 @@ export default function Donate({
     auditRecords = [],
     auditPartner = null,
     supportingDocuments = [],
+    communityHonors = [],
+    partners = [],
+    recognitionMetrics,
+    defaultTab = 'cash',
     progressStats = { total: 0, goal: 50000, percentage: 0 },
     careSustainability,
     donationSuccess = false,
@@ -95,7 +104,16 @@ export default function Donate({
 }: DonateProps) {
     const { auth } = usePage<{ auth: { user: any } }>().props;
 
-    const [activeTab, setActiveTab] = useState<'cash' | 'inkind' | 'sponsor'>('cash');
+    const [activeTab, setActiveTab] = useState<'cash' | 'inkind' | 'sponsor' | 'honor'>(defaultTab || 'cash');
+
+    // Sync tab from URL if provided (e.g. /donate?tab=honor)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab');
+        if (tabParam === 'honor' || tabParam === 'cash' || tabParam === 'inkind' || tabParam === 'sponsor') {
+            setActiveTab(tabParam as any);
+        }
+    }, []);
     const [submitted, setSubmitted] = useState(false);
     const [showAuditModal, setShowAuditModal] = useState(false);
     const [showWishlist, setShowWishlist] = useState(false);
@@ -247,31 +265,54 @@ export default function Donate({
                     <CareTimerBanner sustainability={careSustainability} />
 
                     <div className="grid lg:grid-cols-3 gap-12 items-start" id="donation-form">
-                        {/* Left Column: Donation Form */}
+                        {/* Left Column: Donation Form & Honor Wall Card */}
                         <div className="lg:col-span-2">
                             <div className="bg-white rounded-[40px] shadow-2xl shadow-paw-navy/5 overflow-hidden">
-                                {/* Tabs */}
-                                <div className="flex bg-gray-50 border-b-2 border-gray-100">
+                                {/* 4 Tabs */}
+                                <div className="flex bg-gray-50 border-b-2 border-gray-100 overflow-x-auto scrollbar-none">
                                     <button
                                         onClick={() => setActiveTab('cash')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-6 font-black text-lg transition-all ${activeTab === 'cash' ? 'bg-white text-paw-orange border-b-4 border-paw-orange' : 'text-gray-400 hover:bg-gray-100'}`}
+                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                            activeTab === 'cash' 
+                                                ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
+                                                : 'text-gray-400 hover:bg-gray-100'
+                                        }`}
                                     >
                                         <CreditCard size={20} />
-                                        CASH DONATION
+                                        <span>CASH DONATION</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('inkind')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-6 font-black text-lg transition-all ${activeTab === 'inkind' ? 'bg-white text-paw-orange border-b-4 border-paw-orange' : 'text-gray-400 hover:bg-gray-100'}`}
+                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                            activeTab === 'inkind' 
+                                                ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
+                                                : 'text-gray-400 hover:bg-gray-100'
+                                        }`}
                                     >
                                         <Gift size={20} />
-                                        IN-KIND DONATION
+                                        <span>IN-KIND</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('sponsor')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-6 font-black text-lg transition-all ${activeTab === 'sponsor' ? 'bg-white text-paw-orange border-b-4 border-paw-orange' : 'text-gray-400 hover:bg-gray-100'}`}
+                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                            activeTab === 'sponsor' 
+                                                ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
+                                                : 'text-gray-400 hover:bg-gray-100'
+                                        }`}
                                     >
                                         <Users size={20} />
-                                        SPONSOR FEEDING
+                                        <span>SPONSOR</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('honor')}
+                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                            activeTab === 'honor' 
+                                                ? 'bg-white text-amber-500 border-b-4 border-amber-500' 
+                                                : 'text-gray-400 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <Star size={20} className={activeTab === 'honor' ? 'text-amber-500 fill-amber-400' : 'text-gray-400'} />
+                                        <span>HONOR WALL</span>
                                     </button>
                                 </div>
 
@@ -576,6 +617,23 @@ export default function Donate({
                                                 </div>
                                             </motion.div>
                                         )}
+
+                                        {activeTab === 'honor' && (
+                                            <motion.div
+                                                key="honor"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                            >
+                                                <HonorWallTab
+                                                    honors={communityHonors}
+                                                    partners={partners}
+                                                    recognitionMetrics={recognitionMetrics}
+                                                    onOpenAuditModal={() => setShowAuditModal(true)}
+                                                    onSelectDonationTab={(tab) => setActiveTab(tab)}
+                                                />
+                                            </motion.div>
+                                        )}
                                     </AnimatePresence>
                                 </div>
                             </div>
@@ -589,7 +647,7 @@ export default function Donate({
                                 <div className="space-y-6">
                                     <div>
                                         <div className="flex justify-between items-end mb-2">
-                                            <span className="text-xs font-black text-gray-500 uppercase tracking-widest">Monthly Goal</span>
+                                            <span className="text-xs font-black text-gray-500 uppercase tracking-widest">{new Date().toLocaleString('en-US', { month: 'long' }).toUpperCase()} GOAL</span>
                                             <span className="text-lg font-black text-paw-orange">₱{progressStats.total.toLocaleString()} / ₱{progressStats.goal.toLocaleString()}</span>
                                         </div>
                                         <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden">
@@ -620,10 +678,10 @@ export default function Donate({
 
                                     <button
                                         onClick={() => setShowAuditModal(true)}
-                                        className="w-full py-4 rounded-2xl bg-paw-navy text-white font-bold text-sm uppercase tracking-widest hover:bg-paw-orange transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full py-4 rounded-2xl bg-paw-navy text-white font-bold text-sm uppercase tracking-widest hover:bg-paw-orange transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
                                     >
                                         <FileText size={16} />
-                                        View Full Audit History
+                                        VIEW FULL AUDIT HISTORY
                                     </button>
                                 </div>
                             </div>
