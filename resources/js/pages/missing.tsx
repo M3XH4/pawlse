@@ -1,5 +1,5 @@
 
-import { Search, MapPin, Calendar, Camera, Info, X, Phone, Share2, AlertTriangle, CheckCircle2, Upload, User, Mail, MessageCircle, Facebook, PawPrint, Activity, FileText, Zap, Twitter, Copy } from 'lucide-react';
+import { Search, MapPin, Calendar, Camera, Info, X, Phone, Share2, AlertTriangle, CheckCircle2, Upload, User, Mail, MessageCircle, Facebook, PawPrint, Activity, FileText, Zap, Twitter, Copy, Clock, Sparkles, Trash2, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
@@ -242,6 +242,41 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     contactEmail: '',
     distinguishingFeatures: ''
   });
+
+  // Lock background scroll when any modal is open
+  useEffect(() => {
+    const isModalOpen = reportModalOpen || selectedPet !== null || showContactModal;
+    if (isModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [reportModalOpen, selectedPet, showContactModal]);
+
+  // Keyboard navigation (Escape to close modals)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showContactModal) {
+          setShowContactModal(false);
+        } else if (reportModalOpen) {
+          setReportModalOpen(false);
+        } else if (selectedPet !== null) {
+          setSelectedPet(null);
+          setShowShareMenu(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [reportModalOpen, selectedPet, showContactModal]);
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setUploadedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    setFilePreviews(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -591,13 +626,14 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
             />
             <motion.div 
               layoutId={`missing-${selectedPet.id}`}
-              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[40px] z-10 relative shadow-2xl"
+              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto modal-scroll-area rounded-[28px] sm:rounded-[36px] z-10 relative shadow-2xl"
             >
               <button 
                 onClick={() => setSelectedPet(null)}
-                className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                className="absolute top-6 right-6 p-2.5 bg-gray-100/90 hover:bg-paw-orange hover:text-white rounded-full transition-all z-20 cursor-pointer shadow-sm hover:scale-105"
+                title="Close (Esc)"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
               
               <div className="grid md:grid-cols-2">
@@ -1001,117 +1037,175 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
       {/* Report Missing Pet Modal */}
       <AnimatePresence>
         {reportModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-paw-navy/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 md:p-8 overflow-hidden"
+            onClick={() => setReportModalOpen(false)}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setReportModalOpen(false)}
-              className="absolute inset-0 bg-paw-navy/80 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[40px] z-10 relative shadow-2xl"
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-900 rounded-[28px] sm:rounded-[36px] max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-red-500/20 dark:border-gray-800 overflow-hidden relative"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Report a Missing Pet"
             >
-              <button
-                onClick={() => setReportModalOpen(false)}
-                className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10"
-              >
-                <X size={24} />
-              </button>
-
-              <div className="p-8 md:p-12">
-                {!reportSubmitted ? (
-                  <>
-                    <div className="mb-8">
-                      <div className="inline-flex items-center gap-2 bg-red-100 text-red-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4">
-                        <AlertTriangle size={14} />
+              {!reportSubmitted ? (
+                <>
+                  {/* Sticky Header Bar */}
+                  <div className="shrink-0 px-6 sm:px-8 py-4 sm:py-5 border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex items-center justify-between gap-4 z-10">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-wider mb-1.5">
+                        <AlertTriangle size={13} />
                         Missing Pet Report
                       </div>
-                      <h2 className="text-4xl font-black text-paw-navy mb-3">Report a Missing Pet</h2>
-                      <p className="text-gray-500 font-bold text-lg">
-                        Fill in the details below. Our community network will help spread the word.
+                      <h2 className="text-2xl sm:text-3xl font-black text-paw-navy dark:text-white tracking-tight">
+                        Report a Missing Pet
+                      </h2>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium">
+                        Fill in the details below. Our community network will broadcast and help spread the word immediately.
                       </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      {/* Pet Information */}
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-black text-paw-navy uppercase tracking-widest">Pet Information</h3>
+                    <button
+                      onClick={() => setReportModalOpen(false)}
+                      className="w-10 h-10 bg-gray-100 dark:bg-gray-800 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 shrink-0"
+                      title="Close modal (Esc)"
+                      aria-label="Close modal"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
+                  {/* Scrollable Form Body */}
+                  <div className="flex-1 overflow-y-auto modal-scroll-area p-6 sm:p-8 md:p-10 space-y-8 overscroll-contain">
+                    <form id="missing-pet-form" onSubmit={handleSubmit} className="space-y-8">
+                      {/* Section 1: Pet Information */}
+                      <div className="bg-gray-50/70 dark:bg-gray-800/40 p-5 sm:p-7 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-5">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-2xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 font-black text-xs flex items-center justify-center">
+                            01
+                          </span>
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Pet Name</label>
-                            <input
-                              required
-                              type="text"
-                              name="petName"
-                              value={formData.petName}
-                              onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="e.g. Bantay"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Pet Type</label>
-                            <select
-                              required
-                              name="petType"
-                              value={formData.petType}
-                              onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                            >
-                              <option value="">Select type</option>
-                              <option value="Dog">Dog</option>
-                              <option value="Cat">Cat</option>
-                              <option value="Other">Other</option>
-                            </select>
+                            <h3 className="text-lg font-black text-paw-navy dark:text-white tracking-tight">
+                              Pet Details & Appearance
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                              Basic information to help responders identify your pet
+                            </p>
                           </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
+                        {/* Pet Name & Pet Type */}
+                        <div className="grid md:grid-cols-2 gap-5">
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Breed</label>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Pet Name <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <PawPrint size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                required
+                                type="text"
+                                name="petName"
+                                value={formData.petName}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="e.g. Bantay"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Pet Type <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex items-center gap-2">
+                              {['Dog', 'Cat', 'Other'].map(type => (
+                                <button
+                                  type="button"
+                                  key={type}
+                                  onClick={() => setFormData({ ...formData, petType: type })}
+                                  className={`flex-1 py-3 px-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer border ${
+                                    formData.petType === type
+                                      ? 'bg-red-600 text-white border-red-600 shadow-sm shadow-red-600/25'
+                                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200/80 dark:border-gray-700 hover:border-red-400'
+                                  }`}
+                                >
+                                  {type}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Breed & Color */}
+                        <div className="grid md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Breed <span className="text-red-500">*</span>
+                            </label>
                             <input
                               required
                               type="text"
                               name="breed"
                               value={formData.breed}
                               onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="e.g. Aspin, Puspin, Mixed"
+                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                              placeholder="e.g. Aspin, Puspin, Golden Retriever mix"
                             />
                           </div>
+
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Color / Markings</label>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Color / Markings <span className="text-red-500">*</span>
+                            </label>
                             <input
                               required
                               type="text"
                               name="color"
                               value={formData.color}
                               onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="e.g. Brown, White patches"
+                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                              placeholder="e.g. Brown with white patches, dark muzzle"
                             />
                           </div>
                         </div>
 
+                        {/* Distinguishing Features */}
                         <div>
-                          <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Distinguishing Features</label>
+                          <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                            Distinguishing Features
+                          </label>
                           <input
                             type="text"
                             name="distinguishingFeatures"
                             value={formData.distinguishingFeatures}
                             onChange={handleInputChange}
-                            className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                            placeholder="e.g. Collar color, scars, unique markings"
+                            className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                            placeholder="e.g. Blue collar with bell, notched left ear, scar above right eye"
                           />
                         </div>
 
+                        {/* Upload Photos */}
                         <div>
-                          <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Upload Photo</label>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Upload Photos / Media
+                            </label>
+                            {uploadedFiles.length > 0 && (
+                              <span className="text-xs font-bold text-red-600 dark:text-red-400">
+                                {uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''} attached
+                              </span>
+                            )}
+                          </div>
+
                           <input
                             type="file"
                             id="missing-pet-upload"
@@ -1120,164 +1214,261 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                             onChange={handleFileChange}
                             className="hidden"
                           />
-                          <label
-                            htmlFor="missing-pet-upload"
-                            className="border-4 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-paw-orange transition-all cursor-pointer block"
-                          >
-                            {uploadedFiles.length === 0 ? (
-                              <>
-                                <Upload size={40} className="mx-auto text-gray-400 mb-3" />
-                                <p className="font-black text-paw-navy mb-1">Click to upload or drag and drop</p>
-                                <p className="text-sm text-gray-400 font-bold">PNG, JPG up to 10MB (Multiple allowed)</p>
-                              </>
-                            ) : (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-3 gap-2">
-                                  {filePreviews.map((preview, idx) => (
-                                    <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
-                                      {uploadedFiles[idx]?.type.startsWith('image/') ? (
-                                        <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
-                                      ) : (
-                                        <video src={preview} className="w-full h-full object-cover" />
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="flex items-center justify-center gap-2">
-                                  <CheckCircle2 size={20} className="text-green-600" />
-                                  <p className="font-black text-green-600">{uploadedFiles.length} files selected</p>
-                                </div>
-                                <p className="text-xs text-gray-400 font-bold">Click to change files</p>
+
+                          {uploadedFiles.length === 0 ? (
+                            <label
+                              htmlFor="missing-pet-upload"
+                              className="border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500 rounded-2xl p-7 text-center transition-all cursor-pointer block bg-white dark:bg-gray-800 group"
+                            >
+                              <div className="w-12 h-12 mx-auto rounded-full bg-red-50 dark:bg-red-950/60 text-red-600 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform">
+                                <Upload size={22} />
                               </div>
-                            )}
-                          </label>
+                              <p className="font-black text-sm text-paw-navy dark:text-white mb-0.5">
+                                Click to upload photos or drag and drop
+                              </p>
+                              <p className="text-xs text-gray-400 font-bold">
+                                PNG, JPG, MP4 up to 10MB (Multiple allowed)
+                              </p>
+                            </label>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {filePreviews.map((preview, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 group shadow-2xs"
+                                  >
+                                    {uploadedFiles[idx]?.type.startsWith('image/') ? (
+                                      <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <video src={preview} className="w-full h-full object-cover" />
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveFile(idx)}
+                                      className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/70 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                                      title="Remove photo"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                ))}
+                                <label
+                                  htmlFor="missing-pet-upload"
+                                  className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-red-500 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors bg-white dark:bg-gray-800"
+                                  title="Add more photos"
+                                >
+                                  <Plus size={22} />
+                                  <span className="text-[11px] font-bold">Add More</span>
+                                </label>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Last Seen Information */}
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-black text-paw-navy uppercase tracking-widest">Last Seen</h3>
-
-                        <div className="grid md:grid-cols-2 gap-6">
+                      {/* Section 2: Last Seen Information */}
+                      <div className="bg-gray-50/70 dark:bg-gray-800/40 p-5 sm:p-7 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-5">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 font-black text-xs flex items-center justify-center">
+                            02
+                          </span>
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Location</label>
-                            <input
-                              required
-                              type="text"
-                              name="lastSeenLocation"
-                              value={formData.lastSeenLocation}
-                              onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="e.g. Pala-o Market, Iligan City"
-                            />
+                            <h3 className="text-lg font-black text-paw-navy dark:text-white tracking-tight">
+                              Last Seen Location & Timeline
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                              Pinpoint where and when your pet went missing
+                            </p>
                           </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-5">
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Date & Time</label>
-                            <input
-                              required
-                              type="datetime-local"
-                              name="lastSeenDate"
-                              value={formData.lastSeenDate}
-                              onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                            />
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Last Seen Location <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                required
+                                type="text"
+                                name="lastSeenLocation"
+                                value={formData.lastSeenLocation}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="e.g. Pala-o Market, near main entrance, Iligan City"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Date & Time Lost <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                required
+                                type="datetime-local"
+                                name="lastSeenDate"
+                                value={formData.lastSeenDate}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100"
+                              />
+                            </div>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Additional Description</label>
+                          <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                            Additional Notes & Context <span className="text-red-500">*</span>
+                          </label>
                           <textarea
                             required
                             name="description"
                             value={formData.description}
                             onChange={handleInputChange}
-                            className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold min-h-[120px]"
-                            placeholder="Any additional information that might help find your pet..."
+                            className="w-full p-4 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 min-h-[110px] placeholder-gray-400"
+                            placeholder="Provide any additional details: direction they ran, whether they are skittish or friendly, dietary needs, medical issues, or response to treats..."
                           />
                         </div>
                       </div>
 
-                      {/* Contact Information */}
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-black text-paw-navy uppercase tracking-widest">Contact Information</h3>
+                      {/* Section 3: Contact Information */}
+                      <div className="bg-gray-50/70 dark:bg-gray-800/40 p-5 sm:p-7 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-5">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 font-black text-xs flex items-center justify-center">
+                            03
+                          </span>
+                          <div>
+                            <h3 className="text-lg font-black text-paw-navy dark:text-white tracking-tight">
+                              Owner & Contact Details
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                              How rescuers and citizens can quickly contact you
+                            </p>
+                          </div>
+                        </div>
 
                         <div>
-                          <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Your Name</label>
-                          <input
-                            required
-                            type="text"
-                            name="contactName"
-                            value={formData.contactName}
-                            onChange={handleInputChange}
-                            className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                            placeholder="Full Name"
-                          />
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Phone Number</label>
+                          <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                            Your Full Name <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                               required
-                              type="tel"
-                              name="contactPhone"
-                              value={formData.contactPhone}
+                              type="text"
+                              name="contactName"
+                              value={formData.contactName}
                               onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="09XX XXX XXXX"
+                              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                              placeholder="Full Name"
                             />
                           </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-5">
                           <div>
-                            <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Email Address</label>
-                            <input
-                              required
-                              type="email"
-                              name="contactEmail"
-                              value={formData.contactEmail}
-                              onChange={handleInputChange}
-                              className="w-full p-4 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
-                              placeholder="your@email.com"
-                            />
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                required
+                                type="tel"
+                                name="contactPhone"
+                                value={formData.contactPhone}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="09XX XXX XXXX"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Email Address
+                            </label>
+                            <div className="relative">
+                              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                type="email"
+                                name="contactEmail"
+                                value={formData.contactEmail}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="your@email.com"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-4 p-6 bg-paw-orange/5 rounded-[32px] border-2 border-dashed border-paw-orange/20">
-                        <AlertTriangle className="text-paw-orange shrink-0 mt-1" size={24} />
-                        <p className="text-xs text-gray-600 font-bold leading-relaxed">
-                          By submitting, you agree to share this information with the ISF community to help locate your pet.
-                          We recommend contacting local barangays and animal shelters as well.
+                      {/* Community Alert Banner */}
+                      <div className="flex items-start gap-3.5 p-4 sm:p-5 bg-red-500/5 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-900/40">
+                        <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold leading-relaxed">
+                          By submitting, your missing pet notice will be published to the ISF community and broadcast to volunteers in your area. We also recommend notifying your nearest barangay outpost and local veterinary clinics.
                         </p>
                       </div>
+                    </form>
+                  </div>
 
+                  {/* Sticky Action Footer */}
+                  <div className="shrink-0 px-6 sm:px-10 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/95 dark:bg-gray-850/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 z-10">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                      <span>Broadcasted immediately to active rescuers</span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setReportModalOpen(false)}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-bold text-xs transition cursor-pointer"
+                      >
+                        Cancel
+                      </button>
                       <button
                         type="submit"
+                        form="missing-pet-form"
                         disabled={submitting}
-                        className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                        className="flex-1 sm:flex-initial bg-red-600 hover:bg-red-700 text-white font-black px-6 py-2.5 rounded-2xl shadow-md shadow-red-600/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer disabled:opacity-50 text-xs sm:text-sm"
                       >
-                        <Camera size={24} className={submitting ? 'animate-spin' : ''} />
-                        {submitting ? 'SUBMITTING REPORT...' : 'SUBMIT REPORT'}
+                        <Camera size={16} className={submitting ? 'animate-spin' : ''} />
+                        <span>{submitting ? 'Submitting Report...' : 'Submit Missing Report'}</span>
                       </button>
-                    </form>
-                  </>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-12"
-                  >
-                    <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                      <CheckCircle2 size={48} strokeWidth={3} />
                     </div>
-                    <h2 className="text-5xl font-black text-paw-navy mb-4">Report Submitted!</h2>
-                    <p className="text-gray-500 font-bold text-xl leading-relaxed max-w-md mx-auto">
-                      Your missing pet report has been posted. Our community will help spread the word and look for {formData.petName}.
-                    </p>
-                  </motion.div>
-                )}
-              </div>
+                  </div>
+                </>
+              ) : (
+                /* Report Submitted Success State */
+                <div className="p-8 sm:p-12 text-center my-auto">
+                  <div className="w-20 h-20 bg-green-100 dark:bg-green-950/80 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
+                    <CheckCircle2 size={42} strokeWidth={2.5} />
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-black text-paw-navy dark:text-white mb-3">
+                    Report Broadcasted!
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-300 font-medium text-base sm:text-lg leading-relaxed max-w-md mx-auto mb-6">
+                    Your missing pet report for <strong className="text-red-600">{formData.petName}</strong> has been posted. Our community network and volunteers will be on alert.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setReportModalOpen(false);
+                      setReportSubmitted(false);
+                    }}
+                    className="px-8 py-3 rounded-2xl bg-paw-navy hover:bg-paw-orange text-white font-black text-sm shadow-md transition cursor-pointer"
+                  >
+                    Done & Close
+                  </button>
+                </div>
+              )}
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
