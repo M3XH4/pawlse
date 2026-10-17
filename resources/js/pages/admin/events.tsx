@@ -23,6 +23,8 @@ interface EventModel {
     desc: string;
     keywords: string[] | null;
     status: string; // open, closed
+    assigned_tasks_count?: number;
+    assigned_tasks?: any[];
 }
 
 interface FeedingScheduleModel {
@@ -33,6 +35,8 @@ interface FeedingScheduleModel {
     volunteers: number;
     strays: number;
     status: string; // active, closed
+    assigned_tasks_count?: number;
+    assigned_tasks?: any[];
 }
 
 interface EventManagementProps {
@@ -52,6 +56,12 @@ export default function EventManagement({
     const [activeTab, setActiveTab] = useState<'events' | 'feeding'>('events');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'All');
+
+    // Attendees Roster Modal state
+    const [viewingAttendeesEvent, setViewingAttendeesEvent] = useState<{
+        title: string;
+        attendees: any[];
+    } | null>(null);
 
     // Event Modal state
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -329,6 +339,7 @@ export default function EventManagement({
                                             <th className="pb-3">Schedule</th>
                                             <th className="pb-3">Location</th>
                                             <th className="pb-3">Spots</th>
+                                            <th className="pb-3">Attendees</th>
                                             <th className="pb-3">Status</th>
                                             <th className="pb-3 text-right">Actions</th>
                                         </tr>
@@ -353,6 +364,20 @@ export default function EventManagement({
                                                 <td className="py-4 font-bold">{event.location}</td>
                                                 <td className="py-4">
                                                     {event.spots === null ? 'Unlimited' : `${event.spots} left`}
+                                                </td>
+                                                <td className="py-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setViewingAttendeesEvent({
+                                                            title: event.title,
+                                                            attendees: (event as any).assigned_tasks || []
+                                                        })}
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-bold text-paw-navy hover:border-paw-orange hover:bg-paw-orange/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 transition-colors"
+                                                        title="Click to view full attendee roster"
+                                                    >
+                                                        <Users size={13} className="text-paw-orange" />
+                                                        <span>{(event as any).assigned_tasks_count || 0} Registered</span>
+                                                    </button>
                                                 </td>
                                                 <td className="py-4">
                                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
@@ -421,6 +446,7 @@ export default function EventManagement({
                                             <th className="pb-3">Time</th>
                                             <th className="pb-3">Volunteers Needed</th>
                                             <th className="pb-3">Strays count</th>
+                                            <th className="pb-3">Joined Volunteers</th>
                                             <th className="pb-3">Status</th>
                                             <th className="pb-3 text-right">Actions</th>
                                         </tr>
@@ -433,6 +459,20 @@ export default function EventManagement({
                                                 <td className="py-4">{schedule.time}</td>
                                                 <td className="py-4 font-bold text-paw-blue">{schedule.volunteers}</td>
                                                 <td className="py-4 font-bold text-paw-orange">{schedule.strays}</td>
+                                                <td className="py-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setViewingAttendeesEvent({
+                                                            title: `Route: ${schedule.zone} (${schedule.day})`,
+                                                            attendees: (schedule as any).assigned_tasks || []
+                                                        })}
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-bold text-paw-navy hover:border-paw-orange hover:bg-paw-orange/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 transition-colors"
+                                                        title="Click to view joined volunteers"
+                                                    >
+                                                        <Users size={13} className="text-paw-orange" />
+                                                        <span>{(schedule as any).assigned_tasks_count || 0} Joined</span>
+                                                    </button>
+                                                </td>
                                                 <td className="py-4">
                                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                                                         schedule.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -694,6 +734,88 @@ export default function EventManagement({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Attendees Roster Modal */}
+            {viewingAttendeesEvent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-[28px] max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-800 max-h-[85vh] flex flex-col">
+                        <div className="flex justify-between items-center pb-4 border-b dark:border-gray-800">
+                            <div>
+                                <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
+                                    Attendees Roster
+                                </h3>
+                                <p className="text-xs text-gray-400 font-semibold mt-0.5">
+                                    {viewingAttendeesEvent.title} • {viewingAttendeesEvent.attendees.length} Total
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setViewingAttendeesEvent(null)}
+                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                            {viewingAttendeesEvent.attendees.length === 0 ? (
+                                <p className="text-center text-gray-400 font-bold py-12 text-sm">
+                                    No attendees registered yet for this activity.
+                                </p>
+                            ) : (
+                                viewingAttendeesEvent.attendees.map((att: any) => {
+                                    const isParticipant = att.role?.toLowerCase() === 'participant';
+                                    return (
+                                        <div
+                                            key={att.id}
+                                            className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-gray-800"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-paw-orange/15 text-paw-orange flex items-center justify-center font-bold text-sm shrink-0">
+                                                    {att.user?.name ? att.user.name.charAt(0).toUpperCase() : 'U'}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-[#0B2340] dark:text-white">
+                                                        {att.user?.name || 'Unknown User'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400">
+                                                        {att.user?.email || 'No email provided'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                                                        isParticipant
+                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200'
+                                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200'
+                                                    }`}
+                                                >
+                                                    {att.role}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-gray-400">
+                                                    {att.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="pt-3 border-t dark:border-gray-800 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setViewingAttendeesEvent(null)}
+                                className="px-5 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 cursor-pointer"
+                            >
+                                Close Roster
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

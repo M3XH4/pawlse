@@ -1,5 +1,5 @@
-import { ClipboardList, Calendar, MapPin, Clock, Utensils } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2 } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -35,6 +35,16 @@ interface AssignedTasksProps {
 
 export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
     const activeTasks = tasks?.data || [];
+
+    const handleCancelTask = (taskId: number) => {
+        if (!confirm('Are you sure you want to cancel this task assignment?')) {
+            return;
+        }
+
+        router.delete(`/account/volunteer/assigned-tasks/${taskId}`, {
+            preserveScroll: true,
+        });
+    };
 
     return (
         <DashboardSectionPage
@@ -86,9 +96,22 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                         </div>
                                     </div>
                                 </div>
-                                <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1 rounded-full self-start sm:self-center">
-                                    {task.status}
-                                </span>
+                                <div className="flex items-center gap-2 self-start sm:self-center">
+                                    <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1 rounded-full">
+                                        {task.status}
+                                    </span>
+                                    {task.status === 'pending' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCancelTask(task.id)}
+                                            className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                            title="Cancel this assignment"
+                                        >
+                                            <Trash2 size={12} />
+                                            <span>Leave</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </DashboardCard>
                     ))}

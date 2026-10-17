@@ -121,15 +121,108 @@ test('unauthenticated user is redirected to login when joining event', function 
     $response->assertRedirect(route('login'));
 });
 
-test('regular non-volunteer user cannot join event directly', function () {
+test('regular non-volunteer user can join event as participant', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $event = Event::factory()->create(['status' => 'open', 'spots' => 10]);
+
+    $response = $this->actingAs($user)
+        ->post(route('events.join', $event), ['join_as' => 'participant']);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('assigned_tasks', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'role' => 'Participant',
+        'status' => 'pending',
+    ]);
+    expect($event->fresh()->spots)->toBe(9);
+});
+
+test('regular non-volunteer user cannot join event as volunteer', function () {
     $user = User::factory()->create(['role' => Role::User->value]);
     $event = Event::factory()->create(['status' => 'open']);
 
     $response = $this->actingAs($user)
-        ->post(route('events.join', $event));
+        ->post(route('events.join', $event), ['join_as' => 'volunteer']);
 
-    $response->assertRedirect(route('home'));
-    $response->assertSessionHasErrors(['error']);
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('assigned_tasks', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+    ]);
+});
+
+test('regular non-volunteer user cannot join feeding route', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $schedule = FeedingSchedule::factory()->create(['status' => 'active']);
+
+    $response = $this->actingAs($user)
+        ->post(route('feeding-schedules.join', $schedule));
+
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('assigned_tasks', [
+        'user_id' => $user->id,
+        'feeding_schedule_id' => $schedule->id,
+    ]);
+});
+
+test('volunteer can choose to join event as participant or as volunteer', function () {
+    $volunteer = User::factory()->volunteer()->create();
+    $event = Event::factory()->create(['status' => 'open', 'spots' => 10]);
+
+    $response = $this->actingAs($volunteer)
+        ->post(route('events.join', $event), ['join_as' => 'participant']);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('assigned_tasks', [
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'role' => 'Participant',
+        'status' => 'pending',
+    ]);
+});
+
+test('user can leave an event and restore spots', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $event = Event::factory()->create(['status' => 'open', 'spots' => 5]);
+
+    AssignedTask::factory()->create([
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'role' => 'Participant',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post(route('events.leave', $event));
+
+    $response->assertRedirect();
+    $this->assertDatabaseMissing('assigned_tasks', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+    ]);
+    expect($event->fresh()->spots)->toBe(6);
+});
+
+test('user can view joined events on user dashboard tab', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $event = Event::factory()->create(['status' => 'open']);
+
+    AssignedTask::factory()->create([
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'role' => 'Participant',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('account.user.joined-events'));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('user/joined-events')
+            ->has('tasks.data', 1)
+        );
 });
 
 test('volunteer can join an active feeding schedule route', function () {

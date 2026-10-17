@@ -34,7 +34,11 @@ class EventManagementController extends Controller
                 });
             });
 
-        $events = $eventsQuery->latest()->paginate(10, ['*'], 'events_page')->withQueryString();
+        $events = $eventsQuery->withCount('assignedTasks')
+            ->with(['assignedTasks.user'])
+            ->latest()
+            ->paginate(10, ['*'], 'events_page')
+            ->withQueryString();
 
         // Feeding Schedules Query
         $feedingQuery = FeedingSchedule::query()
@@ -45,7 +49,11 @@ class EventManagementController extends Controller
                 });
             });
 
-        $feedingSchedules = $feedingQuery->latest()->paginate(10, ['*'], 'feeding_page')->withQueryString();
+        $feedingSchedules = $feedingQuery->withCount('assignedTasks')
+            ->with(['assignedTasks.user'])
+            ->latest()
+            ->paginate(10, ['*'], 'feeding_page')
+            ->withQueryString();
 
         return Inertia::render('admin/events', [
             'events' => $events,

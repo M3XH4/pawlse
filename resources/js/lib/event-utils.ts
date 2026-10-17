@@ -33,13 +33,32 @@ export function parseEventDate(dateString?: string | null): Date | null {
         if (!isNaN(parsed.getTime())) return parsed;
 
         // Try standard text like "SEP 22" or "SEP 22, 2026"
-        const textMatch = cleanStr.match(/^([A-Za-z]+)\s+(\d{1,2})(?:,?\s*(\d{4}))?/);
+        const textMatch = cleanStr.match(
+            /^([A-Za-z]+)\s+(\d{1,2})(?:,?\s*(\d{4}))?/,
+        );
         if (textMatch) {
-            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            const monthIdx = monthNames.findIndex(m => textMatch[1].toLowerCase().startsWith(m));
+            const monthNames = [
+                'jan',
+                'feb',
+                'mar',
+                'apr',
+                'may',
+                'jun',
+                'jul',
+                'aug',
+                'sep',
+                'oct',
+                'nov',
+                'dec',
+            ];
+            const monthIdx = monthNames.findIndex((m) =>
+                textMatch[1].toLowerCase().startsWith(m),
+            );
             if (monthIdx !== -1) {
                 const day = parseInt(textMatch[2], 10);
-                const year = textMatch[3] ? parseInt(textMatch[3], 10) : new Date().getFullYear();
+                const year = textMatch[3]
+                    ? parseInt(textMatch[3], 10)
+                    : new Date().getFullYear();
                 return new Date(year, monthIdx, day);
             }
         }
@@ -52,7 +71,10 @@ export function parseEventDate(dateString?: string | null): Date | null {
  * Formats an event date string to a human-friendly string.
  * Example: "Wednesday, Sep 2, 2026" or "Sep 2, 2026"
  */
-export function formatEventDate(dateString?: string | null, format: 'full' | 'short' | 'weekday' = 'full'): string {
+export function formatEventDate(
+    dateString?: string | null,
+    format: 'full' | 'short' | 'weekday' = 'full',
+): string {
     if (!dateString) return 'Date TBA';
 
     const date = parseEventDate(dateString);
@@ -63,7 +85,7 @@ export function formatEventDate(dateString?: string | null, format: 'full' | 'sh
             weekday: 'short',
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     }
 
@@ -71,7 +93,7 @@ export function formatEventDate(dateString?: string | null, format: 'full' | 'sh
         return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     }
 
@@ -79,14 +101,16 @@ export function formatEventDate(dateString?: string | null, format: 'full' | 'sh
         weekday: 'long',
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
     });
 }
 
 /**
  * Returns month, day, year, weekday and relative time status for cards and badges.
  */
-export function getEventDateBadge(dateString?: string | null): EventDateBadgeInfo {
+export function getEventDateBadge(
+    dateString?: string | null,
+): EventDateBadgeInfo {
     const date = parseEventDate(dateString);
 
     if (!date) {
@@ -96,11 +120,13 @@ export function getEventDateBadge(dateString?: string | null): EventDateBadgeInf
             year: '',
             weekday: '',
             fullDate: dateString || 'TBA',
-            isPast: false
+            isPast: false,
         };
     }
 
-    const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+    const month = date
+        .toLocaleDateString('en-US', { month: 'short' })
+        .toUpperCase();
     const day = String(date.getDate()).padStart(2, '0');
     const year = String(date.getFullYear());
     const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -108,12 +134,16 @@ export function getEventDateBadge(dateString?: string | null): EventDateBadgeInf
         weekday: 'short',
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
     });
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const eventDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+    );
     const diffTime = eventDay.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -138,7 +168,7 @@ export function getEventDateBadge(dateString?: string | null): EventDateBadgeInf
         weekday,
         fullDate,
         relativeBadge,
-        isPast
+        isPast,
     };
 }
 
@@ -192,7 +222,9 @@ export function generateGoogleCalendarUrl(event: {
             } else {
                 // Default 2 hours later
                 const startHour = parseInt(startTimeStr.slice(0, 2), 10);
-                endTimeStr = String(Math.min(startHour + 2, 23)).padStart(2, '0') + startTimeStr.slice(2);
+                endTimeStr =
+                    String(Math.min(startHour + 2, 23)).padStart(2, '0') +
+                    startTimeStr.slice(2);
             }
         }
     }
@@ -209,14 +241,23 @@ export function generateGoogleCalendarUrl(event: {
         text: `Pawlse Event: ${event.title}`,
         dates: `${startIso}/${endIso}`,
         details: `${event.desc || ''}\n\nJoin us and support the strays of Iligan!\nMore info: ${window.location.origin}/events`,
-        location: event.location || 'Iligan City'
+        location: event.location || 'Iligan City',
     });
 
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 export interface ShareOptions {
-    platform: 'facebook' | 'twitter' | 'whatsapp' | 'telegram' | 'instagram' | 'copy' | 'calendar' | 'native';
+    platform:
+        | 'facebook'
+        | 'twitter'
+        | 'whatsapp'
+        | 'telegram'
+        | 'instagram'
+        | 'copy'
+        | 'calendar'
+        | 'native'
+        | 'email';
     event: {
         id: number;
         title: string;
@@ -233,14 +274,19 @@ export interface ShareOptions {
 /**
  * Builds a structured, complete post string with Title, Category, Date, Time, Location, Description & Link.
  */
-export function buildEventPostContent(event: ShareOptions['event'], url: string): {
+export function buildEventPostContent(
+    event: ShareOptions['event'],
+    url: string,
+): {
     fullPost: string;
     shortSummary: string;
     headline: string;
 } {
     const formattedDate = formatEventDate(event.date, 'weekday');
     const timeStr = event.time ? formatEventTime(event.time) : 'Time TBA';
-    const categoryTag = event.category ? `#${event.category.replace(/\s+/g, '')}` : '#CommunityEvent';
+    const categoryTag = event.category
+        ? `#${event.category.replace(/\s+/g, '')}`
+        : '#CommunityEvent';
 
     const lines = [
         `📢 ${event.title.toUpperCase()}`,
@@ -259,7 +305,7 @@ export function buildEventPostContent(event: ShareOptions['event'], url: string)
         '🐾 Join us in supporting local animal rescue efforts in Iligan!',
         `🔗 Event link: ${url}`,
         '',
-        `#Pawlse #AnimalRescue #IliganCity ${categoryTag} #AdoptDontShop`
+        `#Pawlse #AnimalRescue #IliganCity ${categoryTag} #AdoptDontShop`,
     );
 
     const fullPost = lines.join('\n');
@@ -272,8 +318,16 @@ export function buildEventPostContent(event: ShareOptions['event'], url: string)
 /**
  * Handle social media sharing, link copying, and calendar integration.
  */
-export async function shareEvent({ platform, event, customUrl }: ShareOptions): Promise<void> {
-    const baseUrl = customUrl || (typeof window !== 'undefined' ? `${window.location.origin}/events?event=${event.id}` : '');
+export async function shareEvent({
+    platform,
+    event,
+    customUrl,
+}: ShareOptions): Promise<void> {
+    const baseUrl =
+        customUrl ||
+        (typeof window !== 'undefined'
+            ? `${window.location.origin}/events?event=${event.id}`
+            : '');
     const { fullPost, shortSummary } = buildEventPostContent(event, baseUrl);
 
     const encodedUrl = encodeURIComponent(baseUrl);
@@ -284,34 +338,53 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
             try {
                 await navigator.clipboard.writeText(fullPost);
                 toast.success('Post text copied to clipboard!', {
-                    description: 'Opening Facebook. Simply paste (Ctrl+V) into your post to include full details!'
+                    description:
+                        'Opening Facebook. Simply paste (Ctrl+V) into your post to include full details!',
                 });
             } catch {
                 toast.success('Opening Facebook share...');
             }
             const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedFullPost}`;
-            window.open(fbUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
+            window.open(
+                fbUrl,
+                '_blank',
+                'width=650,height=550,noopener,noreferrer',
+            );
             break;
         }
 
         case 'twitter': {
-            const tweetText = encodeURIComponent(`🐾 ${event.title}\n🗓 ${formatEventDate(event.date, 'short')} | ⏰ ${event.time || 'TBA'}\n📍 ${event.location}\n\nJoin us!`);
+            const tweetText = encodeURIComponent(
+                `🐾 ${event.title}\n🗓 ${formatEventDate(event.date, 'short')} | ⏰ ${event.time || 'TBA'}\n📍 ${event.location}\n\nJoin us!`,
+            );
             const twUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodedUrl}&hashtags=Pawlse,AnimalRescue,IliganCity`;
-            window.open(twUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
+            window.open(
+                twUrl,
+                '_blank',
+                'width=650,height=550,noopener,noreferrer',
+            );
             toast.success('Opening X (Twitter) share...');
             break;
         }
 
         case 'whatsapp': {
             const waUrl = `https://api.whatsapp.com/send?text=${encodedFullPost}`;
-            window.open(waUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
+            window.open(
+                waUrl,
+                '_blank',
+                'width=650,height=550,noopener,noreferrer',
+            );
             toast.success('Opening WhatsApp...');
             break;
         }
 
         case 'telegram': {
             const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedFullPost}`;
-            window.open(tgUrl, '_blank', 'width=650,height=550,noopener,noreferrer');
+            window.open(
+                tgUrl,
+                '_blank',
+                'width=650,height=550,noopener,noreferrer',
+            );
             toast.success('Opening Telegram...');
             break;
         }
@@ -320,7 +393,8 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
             try {
                 await navigator.clipboard.writeText(fullPost);
                 toast.success('Full event post copied to clipboard!', {
-                    description: 'Ready to paste into your Instagram caption, story, or DM.'
+                    description:
+                        'Ready to paste into your Instagram caption, story, or DM.',
                 });
             } catch (e) {
                 toast.error('Failed to copy event details.');
@@ -335,21 +409,39 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
             break;
         }
 
+        case 'email': {
+            const subject = encodeURIComponent(
+                `🐾 Pawlse Event: ${event.title}`,
+            );
+            const body = encodeURIComponent(
+                `${fullPost}\n\nEvent Link: ${baseUrl}`,
+            );
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            toast.success('Opening your email composer...');
+            break;
+        }
+
         case 'native': {
             if (navigator.share) {
                 try {
                     const shareData: ShareData = {
                         title: event.title,
                         text: fullPost,
-                        url: baseUrl
+                        url: baseUrl,
                     };
 
                     if (event.img && navigator.canShare) {
                         try {
-                            const res = await fetch(event.img, { mode: 'cors' });
+                            const res = await fetch(event.img, {
+                                mode: 'cors',
+                            });
                             if (res.ok) {
                                 const blob = await res.blob();
-                                const file = new File([blob], `event-${event.id}.jpg`, { type: blob.type || 'image/jpeg' });
+                                const file = new File(
+                                    [blob],
+                                    `event-${event.id}.jpg`,
+                                    { type: blob.type || 'image/jpeg' },
+                                );
                                 if (navigator.canShare({ files: [file] })) {
                                     shareData.files = [file];
                                 }
@@ -379,7 +471,8 @@ export async function shareEvent({ platform, event, customUrl }: ShareOptions): 
             try {
                 await navigator.clipboard.writeText(fullPost);
                 toast.success('Full event post copied to clipboard!', {
-                    description: 'Title, time, date, location, and description are copied and ready to paste.'
+                    description:
+                        'Title, time, date, location, and description are copied and ready to paste.',
                 });
             } catch (e) {
                 toast.error('Failed to copy event post.');

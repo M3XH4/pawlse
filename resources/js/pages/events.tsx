@@ -19,7 +19,8 @@ import {
     Users,
     CalendarPlus,
     ExternalLink,
-    Sparkles
+    Sparkles,
+    Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -34,7 +35,7 @@ import {
     formatEventTime,
     getEventDateBadge,
     generateGoogleCalendarUrl,
-    shareEvent
+    shareEvent,
 } from '@/lib/event-utils';
 
 interface PaginatedData<T> {
@@ -83,6 +84,7 @@ interface EventsProps {
     };
     joinedEventIds: number[];
     joinedScheduleIds: number[];
+    joinedEventRoles?: Record<number, string>;
     sharedEvent?: EventModel | null;
     auth?: {
         user?: any;
@@ -98,40 +100,51 @@ const SEARCH_SUGGESTIONS = [
     { keyword: 'volunteer', description: 'Volunteer opportunities' },
 ];
 
-const categoryConfig: Record<string, { bg: string; text: string; badgeBg: string; icon: any }> = {
+const categoryConfig: Record<
+    string,
+    { bg: string; text: string; badgeBg: string; icon: any }
+> = {
     Adoption: {
         bg: 'bg-paw-yellow',
         text: 'text-amber-700',
         badgeBg: 'bg-amber-100 text-amber-800 border-amber-200',
-        icon: Star
+        icon: Star,
     },
     Medical: {
         bg: 'bg-paw-blue',
         text: 'text-blue-700',
         badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
-        icon: ShieldPlus
+        icon: ShieldPlus,
     },
     Feeding: {
         bg: 'bg-paw-orange',
         text: 'text-orange-700',
         badgeBg: 'bg-orange-100 text-orange-800 border-orange-200',
-        icon: Heart
+        icon: Heart,
     },
     Social: {
         bg: 'bg-paw-green',
         text: 'text-emerald-700',
         badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        icon: Users
+        icon: Users,
     },
     Community: {
         bg: 'bg-paw-orange',
         text: 'text-orange-700',
         badgeBg: 'bg-orange-100 text-orange-800 border-orange-200',
-        icon: Heart
+        icon: Heart,
     },
 };
 
-export default function Events({ events, feedingSchedules, filters, joinedEventIds, joinedScheduleIds, auth }: EventsProps) {
+export default function Events({
+    events,
+    feedingSchedules,
+    filters,
+    joinedEventIds,
+    joinedScheduleIds,
+    joinedEventRoles = {},
+    auth,
+}: EventsProps) {
     const user = auth?.user;
     const isVolunteer = user?.role === 'volunteer';
     const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
@@ -148,7 +161,9 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
             const params = new URLSearchParams(window.location.search);
             const eventIdParam = params.get('event') || params.get('id');
             if (eventIdParam && events?.data) {
-                const target = events.data.find(e => String(e.id) === eventIdParam);
+                const target = events.data.find(
+                    (e) => String(e.id) === eventIdParam,
+                );
                 if (target) {
                     setSelectedEvent(target);
                 }
@@ -156,15 +171,37 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
         }
     }, [events?.data]);
 
+    // Lock body scroll and close on Escape key when an event details modal is open
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setSelectedEvent(null);
+            }
+        };
+
+        if (selectedEvent) {
+            window.addEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [selectedEvent]);
+
     // Apply search and filter routing
     const updateSearchAndFilter = (newSearch: string, newCategory: string) => {
-        router.get('/events', {
-            search: newSearch,
-            category: newCategory,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/events',
+            {
+                search: newSearch,
+                category: newCategory,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleCategoryChange = (cat: string) => {
@@ -188,28 +225,59 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
         if (!searchQuery.trim()) return [];
         const query = searchQuery.toLowerCase();
         return SEARCH_SUGGESTIONS.filter(
-            s => s.keyword.toLowerCase().includes(query) || s.description.toLowerCase().includes(query)
+            (s) =>
+                s.keyword.toLowerCase().includes(query) ||
+                s.description.toLowerCase().includes(query),
         ).slice(0, 5);
     }, [searchQuery]);
 
-    const handleJoinEvent = (eventId: number) => {
+    const handleJoinEvent = (
+        eventId: number,
+        joinAs: 'participant' | 'volunteer' = 'participant',
+    ) => {
         if (!user) {
             router.get('/login');
             return;
         }
 
-        if (!isVolunteer) {
+        if (joinAs === 'volunteer' && !isVolunteer) {
             router.get('/volunteer', {
-                selectedEvent: events.data.find(e => e.id === eventId) as any,
+                selectedEvent: events.data.find((e) => e.id === eventId) as any,
             });
             return;
         }
 
-        router.post(`/events/${eventId}/join`, {}, {
-            onSuccess: () => {
-                setSelectedEvent(null);
-            }
-        });
+        router.post(
+            `/events/${eventId}/join`,
+            { join_as: joinAs },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelectedEvent(null);
+                },
+            },
+        );
+    };
+
+    const handleLeaveEvent = (eventId: number) => {
+        if (
+            !confirm(
+                'Are you sure you want to cancel your attendance for this event? Your spot will be released.',
+            )
+        ) {
+            return;
+        }
+
+        router.post(
+            `/events/${eventId}/leave`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelectedEvent(null);
+                },
+            },
+        );
     };
 
     const handleJoinFeeding = (scheduleId: number) => {
@@ -219,21 +287,45 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
         }
 
         if (!isVolunteer) {
-            const feeding = feedingSchedules.data.find(f => f.id === scheduleId);
-            router.get('/volunteer', {
-                selectedEvent: {
-                    type: 'feeding',
-                    zone: feeding?.zone,
-                    day: feeding?.day,
-                    time: feeding?.time,
-                    volunteers: feeding?.volunteers,
-                    strays: feeding?.strays,
-                },
-            });
+            if (
+                confirm(
+                    'Feeding routes require volunteer certification. Would you like to apply as a volunteer now?',
+                )
+            ) {
+                const feeding = feedingSchedules.data.find(
+                    (f) => f.id === scheduleId,
+                );
+                router.get('/volunteer', {
+                    selectedEvent: {
+                        type: 'feeding',
+                        zone: feeding?.zone,
+                        day: feeding?.day,
+                        time: feeding?.time,
+                        volunteers: feeding?.volunteers,
+                        strays: feeding?.strays,
+                    },
+                });
+            }
             return;
         }
 
-        router.post(`/feeding-schedules/${scheduleId}/join`);
+        router.post(
+            `/feeding-schedules/${scheduleId}/join`,
+            {},
+            { preserveScroll: true },
+        );
+    };
+
+    const handleLeaveFeeding = (scheduleId: number) => {
+        if (!confirm('Are you sure you want to leave this feeding route?')) {
+            return;
+        }
+
+        router.post(
+            `/feeding-schedules/${scheduleId}/leave`,
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const toggleBookmark = (e: React.MouseEvent, event: EventModel) => {
@@ -246,7 +338,7 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                 type: 'event',
                 title: event.title,
                 image: event.img,
-                data: event
+                data: event,
             });
         }
     };
@@ -255,13 +347,13 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
     const Pagination = ({ links }: { links: any[] }) => {
         if (!links || links.length <= 3) return null;
         return (
-            <div className="flex justify-center items-center gap-2 mt-12">
+            <div className="mt-12 flex items-center justify-center gap-2">
                 {links.map((link, idx) => {
                     if (link.url === null) {
                         return (
                             <span
                                 key={idx}
-                                className="px-4 py-2 text-gray-400 bg-gray-100 rounded-xl text-sm font-bold cursor-not-allowed"
+                                className="cursor-not-allowed rounded-xl bg-gray-100 px-4 py-2 text-sm font-bold text-gray-400"
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         );
@@ -270,10 +362,10 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                         <Link
                             key={idx}
                             href={link.url}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                            className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${
                                 link.active
                                     ? 'bg-paw-orange text-white'
-                                    : 'bg-white text-paw-navy hover:bg-paw-orange/10 border border-gray-200 shadow-sm'
+                                    : 'border border-gray-200 bg-white text-paw-navy shadow-sm hover:bg-paw-orange/10'
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
@@ -285,22 +377,62 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
 
     return (
         <div className="min-h-screen bg-paw-bg font-quicksand selection:bg-paw-orange/20 selection:text-paw-orange">
-            <Head title={selectedEvent ? `${selectedEvent.title} - Pawlse Events` : 'Upcoming Events & Drives - Pawlse'}>
+            <Head
+                title={
+                    selectedEvent
+                        ? `${selectedEvent.title} - Pawlse Events`
+                        : 'Upcoming Events & Drives - Pawlse'
+                }
+            >
                 {selectedEvent ? (
                     <>
-                        <meta name="description" content={selectedEvent.desc || `${selectedEvent.title} on ${selectedEvent.date} at ${selectedEvent.location}`} />
-                        <meta property="og:title" content={`${selectedEvent.title} - Pawlse`} />
-                        <meta property="og:description" content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`} />
+                        <meta
+                            name="description"
+                            content={
+                                selectedEvent.desc ||
+                                `${selectedEvent.title} on ${selectedEvent.date} at ${selectedEvent.location}`
+                            }
+                        />
+                        <meta
+                            property="og:title"
+                            content={`${selectedEvent.title} - Pawlse`}
+                        />
+                        <meta
+                            property="og:description"
+                            content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`}
+                        />
                         <meta property="og:image" content={selectedEvent.img} />
-                        <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/events?event=${selectedEvent.id}` : ''} />
-                        <meta name="twitter:card" content="summary_large_image" />
-                        <meta name="twitter:title" content={`${selectedEvent.title} - Pawlse`} />
-                        <meta name="twitter:description" content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`} />
-                        <meta name="twitter:image" content={selectedEvent.img} />
+                        <meta
+                            property="og:url"
+                            content={
+                                typeof window !== 'undefined'
+                                    ? `${window.location.origin}/events?event=${selectedEvent.id}`
+                                    : ''
+                            }
+                        />
+                        <meta
+                            name="twitter:card"
+                            content="summary_large_image"
+                        />
+                        <meta
+                            name="twitter:title"
+                            content={`${selectedEvent.title} - Pawlse`}
+                        />
+                        <meta
+                            name="twitter:description"
+                            content={`${formatEventDate(selectedEvent.date, 'weekday')} at ${selectedEvent.location} - ${selectedEvent.desc || ''}`}
+                        />
+                        <meta
+                            name="twitter:image"
+                            content={selectedEvent.img}
+                        />
                     </>
                 ) : (
                     <>
-                        <meta name="description" content="Discover upcoming community animal rescue events, feeding operations, and free vaccination drives in Iligan City." />
+                        <meta
+                            name="description"
+                            content="Discover upcoming community animal rescue events, feeding operations, and free vaccination drives in Iligan City."
+                        />
                     </>
                 )}
             </Head>
@@ -308,81 +440,120 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
             <Header />
 
             <main className="py-12 pb-24">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6">
+                    <div className="mb-10 flex flex-col items-start justify-between gap-6 md:mb-16 md:flex-row md:items-end">
                         <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-3.5 py-1.5 rounded-full mb-3 border border-paw-orange/20">
-                                <Sparkles size={14} className="text-paw-orange" />
-                                <span className="text-paw-orange font-black uppercase tracking-widest text-xs">Community Initiatives</span>
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-paw-orange/20 bg-paw-orange/10 px-3.5 py-1.5">
+                                <Sparkles
+                                    size={14}
+                                    className="text-paw-orange"
+                                />
+                                <span className="text-xs font-black tracking-widest text-paw-orange uppercase">
+                                    Community Initiatives
+                                </span>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-paw-navy mb-4 leading-tight tracking-tight">
-                                Upcoming <span className="text-paw-orange">Events</span> & Drives
+                            <h1 className="mb-4 text-3xl leading-tight font-black tracking-tight text-paw-navy sm:text-4xl md:text-5xl">
+                                Upcoming{' '}
+                                <span className="text-paw-orange">Events</span>{' '}
+                                & Drives
                             </h1>
-                            <p className="text-gray-500 font-bold text-sm sm:text-base md:text-lg leading-relaxed">
-                                From feeding operations to free medical & vaccination drives, there are plenty of meaningful ways
-                                to get involved and protect our furry friends in Iligan.
+                            <p className="text-sm leading-relaxed font-bold text-gray-500 sm:text-base md:text-lg">
+                                From feeding operations to free medical &
+                                vaccination drives, there are plenty of
+                                meaningful ways to get involved and protect our
+                                furry friends in Iligan.
                             </p>
                         </div>
 
                         {/* Search Input with Autocomplete */}
-                        <div className="flex gap-4 w-full md:w-auto">
+                        <div className="flex w-full gap-4 md:w-auto">
                             <div className="relative flex-1 md:w-84">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <Search
+                                    className="absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400"
+                                    size={18}
+                                />
                                 <input
                                     type="text"
                                     placeholder="Search events, locations, keywords..."
                                     value={searchQuery}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    onChange={(e) =>
+                                        handleSearchChange(e.target.value)
+                                    }
                                     onFocus={() => setShowSuggestions(true)}
-                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                    className="w-full pl-11 pr-10 py-3.5 md:py-4 bg-white rounded-2xl outline-none focus:border-paw-orange border-2 border-transparent transition-all shadow-xl shadow-paw-navy/5 font-bold text-sm text-paw-navy placeholder:text-gray-400"
+                                    onBlur={() =>
+                                        setTimeout(
+                                            () => setShowSuggestions(false),
+                                            200,
+                                        )
+                                    }
+                                    className="w-full rounded-2xl border-2 border-transparent bg-white py-3.5 pr-10 pl-11 text-sm font-bold text-paw-navy shadow-xl shadow-paw-navy/5 transition-all outline-none placeholder:text-gray-400 focus:border-paw-orange md:py-4"
                                 />
                                 {searchQuery && (
                                     <button
                                         onClick={() => handleSearchChange('')}
-                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-paw-orange transition-colors p-1"
+                                        className="absolute top-1/2 right-3.5 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-paw-orange"
                                     >
                                         <X size={16} />
                                     </button>
                                 )}
 
                                 <AnimatePresence>
-                                    {showSuggestions && filteredSuggestions.length > 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border-2 border-gray-100 overflow-hidden z-50 font-bold text-gray-700"
-                                        >
-                                            {filteredSuggestions.map((suggestion, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() => handleSuggestionClick(suggestion.keyword)}
-                                                    className="w-full px-4 py-3 text-left hover:bg-paw-orange/10 transition-colors border-b border-gray-100 last:border-0 cursor-pointer"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Search size={15} className="text-paw-orange shrink-0" />
-                                                        <div>
-                                                            <p className="font-black text-paw-navy text-sm">{suggestion.keyword}</p>
-                                                            <p className="text-xs font-bold text-gray-500">{suggestion.description}</p>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </motion.div>
-                                    )}
+                                    {showSuggestions &&
+                                        filteredSuggestions.length > 0 && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-2xl border-2 border-gray-100 bg-white font-bold text-gray-700 shadow-2xl"
+                                            >
+                                                {filteredSuggestions.map(
+                                                    (suggestion, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() =>
+                                                                handleSuggestionClick(
+                                                                    suggestion.keyword,
+                                                                )
+                                                            }
+                                                            className="w-full cursor-pointer border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 hover:bg-paw-orange/10"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <Search
+                                                                    size={15}
+                                                                    className="shrink-0 text-paw-orange"
+                                                                />
+                                                                <div>
+                                                                    <p className="text-sm font-black text-paw-navy">
+                                                                        {
+                                                                            suggestion.keyword
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-gray-500">
+                                                                        {
+                                                                            suggestion.description
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    ),
+                                                )}
+                                            </motion.div>
+                                        )}
                                 </AnimatePresence>
                             </div>
                         </div>
                     </div>
 
                     {/* Section Switcher Tabs */}
-                    <div className="flex gap-4 mb-8 border-b-2 border-gray-200">
+                    <div className="mb-8 flex gap-4 border-b-2 border-gray-200">
                         <button
                             onClick={() => setActiveTab('events')}
-                            className={`px-6 py-4 font-black text-base md:text-lg transition-all relative cursor-pointer flex items-center gap-2 ${
-                                activeTab === 'events' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            className={`relative flex cursor-pointer items-center gap-2 px-6 py-4 text-base font-black transition-all md:text-lg ${
+                                activeTab === 'events'
+                                    ? 'text-paw-orange'
+                                    : 'text-gray-400 hover:text-paw-navy'
                             }`}
                         >
                             <Calendar size={20} />
@@ -390,14 +561,16 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                             {activeTab === 'events' && (
                                 <motion.div
                                     layoutId="activeTab"
-                                    className="absolute bottom-0 left-0 right-0 h-1 bg-paw-orange rounded-t-full"
+                                    className="absolute right-0 bottom-0 left-0 h-1 rounded-t-full bg-paw-orange"
                                 />
                             )}
                         </button>
                         <button
                             onClick={() => setActiveTab('feeding')}
-                            className={`px-6 py-4 font-black text-base md:text-lg transition-all relative flex items-center gap-2 cursor-pointer ${
-                                activeTab === 'feeding' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            className={`relative flex cursor-pointer items-center gap-2 px-6 py-4 text-base font-black transition-all md:text-lg ${
+                                activeTab === 'feeding'
+                                    ? 'text-paw-orange'
+                                    : 'text-gray-400 hover:text-paw-navy'
                             }`}
                         >
                             <Utensils size={20} />
@@ -405,7 +578,7 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                             {activeTab === 'feeding' && (
                                 <motion.div
                                     layoutId="activeTab"
-                                    className="absolute bottom-0 left-0 right-0 h-1 bg-paw-orange rounded-t-full"
+                                    className="absolute right-0 bottom-0 left-0 h-1 rounded-t-full bg-paw-orange"
                                 />
                             )}
                         </button>
@@ -413,17 +586,24 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
 
                     {/* Category Filter Pills */}
                     {activeTab === 'events' && (
-                        <div className="flex gap-2.5 md:gap-3 mb-8 md:mb-12 overflow-x-auto pb-4 scrollbar-hide">
-                            {['All', 'Feeding', 'Medical', 'Social', 'Adoption'].map((f) => {
-                                const isSelected = filter.toLowerCase() === f.toLowerCase();
+                        <div className="scrollbar-hide mb-8 flex gap-2.5 overflow-x-auto pb-4 md:mb-12 md:gap-3">
+                            {[
+                                'All',
+                                'Feeding',
+                                'Medical',
+                                'Social',
+                                'Adoption',
+                            ].map((f) => {
+                                const isSelected =
+                                    filter.toLowerCase() === f.toLowerCase();
                                 return (
                                     <button
                                         key={f}
                                         onClick={() => handleCategoryChange(f)}
-                                        className={`px-5 py-2.5 md:px-7 md:py-3 rounded-2xl font-black text-xs md:text-sm transition-all whitespace-nowrap cursor-pointer shadow-sm ${
+                                        className={`cursor-pointer rounded-2xl px-5 py-2.5 text-xs font-black whitespace-nowrap shadow-sm transition-all md:px-7 md:py-3 md:text-sm ${
                                             isSelected
-                                                ? 'bg-paw-orange text-white shadow-xl shadow-paw-orange/25 scale-105'
-                                                : 'bg-white text-paw-navy hover:bg-paw-orange/10 border border-gray-100 hover:border-paw-orange/30'
+                                                ? 'scale-105 bg-paw-orange text-white shadow-xl shadow-paw-orange/25'
+                                                : 'border border-gray-100 bg-white text-paw-navy hover:border-paw-orange/30 hover:bg-paw-orange/10'
                                         }`}
                                     >
                                         {f.toUpperCase()}
@@ -437,20 +617,31 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                     {activeTab === 'events' && (
                         <>
                             {events.data.length === 0 ? (
-                                <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                                    <Search size={56} className="mx-auto text-gray-300 mb-4" />
-                                    <h3 className="text-2xl font-black text-paw-navy mb-2">No Events Found</h3>
-                                    <p className="text-gray-500 font-bold max-w-md mx-auto">
-                                        No upcoming events match your current filter or search criteria. Try choosing a different category or clearing search terms.
+                                <div className="rounded-3xl border border-gray-100 bg-white p-8 py-20 text-center shadow-sm">
+                                    <Search
+                                        size={56}
+                                        className="mx-auto mb-4 text-gray-300"
+                                    />
+                                    <h3 className="mb-2 text-2xl font-black text-paw-navy">
+                                        No Events Found
+                                    </h3>
+                                    <p className="mx-auto max-w-md font-bold text-gray-500">
+                                        No upcoming events match your current
+                                        filter or search criteria. Try choosing
+                                        a different category or clearing search
+                                        terms.
                                     </p>
                                     {(searchQuery || filter !== 'All') && (
                                         <button
                                             onClick={() => {
                                                 setSearchQuery('');
                                                 setFilter('All');
-                                                updateSearchAndFilter('', 'All');
+                                                updateSearchAndFilter(
+                                                    '',
+                                                    'All',
+                                                );
                                             }}
-                                            className="mt-6 px-6 py-2.5 bg-paw-orange text-white font-black text-xs uppercase tracking-wider rounded-xl hover:bg-orange-600 transition-colors"
+                                            className="mt-6 rounded-xl bg-paw-orange px-6 py-2.5 text-xs font-black tracking-wider text-white uppercase transition-colors hover:bg-orange-600"
                                         >
                                             Reset Filters
                                         </button>
@@ -458,48 +649,76 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-stretch">
+                                    <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 md:gap-8">
                                         {events.data.map((event) => {
-                                            const dateBadge = getEventDateBadge(event.date);
-                                            const formattedDate = formatEventDate(event.date, 'weekday');
-                                            const formattedTime = formatEventTime(event.time);
-                                            const isJoined = joinedEventIds.includes(event.id);
-                                            const bookmarked = isBookmarked(event.id, 'event');
-                                            const config = categoryConfig[event.category] || categoryConfig.Community;
-                                            const CategoryIcon = config.icon || Heart;
+                                            const dateBadge = getEventDateBadge(
+                                                event.date,
+                                            );
+                                            const formattedDate =
+                                                formatEventDate(
+                                                    event.date,
+                                                    'weekday',
+                                                );
+                                            const formattedTime =
+                                                formatEventTime(event.time);
+                                            const isJoined =
+                                                joinedEventIds.includes(
+                                                    event.id,
+                                                );
+                                            const bookmarked = isBookmarked(
+                                                event.id,
+                                                'event',
+                                            );
+                                            const config =
+                                                categoryConfig[
+                                                    event.category
+                                                ] || categoryConfig.Community;
+                                            const CategoryIcon =
+                                                config.icon || Heart;
 
                                             return (
                                                 <motion.div
                                                     key={event.id}
                                                     layoutId={`event-${event.id}`}
                                                     whileHover={{ y: -6 }}
-                                                    transition={{ duration: 0.2 }}
-                                                    onClick={() => setSelectedEvent(event)}
-                                                    className="bg-white rounded-[28px] md:rounded-[36px] overflow-hidden shadow-xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/30 transition-all cursor-pointer group flex flex-col md:flex-row h-full relative"
+                                                    transition={{
+                                                        duration: 0.2,
+                                                    }}
+                                                    onClick={() =>
+                                                        setSelectedEvent(event)
+                                                    }
+                                                    className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[28px] border-2 border-transparent bg-white shadow-xl shadow-paw-navy/5 transition-all hover:border-paw-orange/30 md:flex-row md:rounded-[36px]"
                                                 >
                                                     {/* Image & Badges Container */}
-                                                    <div className="md:w-2/5 aspect-[16/10] md:aspect-auto overflow-hidden relative shrink-0 min-h-[220px] md:min-h-full bg-paw-bg">
+                                                    <div className="relative aspect-[16/10] min-h-[220px] shrink-0 overflow-hidden bg-paw-bg md:aspect-auto md:min-h-full md:w-2/5">
                                                         <ImageWithFallback
                                                             src={event.img}
                                                             alt={event.title}
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                         />
 
                                                         {/* Calendar Date Badge */}
-                                                        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md rounded-2xl p-2 shadow-lg border border-white/40 flex flex-col items-center justify-center min-w-[54px] z-10">
-                                                            <span className="text-[10px] font-black text-paw-orange tracking-widest leading-tight uppercase">
-                                                                {dateBadge.month}
+                                                        <div className="absolute top-4 left-4 z-10 flex min-w-[54px] flex-col items-center justify-center rounded-2xl border border-white/40 bg-white/95 p-2 shadow-lg backdrop-blur-md">
+                                                            <span className="text-[10px] leading-tight font-black tracking-widest text-paw-orange uppercase">
+                                                                {
+                                                                    dateBadge.month
+                                                                }
                                                             </span>
-                                                            <span className="text-xl font-black text-paw-navy leading-none">
+                                                            <span className="text-xl leading-none font-black text-paw-navy">
                                                                 {dateBadge.day}
                                                             </span>
                                                         </div>
 
                                                         {/* Bookmark Button */}
                                                         <button
-                                                            onClick={(e) => toggleBookmark(e, event)}
+                                                            onClick={(e) =>
+                                                                toggleBookmark(
+                                                                    e,
+                                                                    event,
+                                                                )
+                                                            }
                                                             aria-label="Bookmark event"
-                                                            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-xl text-paw-navy shadow-md hover:bg-white transition-all z-10 group/btn cursor-pointer"
+                                                            className="group/btn absolute top-4 right-4 z-10 cursor-pointer rounded-xl bg-white/90 p-2 text-paw-navy shadow-md backdrop-blur-sm transition-all hover:bg-white"
                                                         >
                                                             <Bookmark
                                                                 size={16}
@@ -513,87 +732,156 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
 
                                                         {/* Relative Time Badge */}
                                                         {dateBadge.relativeBadge && (
-                                                            <div className="absolute bottom-3 left-3 bg-paw-navy/85 backdrop-blur-sm text-white px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md">
-                                                                {dateBadge.relativeBadge}
+                                                            <div className="absolute bottom-3 left-3 rounded-xl bg-paw-navy/85 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase shadow-md backdrop-blur-sm">
+                                                                {
+                                                                    dateBadge.relativeBadge
+                                                                }
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {/* Card Content */}
-                                                    <div className="p-6 md:p-7 flex flex-col justify-between flex-1">
+                                                    <div className="flex flex-1 flex-col justify-between p-6 md:p-7">
                                                         <div>
                                                             {/* Category & Spots Row */}
-                                                            <div className="flex justify-between items-center mb-3.5 gap-2">
-                                                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border ${config.badgeBg}`}>
-                                                                    <CategoryIcon size={12} className="shrink-0" />
-                                                                    {event.category}
+                                                            <div className="mb-3.5 flex items-center justify-between gap-2">
+                                                                <span
+                                                                    className={`inline-flex items-center gap-1 rounded-xl border px-3 py-1 text-[10px] font-black tracking-wider uppercase ${config.badgeBg}`}
+                                                                >
+                                                                    <CategoryIcon
+                                                                        size={
+                                                                            12
+                                                                        }
+                                                                        className="shrink-0"
+                                                                    />
+                                                                    {
+                                                                        event.category
+                                                                    }
                                                                 </span>
 
-                                                                {event.spots === null ? (
-                                                                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                                                {event.spots ===
+                                                                null ? (
+                                                                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-emerald-700 uppercase">
                                                                         Unlimited
                                                                     </span>
-                                                                ) : event.spots <= 5 && event.spots > 0 ? (
-                                                                    <span className="text-orange-700 bg-orange-100 border border-orange-200 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse">
-                                                                        🔥 {event.spots} spots left
+                                                                ) : event.spots <=
+                                                                      5 &&
+                                                                  event.spots >
+                                                                      0 ? (
+                                                                    <span className="animate-pulse rounded-full border border-orange-200 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-orange-700 uppercase">
+                                                                        🔥{' '}
+                                                                        {
+                                                                            event.spots
+                                                                        }{' '}
+                                                                        spots
+                                                                        left
                                                                     </span>
-                                                                ) : event.spots === 0 ? (
-                                                                    <span className="text-red-700 bg-red-100 border border-red-200 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                                                ) : event.spots ===
+                                                                  0 ? (
+                                                                    <span className="rounded-full border border-red-200 bg-red-100 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-red-700 uppercase">
                                                                         Full
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-red-500 font-black text-[10px] uppercase tracking-wider">
-                                                                        {event.spots} spots left
+                                                                    <span className="text-[10px] font-black tracking-wider text-red-500 uppercase">
+                                                                        {
+                                                                            event.spots
+                                                                        }{' '}
+                                                                        spots
+                                                                        left
                                                                     </span>
                                                                 )}
                                                             </div>
 
                                                             {/* Title */}
-                                                            <h3 className="text-xl md:text-2xl font-black text-paw-navy mb-4 leading-snug group-hover:text-paw-orange transition-colors line-clamp-2">
+                                                            <h3 className="mb-4 line-clamp-2 text-xl leading-snug font-black text-paw-navy transition-colors group-hover:text-paw-orange md:text-2xl">
                                                                 {event.title}
                                                             </h3>
 
                                                             {/* Event Details (Fixed Date, Time, Location UI) */}
                                                             <div className="space-y-2.5">
-                                                                <div className="flex items-center gap-2.5 text-gray-600 font-bold text-xs md:text-sm">
-                                                                    <div className="w-6 h-6 rounded-lg bg-paw-orange/10 flex items-center justify-center shrink-0">
-                                                                        <Calendar size={14} className="text-paw-orange" />
+                                                                <div className="flex items-center gap-2.5 text-xs font-bold text-gray-600 md:text-sm">
+                                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-paw-orange/10">
+                                                                        <Calendar
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                            className="text-paw-orange"
+                                                                        />
                                                                     </div>
-                                                                    <span className="text-paw-navy font-black">{formattedDate}</span>
+                                                                    <span className="font-black text-paw-navy">
+                                                                        {
+                                                                            formattedDate
+                                                                        }
+                                                                    </span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-2.5 text-gray-600 font-bold text-xs md:text-sm">
-                                                                    <div className="w-6 h-6 rounded-lg bg-paw-blue/10 flex items-center justify-center shrink-0">
-                                                                        <Clock size={14} className="text-paw-blue" />
+                                                                <div className="flex items-center gap-2.5 text-xs font-bold text-gray-600 md:text-sm">
+                                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-paw-blue/10">
+                                                                        <Clock
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                            className="text-paw-blue"
+                                                                        />
                                                                     </div>
-                                                                    <span>{formattedTime}</span>
+                                                                    <span>
+                                                                        {
+                                                                            formattedTime
+                                                                        }
+                                                                    </span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-2.5 text-gray-600 font-bold text-xs md:text-sm">
-                                                                    <div className="w-6 h-6 rounded-lg bg-paw-green/10 flex items-center justify-center shrink-0">
-                                                                        <MapPin size={14} className="text-paw-green" />
+                                                                <div className="flex items-center gap-2.5 text-xs font-bold text-gray-600 md:text-sm">
+                                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-paw-green/10">
+                                                                        <MapPin
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                            className="text-paw-green"
+                                                                        />
                                                                     </div>
-                                                                    <span className="line-clamp-1">{event.location}</span>
+                                                                    <span className="line-clamp-1">
+                                                                        {
+                                                                            event.location
+                                                                        }
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         {/* Footer: More Info + Share Dropdown */}
-                                                        <div className="mt-6 pt-5 border-t border-gray-100 flex justify-between items-center gap-3">
-                                                            <span className="text-paw-navy group-hover:text-paw-orange transition-colors font-black text-xs uppercase tracking-widest flex items-center gap-1.5">
+                                                        <div className="mt-6 flex items-center justify-between gap-3 border-t border-gray-100 pt-5">
+                                                            <span className="flex items-center gap-1.5 text-xs font-black tracking-widest text-paw-navy uppercase transition-colors group-hover:text-paw-orange">
                                                                 More Info
-                                                                <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                                                                <ChevronRight
+                                                                    size={15}
+                                                                    className="transition-transform group-hover:translate-x-1"
+                                                                />
                                                             </span>
 
                                                             <div className="flex items-center gap-2">
                                                                 {isJoined && (
-                                                                    <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-[10px] uppercase px-3 py-1 rounded-full flex items-center gap-1">
-                                                                        <CheckCircle2 size={12} /> Joined
+                                                                    <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-[10px] font-black text-emerald-800 uppercase">
+                                                                        <CheckCircle2
+                                                                            size={
+                                                                                12
+                                                                            }
+                                                                        />{' '}
+                                                                        {joinedEventRoles[
+                                                                            event.id
+                                                                        ] ===
+                                                                        'Participant'
+                                                                            ? 'Participant'
+                                                                            : 'Volunteer'}
                                                                     </span>
                                                                 )}
 
                                                                 {/* Share Button & Dropdown */}
-                                                                <EventShareDropdown event={event} />
+                                                                <EventShareDropdown
+                                                                    event={
+                                                                        event
+                                                                    }
+                                                                />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -610,86 +898,165 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
                     {/* Feeding Schedules Tab */}
                     {activeTab === 'feeding' && (
                         <>
-                            <div className="bg-gradient-to-br from-paw-orange to-paw-yellow rounded-[36px] p-8 md:p-12 text-white mb-8 shadow-xl shadow-paw-orange/15">
-                                <div className="flex items-center gap-5 mb-3">
-                                    <div className="w-14 h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+                            <div className="mb-8 rounded-[36px] bg-gradient-to-br from-paw-orange to-paw-yellow p-8 text-white shadow-xl shadow-paw-orange/15 md:p-12">
+                                <div className="mb-3 flex items-center gap-5">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 shadow-inner backdrop-blur-md md:h-16 md:w-16">
                                         <Utensils size={32} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black">Monthly Feeding Schedule</h2>
-                                        <p className="text-sm md:text-base font-bold text-white/90">Regular feeding routes across key zones in Iligan City</p>
+                                        <h2 className="text-2xl font-black sm:text-3xl md:text-4xl">
+                                            Monthly Feeding Schedule
+                                        </h2>
+                                        <p className="text-sm font-bold text-white/90 md:text-base">
+                                            Regular feeding routes across key
+                                            zones in Iligan City
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             {feedingSchedules.data.length === 0 ? (
-                                <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                                    <Search size={56} className="mx-auto text-gray-300 mb-4" />
-                                    <h3 className="text-2xl font-black text-paw-navy mb-2">No Feeding Schedule Found</h3>
-                                    <p className="text-gray-500 font-bold">Try adjusting your search criteria.</p>
+                                <div className="rounded-3xl border border-gray-100 bg-white p-8 py-20 text-center shadow-sm">
+                                    <Search
+                                        size={56}
+                                        className="mx-auto mb-4 text-gray-300"
+                                    />
+                                    <h3 className="mb-2 text-2xl font-black text-paw-navy">
+                                        No Feeding Schedule Found
+                                    </h3>
+                                    <p className="font-bold text-gray-500">
+                                        Try adjusting your search criteria.
+                                    </p>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {feedingSchedules.data.map((feeding, idx) => {
-                                            const isJoined = joinedScheduleIds.includes(feeding.id);
-                                            return (
-                                                <motion.div
-                                                    key={feeding.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.05 }}
-                                                    className="bg-white rounded-[32px] p-6 shadow-xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/30 transition-all flex flex-col justify-between"
-                                                >
-                                                    <div>
-                                                        <div className="flex items-start justify-between mb-4">
-                                                            <div className="w-12 h-12 bg-paw-orange/10 rounded-2xl flex items-center justify-center">
-                                                                <Utensils size={24} className="text-paw-orange" />
-                                                            </div>
-                                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-black uppercase tracking-widest">
-                                                                {feeding.status}
-                                                            </span>
-                                                        </div>
-
-                                                        <h3 className="text-xl font-black text-paw-navy mb-2 leading-tight">{feeding.zone}</h3>
-
-                                                        <div className="space-y-3 mb-6">
-                                                            <div className="flex items-center gap-2 text-gray-600 font-bold text-sm">
-                                                                <Calendar size={16} className="text-paw-orange" /> {feeding.day}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-gray-600 font-bold text-sm">
-                                                                <Clock size={16} className="text-paw-orange" /> {feeding.time}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100 mb-4">
-                                                            <div className="text-center">
-                                                                <p className="text-2xl font-black text-paw-orange mb-1">{feeding.strays}</p>
-                                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Strays</p>
-                                                            </div>
-                                                            <div className="text-center">
-                                                                <p className="text-2xl font-black text-paw-blue mb-1">{feeding.volunteers}</p>
-                                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Volunteers</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => handleJoinFeeding(feeding.id)}
-                                                        disabled={isJoined}
-                                                        className={`w-full mt-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${
-                                                            isJoined
-                                                                ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                                                                : 'bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white'
-                                                        }`}
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                        {feedingSchedules.data.map(
+                                            (feeding, idx) => {
+                                                const isJoined =
+                                                    joinedScheduleIds.includes(
+                                                        feeding.id,
+                                                    );
+                                                return (
+                                                    <motion.div
+                                                        key={feeding.id}
+                                                        initial={{
+                                                            opacity: 0,
+                                                            y: 20,
+                                                        }}
+                                                        animate={{
+                                                            opacity: 1,
+                                                            y: 0,
+                                                        }}
+                                                        transition={{
+                                                            delay: idx * 0.05,
+                                                        }}
+                                                        className="flex flex-col justify-between rounded-[32px] border-2 border-transparent bg-white p-6 shadow-xl shadow-paw-navy/5 transition-all hover:border-paw-orange/30"
                                                     >
-                                                        {isJoined ? 'Joined Route' : 'Join This Route'}
-                                                    </button>
-                                                </motion.div>
-                                            );
-                                        })}
+                                                        <div>
+                                                            <div className="mb-4 flex items-start justify-between">
+                                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-paw-orange/10">
+                                                                    <Utensils
+                                                                        size={
+                                                                            24
+                                                                        }
+                                                                        className="text-paw-orange"
+                                                                    />
+                                                                </div>
+                                                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black tracking-widest text-green-700 uppercase">
+                                                                    {
+                                                                        feeding.status
+                                                                    }
+                                                                </span>
+                                                            </div>
+
+                                                            <h3 className="mb-2 text-xl leading-tight font-black text-paw-navy">
+                                                                {feeding.zone}
+                                                            </h3>
+
+                                                            <div className="mb-6 space-y-3">
+                                                                <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
+                                                                    <Calendar
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                        className="text-paw-orange"
+                                                                    />{' '}
+                                                                    {
+                                                                        feeding.day
+                                                                    }
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
+                                                                    <Clock
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                        className="text-paw-orange"
+                                                                    />{' '}
+                                                                    {
+                                                                        feeding.time
+                                                                    }
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mb-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                                                                <div className="text-center">
+                                                                    <p className="mb-1 text-2xl font-black text-paw-orange">
+                                                                        {
+                                                                            feeding.strays
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">
+                                                                        Strays
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <p className="mb-1 text-2xl font-black text-paw-blue">
+                                                                        {
+                                                                            feeding.volunteers
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">
+                                                                        Volunteers
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <button
+                                                            onClick={() => {
+                                                                if (isJoined) {
+                                                                    handleLeaveFeeding(
+                                                                        feeding.id,
+                                                                    );
+                                                                } else {
+                                                                    handleJoinFeeding(
+                                                                        feeding.id,
+                                                                    );
+                                                                }
+                                                            }}
+                                                            className={`mt-4 w-full cursor-pointer rounded-2xl py-3.5 text-xs font-black tracking-widest uppercase transition-all ${
+                                                                isJoined
+                                                                    ? 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                                                                    : isVolunteer
+                                                                      ? 'bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white'
+                                                                      : 'bg-gray-100 text-gray-500 hover:bg-paw-orange/10 hover:text-paw-orange'
+                                                            }`}
+                                                        >
+                                                            {isJoined
+                                                                ? 'Joined Route • Leave'
+                                                                : isVolunteer
+                                                                  ? 'Join This Route'
+                                                                  : 'Join Route (Volunteers Only)'}
+                                                        </button>
+                                                    </motion.div>
+                                                );
+                                            },
+                                        )}
                                     </div>
-                                    <Pagination links={feedingSchedules.links} />
+                                    <Pagination
+                                        links={feedingSchedules.links}
+                                    />
                                 </>
                             )}
                         </>
@@ -700,141 +1067,284 @@ export default function Events({ events, feedingSchedules, filters, joinedEventI
             {/* Event Details Expanded Modal */}
             <AnimatePresence>
                 {selectedEvent && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+                    <div className="modal-scroll-area fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
+                        {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                             onClick={() => setSelectedEvent(null)}
                             className="fixed inset-0 bg-paw-navy/80 backdrop-blur-md"
                         />
+
+                        {/* Modal Dialog Card */}
                         <motion.div
-                            layoutId={`event-${selectedEvent.id}`}
-                            className="bg-white w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[24px] md:rounded-[40px] z-10 relative shadow-2xl my-auto font-quicksand"
+                            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                            transition={{
+                                duration: 0.22,
+                                ease: [0.16, 1, 0.3, 1],
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative z-10 my-auto flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border-0 bg-white font-quicksand shadow-2xl md:max-h-[86vh] md:flex-row md:rounded-[36px]"
                         >
-                            {/* Close Modal Button */}
-                            <button
-                                onClick={() => setSelectedEvent(null)}
-                                className="absolute top-4 right-4 md:top-6 md:right-6 p-2.5 bg-gray-100 hover:bg-gray-200 text-paw-navy rounded-full transition-colors z-20 cursor-pointer shadow-sm"
-                            >
-                                <X size={20} />
-                            </button>
+                            {/* Modal Media Side */}
+                            <div className="relative h-56 shrink-0 overflow-hidden bg-paw-bg sm:h-64 md:h-auto md:w-5/12">
+                                <ImageWithFallback
+                                    src={selectedEvent.img}
+                                    alt={selectedEvent.title}
+                                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                                />
 
-                            <div className="grid md:grid-cols-2">
-                                {/* Modal Media Side */}
-                                <div className="h-64 md:h-full min-h-[260px] relative bg-paw-bg">
-                                    <ImageWithFallback
-                                        src={selectedEvent.img}
-                                        alt={selectedEvent.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full text-paw-orange font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-1.5">
-                                        <Sparkles size={14} />
-                                        {selectedEvent.category}
-                                    </div>
+                                {/* Subtle Gradient Overlays */}
+                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30" />
 
-                                    {/* Date Stamp */}
-                                    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border border-white/60 flex items-center gap-2.5">
-                                        <Calendar size={18} className="text-paw-orange" />
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase leading-none">Event Date</span>
-                                            <span className="text-xs font-black text-paw-navy">{formatEventDate(selectedEvent.date, 'weekday')}</span>
-                                        </div>
-                                    </div>
+                                {/* Category Badge */}
+                                <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/60 bg-white/95 px-3.5 py-1.5 text-xs font-black tracking-wider text-paw-orange uppercase shadow-lg backdrop-blur-md">
+                                    <Sparkles size={13} />
+                                    <span>{selectedEvent.category}</span>
                                 </div>
 
-                                {/* Modal Content Side */}
-                                <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-between">
-                                    <div>
-                                        <div className="flex items-center justify-between gap-3 mb-3 pr-12 md:pr-14">
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-paw-orange">
+                                {/* Date Stamp Badge */}
+                                <div className="absolute right-4 bottom-4 left-4 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/95 px-3.5 py-2.5 shadow-xl backdrop-blur-md">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div className="flex min-w-0 flex-col">
+                                        <span className="mb-0.5 text-[10px] leading-none font-black tracking-widest text-gray-400 uppercase">
+                                            Event Date
+                                        </span>
+                                        <span className="truncate text-xs font-black text-paw-navy">
+                                            {formatEventDate(
+                                                selectedEvent.date,
+                                                'weekday',
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Content Side */}
+                            <div className="modal-scroll-area flex min-h-0 flex-1 flex-col justify-between overflow-y-auto bg-white p-5 sm:p-7 md:w-7/12 md:p-8">
+                                <div>
+                                    {/* Header Row: Information Tag + Spots Badge + Close Button */}
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="flex items-center gap-1.5 rounded-full bg-paw-orange/10 px-2.5 py-1 text-[11px] font-black tracking-widest text-paw-orange uppercase">
+                                                <Sparkles size={12} />
                                                 Event Information
                                             </span>
                                             {selectedEvent.spots !== null && (
-                                                <span className="text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap">
-                                                    {selectedEvent.spots} Spots Left
+                                                <span className="rounded-full border border-red-200/80 bg-red-50 px-2.5 py-0.5 text-[11px] font-black tracking-wider whitespace-nowrap text-red-600 uppercase">
+                                                    {selectedEvent.spots} Spots
+                                                    Left
                                                 </span>
                                             )}
                                         </div>
 
-                                        <h2 className="text-2xl sm:text-3xl font-black text-paw-navy mb-6 leading-tight">
-                                            {selectedEvent.title}
-                                        </h2>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedEvent(null)
+                                            }
+                                            className="shrink-0 cursor-pointer rounded-full p-2 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90"
+                                            aria-label="Close modal"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
 
-                                        {/* Formatted Date/Time/Location Info Cards */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                                            <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 flex items-start gap-3">
-                                                 <div className="w-8 h-8 rounded-xl bg-paw-orange/10 flex items-center justify-center text-paw-orange shrink-0">
-                                                     <Calendar size={16} />
-                                                 </div>
-                                                 <div>
-                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Date</p>
-                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventDate(selectedEvent.date, 'full')}</p>
-                                                 </div>
+                                    {/* Event Title */}
+                                    <h2 className="mb-4 text-2xl leading-tight font-black tracking-tight text-paw-navy sm:text-3xl">
+                                        {selectedEvent.title}
+                                    </h2>
+
+                                    {/* Date/Time/Location Info Cards */}
+                                    <div className="mb-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange">
+                                                <Calendar size={16} />
                                             </div>
-
-                                            <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 flex items-start gap-3">
-                                                 <div className="w-8 h-8 rounded-xl bg-paw-blue/10 flex items-center justify-center text-paw-blue shrink-0">
-                                                     <Clock size={16} />
-                                                 </div>
-                                                 <div>
-                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Time</p>
-                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{formatEventTime(selectedEvent.time)}</p>
-                                                 </div>
-                                            </div>
-
-                                            <div className="bg-paw-bg p-4 rounded-2xl border border-gray-100 sm:col-span-2 flex items-start gap-3">
-                                                 <div className="w-8 h-8 rounded-xl bg-paw-green/10 flex items-center justify-center text-paw-green shrink-0">
-                                                     <MapPin size={16} />
-                                                 </div>
-                                                 <div>
-                                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Location</p>
-                                                     <p className="font-black text-paw-navy text-xs sm:text-sm">{selectedEvent.location}</p>
-                                                 </div>
+                                            <div className="min-w-0">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Date
+                                                </p>
+                                                <p className="truncate text-xs font-black text-paw-navy sm:text-sm">
+                                                    {formatEventDate(
+                                                        selectedEvent.date,
+                                                        'full',
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
 
-                                        {/* Description */}
-                                        <div className="mb-8">
-                                            <h4 className="font-black text-paw-navy mb-2 uppercase tracking-widest text-xs">About this Event</h4>
-                                            <p className="text-gray-500 font-bold text-sm leading-relaxed">{selectedEvent.desc}</p>
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-blue/15 text-paw-blue">
+                                                <Clock size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Time
+                                                </p>
+                                                <p className="truncate text-xs font-black text-paw-navy sm:text-sm">
+                                                    {formatEventTime(
+                                                        selectedEvent.time,
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg sm:col-span-2">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-green/15 text-paw-green">
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Location
+                                                </p>
+                                                <p className="text-xs font-black text-paw-navy sm:text-sm">
+                                                    {selectedEvent.location}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="space-y-3 pt-4 border-t border-gray-100">
-                                        {joinedEventIds.includes(selectedEvent.id) ? (
-                                            <div className="w-full bg-emerald-100 text-emerald-800 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 border border-emerald-200">
-                                                <CheckCircle2 size={20} /> ALREADY JOINED THIS EVENT
+                                    {/* Description */}
+                                    <div className="mb-6">
+                                        <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-black tracking-widest text-paw-navy uppercase">
+                                            About this Event
+                                        </h4>
+                                        <p className="text-xs leading-relaxed font-semibold text-gray-600 sm:text-sm">
+                                            {selectedEvent.desc}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons Footer */}
+                                <div className="mt-auto space-y-2.5 pt-2">
+                                    {joinedEventIds.includes(
+                                        selectedEvent.id,
+                                    ) ? (
+                                        <div className="space-y-2">
+                                            <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-0 bg-emerald-50 py-3 text-xs md:text-sm font-black text-emerald-800">
+                                                <CheckCircle2
+                                                    size={18}
+                                                    className="text-emerald-600"
+                                                />
+                                                <span>
+                                                    YOU ARE REGISTERED AS{' '}
+                                                    {(
+                                                        joinedEventRoles[
+                                                            selectedEvent.id
+                                                        ] || 'Participant'
+                                                    ).toUpperCase()}
+                                                </span>
                                             </div>
-                                        ) : (
                                             <button
-                                                onClick={() => handleJoinEvent(selectedEvent.id)}
-                                                className="w-full bg-paw-orange text-white py-4 rounded-2xl font-black text-base hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+                                                type="button"
+                                                onClick={() =>
+                                                    handleLeaveEvent(
+                                                        selectedEvent.id,
+                                                    )
+                                                }
+                                                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
                                             >
-                                                <Plus size={20} />
-                                                {isVolunteer ? 'JOIN EVENT' : 'JOIN AS VOLUNTEER'}
+                                                <Trash2 size={14} />
+                                                <span>Cancel Attendance / Leave Event</span>
                                             </button>
-                                        )}
-
-                                        <div className="grid grid-cols-2 gap-3 items-center">
-                                            {/* Google Calendar Link */}
-                                            <button
-                                                onClick={() => shareEvent({ platform: 'calendar', event: selectedEvent })}
-                                                className="w-full h-12 py-2.5 px-3 rounded-2xl border-2 border-paw-navy/10 hover:border-paw-orange hover:bg-paw-orange/5 text-paw-navy font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-                                            >
-                                                <CalendarPlus size={16} className="text-paw-orange shrink-0" />
-                                                <span>Add to Calendar</span>
-                                            </button>
-
-                                            {/* Share Button with Dropdown */}
-                                            <EventShareDropdown
-                                                event={selectedEvent}
-                                                variant="modal-button"
-                                                containerClassName="w-full h-full flex"
-                                                className="w-full h-12"
-                                            />
                                         </div>
+                                    ) : selectedEvent.spots === 0 ? (
+                                        <div className="flex w-full items-center justify-center rounded-2xl bg-gray-100 py-3.5 text-xs font-black text-gray-500 uppercase">
+                                            This Event is Fully Booked
+                                        </div>
+                                    ) : isVolunteer ? (
+                                        <div className="space-y-2">
+                                            <p className="text-center text-[11px] font-bold text-gray-500">
+                                                Choose how you want to join this event:
+                                            </p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleJoinEvent(
+                                                            selectedEvent.id,
+                                                            'volunteer',
+                                                        )
+                                                    }
+                                                    className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-0 bg-paw-orange py-3 text-xs font-black tracking-wider text-white uppercase shadow-md shadow-paw-orange/20 transition-all hover:bg-orange-600 active:scale-[0.99]"
+                                                >
+                                                    <Plus size={16} />
+                                                    <span>Join as Volunteer</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleJoinEvent(
+                                                            selectedEvent.id,
+                                                            'participant',
+                                                        )
+                                                    }
+                                                    className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-2 border-paw-navy/20 bg-white py-3 text-xs font-black tracking-wider text-paw-navy uppercase transition-all hover:border-paw-navy hover:bg-paw-navy/5 active:scale-[0.99]"
+                                                >
+                                                    <CheckCircle2 size={16} />
+                                                    <span>Join as Participant</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleJoinEvent(
+                                                        selectedEvent.id,
+                                                        'participant',
+                                                    )
+                                                }
+                                                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-0 border-transparent bg-paw-orange py-3.5 text-sm font-black tracking-wider text-white uppercase shadow-lg ring-0 shadow-paw-orange/20 transition-all outline-none hover:bg-orange-600 active:scale-[0.99]"
+                                            >
+                                                <Plus size={18} />
+                                                <span>JOIN AS PARTICIPANT</span>
+                                            </button>
+                                            <div className="text-center">
+                                                <Link
+                                                    href="/volunteer"
+                                                    className="text-[11px] font-bold text-gray-400 hover:text-paw-orange transition-colors"
+                                                >
+                                                    Want to help as a volunteer? Apply here →
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 items-center gap-2.5">
+                                        {/* Google Calendar Link */}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                shareEvent({
+                                                    platform: 'calendar',
+                                                    event: selectedEvent,
+                                                })
+                                            }
+                                            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-paw-navy/10 px-3 py-2 text-xs font-black tracking-wider whitespace-nowrap text-paw-navy uppercase transition-all hover:border-paw-orange hover:bg-paw-orange/5 active:scale-[0.99]"
+                                        >
+                                            <CalendarPlus
+                                                size={16}
+                                                className="shrink-0 text-paw-orange"
+                                            />
+                                            <span>Add to Calendar</span>
+                                        </button>
+
+                                        {/* Share Button (triggers EventShareModal) */}
+                                        <EventShareDropdown
+                                            event={selectedEvent}
+                                            variant="modal-button"
+                                            containerClassName="w-full h-full flex"
+                                            className="h-11 w-full"
+                                        />
                                     </div>
                                 </div>
                             </div>

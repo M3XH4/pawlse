@@ -92,6 +92,46 @@ class VolunteerDashboardController extends Controller
     }
 
     /**
+     * Cancel an active assigned task.
+     */
+    public function cancelTask(Request $request, AssignedTask $task): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($task->user_id !== $user->id) {
+            abort(403);
+        }
+
+        if ($task->status !== 'pending') {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Only pending task assignments can be cancelled.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        if ($task->event_id !== null) {
+            $event = $task->event;
+            if ($event !== null && $event->spots !== null) {
+                $event->increment('spots');
+            }
+        }
+
+        $taskTitle = $task->event?->title ?? $task->feedingSchedule?->zone ?? 'Assignment';
+        $task->delete();
+
+        AuditLog::log('volunteer_cancel_task', "Cancelled volunteer task assignment for '{$taskTitle}'");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Task assignment cancelled successfully.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
      * Show participation history.
      */
     public function participationHistory(Request $request): Response

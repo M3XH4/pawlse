@@ -87,7 +87,9 @@ Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])-
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::post('/events/{event}/join', [EventController::class, 'joinEvent'])->name('events.join')->middleware('auth');
+Route::post('/events/{event}/leave', [EventController::class, 'leaveEvent'])->name('events.leave')->middleware('auth');
 Route::post('/feeding-schedules/{schedule}/join', [EventController::class, 'joinFeedingRoute'])->name('feeding-schedules.join')->middleware('auth');
+Route::post('/feeding-schedules/{schedule}/leave', [EventController::class, 'leaveFeedingRoute'])->name('feeding-schedules.leave')->middleware('auth');
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
@@ -132,6 +134,7 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::get('adoption-applications', [AdoptionApplicationController::class, 'index'])->name('adoption-applications');
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::get('missing-found', [PetReportController::class, 'userMissingFoundReports'])->name('missing-found');
+    Route::get('joined-events', [EventController::class, 'userJoinedEvents'])->name('joined-events');
     Route::inertia('notifications', 'user/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('volunteer-status', [VolunteerDashboardController::class, 'userStatus'])->name('volunteer-status');
@@ -147,6 +150,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('profile', [VolunteerDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('status', [VolunteerDashboardController::class, 'status'])->name('status');
     Route::get('assigned-tasks', [VolunteerDashboardController::class, 'assignedTasks'])->name('assigned-tasks');
+    Route::delete('assigned-tasks/{task}', [VolunteerDashboardController::class, 'cancelTask'])->name('assigned-tasks.cancel');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
     Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');

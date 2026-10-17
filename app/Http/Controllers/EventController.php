@@ -9,6 +9,7 @@ use App\Models\FeedingSchedule;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,21 +53,20 @@ class EventController extends Controller
         $user = $request->user();
         $joinedEventIds = [];
         $joinedScheduleIds = [];
+        $joinedEventRoles = [];
 
         if ($user !== null) {
-            $joinedEventIds = AssignedTask::query()
+            $userTasks = AssignedTask::query()
                 ->where('user_id', $user->id)
-                ->whereNotNull('event_id')
                 ->whereIn('status', ['pending', 'completed'])
-                ->pluck('event_id')
-                ->toArray();
+                ->get();
 
-            $joinedScheduleIds = AssignedTask::query()
-                ->where('user_id', $user->id)
-                ->whereNotNull('feeding_schedule_id')
-                ->whereIn('status', ['pending', 'completed'])
-                ->pluck('feeding_schedule_id')
-                ->toArray();
+            $joinedEventIds = $userTasks->whereNotNull('event_id')->pluck('event_id')->values()->toArray();
+            $joinedScheduleIds = $userTasks->whereNotNull('feeding_schedule_id')->pluck('feeding_schedule_id')->values()->toArray();
+
+            foreach ($userTasks->whereNotNull('event_id') as $task) {
+                $joinedEventRoles[$task->event_id] = $task->role;
+            }
         }
 
         // Check if an event is requested via query param (?event=ID or ?id=ID) for sharing
@@ -85,6 +85,7 @@ class EventController extends Controller
             ],
             'joinedEventIds' => $joinedEventIds,
             'joinedScheduleIds' => $joinedScheduleIds,
+            'joinedEventRoles' => $joinedEventRoles,
             'sharedEvent' => $sharedEvent,
         ])->withViewData([
             'sharedEvent' => $sharedEvent,
@@ -92,7 +93,7 @@ class EventController extends Controller
     }
 
     /**
-     * Join an event.
+     * Join an event as a participant or volunteer.
      */
     public function joinEvent(Request $request, Event $event): RedirectResponse
     {
@@ -102,76 +103,138 @@ class EventController extends Controller
             return redirect()->route('login');
         }
 
-        if (! $user->hasRole('volunteer')) {
-            return redirect()->route('home')->withErrors([
-                'error' => 'Only approved volunteers can join events directly.',
-            ]);
+        $joinAs = $request->input('join_as', $user->hasRole('volunteer') ? 'volunteer' : 'participant');
+
+        if ($joinAs === 'volunteer') {
+            if (! $user->hasRole('volunteer')) {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => 'Only approved volunteers can join events in a volunteer role. You can join as a participant instead.',
+                ]);
+
+                return redirect()->back();
+            }
+
+            $app = VolunteerApplication::query()
+                ->where('user_id', $user->id)
+                ->first();
+            $role = $app ? $app->role : 'Volunteer Helper';
+        } else {
+            $role = 'Participant';
         }
 
-        // Check if event is open
-        if ($event->status !== 'open') {
+        try {
+            DB::transaction(function () use ($event, $user, $role) {
+                /** @var Event|null $lockedEvent */
+                $lockedEvent = Event::query()->where('id', $event->id)->lockForUpdate()->first();
+
+                if (! $lockedEvent || $lockedEvent->status !== 'open') {
+                    throw new \RuntimeException('This event is closed and cannot be joined.');
+                }
+
+                $alreadyJoined = AssignedTask::query()
+                    ->where('user_id', $user->id)
+                    ->where('event_id', $lockedEvent->id)
+                    ->whereIn('status', ['pending', 'completed'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($alreadyJoined) {
+                    throw new \RuntimeException('You have already joined this event.');
+                }
+
+                if ($lockedEvent->spots !== null && $lockedEvent->spots <= 0) {
+                    throw new \RuntimeException('This event is fully booked.');
+                }
+
+                AssignedTask::query()->create([
+                    'user_id' => $user->id,
+                    'event_id' => $lockedEvent->id,
+                    'role' => $role,
+                    'status' => 'pending',
+                ]);
+
+                if ($lockedEvent->spots !== null) {
+                    $lockedEvent->decrement('spots');
+                }
+
+                AuditLog::log('event_join', "User '{$user->name}' joined event '{$lockedEvent->title}' as {$role}");
+            });
+        } catch (\RuntimeException $e) {
             Inertia::flash('toast', [
                 'type' => 'error',
-                'message' => 'This event is closed and cannot be joined.',
+                'message' => $e->getMessage(),
             ]);
 
             return redirect()->back();
         }
 
-        // Check if already joined
-        $alreadyJoined = AssignedTask::query()
-            ->where('user_id', $user->id)
-            ->where('event_id', $event->id)
-            ->exists();
-
-        if ($alreadyJoined) {
-            Inertia::flash('toast', [
-                'type' => 'error',
-                'message' => 'You have already joined this event.',
-            ]);
-
-            return redirect()->back();
-        }
-
-        // Check spots limit
-        if ($event->spots !== null && $event->spots <= 0) {
-            Inertia::flash('toast', [
-                'type' => 'error',
-                'message' => 'This event is fully booked.',
-            ]);
-
-            return redirect()->back();
-        }
-
-        // Get user's preferred volunteer role
-        $app = VolunteerApplication::query()
-            ->where('user_id', $user->id)
-            ->first();
-        $role = $app ? $app->role : 'Helper';
-
-        AssignedTask::query()->create([
-            'user_id' => $user->id,
-            'event_id' => $event->id,
-            'role' => $role,
-            'status' => 'pending',
-        ]);
-
-        if ($event->spots !== null) {
-            $event->decrement('spots');
-        }
-
-        AuditLog::log('volunteer_join_event', "Joined event '{$event->title}'");
+        $successMsg = $role === 'Participant'
+            ? 'Successfully joined the event as a participant!'
+            : 'Successfully joined the event as a volunteer!';
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Successfully joined the event!',
+            'message' => $successMsg,
         ]);
 
         return redirect()->back();
     }
 
     /**
-     * Join a feeding schedule route.
+     * Leave / Cancel attendance for an event.
+     */
+    public function leaveEvent(Request $request, Event $event): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return redirect()->route('login');
+        }
+
+        try {
+            DB::transaction(function () use ($event, $user) {
+                /** @var Event|null $lockedEvent */
+                $lockedEvent = Event::query()->where('id', $event->id)->lockForUpdate()->first();
+
+                $task = AssignedTask::query()
+                    ->where('user_id', $user->id)
+                    ->where('event_id', $event->id)
+                    ->where('status', 'pending')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $task) {
+                    throw new \RuntimeException('You are not currently registered for this event or attendance has already been completed.');
+                }
+
+                $task->delete();
+
+                if ($lockedEvent && $lockedEvent->spots !== null) {
+                    $lockedEvent->increment('spots');
+                }
+
+                AuditLog::log('event_leave', "User '{$user->name}' cancelled attendance for event '{$lockedEvent?->title}'");
+            });
+        } catch (\RuntimeException $e) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()->back();
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Successfully cancelled your event participation.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Join a feeding schedule route (volunteers only).
      */
     public function joinFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
     {
@@ -182,44 +245,51 @@ class EventController extends Controller
         }
 
         if (! $user->hasRole('volunteer')) {
-            return redirect()->route('home')->withErrors([
-                'error' => 'Only approved volunteers can join feeding routes directly.',
-            ]);
-        }
-
-        // Check if route is active
-        if ($schedule->status !== 'active') {
             Inertia::flash('toast', [
                 'type' => 'error',
-                'message' => 'This feeding route is inactive.',
+                'message' => 'Only approved volunteers can join feeding schedules. Please apply as a volunteer to participate in feeding routes.',
             ]);
 
             return redirect()->back();
         }
 
-        // Check if already joined
-        $alreadyJoined = AssignedTask::query()
-            ->where('user_id', $user->id)
-            ->where('feeding_schedule_id', $schedule->id)
-            ->exists();
+        try {
+            DB::transaction(function () use ($schedule, $user) {
+                /** @var FeedingSchedule|null $lockedSchedule */
+                $lockedSchedule = FeedingSchedule::query()->where('id', $schedule->id)->lockForUpdate()->first();
 
-        if ($alreadyJoined) {
+                if (! $lockedSchedule || $lockedSchedule->status !== 'active') {
+                    throw new \RuntimeException('This feeding route is inactive.');
+                }
+
+                $alreadyJoined = AssignedTask::query()
+                    ->where('user_id', $user->id)
+                    ->where('feeding_schedule_id', $lockedSchedule->id)
+                    ->whereIn('status', ['pending', 'completed'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($alreadyJoined) {
+                    throw new \RuntimeException('You have already joined this feeding route.');
+                }
+
+                AssignedTask::query()->create([
+                    'user_id' => $user->id,
+                    'feeding_schedule_id' => $lockedSchedule->id,
+                    'role' => 'Food Carrier',
+                    'status' => 'pending',
+                ]);
+
+                AuditLog::log('volunteer_join_feeding_route', "Joined feeding route zone '{$lockedSchedule->zone}' on {$lockedSchedule->day}");
+            });
+        } catch (\RuntimeException $e) {
             Inertia::flash('toast', [
                 'type' => 'error',
-                'message' => 'You have already joined this feeding route.',
+                'message' => $e->getMessage(),
             ]);
 
             return redirect()->back();
         }
-
-        AssignedTask::query()->create([
-            'user_id' => $user->id,
-            'feeding_schedule_id' => $schedule->id,
-            'role' => 'Food Carrier',
-            'status' => 'pending',
-        ]);
-
-        AuditLog::log('volunteer_join_feeding_route', "Joined feeding route zone '{$schedule->zone}' on {$schedule->day}");
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -227,5 +297,69 @@ class EventController extends Controller
         ]);
 
         return redirect()->back();
+    }
+
+    /**
+     * Leave a feeding schedule route.
+     */
+    public function leaveFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return redirect()->route('login');
+        }
+
+        try {
+            DB::transaction(function () use ($schedule, $user) {
+                $task = AssignedTask::query()
+                    ->where('user_id', $user->id)
+                    ->where('feeding_schedule_id', $schedule->id)
+                    ->where('status', 'pending')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $task) {
+                    throw new \RuntimeException('You are not currently assigned to this feeding route.');
+                }
+
+                $task->delete();
+
+                AuditLog::log('volunteer_leave_feeding_route', "Left feeding route zone '{$schedule->zone}' on {$schedule->day}");
+            });
+        } catch (\RuntimeException $e) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()->back();
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Successfully left the feeding route.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Show joined events on user dashboard tab.
+     */
+    public function userJoinedEvents(Request $request): Response
+    {
+        $user = $request->user();
+
+        $tasks = AssignedTask::with('event')
+            ->where('user_id', $user->id)
+            ->whereNotNull('event_id')
+            ->whereIn('status', ['pending', 'completed'])
+            ->latest()
+            ->paginate(8);
+
+        return Inertia::render('user/joined-events', [
+            'tasks' => $tasks,
+        ]);
     }
 }
