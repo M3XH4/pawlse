@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 
 interface UserRecord {
     id: number;
@@ -686,8 +687,13 @@ export default function UserManagement({
                                             Previous
                                         </button>
                                         <button
-                                            onClick={() => users.links[users.links.length - 1].url && router.visit(users.links[users.links.length - 1].url)}
-                                            disabled={!users.links[users.links.length - 1].url}
+                                            onClick={() => {
+                                                const nextUrl = users.links[users.links.length - 1]?.url;
+                                                if (nextUrl) {
+                                                    router.visit(nextUrl);
+                                                }
+                                            }}
+                                            disabled={!users.links[users.links.length - 1]?.url}
                                             className="relative ml-3 inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                                         >
                                             Next
@@ -875,8 +881,14 @@ export default function UserManagement({
                                         disabled={isSavingRolePerms}
                                         className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
                                     >
-                                        {isSavingRolePerms ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                                        <span>Save Permissions</span>
+                                        {isSavingRolePerms ? (
+                                            <Spinner size="xs" showTime showProgress label="Saving..." />
+                                        ) : (
+                                            <>
+                                                <Check className="h-3.5 w-3.5" />
+                                                <span>Save Permissions</span>
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -1257,8 +1269,16 @@ export default function UserManagement({
                                         disabled={processing}
                                         className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition shadow-xs"
                                     >
-                                        {processing && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                                        <span>{editingUser ? 'Save User Changes' : 'Create Account'}</span>
+                                        {processing ? (
+                                            <Spinner
+                                                size="xs"
+                                                showTime
+                                                showProgress
+                                                label={editingUser ? 'Saving Changes...' : 'Creating Account...'}
+                                            />
+                                        ) : (
+                                            <span>{editingUser ? 'Save User Changes' : 'Create Account'}</span>
+                                        )}
                                     </button>
                                 </div>
                             </form>
@@ -1327,8 +1347,11 @@ export default function UserManagement({
                                         disabled={isCreatingRole}
                                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition"
                                     >
-                                        {isCreatingRole && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                                        <span>Create Role</span>
+                                        {isCreatingRole ? (
+                                            <Spinner size="xs" showTime showProgress label="Creating Role..." />
+                                        ) : (
+                                            <span>Create Role</span>
+                                        )}
                                     </button>
                                 </div>
                             </form>

@@ -18,11 +18,11 @@ import {
   Upload,
   CheckCircle2,
   Clock,
-  Loader2,
   Sparkles,
   Eye,
   Trash2,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
@@ -665,9 +665,7 @@ export function PostAdoptionTab({
                     className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {processing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" /> Saving...
-                      </>
+                      <Spinner showTime showProgress label="Saving..." />
                     ) : (
                       'Save Follow-up Check-in'
                     )}

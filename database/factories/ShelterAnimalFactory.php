@@ -77,4 +77,11 @@ class ShelterAnimalFactory extends Factory
             'current_location' => 'Foster Home Care',
         ]);
     }
+
+    public function available(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ShelterAnimalStatus::Available,
+        ]);
+    }
 }

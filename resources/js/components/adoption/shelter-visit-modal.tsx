@@ -8,11 +8,11 @@ import {
   Clock,
   Users,
   AlertCircle,
-  Loader2,
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PetOption {
   id: number;
@@ -328,10 +328,7 @@ export function ShelterVisitModal({
               className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white shadow-sm hover:shadow transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {processing ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Submitting Request...
-                </>
+                <Spinner showTime showProgress label="Submitting Request..." />
               ) : (
                 'Submit Visit Request'
               )}

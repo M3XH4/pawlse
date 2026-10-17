@@ -7,10 +7,10 @@ import {
     AlertCircle,
     AlertTriangle,
     Info,
-    Loader2,
     X,
 } from 'lucide-react';
 import { setupSonnerInterception } from '@/lib/toast-utils';
+import { CircularProgressSpinner } from '@/components/ui/spinner';
 
 function Toaster({ ...props }: ToasterProps) {
     const { appearance } = useAppearance();
@@ -51,7 +51,7 @@ function Toaster({ ...props }: ToasterProps) {
                 ),
                 loading: (
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 ring-4 ring-amber-500/15 dark:bg-amber-950 dark:text-amber-400 dark:ring-amber-500/20">
-                        <Loader2 className="size-4.5 animate-spin stroke-[2.25]" />
+                        <CircularProgressSpinner size="sm" className="size-4.5 stroke-[2.25]" />
                     </span>
                 ),
                 close: <X className="size-3.5 stroke-[2]" />,

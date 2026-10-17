@@ -8,6 +8,7 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 
 const MISSING_PETS = [
   {
@@ -1438,8 +1439,22 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                         disabled={submitting}
                         className="flex-1 sm:flex-initial bg-red-600 hover:bg-red-700 text-white font-black px-6 py-2.5 rounded-2xl shadow-md shadow-red-600/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer disabled:opacity-50 text-xs sm:text-sm"
                       >
-                        <Camera size={16} className={submitting ? 'animate-spin' : ''} />
-                        <span>{submitting ? 'Submitting Report...' : 'Submit Missing Report'}</span>
+                        {submitting ? (
+                          <LoadingTimeUI
+                            isLoading={submitting}
+                            variant="inline"
+                            size="sm"
+                            label="SUBMITTING REPORT..."
+                            showProgress
+                            showTime
+                            className="text-white"
+                          />
+                        ) : (
+                          <>
+                            <Camera size={16} />
+                            <span>Submit Missing Report</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

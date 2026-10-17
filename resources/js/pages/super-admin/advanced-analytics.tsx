@@ -47,6 +47,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -424,8 +425,14 @@ export default function SuperAdminAdvancedAnalytics() {
                         disabled={loading}
                         className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs transition-colors hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
                     >
-                        <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-                        Refresh
+                        {loading ? (
+                            <Spinner size="xs" showTime showProgress label="Refreshing..." />
+                        ) : (
+                            <>
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                <span>Refresh</span>
+                            </>
+                        )}
                     </button>
 
                     <button

@@ -1,4 +1,4 @@
-import { AlertCircle, MapPin, Camera, Clock, CheckCircle2, Siren, Phone, Navigation, Hospital, Loader2 } from 'lucide-react';
+import { AlertCircle, MapPin, Camera, Clock, CheckCircle2, Siren, Phone, Navigation, Hospital } from 'lucide-react';
 import { motion } from 'motion/react';
 import React, { useState } from 'react';
 import { router } from '@inertiajs/react';
@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { reverseGeocode } from '@/lib/geocoding';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
+import { Spinner } from '@/components/ui/spinner';
 
 
 const EMERGENCY_CONTACTS = [
@@ -220,10 +222,7 @@ export default function SOS() {
                           className="px-6 py-4 sm:py-0 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                           {detectingLocation ? (
-                            <>
-                              <Loader2 size={18} className="animate-spin" />
-                              <span>Detecting...</span>
-                            </>
+                            <Spinner showTime showProgress label="Detecting..." size="xs" />
                           ) : (
                             <>
                               <MapPin size={18} />
@@ -366,8 +365,22 @@ export default function SOS() {
                     disabled={submitting}
                     className="w-full bg-red-600 text-white py-6 rounded-[24px] font-black text-2xl hover:bg-red-700 transition-all shadow-2xl shadow-red-600/40 flex items-center justify-center gap-3 uppercase tracking-tight disabled:opacity-50"
                   >
-                    <Siren size={28} className={submitting ? 'animate-spin' : 'animate-bounce'} />
-                    {submitting ? 'SENDING EMERGENCY REPORT...' : 'SEND EMERGENCY REPORT'}
+                    {submitting ? (
+                      <LoadingTimeUI
+                        isLoading={submitting}
+                        variant="inline"
+                        size="md"
+                        label="SENDING EMERGENCY REPORT..."
+                        showProgress
+                        showTime
+                        className="text-white text-lg sm:text-xl"
+                      />
+                    ) : (
+                      <>
+                        <Siren size={28} className="animate-bounce" />
+                        <span>SEND EMERGENCY REPORT</span>
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -491,8 +504,8 @@ export default function SOS() {
                       contactPhone: '',
                       situationType: ''
                     });
-                    setUploadedFile(null);
-                    setFilePreview(null);
+                    setUploadedFiles([]);
+                    setFilePreviews([]);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="bg-white text-red-600 px-12 py-5 rounded-[24px] font-black text-xl hover:bg-gray-100 transition-all shadow-xl border-2 border-white"

@@ -135,7 +135,7 @@ test('admin is notified when adoption application is submitted', function () {
 
     $admin = User::factory()->admin()->create();
     $user = User::factory()->user()->create();
-    $pet = ShelterAnimal::factory()->create();
+    $pet = ShelterAnimal::factory()->available()->create();
 
     $payload = [
         'pet_id' => $pet->id,
@@ -175,7 +175,7 @@ test('admin is notified when adoption application is submitted', function () {
         'canVisitShelter' => 'Yes',
     ];
 
-    $this->actingAs($user)->post(route('adopt.apply'), $payload);
+    $response = $this->actingAs($user)->post(route('adopt.apply'), $payload);
 
     Notification::assertSentTo($admin, AdoptionApplicationSubmittedNotification::class);
 });

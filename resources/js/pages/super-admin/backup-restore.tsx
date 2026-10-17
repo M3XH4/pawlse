@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 
 interface BackupRecord {
     id: number;
@@ -113,8 +114,14 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                 disabled={runningBackup}
                                 className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
                             >
-                                <RefreshCw className={`h-3.5 w-3.5 ${runningBackup ? 'animate-spin' : ''}`} />
-                                <span>{runningBackup ? 'Backing Up...' : 'Run Backup Now'}</span>
+                                {runningBackup ? (
+                                    <Spinner showTime showProgress label="Backing Up..." size="xs" />
+                                ) : (
+                                    <>
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        <span>Run Backup Now</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                         <hr className="my-4 border-gray-100 dark:border-slate-850" />
@@ -166,8 +173,14 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                                             disabled={restoringBackupId !== null}
                                                             className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 flex items-center gap-0.5"
                                                         >
-                                                            <RefreshCw className={`h-3 w-3 ${restoringBackupId === backup.id ? 'animate-spin' : ''}`} />
-                                                            Restore
+                                                            {restoringBackupId === backup.id ? (
+                                                                <Spinner showTime showProgress label="Restoring..." size="xs" />
+                                                            ) : (
+                                                                <>
+                                                                    <RefreshCw className="h-3 w-3" />
+                                                                    Restore
+                                                                </>
+                                                            )}
                                                         </button>
                                                         <button
                                                             onClick={() => triggerDelete(backup)}

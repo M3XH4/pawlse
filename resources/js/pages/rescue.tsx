@@ -1,4 +1,4 @@
-import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText, Loader2 } from 'lucide-react';
+import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
@@ -7,6 +7,8 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { PhoneInput } from '@/components/phone-input';
 import { reverseGeocode } from '@/lib/geocoding';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
+import { Spinner } from '@/components/ui/spinner';
 
 type BreedPrediction = {
     name: string;
@@ -775,22 +777,18 @@ export default function RescuePage() {
                                                     </label>
                                                 </div>
                                             ) : analyzing ? (
-                                                <div className="rounded-3xl p-12 text-center bg-white border-2 border-paw-orange/10">
-                                                    <div className="relative mb-8 inline-block">
-                                                        <motion.div
-                                                            animate={{ rotate: 360 }}
-                                                            transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                                                            className="w-24 h-24 border-8 border-paw-orange/20 border-t-paw-orange rounded-full"
-                                                        />
-                                                        <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-paw-orange" size={32} />
-                                                    </div>
-                                                    <h3 className="text-2xl font-black text-paw-navy mb-2">Analyzing Image...</h3>
-                                                    <div className="flex items-center justify-center gap-2 my-4">
-                                                        <span className="w-2 h-2 bg-paw-orange rounded-full animate-bounce" />
-                                                        <span className="w-2 h-2 bg-paw-orange rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
-                                                        <span className="w-2 h-2 bg-paw-orange rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
-                                                    </div>
-                                                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Identifying Attributes</p>
+                                                <div className="rounded-3xl p-8 text-center bg-white border-2 border-paw-orange/20 shadow-xl">
+                                                    <LoadingTimeUI
+                                                        isLoading={analyzing}
+                                                        variant="card"
+                                                        size="lg"
+                                                        label="Analyzing Pet Photo with AI..."
+                                                        description="Running deep learning model to detect species, predict breed, and identify age characteristics"
+                                                        showProgress={true}
+                                                        showTime={true}
+                                                        showStatusHint={true}
+                                                        className="border-0 shadow-none bg-transparent p-0"
+                                                    />
                                                 </div>
                                             ) : null}
 
@@ -1116,10 +1114,7 @@ export default function RescuePage() {
                                                             className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                                                         >
                                                             {detectingLocation ? (
-                                                                <>
-                                                                    <Loader2 size={18} className="animate-spin" />
-                                                                    <span>Detecting...</span>
-                                                                </>
+                                                                <Spinner showTime showProgress label="Detecting..." size="xs" />
                                                             ) : (
                                                                 <>
                                                                     <MapPin size={18} />
@@ -1296,7 +1291,22 @@ export default function RescuePage() {
                                                     onClick={() => handleSubmit('AI-Assisted Reporting')}
                                                     className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl flex items-center justify-center gap-3 uppercase disabled:opacity-50"
                                                 >
-                                                    {submitting ? 'Submitting Report...' : 'SUBMIT RESCUE REPORT'} <Siren size={20} className={submitting ? 'animate-spin' : ''} />
+                                                    {submitting ? (
+                                                        <LoadingTimeUI
+                                                            isLoading={submitting}
+                                                            variant="inline"
+                                                            size="sm"
+                                                            label="SUBMITTING REPORT..."
+                                                            showProgress
+                                                            showTime
+                                                            className="text-white"
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            <span>SUBMIT RESCUE REPORT</span>
+                                                            <Siren size={20} />
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -1358,21 +1368,19 @@ export default function RescuePage() {
                                         animate={{ opacity: 1 }}
                                         className="bg-white aspect-video rounded-[60px] flex flex-col items-center justify-center p-12 text-center shadow-2xl border-2 border-paw-navy/10"
                                     >
-                                        <div className="relative mb-12">
-                                            <motion.div
-                                                animate={{ rotate: 360 }}
-                                                transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                                                className="w-32 h-32 border-8 border-paw-navy/20 border-t-paw-navy rounded-full"
+                                        <div className="w-full max-w-md">
+                                            <LoadingTimeUI
+                                                isLoading={analyzing}
+                                                variant="card"
+                                                size="lg"
+                                                label="Analyzing Pet Photo with AI..."
+                                                description="Processing visual features, detecting animal breed, and estimating age classification"
+                                                showProgress={true}
+                                                showTime={true}
+                                                showStatusHint={true}
+                                                className="border-0 shadow-none bg-transparent"
                                             />
-                                            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-paw-navy" size={40} />
                                         </div>
-                                        <h3 className="text-3xl font-black text-paw-navy mb-2">Analyzing Image...</h3>
-                                        <div className="flex items-center gap-2 my-4">
-                                            <span className="w-2 h-2 bg-paw-navy rounded-full animate-bounce" />
-                                            <span className="w-2 h-2 bg-paw-navy rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
-                                            <span className="w-2 h-2 bg-paw-navy rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
-                                        </div>
-                                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Identifying Attributes</p>
                                     </motion.div>
                                 )}
 
@@ -1764,10 +1772,7 @@ export default function RescuePage() {
                                                     className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                                                 >
                                                     {detectingLocation ? (
-                                                        <>
-                                                            <Loader2 size={18} className="animate-spin" />
-                                                            <span>Detecting...</span>
-                                                        </>
+                                                        <Spinner showTime showProgress label="Detecting..." size="xs" />
                                                     ) : (
                                                         <>
                                                             <MapPin size={18} />
@@ -1873,7 +1878,22 @@ export default function RescuePage() {
                                             onClick={() => handleSubmit('Manual Entry')}
                                             className="w-full bg-red-600 text-white py-6 rounded-2xl font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/30 flex items-center justify-center gap-3 uppercase disabled:opacity-50"
                                         >
-                                            {submitting ? 'Submitting Report...' : 'SUBMIT RESCUE REPORT'} <Siren size={24} className={submitting ? 'animate-spin' : ''} />
+                                            {submitting ? (
+                                                <LoadingTimeUI
+                                                    isLoading={submitting}
+                                                    variant="inline"
+                                                    size="md"
+                                                    label="SUBMITTING REPORT..."
+                                                    showProgress
+                                                    showTime
+                                                    className="text-white"
+                                                />
+                                            ) : (
+                                                <>
+                                                    <span>SUBMIT RESCUE REPORT</span>
+                                                    <Siren size={24} />
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>

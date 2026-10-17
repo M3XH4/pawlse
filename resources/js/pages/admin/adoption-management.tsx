@@ -1,8 +1,9 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles, Loader2 } from 'lucide-react';
+import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -1013,7 +1014,7 @@ export default function AdoptionManagement({
                               } ${(isToggling || isDeleting) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               {isToggling ? (
-                                <Loader2 size={13} className="animate-spin text-white" />
+                                <Spinner size="xs" showTime showProgress className="text-white" />
                               ) : (
                                 <Check size={14} />
                               )}
@@ -1090,7 +1091,7 @@ export default function AdoptionManagement({
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                               title="Delete need"
                             >
-                              {isDeleting ? <Loader2 size={15} className="animate-spin text-red-500" /> : <Trash2 size={15} />}
+                              {isDeleting ? <Spinner size="xs" showTime showProgress className="text-red-500" /> : <Trash2 size={15} />}
                             </button>
                           </div>
                         </div>
@@ -1261,17 +1262,18 @@ export default function AdoptionManagement({
                       className="px-6 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-paw-orange/20"
                     >
                       {needProcessing ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : editingNeed ? (
-                        <CheckCircle size={14} />
+                        <Spinner
+                          size="xs"
+                          showTime
+                          showProgress
+                          label={editingNeed ? 'Saving Changes...' : 'Adding Item...'}
+                        />
                       ) : (
-                        <Plus size={14} />
+                        <>
+                          {editingNeed ? <CheckCircle size={14} /> : <Plus size={14} />}
+                          <span>{editingNeed ? 'Save Changes' : 'Add Item to Wishlist'}</span>
+                        </>
                       )}
-                      <span>
-                        {needProcessing
-                          ? (editingNeed ? 'Saving Changes...' : 'Adding Item...')
-                          : (editingNeed ? 'Save Changes' : 'Add Item to Wishlist')}
-                      </span>
                     </button>
                   </div>
                 </form>

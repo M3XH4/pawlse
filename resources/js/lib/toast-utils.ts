@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import React from 'react';
 import { toast as sonnerToast } from 'sonner';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 
 export type ToastType =
     | 'success'
@@ -36,6 +38,7 @@ export function formatToastPayload(
     }
 
     const trimmed = rawMessage.trim();
+
     if (!trimmed) {
         const fallbacks: Record<ToastType, string> = {
             success: 'Success',
@@ -45,6 +48,7 @@ export function formatToastPayload(
             loading: 'Processing...',
             default: 'Notification',
         };
+
         return { title: fallbacks[type] || 'Notice' };
     }
 
@@ -55,6 +59,7 @@ export function formatToastPayload(
 
     // 2. Explicit two-part messages (e.g. "Action completed! We will email you the receipt.")
     const splitMatch = trimmed.match(/^([^.!?]+)[.!?]+\s+(.+)$/);
+
     if (splitMatch && splitMatch[2]) {
         let titleCandidate = splitMatch[1].trim();
         const descCandidate = splitMatch[2].trim();
@@ -139,6 +144,7 @@ export function formatToastPayload(
                         .join(' ') +
                     ' ' +
                     suffix;
+
                 return {
                     title,
                     description: trimmed,
@@ -158,6 +164,7 @@ export function formatToastPayload(
         const title = words
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
             .join(' ');
+
         return {
             title,
             description: trimmed,
@@ -174,6 +181,7 @@ export function formatToastPayload(
             loading: 'In Progress',
             default: 'Notification',
         };
+
         return {
             title: fallbackTitles[type] || 'Notice',
             description: trimmed,
@@ -193,6 +201,7 @@ export function setupSonnerInterception(): void {
     if (isIntercepted || typeof window === 'undefined') {
         return;
     }
+
     isIntercepted = true;
 
     const original = {
@@ -201,6 +210,7 @@ export function setupSonnerInterception(): void {
         warning: sonnerToast.warning.bind(sonnerToast),
         info: sonnerToast.info.bind(sonnerToast),
         message: sonnerToast.message.bind(sonnerToast),
+        loading: sonnerToast.loading.bind(sonnerToast),
     };
 
     const types: Array<'success' | 'error' | 'warning' | 'info' | 'message'> = [
@@ -215,7 +225,7 @@ export function setupSonnerInterception(): void {
         const orig = original[type];
         const toastType: ToastType = type === 'message' ? 'default' : type;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (sonnerToast as any)[type] = (message: any, options?: any) => {
             if (typeof message === 'string') {
                 const { title, description } = formatToastPayload(
@@ -233,4 +243,32 @@ export function setupSonnerInterception(): void {
             return orig(message, options);
         };
     });
+
+     
+    (sonnerToast as any).loading = (message: any, options?: any) => {
+        const { title, description } = formatToastPayload(
+            'loading',
+            message,
+            options?.description,
+        );
+
+        const customDescription = React.createElement(
+            'div',
+            { className: 'w-full flex flex-col gap-1.5 mt-1' },
+            description ? React.createElement('div', { className: 'text-xs opacity-90' }, description) : null,
+            React.createElement(LoadingTimeUI, {
+                variant: 'bar',
+                size: 'sm',
+                showProgress: true,
+                showTime: true,
+                label: '',
+                showStatusHint: true,
+            })
+        );
+
+        return original.loading(title, {
+            ...options,
+            description: customDescription,
+        });
+    };
 }

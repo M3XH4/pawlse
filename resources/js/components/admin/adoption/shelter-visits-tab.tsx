@@ -16,12 +16,12 @@ import {
   User,
   Phone,
   Mail,
-  Loader2,
   AlertTriangle,
   Heart,
   ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -446,9 +446,7 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
                     className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {processing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" /> Updating...
-                      </>
+                      <Spinner showTime showProgress label="Updating..." />
                     ) : (
                       'Save Schedule Update'
                     )}
