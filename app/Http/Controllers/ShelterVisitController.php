@@ -21,11 +21,24 @@ class ShelterVisitController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'preferred_date' => ['required', 'date', 'after_or_equal:today'],
             'preferred_time_slot' => ['nullable', 'string', 'max:100'],
-            'number_of_visitors' => ['required', 'integer', 'min:1', 'max:50'],
+            'number_of_visitors' => ['required', 'integer', 'min:1', 'max:10'],
             'purpose' => ['required', 'string', 'max:100'],
             'shelter_animal_id' => ['nullable', 'exists:shelter_animals,id'],
             'additional_notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        if (! empty($validated['preferred_time_slot'])) {
+            $existingVisitorsCount = ShelterVisit::whereDate('preferred_date', $validated['preferred_date'])
+                ->where('preferred_time_slot', $validated['preferred_time_slot'])
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->sum('number_of_visitors');
+
+            if ($existingVisitorsCount + (int) $validated['number_of_visitors'] > 10) {
+                return back()->withErrors([
+                    'preferred_time_slot' => 'The selected date and time slot has reached maximum visitor capacity (10 visitors limit). Please select another time slot or date.',
+                ]);
+            }
+        }
 
         $visit = ShelterVisit::create([
             ...$validated,

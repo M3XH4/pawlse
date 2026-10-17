@@ -151,8 +151,8 @@ export function AdoptionWizard({ pet, onClose }: AdoptionWizardProps) {
       post('/adopt/apply', {
         onSuccess: () => {
           setCompletedSteps(prev => [...new Set([...prev, 4])]);
-          toast.success(`Adoption application for ${pet.name} submitted successfully! We will contact you soon.`);
-          setTimeout(() => onClose(), 1500);
+          toast.success(`Application for ${pet.name} submitted! Navigating to your applications dashboard...`);
+          onClose();
         },
         onError: (errs) => {
           console.error(errs);

@@ -566,9 +566,24 @@ class FosterManagementController extends Controller
                 'end_reason' => $validated['end_reason'],
             ]);
 
-            $animal->update([
-                'status' => ShelterAnimalStatus::from($validated['target_status']),
-            ]);
+            if ($validated['target_status'] === 'adopted') {
+                $fosterUser = $activePlacement->fosterParentUser ?? $activePlacement->fosterParent?->user;
+                $animal->update([
+                    'status' => ShelterAnimalStatus::Adopted,
+                    'adoption_date' => now(),
+                    'adopter_name' => $fosterUser?->name ?? 'Foster Parent',
+                    'adopter_email' => $fosterUser?->email,
+                    'adopter_phone' => $fosterUser?->phone,
+                ]);
+            } else {
+                $animal->update([
+                    'status' => ShelterAnimalStatus::from($validated['target_status']),
+                    'adopter_name' => null,
+                    'adopter_email' => null,
+                    'adopter_phone' => null,
+                    'adoption_date' => null,
+                ]);
+            }
 
             $activePlacement->fosterParentUser?->notify(new FosterPlacementEndedNotification($activePlacement));
 

@@ -18,6 +18,8 @@ const NULL_PAGES = new Set([
     'about',
     'adopt',
     'adopt/show',
+    'animals',
+    'animals/index',
     'rescue',
     'donate',
     'volunteer',
@@ -31,7 +33,7 @@ const NULL_PAGES = new Set([
     'honor',
     'blog',
     'blog/index',
-    'blog/show'
+    'blog/show',
 ]);
 
 createInertiaApp({

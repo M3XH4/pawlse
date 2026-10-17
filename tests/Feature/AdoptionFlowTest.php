@@ -57,7 +57,7 @@ test('authenticated user can submit adoption application with files', function (
     ]);
 
     $response->assertSessionHasNoErrors();
-    $response->assertRedirect(route('adopt'));
+    $response->assertRedirect(route('account.user.adoption-applications'));
 
     $this->assertDatabaseHas('adoption_applications', [
         'user_id' => $user->id,
@@ -72,4 +72,46 @@ test('authenticated user can submit adoption application with files', function (
     foreach ($app->files as $file) {
         Storage::disk('public')->assertExists($file->path);
     }
+});
+
+test('user cannot submit adoption application for already adopted pet', function () {
+    $user = User::factory()->create();
+    $adoptedPet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Adopted]);
+
+    $response = $this->actingAs($user)->post(route('adopt.apply'), [
+        'pet_id' => $adoptedPet->id,
+        'fullName' => 'Jane Smith',
+        'address' => '456 Oak St',
+        'phone' => '09123456789',
+        'email' => 'jane@example.com',
+        'birthDate' => '1996-01-01',
+        'company' => 'Pawlse',
+        'status' => 'Single',
+        'pronouns' => 'She/Her',
+        'adoptionSource' => ['Social Media'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Alice Smith',
+        'emergencyRelationship' => 'Mother',
+        'emergencyPhone' => '09876543210',
+        'emergencyEmail' => 'alice@example.com',
+        'adoptionPreference' => 'Cat',
+        'residenceType' => 'Apartment',
+        'isRenting' => 'No',
+        'movingPlan' => 'Keep pet',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Self',
+        'expensesHandler' => 'Self',
+        'emergencyHandler' => 'Self',
+        'hoursAlone' => '4 hours',
+        'introductionPlan' => 'Gradual',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+        'preferredDate' => now()->addDays(2)->format('Y-m-d'),
+        'preferredTime' => '10:00',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasErrors(['pet_id']);
 });

@@ -15,6 +15,7 @@ interface Application {
     preferred_date: string;
     preferred_time: string;
     can_visit_shelter: boolean;
+    rejection_reason?: string | null;
     shelter_animal: {
         id: number;
         name: string;
@@ -33,7 +34,9 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
         (a) => a.status === 'pending' || a.status === 'scheduled'
     ).length;
 
-    const getStatusBadge = (status: Application['status']) => {
+    const getStatusBadge = (status: Application['status'], rejectionReason?: string | null) => {
+        const isPetMatched = rejectionReason && rejectionReason.toLowerCase().includes('matched for this pet');
+
         switch (status) {
             case 'pending':
                 return (
@@ -54,6 +57,13 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                     </span>
                 );
             case 'rejected':
+                if (isPetMatched) {
+                    return (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                            <Heart size={12} className="text-amber-500" /> Pet Matched / Closed
+                        </span>
+                    );
+                }
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
                         <XCircle size={12} /> Declined
@@ -90,6 +100,17 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                 </DashboardCard>
             ) : (
                 <div className="space-y-6">
+                    {/* Informational Banner clarifying Adoption Interview vs Shelter Visit */}
+                    <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs font-medium text-amber-900 flex items-start gap-3">
+                        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                            <p className="font-bold text-amber-950">Adoption Interview vs. Shelter Visit</p>
+                            <p className="text-amber-800 leading-relaxed">
+                                The <strong>interview</strong> is scheduled by shelter admins to review your adoption application and discuss your pet care plan. If you simply want to tour the facility or see the animals, that is handled separately via <strong>Shelter Visits</strong>.
+                            </p>
+                        </div>
+                    </div>
+
                     {applications.map((app) => (
                         <DashboardCard key={app.id} className="p-6">
                             <div className="flex flex-col md:flex-row gap-6">
@@ -119,7 +140,7 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                                                 Applied on {new Date(app.created_at).toLocaleDateString()} • Ref #{app.id}
                                             </p>
                                         </div>
-                                        <div>{getStatusBadge(app.status)}</div>
+                                        <div>{getStatusBadge(app.status, app.rejection_reason)}</div>
                                     </div>
 
                                     <div className="grid gap-4 sm:grid-cols-2 text-xs font-bold text-gray-500 border-t pt-4">
@@ -130,10 +151,10 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="uppercase text-[10px] tracking-wider text-gray-400">Preferred Interview Date</p>
+                                            <p className="uppercase text-[10px] tracking-wider text-gray-400">Scheduled / Preferred Interview</p>
                                             <p className="text-sm text-[#0B2340] dark:text-white mt-0.5 flex items-center gap-1.5">
                                                 <Calendar size={14} className="text-paw-orange" />
-                                                {app.preferred_date ? new Date(app.preferred_date).toLocaleDateString() : 'N/A'} at {app.preferred_time || 'N/A'}
+                                                {app.preferred_date ? new Date(app.preferred_date).toLocaleDateString() : 'Pending Date'} at {app.preferred_time || 'Pending Time'}
                                             </p>
                                         </div>
                                     </div>
@@ -142,14 +163,14 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                                     {app.status === 'pending' && (
                                         <div className="bg-amber-50/50 dark:bg-amber-950/10 p-3.5 rounded-xl border border-amber-100/50 text-xs font-bold text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
                                             <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                                            <p>Our coordinators are reviewing your questionnaire and uploaded photos of your residence. We will update scheduling if any revisions are needed.</p>
+                                            <p>Our coordinators are reviewing your questionnaire and uploaded photos of your residence. Once reviewed, an admin will reach out to conduct your adoption interview.</p>
                                         </div>
                                     )}
 
                                     {app.status === 'scheduled' && (
                                         <div className="bg-blue-50/50 dark:bg-blue-950/10 p-3.5 rounded-xl border border-blue-100/50 text-xs font-bold text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
                                             <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                                            <p>Your shelter interview and home assessment call is set! Please make sure you are available on <strong>{new Date(app.preferred_date).toLocaleDateString()}</strong> at <strong>{app.preferred_time}</strong>. If you cannot visit the shelter, coordinators will connect via phone.</p>
+                                            <p>Your shelter adoption interview with our coordinators is set! Please be prepared on <strong>{new Date(app.preferred_date).toLocaleDateString()}</strong> at <strong>{app.preferred_time}</strong>. If you selected remote/phone or cannot visit in person, coordinators will call you.</p>
                                         </div>
                                     )}
 
@@ -161,9 +182,36 @@ export default function UserAdoptionApplications({ applications = [] }: UserAdop
                                     )}
 
                                     {app.status === 'rejected' && (
-                                        <div className="bg-red-50/50 dark:bg-red-950/10 p-3.5 rounded-xl border border-red-100/50 text-xs font-bold text-red-800 dark:text-red-300 flex items-start gap-2.5">
-                                            <XCircle size={16} className="shrink-0 mt-0.5" />
-                                            <p>Your application was declined by the shelter team at this time. You can contact support or browse other pets that might better match your living situation.</p>
+                                        <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-start gap-2.5 ${
+                                            app.rejection_reason && app.rejection_reason.toLowerCase().includes('matched for this pet')
+                                                ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 text-slate-700 dark:text-slate-300'
+                                                : 'bg-red-50/50 dark:bg-red-950/10 border-red-100/50 text-red-800 dark:text-red-300'
+                                        }`}>
+                                            {app.rejection_reason && app.rejection_reason.toLowerCase().includes('matched for this pet') ? (
+                                                <Heart size={16} className="shrink-0 mt-0.5 text-amber-500" />
+                                            ) : (
+                                                <XCircle size={16} className="shrink-0 mt-0.5" />
+                                            )}
+                                            <div>
+                                                <p>
+                                                    {app.rejection_reason && app.rejection_reason.toLowerCase().includes('matched for this pet')
+                                                        ? 'This animal has found a home with another applicant.'
+                                                        : 'Your application was not approved by the shelter team at this time.'}
+                                                </p>
+                                                {app.rejection_reason && (
+                                                    <p className="mt-1 font-semibold text-slate-600 dark:text-slate-400">
+                                                        Note: {app.rejection_reason}
+                                                    </p>
+                                                )}
+                                                {app.rejection_reason && app.rejection_reason.toLowerCase().includes('matched for this pet') && (
+                                                    <p className="mt-2 text-xs font-normal text-slate-500">
+                                                        Don't be discouraged! There are other rescued animals waiting for a loving home.{' '}
+                                                        <Link href="/adopt" className="text-amber-600 hover:underline font-semibold">
+                                                            View other adoptable pets →
+                                                        </Link>
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

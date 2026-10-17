@@ -32,8 +32,29 @@ export interface MedicalRecordItem {
   notes?: string | null;
 }
 
+export interface FosterPlacementItem {
+  id: number;
+  status: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  foster_parent_name?: string | null;
+  placement_notes?: string | null;
+}
+
+export interface PostAdoptionFollowUpItem {
+  id: number;
+  follow_up_date?: string | null;
+  method: string;
+  status: string;
+  pet_condition: string;
+  notes: string;
+}
+
 export interface AdoptPetDetail {
   id: number;
+  code?: string;
+  status?: string;
+  status_label?: string;
   name: string;
   type?: string | null;
   breed: string;
@@ -45,9 +66,12 @@ export interface AdoptPetDetail {
   microchip_id?: string | null;
   intake_type?: string | null;
   current_location?: string | null;
+  admitted_at?: string | null;
   rescue_date?: string | null;
   rescue_location?: string | null;
   rescue_story?: string | null;
+  adoption_date?: string | null;
+  adopter_name?: string | null;
   special_needs?: string | null;
   behavior?: string | null;
   story?: string | null;
@@ -56,6 +80,8 @@ export interface AdoptPetDetail {
   vaccinated: boolean;
   shelterDays: number;
   medical_records?: MedicalRecordItem[];
+  foster_placements?: FosterPlacementItem[];
+  follow_ups?: PostAdoptionFollowUpItem[];
 }
 
 interface PetDetailModalProps {
@@ -124,10 +150,47 @@ export function PetDetailModal({
                   />
 
                   {/* Status Badge */}
-                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-orange-600 font-bold text-xs flex items-center gap-1.5 shadow-xs border border-orange-100">
-                    <Heart size={12} fill="currentColor" />
-                    Available for Adoption
-                  </div>
+                  {(() => {
+                    const st = (pet.status || 'available').toLowerCase();
+                    if (st === 'available') {
+                      return (
+                        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-orange-600 font-bold text-xs flex items-center gap-1.5 shadow-xs border border-orange-100">
+                          <Heart size={12} fill="currentColor" />
+                          <span>{pet.status_label || 'Available for Adoption'}</span>
+                        </div>
+                      );
+                    }
+                    if (st === 'treatment') {
+                      return (
+                        <div className="absolute top-3 left-3 bg-amber-500 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                          <Activity size={12} />
+                          <span>{pet.status_label || 'Under Treatment'}</span>
+                        </div>
+                      );
+                    }
+                    if (st === 'foster') {
+                      return (
+                        <div className="absolute top-3 left-3 bg-blue-600 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                          <Heart size={12} fill="currentColor" />
+                          <span>{pet.status_label || 'In Foster Care'}</span>
+                        </div>
+                      );
+                    }
+                    if (st === 'adopted') {
+                      return (
+                        <div className="absolute top-3 left-3 bg-teal-600 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                          <CheckCircle2 size={12} />
+                          <span>{pet.status_label || 'Adopted'}</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="absolute top-3 left-3 bg-slate-800 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                        <AlertTriangle size={12} />
+                        <span>{pet.status_label || 'In Shelter Care'}</span>
+                      </div>
+                    );
+                  })()}
 
                   {/* Vaccination Pill */}
                   <div
@@ -420,15 +483,27 @@ export function PetDetailModal({
 
               {/* Action Buttons Section */}
               <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
-                {/* 1. Main Button: Apply to Adopt */}
-                <button
-                  type="button"
-                  onClick={() => onApply(pet)}
-                  className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Heart size={16} fill="currentColor" />
-                  Apply to Adopt {pet.name}
-                </button>
+                {/* 1. Main Button: Apply to Adopt if available, else view care profile */}
+                {(pet.status || 'available').toLowerCase() === 'available' ? (
+                  <button
+                    type="button"
+                    onClick={() => onApply(pet)}
+                    className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Heart size={16} fill="currentColor" />
+                    Apply to Adopt {pet.name}
+                  </button>
+                ) : (
+                  <a
+                    href={`/adopt/${pet.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink size={16} />
+                    View Care History & Shelter Record
+                  </a>
+                )}
 
                 {/* 2. Side-by-side buttons: Share & View Full Profile */}
                 <div className="grid grid-cols-2 gap-2.5">

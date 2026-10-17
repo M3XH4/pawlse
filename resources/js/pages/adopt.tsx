@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useRef } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { AdoptionWizard } from '@/components/adoption-wizard';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -578,6 +578,34 @@ export default function Adopt({ pets = [] }: AdoptProps) {
               ))}
             </div>
           )}
+
+          {/* Redirect to Animal Master Record Overview */}
+          <div className="mt-12 bg-white rounded-[2.5rem] p-6 sm:p-10 border border-amber-200/70 shadow-xl shadow-amber-500/5 relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-paw-orange text-xs font-black uppercase tracking-wider">
+                  <Sparkles size={13} />
+                  <span>ANIMAL MASTER RECORDS</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-paw-navy">
+                  Looking for other animals in our care?
+                </h3>
+                <p className="text-gray-600 font-medium text-sm sm:text-base leading-relaxed">
+                  Not all rescued animals are ready for adoption. Explore our complete Animal Master Record Overview to see all shelter residents, animals in veterinary rehabilitation, and those in foster care.
+                </p>
+              </div>
+
+              <div className="shrink-0 flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/animals"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-paw-orange hover:bg-orange-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-paw-orange/20 transition-all group cursor-pointer"
+                >
+                  <span>View Animal Master Overview</span>
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

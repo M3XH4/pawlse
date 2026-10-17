@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   HeartHandshake,
@@ -20,6 +20,7 @@ import {
   Tag,
   Share2,
   Camera,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
@@ -68,6 +69,8 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
     });
   };
 
+  const [isIntaking, setIsIntaking] = useState(false);
+
   const handleStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRequest) return;
@@ -83,6 +86,31 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
         toast.error('Failed to update request.');
       },
     });
+  };
+
+  const handleIntakeSubmit = () => {
+    if (!selectedRequest) return;
+    if (!confirm(`Are you sure you want to admit ${selectedRequest.animal_name} into shelter master records as an available adoptable pet?`)) return;
+
+    setIsIntaking(true);
+    router.post(
+      `/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/intake`,
+      { intake_notes: data.admin_notes },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          toast.success(`${selectedRequest.animal_name} successfully admitted to shelter master records!`);
+          setSelectedRequest(null);
+          reset();
+        },
+        onError: () => {
+          toast.error('Failed to intake pet to shelter.');
+        },
+        onFinish: () => {
+          setIsIntaking(false);
+        },
+      }
+    );
   };
 
   const filteredRequests = useMemo(() => {
@@ -436,28 +464,52 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRequest(null)}
-                    className="px-5 py-3 rounded-2xl text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={processing}
-                    className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {processing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" /> Saving...
-                      </>
-                    ) : (
-                      'Save Status Update'
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    {selectedRequest.status !== 'home_found' && (
+                      <button
+                        type="button"
+                        disabled={isIntaking || processing}
+                        onClick={handleIntakeSubmit}
+                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                        title="Directly create an Animal Master Record for this pet and mark intake completed"
+                      >
+                        {isIntaking ? (
+                          <>
+                            <Loader2 size={15} className="animate-spin" /> Admitting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={15} /> Admit to Shelter
+                          </>
+                        )}
+                      </button>
                     )}
-                  </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRequest(null)}
+                      className="px-5 py-3 rounded-2xl text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={processing}
+                      className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {processing ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Saving...
+                        </>
+                      ) : (
+                        'Save Status Update'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </form>
             </motion.div>

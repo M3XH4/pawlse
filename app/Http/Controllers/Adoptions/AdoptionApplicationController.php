@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Adoptions;
 use App\Enums\AdoptionApplicationStatus;
 use App\Enums\AdoptionDocumentKind;
 use App\Enums\Role;
+use App\Enums\ShelterAnimalStatus;
 use App\Events\AdoptionApplicationSubmittedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,7 +40,13 @@ class AdoptionApplicationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'pet_id' => ['required', 'exists:shelter_animals,id'],
+            'pet_id' => [
+                'required',
+                Rule::exists('shelter_animals', 'id')->whereIn('status', [
+                    ShelterAnimalStatus::Available->value,
+                    ShelterAnimalStatus::Pending->value,
+                ]),
+            ],
 
             // Step 1: Personal Info
             'fullName' => ['required', 'string', 'max:255'],
@@ -188,6 +196,6 @@ class AdoptionApplicationController extends Controller
             'message' => 'Adoption application submitted successfully!',
         ]);
 
-        return redirect()->route('adopt');
+        return redirect()->route('account.user.adoption-applications');
     }
 }

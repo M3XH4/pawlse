@@ -4,7 +4,11 @@ use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
 use App\Models\AnimalDonationNeed;
+use App\Models\FosterParent;
+use App\Models\FosterPlacement;
+use App\Models\RehomingRequest;
 use App\Models\ShelterAnimal;
+use App\Models\ShelterVisit;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -359,4 +363,225 @@ test('non-admin cannot add, update or delete wishlist needs', function () {
     $this->actingAs($user)
         ->delete(route('account.admin.adoption-management.needs.destroy', $need))
         ->assertStatus(403);
+});
+
+test('approving an application automatically rejects competing applications for the same animal', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    $appApproved = AdoptionApplication::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'status' => AdoptionApplicationStatus::Scheduled,
+        'full_name' => 'Alice Green',
+    ]);
+
+    $appCompeting1 = AdoptionApplication::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'status' => AdoptionApplicationStatus::Pending,
+        'full_name' => 'Bob Brown',
+    ]);
+
+    $appCompeting2 = AdoptionApplication::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'status' => AdoptionApplicationStatus::Scheduled,
+        'full_name' => 'Charlie White',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.update-status', $appApproved), [
+            'status' => 'approved',
+            'notes' => 'Alice was a perfect match.',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $pet->refresh();
+    expect($pet->status)->toBe(ShelterAnimalStatus::Adopted);
+    expect($pet->adopter_name)->toBe('Alice Green');
+
+    $appApproved->refresh();
+    expect($appApproved->status)->toBe(AdoptionApplicationStatus::Approved);
+
+    $appCompeting1->refresh();
+    expect($appCompeting1->status)->toBe(AdoptionApplicationStatus::Rejected);
+    expect($appCompeting1->rejection_reason)->toContain('Another applicant was approved');
+
+    $appCompeting2->refresh();
+    expect($appCompeting2->status)->toBe(AdoptionApplicationStatus::Rejected);
+    expect($appCompeting2->rejection_reason)->toContain('Another applicant was approved');
+});
+
+test('rejecting a previously approved application rolls back animal status to available and clears adopter details', function () {
+    $admin = User::factory()->admin()->create();
+    $pet = ShelterAnimal::factory()->create([
+        'status' => ShelterAnimalStatus::Adopted,
+        'adopter_name' => 'Dave Miller',
+        'adopter_email' => 'dave@example.com',
+        'adopter_phone' => '1234567890',
+        'adoption_date' => now()->toDateString(),
+    ]);
+
+    $application = AdoptionApplication::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'status' => AdoptionApplicationStatus::Approved,
+        'full_name' => 'Dave Miller',
+        'email' => 'dave@example.com',
+        'phone' => '1234567890',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.update-status', $application), [
+            'status' => 'rejected',
+            'rejection_reason' => 'Adopter decided to relocate and cancelled adoption before pickup.',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $pet->refresh();
+    expect($pet->status)->toBe(ShelterAnimalStatus::Available);
+    expect($pet->adopter_name)->toBeNull();
+    expect($pet->adopter_email)->toBeNull();
+    expect($pet->adopter_phone)->toBeNull();
+    expect($pet->adoption_date)->toBeNull();
+});
+
+test('admin can intake a rehoming request directly into shelter master records', function () {
+    $admin = User::factory()->admin()->create();
+    $rehoming = RehomingRequest::factory()->create([
+        'animal_name' => 'Milo',
+        'species' => 'Dog',
+        'breed' => 'Golden Retriever',
+        'gender' => 'Male',
+        'age' => '2 years',
+        'status' => 'reviewed',
+        'reason' => 'Moving abroad',
+        'description' => 'Friendly dog',
+        'health_notes' => 'Up to date with rabies shots',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.rehoming-requests.intake', $rehoming), [
+            'intake_notes' => 'Admitted to Kennel B4.',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('account.admin.adoption-management'));
+
+    $rehoming->refresh();
+    expect($rehoming->status)->toBe('home_found');
+    expect($rehoming->admin_notes)->toContain('Pet successfully admitted to shelter master records');
+
+    $this->assertDatabaseHas('shelter_animals', [
+        'name' => 'Milo',
+        'breed' => 'Golden Retriever',
+        'status' => ShelterAnimalStatus::Available->value,
+    ]);
+});
+
+test('post-adoption follow-up validates pet is adopted and auto-queues next follow-up date', function () {
+    $admin = User::factory()->admin()->create();
+    $petAdopted = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Adopted]);
+    $petAvailable = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    // 1. Should fail on non-adopted pet
+    $failResponse = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.post-adoption-follow-ups.store'), [
+            'shelter_animal_id' => $petAvailable->id,
+            'follow_up_date' => now()->toDateString(),
+            'method' => 'call',
+            'status' => 'completed',
+            'pet_condition' => 'Good',
+            'notes' => 'Tried to follow up.',
+        ]);
+
+    $failResponse->assertSessionHasErrors(['shelter_animal_id']);
+
+    // 2. Succeed on adopted pet and auto-queue next follow-up
+    $nextDate = now()->addMonths(3)->toDateString();
+    $successResponse = $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.post-adoption-follow-ups.store'), [
+            'shelter_animal_id' => $petAdopted->id,
+            'follow_up_date' => now()->toDateString(),
+            'method' => 'video',
+            'status' => 'completed',
+            'pet_condition' => 'Excellent',
+            'notes' => 'Video call showed dog happy in backyard.',
+            'next_follow_up_date' => $nextDate,
+        ]);
+
+    $successResponse->assertSessionHasNoErrors();
+
+    // Verify original completed follow up
+    $this->assertDatabaseHas('post_adoption_follow_ups', [
+        'shelter_animal_id' => $petAdopted->id,
+        'method' => 'video',
+        'status' => 'completed',
+        'pet_condition' => 'Excellent',
+    ]);
+
+    // Verify auto-scheduled subsequent follow up
+    $this->assertDatabaseHas('post_adoption_follow_ups', [
+        'shelter_animal_id' => $petAdopted->id,
+        'status' => 'scheduled',
+    ]);
+});
+
+test('ending a foster placement with adopted status automatically populates foster parent adopter details', function () {
+    $admin = User::factory()->admin()->create();
+    $fosterUser = User::factory()->create([
+        'name' => 'Fiona Foster',
+        'email' => 'fiona@example.com',
+        'phone' => '09123456789',
+    ]);
+    $fosterParent = FosterParent::factory()->create([
+        'user_id' => $fosterUser->id,
+        'status' => 'approved',
+    ]);
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Foster]);
+    $placement = FosterPlacement::factory()->create([
+        'shelter_animal_id' => $pet->id,
+        'foster_parent_id' => $fosterParent->id,
+        'foster_parent_user_id' => $fosterUser->id,
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.foster-management.end', $placement), [
+            'end_reason' => 'Foster-to-adopt finalized with family.',
+            'target_status' => 'adopted',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $pet->refresh();
+    expect($pet->status)->toBe(ShelterAnimalStatus::Adopted);
+    expect($pet->adopter_name)->toBe('Fiona Foster');
+    expect($pet->adopter_email)->toBe('fiona@example.com');
+    expect($pet->adopter_phone)->toBe('09123456789');
+    expect($pet->adoption_date)->not->toBeNull();
+});
+
+test('shelter visits slot enforces capacity limit', function () {
+    $date = now()->addDays(5)->toDateString();
+    $slot = 'Morning (9:00 AM - 12:00 PM)';
+
+    // Pre-book 8 visitors for this slot
+    ShelterVisit::factory()->create([
+        'preferred_date' => $date,
+        'preferred_time_slot' => $slot,
+        'number_of_visitors' => 8,
+        'status' => 'confirmed',
+    ]);
+
+    // Try to book 5 more visitors (8 + 5 = 13 > 10) -> should fail with error
+    $response = $this->post(route('shelter-visits.store'), [
+        'full_name' => 'George Lucas',
+        'contact_number' => '09887766554',
+        'preferred_date' => $date,
+        'preferred_time_slot' => $slot,
+        'number_of_visitors' => 5,
+        'purpose' => 'Shelter Tour',
+    ]);
+
+    $response->assertSessionHasErrors(['preferred_time_slot']);
 });
