@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { formatToastPayload } from '@/lib/toast-utils';
 import type { FlashToast } from '@/types/ui';
 
 export function useFlashToast(): void {
@@ -13,7 +14,20 @@ export function useFlashToast(): void {
                 return;
             }
 
-            toast[data.type](data.message);
+            const rawContent = data.title || data.message || '';
+            const rawDescription = data.title
+                ? data.description || data.message
+                : data.description;
+
+            const { title, description } = formatToastPayload(
+                data.type,
+                rawContent,
+                rawDescription,
+            );
+
+            toast[data.type](title, {
+                description,
+            });
         });
     }, []);
 }
