@@ -23,6 +23,7 @@ test('all user dashboard pages are reachable for users', function (string $route
     ['account.user.missing-found', 'user/missing-found'],
     ['account.user.notifications', 'user/notifications'],
     ['account.user.account-settings', 'user/account-settings'],
+    ['account.user.help-desk', 'user/help-desk'],
 ]);
 
 test('all volunteer dashboard pages are reachable for volunteers', function (string $routeName, string $component) {
@@ -40,6 +41,7 @@ test('all volunteer dashboard pages are reachable for volunteers', function (str
     ['account.volunteer.rescue-reports', 'volunteer/rescue-reports'],
     ['account.volunteer.notifications', 'volunteer/notifications'],
     ['account.volunteer.account-settings', 'volunteer/account-settings'],
+    ['account.volunteer.help-desk', 'volunteer/help-desk'],
 ]);
 
 test('all admin dashboard pages are reachable for admins', function (string $routeName, string $component) {
@@ -58,6 +60,7 @@ test('all admin dashboard pages are reachable for admins', function (string $rou
     ['account.admin.reports-analytics', 'admin/reports-analytics'],
     ['account.admin.notifications', 'admin/notifications'],
     ['account.admin.account-settings', 'admin/account-settings'],
+    ['account.admin.help-desk', 'admin/help-desk'],
 ]);
 
 test('all super admin dashboard pages are reachable for super admins', function (string $routeName, string $component) {
@@ -77,6 +80,7 @@ test('all super admin dashboard pages are reachable for super admins', function 
     ['account.super-admin.system-settings', 'super-admin/system-settings'],
     ['account.super-admin.notifications', 'super-admin/notifications'],
     ['account.super-admin.account-settings', 'super-admin/account-settings'],
+    ['account.super-admin.help-desk', 'super-admin/help-desk'],
 ]);
 
 test('user adoption applications page receives user applications data', function () {

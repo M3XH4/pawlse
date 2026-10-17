@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationMonitoringController;
 use App\Http\Controllers\Admin\EventManagementController;
 use App\Http\Controllers\Admin\FosterManagementController;
+use App\Http\Controllers\Admin\HelpDeskController as AdminHelpDeskController;
 use App\Http\Controllers\Admin\ReportsAnalyticsController;
 use App\Http\Controllers\Admin\RescueManagementController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FosterCareController;
+use App\Http\Controllers\HelpDeskController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HonorController;
 use App\Http\Controllers\PetController;
@@ -38,6 +40,7 @@ use App\Http\Controllers\SuperAdmin\AuditLogController;
 use App\Http\Controllers\SuperAdmin\BackupController;
 use App\Http\Controllers\SuperAdmin\CommunityHonorController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\HelpDeskController as SuperAdminHelpDeskController;
 use App\Http\Controllers\SuperAdmin\PartnerManagementController;
 use App\Http\Controllers\SuperAdmin\ResourceManagementController;
 use App\Http\Controllers\SuperAdmin\SecurityController;
@@ -132,6 +135,10 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::inertia('notifications', 'user/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('volunteer-status', [VolunteerDashboardController::class, 'userStatus'])->name('volunteer-status');
+    Route::get('help-desk', [HelpDeskController::class, 'userIndex'])->name('help-desk');
+    Route::post('help-desk/tickets', [HelpDeskController::class, 'storeTicket'])->name('help-desk.tickets.store');
+    Route::post('help-desk/tickets/{ticket}/reply', [HelpDeskController::class, 'replyTicket'])->name('help-desk.tickets.reply');
+    Route::post('help-desk/faq/{faq}/helpful', [HelpDeskController::class, 'markFaqHelpful'])->name('help-desk.faq.helpful');
 });
 
 Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volunteerDashboardMiddleware)->group(function () {
@@ -149,6 +156,10 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('apply-foster', [FosterCareController::class, 'applyFoster'])->name('apply-foster');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
+    Route::get('help-desk', [HelpDeskController::class, 'volunteerIndex'])->name('help-desk');
+    Route::post('help-desk/tickets', [HelpDeskController::class, 'storeTicket'])->name('help-desk.tickets.store');
+    Route::post('help-desk/tickets/{ticket}/reply', [HelpDeskController::class, 'replyTicket'])->name('help-desk.tickets.reply');
+    Route::post('help-desk/faq/{faq}/helpful', [HelpDeskController::class, 'markFaqHelpful'])->name('help-desk.faq.helpful');
 });
 
 Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboardMiddleware)->group(function () {
@@ -235,6 +246,14 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::get('reports-analytics/export', [ReportsAnalyticsController::class, 'export'])->name('reports-analytics.export');
     Route::inertia('notifications', 'admin/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
+    Route::get('help-desk', [AdminHelpDeskController::class, 'index'])->name('help-desk');
+    Route::post('help-desk/inquiry', [AdminHelpDeskController::class, 'storeInquiryToSuperAdmin'])->name('help-desk.inquiry');
+    Route::post('help-desk/tickets/{ticket}/reply', [AdminHelpDeskController::class, 'replyTicket'])->name('help-desk.tickets.reply');
+    Route::post('help-desk/tickets/{ticket}/status', [AdminHelpDeskController::class, 'updateStatus'])->name('help-desk.tickets.update-status');
+    Route::post('help-desk/tickets/{ticket}/escalate', [AdminHelpDeskController::class, 'escalateToSuperAdmin'])->name('help-desk.tickets.escalate');
+    Route::post('help-desk/frequent-problems', [AdminHelpDeskController::class, 'storeFrequentProblem'])->name('help-desk.frequent-problems.store');
+    Route::put('help-desk/frequent-problems/{frequentProblem}', [AdminHelpDeskController::class, 'updateFrequentProblem'])->name('help-desk.frequent-problems.update');
+    Route::delete('help-desk/frequent-problems/{frequentProblem}', [AdminHelpDeskController::class, 'destroyFrequentProblem'])->name('help-desk.frequent-problems.destroy');
 });
 
 Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($superAdminDashboardMiddleware)->group(function () {
@@ -295,6 +314,12 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
 
     Route::inertia('notifications', 'super-admin/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
+    Route::get('help-desk', [SuperAdminHelpDeskController::class, 'index'])->name('help-desk');
+    Route::post('help-desk/tickets/{ticket}/reply', [SuperAdminHelpDeskController::class, 'replyTicket'])->name('help-desk.tickets.reply');
+    Route::post('help-desk/tickets/{ticket}/status', [SuperAdminHelpDeskController::class, 'updateStatus'])->name('help-desk.tickets.update-status');
+    Route::post('help-desk/frequent-problems', [SuperAdminHelpDeskController::class, 'storeFrequentProblem'])->name('help-desk.frequent-problems.store');
+    Route::put('help-desk/frequent-problems/{frequentProblem}', [SuperAdminHelpDeskController::class, 'updateFrequentProblem'])->name('help-desk.frequent-problems.update');
+    Route::delete('help-desk/frequent-problems/{frequentProblem}', [SuperAdminHelpDeskController::class, 'destroyFrequentProblem'])->name('help-desk.frequent-problems.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

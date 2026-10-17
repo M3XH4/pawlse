@@ -15,6 +15,7 @@ import {
     Heart,
     HeartHandshake,
     LayoutGrid,
+    LifeBuoy,
     Search,
     Settings,
     ShieldCheck,
@@ -78,6 +79,7 @@ export const userNavItems: DashboardNavItem[] = [
     navItem('My Donations', donations.url(), Gift),
     navItem('Missing/Found Reports', missingFound.url(), Search),
     navItem('Volunteer Status', '/account/user/volunteer-status', Zap),
+    navItem('Help Desk & Support', '/account/user/help-desk', LifeBuoy),
     navItem('Account Settings', userAccountSettings.url(), Settings),
 ];
 
@@ -89,6 +91,7 @@ export const volunteerNavItems: DashboardNavItem[] = [
     navItem('Participation History', participationHistory.url(), Clock),
     navItem('Certificates & Recognition', certificates.url(), Award),
     navItem('My Rescue Reports', volunteerRescueReports.url(), FileText),
+    navItem('Help Desk & Support', '/account/volunteer/help-desk', LifeBuoy),
     navItem('Account Settings', volunteerAccountSettings.url(), Settings),
     navItem('Switch to User Dashboard', '/volunteer/switch-user', User),
 ];
@@ -105,6 +108,7 @@ export const superAdminNavItems: DashboardNavItem[] = [
     navItem('Advanced Analytics', advancedAnalytics.url(), BarChart3),
     navItem('Backup & Restore', backupRestore.url(), DatabaseBackup),
     navItem('AI Configuration', aiConfiguration.url(), Sparkles),
+    navItem('Help Desk & Inquiries', '/account/super-admin/help-desk', LifeBuoy),
     navItem('System Settings', systemSettings.url(), Settings),
     navItem('Account Settings', superAdminAccountSettings.url(), Settings),
 ];

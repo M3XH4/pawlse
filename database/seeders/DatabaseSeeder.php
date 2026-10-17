@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             NotificationSeeder::class,
             PartnerAndResourceSeeder::class,
             BlogPostSeeder::class,
+            HelpDeskSeeder::class,
         ]);
     }
 }

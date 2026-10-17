@@ -9,6 +9,7 @@ import {
     HeartHandshake,
     Home,
     LayoutGrid,
+    LifeBuoy,
     Settings,
     Sparkles,
     User,
@@ -117,6 +118,12 @@ export const adminNavItems: AdminNavItem[] = [
         href: notifications.url(),
         match: notifications.url(),
         icon: Bell,
+    },
+    {
+        title: 'Help Desk & Tickets',
+        href: '/account/admin/help-desk',
+        match: '/account/admin/help-desk',
+        icon: LifeBuoy,
     },
     {
         title: 'Account Settings',
