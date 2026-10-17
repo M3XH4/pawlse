@@ -17,7 +17,57 @@ export interface FormattedToastContent {
 }
 
 /**
- * Normalizes toast messages into a short, impactful headline and concise supporting detail.
+ * Checks whether a proposed description is essentially identical or redundant
+ * compared to the title, avoiding silly duplicated text like:
+ * "Location Address Pinned" / "Location address pinned!"
+ */
+export function isRedundant(title: string, description?: string): boolean {
+    if (!description) {
+        return true;
+    }
+    const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDesc = description.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (cleanTitle === cleanDesc) {
+        return true;
+    }
+
+    if (
+        cleanDesc.includes(cleanTitle) &&
+        cleanDesc.length - cleanTitle.length <= 14
+    ) {
+        return true;
+    }
+
+    if (
+        cleanTitle.includes(cleanDesc) &&
+        cleanTitle.length - cleanDesc.length <= 14
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Converts a string into title case for impactful, clean headlines.
+ */
+function toTitleCase(str: string): string {
+    return str
+        .split(' ')
+        .filter(Boolean)
+        .map((word) => {
+            if (/^(and|or|for|of|the|in|to|with|a|an)$/i.test(word)) {
+                return word.toLowerCase();
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(' ');
+}
+
+/**
+ * Normalizes toast messages into a short, impactful headline and concise supporting detail,
+ * ensuring no repetitive text or awkward line duplication.
  */
 export function formatToastPayload(
     type: ToastType,
@@ -25,6 +75,14 @@ export function formatToastPayload(
     existingDescription?: string | ReactNode,
 ): FormattedToastContent {
     if (existingDescription !== undefined) {
+        const titleStr = typeof rawMessage === 'string' ? rawMessage : '';
+        const descStr =
+            typeof existingDescription === 'string' ? existingDescription : '';
+
+        if (titleStr && descStr && isRedundant(titleStr, descStr)) {
+            return { title: rawMessage };
+        }
+
         return {
             title: rawMessage,
             description: existingDescription,
@@ -52,13 +110,10 @@ export function formatToastPayload(
         return { title: fallbacks[type] || 'Notice' };
     }
 
-    // 1. Very short status phrases (<= 15 characters without punctuation)
-    if (trimmed.length <= 15 && !/[.!?]/.test(trimmed)) {
-        return { title: trimmed };
-    }
-
-    // 2. Explicit two-part messages (e.g. "Action completed! We will email you the receipt.")
-    const splitMatch = trimmed.match(/^([^.!?]+)[.!?]+\s+(.+)$/);
+    // 1. Two-part messages separated by ! or . or : followed by a capital letter / secondary sentence
+    // e.g. "Rehoming assistance request submitted successfully! ISF will review your submission and coordinate."
+    // e.g. "Unable to detect location. Please enter manually."
+    const splitMatch = trimmed.match(/^([^!.:]+)[!.:]+\s+([A-Z0-9].+)$/);
 
     if (splitMatch && splitMatch[2]) {
         let titleCandidate = splitMatch[1].trim();
@@ -66,36 +121,19 @@ export function formatToastPayload(
 
         titleCandidate = titleCandidate.replace(/^(new|the|your|a|an)\s+/i, '');
         titleCandidate = titleCandidate.replace(/\s+successfully$/i, '');
-        const title =
-            titleCandidate.charAt(0).toUpperCase() + titleCandidate.slice(1);
+        const title = toTitleCase(titleCandidate);
 
-        return {
-            title,
-            description: descCandidate,
-        };
+        if (!isRedundant(title, descCandidate)) {
+            return {
+                title,
+                description: descCandidate,
+            };
+        }
     }
 
-    // 3. Smart extraction for single sentences
-    const clean = trimmed.replace(/[.!?]+$/, '').trim();
-    const lower = clean.toLowerCase();
+    const lower = trimmed.toLowerCase();
 
-    // Errors & failures
-    if (lower.startsWith('failed to ') || lower.startsWith('unable to ')) {
-        const action = clean.replace(/^(failed to|unable to)\s+/i, '').trim();
-        const shortAction = action.replace(/^(the|a|an|your)\s+/i, '');
-        const titleWords = shortAction.split(' ').slice(0, 3);
-        const title =
-            titleWords
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(' ') + ' Failed';
-
-        return {
-            title,
-            description: trimmed,
-        };
-    }
-
-    // Warnings & Duplicates
+    // 2. Specific domain alerts that have a distinct high-impact category headline
     if (lower.includes('duplicate')) {
         return {
             title: 'Potential Duplicate Flagged',
@@ -110,92 +148,50 @@ export function formatToastPayload(
         };
     }
 
-    // Action verbs matching
-    const actions: Array<{ verb: string; suffix: string }> = [
-        { verb: 'permanently deleted', suffix: 'Deleted' },
-        { verb: 'deleted', suffix: 'Deleted' },
-        { verb: 'removed', suffix: 'Removed' },
-        { verb: 'restored', suffix: 'Restored' },
-        { verb: 'saved', suffix: 'Saved' },
-        { verb: 'updated', suffix: 'Updated' },
-        { verb: 'created', suffix: 'Created' },
-        { verb: 'added', suffix: 'Added' },
-        { verb: 'submitted', suffix: 'Submitted' },
-        { verb: 'pinned', suffix: 'Pinned' },
-        { verb: 'archived', suffix: 'Archived' },
-        { verb: 'downloaded', suffix: 'Downloaded' },
-        { verb: 'copied', suffix: 'Copied' },
-    ];
-
-    for (const { verb, suffix } of actions) {
-        if (lower.includes(verb)) {
-            const idx = lower.indexOf(verb);
-            let subject = clean.slice(0, idx).trim();
-            subject = subject.replace(/^(new|the|your|a|an)\s+/i, '');
-            subject = subject.replace(/\s+(was|has been|is)\s*$/i, '');
-            subject = subject.replace(/\s+successfully\s*$/i, '');
-            subject = subject.trim();
-
-            if (subject.length > 0 && subject.length <= 32) {
-                const title =
-                    subject
-                        .split(' ')
-                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                        .join(' ') +
-                    ' ' +
-                    suffix;
-
-                return {
-                    title,
-                    description: trimmed,
-                };
-            }
-
+    // 3. Failures & errors
+    if (lower.startsWith('failed to ') || lower.startsWith('unable to ')) {
+        const sentences = trimmed.split(/\.\s+/);
+        if (sentences.length > 1) {
+            const first = sentences[0].trim();
+            const rest = sentences.slice(1).join('. ').trim();
             return {
-                title: suffix,
-                description: trimmed,
+                title: first.charAt(0).toUpperCase() + first.slice(1),
+                description: rest,
             };
         }
-    }
 
-    // Database / background jobs
-    if (lower.startsWith('starting ') || lower.startsWith('restoring ')) {
-        const words = clean.split(' ').slice(0, 3);
-        const title = words
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
-
+        // Single error sentence
         return {
-            title,
-            description: trimmed,
+            title: trimmed.charAt(0).toUpperCase() + trimmed.slice(1),
         };
     }
 
-    // If long sentence without specific keyword, provide impactful header based on toast type
-    if (clean.length > 25) {
-        const fallbackTitles: Record<ToastType, string> = {
-            success: 'Action Completed',
-            error: 'Action Failed',
-            warning: 'Attention Needed',
-            info: 'Notice',
-            loading: 'In Progress',
-            default: 'Notification',
-        };
+    // 4. Single-sentence confirmations (e.g. "Location address pinned!", "AI configurations saved.")
+    // Keep it clean, impactful, and single-line so there is zero duplication!
+    const clean = trimmed.replace(/[!.]+$/, '').trim();
+    const hasEllipsis = trimmed.endsWith('...');
 
-        return {
-            title: fallbackTitles[type] || 'Notice',
-            description: trimmed,
-        };
-    }
+    let subject = clean.replace(/^(new|the|your|a|an)\s+/i, '');
+    subject = subject.replace(/\s+successfully$/i, '');
+    subject = subject.replace(/\s+permanently$/i, '');
 
-    return { title: trimmed };
+    const title =
+        toTitleCase(subject).charAt(0).toUpperCase() +
+        toTitleCase(subject).slice(1) +
+        (hasEllipsis ? '...' : '');
+
+    return {
+        title,
+        description: undefined,
+    };
 }
 
 let isIntercepted = false;
+const recentToasts = new Map<string, number>();
 
 /**
  * Enhances the Sonner toast singleton so every toast across the app automatically
- * receives impactful headlines and detailed descriptions.
+ * receives impactful headlines, no redundant descriptions, and prevents rapid-fire duplicate spamming.
  */
 export function setupSonnerInterception(): void {
     if (isIntercepted || typeof window === 'undefined') {
@@ -225,7 +221,7 @@ export function setupSonnerInterception(): void {
         const orig = original[type];
         const toastType: ToastType = type === 'message' ? 'default' : type;
 
-         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (sonnerToast as any)[type] = (message: any, options?: any) => {
             if (typeof message === 'string') {
                 const { title, description } = formatToastPayload(
@@ -234,8 +230,20 @@ export function setupSonnerInterception(): void {
                     options?.description,
                 );
 
+                // Deduplicate rapid identical toasts within 1.5s
+                const dedupeKey = `${toastType}:${message.trim().toLowerCase()}`;
+                const now = Date.now();
+                const lastTime = recentToasts.get(dedupeKey) || 0;
+                recentToasts.set(dedupeKey, now);
+
+                let id = options?.id;
+                if (!id && now - lastTime < 1500) {
+                    id = dedupeKey;
+                }
+
                 return orig(title, {
                     ...options,
+                    ...(id ? { id } : {}),
                     ...(description !== undefined ? { description } : {}),
                 });
             }
@@ -244,7 +252,8 @@ export function setupSonnerInterception(): void {
         };
     });
 
-     
+    // Custom loading toast with progress animation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (sonnerToast as any).loading = (message: any, options?: any) => {
         const { title, description } = formatToastPayload(
             'loading',
@@ -255,7 +264,13 @@ export function setupSonnerInterception(): void {
         const customDescription = React.createElement(
             'div',
             { className: 'w-full flex flex-col gap-1.5 mt-1' },
-            description ? React.createElement('div', { className: 'text-xs opacity-90' }, description) : null,
+            description
+                ? React.createElement(
+                      'div',
+                      { className: 'text-xs opacity-90' },
+                      description,
+                  )
+                : null,
             React.createElement(LoadingTimeUI, {
                 variant: 'bar',
                 size: 'sm',
@@ -263,7 +278,7 @@ export function setupSonnerInterception(): void {
                 showTime: true,
                 label: '',
                 showStatusHint: true,
-            })
+            }),
         );
 
         return original.loading(title, {

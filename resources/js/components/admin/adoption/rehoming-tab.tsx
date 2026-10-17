@@ -475,7 +475,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                         title="Directly create an Animal Master Record for this pet and mark intake completed"
                       >
                         {isIntaking ? (
-                          <Spinner showTime showProgress label="Admitting..." />
+                          <Spinner showProgress label="Admitting..." />
                         ) : (
                           <>
                             <Sparkles size={15} /> Admit to Shelter
@@ -500,7 +500,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                       className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {processing ? (
-                        <Spinner showTime showProgress label="Saving..." />
+                        <Spinner showProgress label="Saving..." />
                       ) : (
                         'Save Status Update'
                       )}

@@ -43,7 +43,8 @@ function Button({
   asChild = false,
   loading = false,
   loadingText,
-  showLoadingTime = true,
+  showProgress = true,
+  showLoadingTime = false,
   disabled,
   children,
   ...props
@@ -52,6 +53,7 @@ function Button({
     asChild?: boolean
     loading?: boolean
     loadingText?: string
+    showProgress?: boolean
     showLoadingTime?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
@@ -65,7 +67,11 @@ function Button({
     >
       {loading ? (
         <>
-          <Spinner showTime={showLoadingTime} size={size === "sm" ? "xs" : "sm"} />
+          <Spinner
+            showProgress={showProgress}
+            showTime={showLoadingTime}
+            size={size === "sm" ? "xs" : "sm"}
+          />
           {loadingText ? <span>{loadingText}</span> : children}
         </>
       ) : (

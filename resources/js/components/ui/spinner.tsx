@@ -9,7 +9,7 @@ export interface SpinnerProps extends React.HTMLAttributes<HTMLSpanElement> {
   showProgress?: boolean
   progress?: number
   label?: string
-  size?: "xs" | "sm" | "md" | "lg"
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
   variant?: "inline" | "badge" | "icon"
 }
 
@@ -24,7 +24,7 @@ function CircularProgressSpinner({
   className,
 }: {
   progress?: number
-  size?: "xs" | "sm" | "md" | "lg"
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
   className?: string
 }) {
   const radius = 9
@@ -37,6 +37,8 @@ function CircularProgressSpinner({
     sm: "size-4.5 stroke-[2.5]",
     md: "size-5.5 stroke-[2.25]",
     lg: "size-7 stroke-[2]",
+    xl: "size-14 stroke-[2]",
+    "2xl": "size-20 stroke-[2]",
   }
 
   return (
@@ -76,7 +78,7 @@ function CircularProgressSpinner({
 /**
  * Pure SVG Loader for places that strictly need an SVG icon element.
  */
-function SpinnerIcon({ className, progress = 25, size = "sm" }: { className?: string; progress?: number; size?: "xs" | "sm" | "md" | "lg" }) {
+function SpinnerIcon({ className, progress = 25, size = "sm" }: { className?: string; progress?: number; size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" }) {
   return (
     <CircularProgressSpinner
       progress={progress}
@@ -88,12 +90,12 @@ function SpinnerIcon({ className, progress = 25, size = "sm" }: { className?: st
 
 /**
  * Enhanced Spinner with spinning progress animation, live elapsed timer, and percentage indicator.
- * Displays elapsed time in tenths of a second so users know the app is actively working.
+ * For buttons and inline actions, it provides a clean, elegant spinner by default.
  */
 function Spinner({
   className,
   iconClassName,
-  showTime = true,
+  showTime = false,
   showProgress = true,
   progress: customProgress,
   label,

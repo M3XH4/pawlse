@@ -457,7 +457,7 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
               className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white shadow-sm hover:shadow transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {processing ? (
-                <Spinner showTime showProgress label="Submitting Request..." />
+                <Spinner showProgress label="Submitting Request..." />
               ) : (
                 'Submit Rehoming Request'
               )}

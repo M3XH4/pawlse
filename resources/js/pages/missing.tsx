@@ -1446,7 +1446,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                             size="sm"
                             label="SUBMITTING REPORT..."
                             showProgress
-                            showTime
+                            showTime={false}
                             className="text-white"
                           />
                         ) : (

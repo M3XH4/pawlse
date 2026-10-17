@@ -446,7 +446,7 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
                     className="px-6 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {processing ? (
-                      <Spinner showTime showProgress label="Updating..." />
+                      <Spinner showProgress label="Updating..." />
                     ) : (
                       'Save Schedule Update'
                     )}

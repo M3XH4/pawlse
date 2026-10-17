@@ -10,7 +10,6 @@ import SuperAdminLayout from '@/layouts/super-admin-layout';
 import UserLayout from '@/layouts/user-layout';
 import VolunteerLayout from '@/layouts/volunteer-layout';
 import AuthSplitLayout from './layouts/auth/auth-split-layout';
-import { GlobalLoadingIndicator } from '@/components/ui/global-loading-indicator';
 import '@/lib/notification-store';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -64,14 +63,16 @@ createInertiaApp({
         return (
             <BookmarkProvider>
                 <TooltipProvider delayDuration={0}>
-                    <GlobalLoadingIndicator />
                     {app}
                     <Toaster />
                 </TooltipProvider>
             </BookmarkProvider>
         );
     },
-    progress: false,
+    progress: {
+        color: '#f97316',
+        showSpinner: false,
+    },
 });
 
 // This will set light / dark mode on load...

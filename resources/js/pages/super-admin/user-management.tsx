@@ -882,7 +882,7 @@ export default function UserManagement({
                                         className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
                                     >
                                         {isSavingRolePerms ? (
-                                            <Spinner size="xs" showTime showProgress label="Saving..." />
+                                            <Spinner size="xs" showProgress label="Saving..." />
                                         ) : (
                                             <>
                                                 <Check className="h-3.5 w-3.5" />
@@ -1272,7 +1272,6 @@ export default function UserManagement({
                                         {processing ? (
                                             <Spinner
                                                 size="xs"
-                                                showTime
                                                 showProgress
                                                 label={editingUser ? 'Saving Changes...' : 'Creating Account...'}
                                             />
@@ -1348,7 +1347,7 @@ export default function UserManagement({
                                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition"
                                     >
                                         {isCreatingRole ? (
-                                            <Spinner size="xs" showTime showProgress label="Creating Role..." />
+                                            <Spinner size="xs" showProgress label="Creating Role..." />
                                         ) : (
                                             <span>Create Role</span>
                                         )}

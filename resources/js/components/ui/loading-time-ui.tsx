@@ -14,7 +14,7 @@ export interface LoadingTimeUIProps {
     label?: string;
     description?: string;
     estimatedTime?: string;
-    size?: 'xs' | 'sm' | 'md' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     variant?: 'inline' | 'pill' | 'card' | 'bar' | 'overlay';
     icon?: ReactNode;
     className?: string;
@@ -120,64 +120,85 @@ export function LoadingTimeUI({
         );
     }
 
-    // 3. CARD VARIANT: Structured card with full details
+    // 3. CARD VARIANT: Prominent centered loading with big spinning animation and bottom progress bar + time
     if (variant === 'card') {
+        const bigSpinnerSize = size === 'sm' ? 'lg' : size === 'lg' ? '2xl' : 'xl';
+
         return (
             <div className={cn(
-                'rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-5 shadow-xl select-none flex flex-col gap-4',
-                size === 'sm' && 'p-3 gap-2.5',
-                size === 'lg' && 'p-7 gap-5',
+                'rounded-3xl border border-gray-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-8 shadow-2xl select-none flex flex-col items-center text-center',
+                size === 'sm' && 'p-5',
+                size === 'lg' && 'p-10',
                 className
             )}>
-                <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-xl bg-paw-orange/10 dark:bg-paw-orange/20 flex items-center justify-center shrink-0">
-                            {iconElement}
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base leading-snug">
-                                {label}
-                            </h4>
-                            {description && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    {description}
-                                </p>
-                            )}
-                        </div>
+                {/* Big Spinning Animation */}
+                <div className="relative mb-6 flex items-center justify-center">
+                    <CircularProgressSpinner
+                        progress={currentProgress}
+                        size={bigSpinnerSize}
+                        className="text-paw-orange shrink-0 drop-shadow-md"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="font-mono text-xs font-black text-paw-orange">
+                            {Math.round(currentProgress)}%
+                        </span>
                     </div>
-                    {showTime && (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 font-mono text-xs font-bold text-gray-700 dark:text-gray-300 tabular-nums">
-                            <Clock className="size-3.5 text-paw-orange" />
-                            <span>{timeDisplay}</span>
-                        </div>
+                </div>
+
+                {/* Title & Description */}
+                <div className="max-w-sm mb-6">
+                    <h4 className="font-black text-gray-900 dark:text-white text-base sm:text-lg tracking-tight leading-snug">
+                        {label}
+                    </h4>
+                    {description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                            {description}
+                        </p>
+                    )}
+                    {showStatusHint && (
+                        <p className="text-[11px] font-medium text-paw-orange/90 italic mt-1.5 animate-pulse">
+                            {timer.statusHint}
+                        </p>
                     )}
                 </div>
 
-                {showProgress && (
-                    <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500 dark:text-gray-400 font-medium">
-                                {timer.statusHint}
-                            </span>
-                            <span className="font-black text-paw-orange font-mono">
-                                {Math.round(currentProgress)}%
-                            </span>
+                {/* Bottom Progress Bar & Time Counter */}
+                <div className="w-full space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800/80">
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <Sparkles className="size-3 text-amber-500" />
+                            <span>Progress</span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                            {showTime && (
+                                <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                    <Clock className="size-3 text-paw-orange" />
+                                    <span>{timeDisplay}</span>
+                                </span>
+                            )}
+                            {showProgress && (
+                                <span className="font-black text-paw-orange font-mono text-xs">
+                                    {Math.round(currentProgress)}%
+                                </span>
+                            )}
                         </div>
-                        <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5">
+                    </div>
+
+                    {showProgress && (
+                        <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5 shadow-inner">
                             <div 
-                                className="h-full bg-gradient-to-r from-paw-orange to-amber-400 rounded-full transition-all duration-150 shadow-sm"
+                                className="h-full bg-gradient-to-r from-paw-orange via-amber-500 to-amber-400 rounded-full transition-all duration-150 shadow-xs"
                                 style={{ width: `${currentProgress}%` }}
                             />
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {estimatedTime && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium pt-1 border-t border-gray-100 dark:border-gray-800/80">
-                        <Sparkles className="size-3 text-amber-500" />
-                        <span>Estimated duration: {estimatedTime}</span>
-                    </div>
-                )}
+                    {estimatedTime && (
+                        <p className="text-[10px] text-gray-400 text-right">
+                            Estimated: {estimatedTime}
+                        </p>
+                    )}
+                </div>
             </div>
         );
     }
@@ -186,7 +207,7 @@ export function LoadingTimeUI({
     if (variant === 'overlay') {
         return (
             <div className={cn(
-                'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200',
+                'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200',
                 className
             )}>
                 <LoadingTimeUI

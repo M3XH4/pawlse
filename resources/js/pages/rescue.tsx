@@ -1,4 +1,23 @@
-import { Siren, Camera, ShieldCheck, CheckCircle2, ArrowRight, Heart, Activity, MessageSquare, Brain, Sparkles, Info, Pencil, X, ChevronDown, Upload, AlertTriangle, MapPin, FileText } from 'lucide-react';
+import {
+    Siren,
+    Camera,
+    ShieldCheck,
+    CheckCircle2,
+    ArrowRight,
+    Heart,
+    Activity,
+    MessageSquare,
+    Brain,
+    Sparkles,
+    Info,
+    Pencil,
+    X,
+    ChevronDown,
+    Upload,
+    AlertTriangle,
+    MapPin,
+    FileText,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
@@ -109,10 +128,17 @@ export default function RescuePage() {
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
-    const mapAgeCategory = (ageGroup: string | undefined, speciesType: 'Dog' | 'Cat') => {
+    const mapAgeCategory = (
+        ageGroup: string | undefined,
+        speciesType: 'Dog' | 'Cat',
+    ) => {
         const ag = (ageGroup || '').toLowerCase();
         if (speciesType === 'Dog') {
-            if (ag.includes('puppy') || ag.includes('kitten') || ag.includes('young')) {
+            if (
+                ag.includes('puppy') ||
+                ag.includes('kitten') ||
+                ag.includes('young')
+            ) {
                 return 'Puppy: Birth to 6–7 months';
             }
             if (ag.includes('senior') || ag.includes('geriatric')) {
@@ -120,7 +146,11 @@ export default function RescuePage() {
             }
             return 'Adult: 1 to 7 years';
         } else {
-            if (ag.includes('kitten') || ag.includes('puppy') || ag.includes('young')) {
+            if (
+                ag.includes('kitten') ||
+                ag.includes('puppy') ||
+                ag.includes('young')
+            ) {
                 return 'Kitten: Birth to 6 months';
             }
             if (ag.includes('senior') || ag.includes('geriatric')) {
@@ -164,7 +194,7 @@ export default function RescuePage() {
         'Adult: 1 to 7 years',
         'Mature (Middle Age): Over 7 years',
         'Senior: 8+ years (large breeds), 11+ years (small breeds)',
-        'Geriatric: At or beyond life expectancy'
+        'Geriatric: At or beyond life expectancy',
     ];
 
     const catAgeCategories = [
@@ -173,10 +203,11 @@ export default function RescuePage() {
         'Prime (Young Adult): 3 to 6 years',
         'Mature: 7 to 10 years',
         'Senior: 11 to 14 years',
-        'Geriatric/Super Senior: 15+ years'
+        'Geriatric/Super Senior: 15+ years',
     ];
 
-    const currentAgeCategories = animalType === 'Dog' ? dogAgeCategories : catAgeCategories;
+    const currentAgeCategories =
+        animalType === 'Dog' ? dogAgeCategories : catAgeCategories;
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
@@ -226,7 +257,7 @@ export default function RescuePage() {
             }
 
             const data = await response.json();
-                
+
             if (data.accepted === false) {
                 toast.error(data.message ?? 'Image cannot be processed.');
                 setAiResult(null);
@@ -243,12 +274,13 @@ export default function RescuePage() {
 
             console.log('AI Response:', data);
 
-            const suggestedName =
-                Array.isArray(data.neutral_names)
-                    ? data.neutral_names[0]
-                    : data.neutral_names ?? data.suggested_name ?? '';
+            const suggestedName = Array.isArray(data.neutral_names)
+                ? data.neutral_names[0]
+                : (data.neutral_names ?? data.suggested_name ?? '');
 
-            const detectedAnimal = (data.species === 'dog' ? 'Dog' : 'Cat') as 'Dog' | 'Cat';
+            const detectedAnimal = (data.species === 'dog' ? 'Dog' : 'Cat') as
+                | 'Dog'
+                | 'Cat';
             const mappedAge = mapAgeCategory(data.age_group, detectedAnimal);
 
             const suggestions: AIResult = {
@@ -261,12 +293,14 @@ export default function RescuePage() {
                 confidence: Math.round((data.confidence ?? 0) * 100),
                 confidenceLevel: data.confidence_level ?? 'Unknown',
                 isConfident: data.is_confident ?? false,
-                confidenceMessage: data.confidence_message ?? 'Review is recommended.',
+                confidenceMessage:
+                    data.confidence_message ?? 'Review is recommended.',
                 isMixedBreed: data.is_mixed_breed ?? false,
                 mixedConfidence: data.mixed_confidence ?? 0,
                 breeds: data.breeds ?? [],
                 similarBreeds: data.similar_breeds ?? [],
-                totalAnimalsDetected: data.total_animals_detected ?? (data.animals?.length ?? 1),
+                totalAnimalsDetected:
+                    data.total_animals_detected ?? data.animals?.length ?? 1,
                 animals: data.animals ?? [],
             };
             setAiResult(suggestions);
@@ -274,45 +308,53 @@ export default function RescuePage() {
             setSelectedAnimalIdx(0);
 
             // Populate animalReviews list for multi-species review
-            const reviews: AnimalReviewItem[] = (data.animals && data.animals.length > 0)
-                ? data.animals.map((a: AnimalPrediction, i: number) => {
-                    const sp = (a.species === 'dog' ? 'Dog' : 'Cat') as 'Dog' | 'Cat';
-                    const ageCat = mapAgeCategory(a.age_group, sp);
-                    const name = a.suggested_names?.[0] ?? a.neutral_names?.[0] ?? '';
-                    return {
-                        index: i,
-                        species: sp,
-                        breed: a.breed,
-                        rawBreed: a.raw_breed,
-                        ageCategory: ageCat,
-                        gender: 'Unknown',
-                        suggestedName: name,
-                        confidence: Math.round((a.confidence ?? 0) * 100),
-                        confidenceLevel: a.confidence_level ?? 'High',
-                        isConfident: a.is_confident ?? true,
-                        confidenceMessage: a.confidence_message ?? '',
-                        isMixedBreed: a.is_mixed_breed ?? false,
-                        mixedConfidence: a.mixed_confidence ?? 0,
-                        box: a.box,
-                        included: true,
-                    };
-                })
-                : [{
-                    index: 0,
-                    species: detectedAnimal,
-                    breed: suggestions.breed,
-                    rawBreed: suggestions.rawBreed,
-                    ageCategory: suggestions.ageCategory,
-                    gender: suggestions.gender,
-                    suggestedName: suggestions.suggestedName,
-                    confidence: suggestions.confidence,
-                    confidenceLevel: suggestions.confidenceLevel,
-                    isConfident: suggestions.isConfident,
-                    confidenceMessage: suggestions.confidenceMessage,
-                    isMixedBreed: suggestions.isMixedBreed,
-                    mixedConfidence: suggestions.mixedConfidence,
-                    included: true,
-                }];
+            const reviews: AnimalReviewItem[] =
+                data.animals && data.animals.length > 0
+                    ? data.animals.map((a: AnimalPrediction, i: number) => {
+                          const sp = (a.species === 'dog' ? 'Dog' : 'Cat') as
+                              | 'Dog'
+                              | 'Cat';
+                          const ageCat = mapAgeCategory(a.age_group, sp);
+                          const name =
+                              a.suggested_names?.[0] ??
+                              a.neutral_names?.[0] ??
+                              '';
+                          return {
+                              index: i,
+                              species: sp,
+                              breed: a.breed,
+                              rawBreed: a.raw_breed,
+                              ageCategory: ageCat,
+                              gender: 'Unknown',
+                              suggestedName: name,
+                              confidence: Math.round((a.confidence ?? 0) * 100),
+                              confidenceLevel: a.confidence_level ?? 'High',
+                              isConfident: a.is_confident ?? true,
+                              confidenceMessage: a.confidence_message ?? '',
+                              isMixedBreed: a.is_mixed_breed ?? false,
+                              mixedConfidence: a.mixed_confidence ?? 0,
+                              box: a.box,
+                              included: true,
+                          };
+                      })
+                    : [
+                          {
+                              index: 0,
+                              species: detectedAnimal,
+                              breed: suggestions.breed,
+                              rawBreed: suggestions.rawBreed,
+                              ageCategory: suggestions.ageCategory,
+                              gender: suggestions.gender,
+                              suggestedName: suggestions.suggestedName,
+                              confidence: suggestions.confidence,
+                              confidenceLevel: suggestions.confidenceLevel,
+                              isConfident: suggestions.isConfident,
+                              confidenceMessage: suggestions.confidenceMessage,
+                              isMixedBreed: suggestions.isMixedBreed,
+                              mixedConfidence: suggestions.mixedConfidence,
+                              included: true,
+                          },
+                      ];
             setAnimalReviews(reviews);
 
             setAnimalType(detectedAnimal);
@@ -326,7 +368,9 @@ export default function RescuePage() {
             }
 
             if ((data.total_animals_detected ?? 1) > 1) {
-                toast.success(`AI detected ${data.total_animals_detected} animals in this photo! Multi-animal review activated.`);
+                toast.success(
+                    `AI detected ${data.total_animals_detected} animals in this photo! Multi-animal review activated.`,
+                );
             } else {
                 toast.success('AI identification complete!');
             }
@@ -370,45 +414,65 @@ export default function RescuePage() {
         };
         setAiResult(updatedAiResult);
         setEditedResult(updatedAiResult);
-        toast.info(`Reviewing Animal #${idx + 1}: ${animal.species} (${animal.breed})`);
+        toast.info(
+            `Reviewing Animal #${idx + 1}: ${animal.species} (${animal.breed})`,
+        );
     };
 
     const handleToggleIncludeAnimal = (idx: number) => {
-        setAnimalReviews(prev => prev.map((item, i) => {
-            if (i === idx) {
-                const newIncluded = !item.included;
-                toast.info(`Animal #${idx + 1} ${newIncluded ? 'included in' : 'excluded from'} report`);
-                return { ...item, included: newIncluded };
-            }
-            return item;
-        }));
+        setAnimalReviews((prev) =>
+            prev.map((item, i) => {
+                if (i === idx) {
+                    const newIncluded = !item.included;
+                    toast.info(
+                        `Animal #${idx + 1} ${newIncluded ? 'included in' : 'excluded from'} report`,
+                    );
+                    return { ...item, included: newIncluded };
+                }
+                return item;
+            }),
+        );
     };
 
     const handleDetectLocation = () => {
         if ('geolocation' in navigator) {
             setDetectingLocation(true);
-            toast.info('Detecting your location...');
+            toast.info('Detecting your location...', {
+                id: 'rescue-geo-location',
+            });
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const { latitude, longitude } = position.coords;
                     try {
-                        const address = await reverseGeocode(latitude, longitude);
+                        const address = await reverseGeocode(
+                            latitude,
+                            longitude,
+                        );
                         setLocation(address);
-                        toast.success('Location address pinned!');
+                        toast.success('Location address pinned!', {
+                            id: 'rescue-geo-location',
+                        });
                     } catch (error) {
                         console.error('Geocoding error:', error);
-                        setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-                        toast.success('Location pinned!');
+                        setLocation(
+                            `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+                        );
+                        toast.success('Location pinned!', {
+                            id: 'rescue-geo-location',
+                        });
                     } finally {
                         setDetectingLocation(false);
                     }
                 },
                 (error) => {
                     console.error('Geolocation error:', error);
-                    toast.error('Unable to detect location. Please enter manually.');
+                    toast.error(
+                        'Unable to detect location. Please enter manually.',
+                        { id: 'rescue-geo-location' },
+                    );
                     setDetectingLocation(false);
                 },
-                { enableHighAccuracy: true, timeout: 10000 }
+                { enableHighAccuracy: true, timeout: 10000 },
             );
         } else {
             toast.error('Geolocation is not supported by your browser');
@@ -426,9 +490,11 @@ export default function RescuePage() {
             return;
         }
 
-        const includedAnimals = animalReviews.filter(a => a.included);
+        const includedAnimals = animalReviews.filter((a) => a.included);
         if (animalReviews.length > 0 && includedAnimals.length === 0) {
-            toast.error('Please select at least one animal to include in the rescue report.');
+            toast.error(
+                'Please select at least one animal to include in the rescue report.',
+            );
             return;
         }
 
@@ -442,7 +508,7 @@ export default function RescuePage() {
         formData.append('name', suggestedName || '');
         formData.append('description', incidentDesc || '');
         formData.append('location', location);
-        
+
         const reporterName = contactName.trim() || (user?.name ?? '');
         const reporterPhone = contactPhone.trim();
         const reporterEmail = contactEmail.trim() || (user?.email ?? '');
@@ -480,7 +546,7 @@ export default function RescuePage() {
                 const message = Object.values(errors).flat().join(' ');
                 toast.error(message || 'Failed to submit report.');
                 setSubmitting(false);
-            }
+            },
         });
     };
 
@@ -551,19 +617,21 @@ export default function RescuePage() {
             setSuggestedName(editedResult.suggestedName);
 
             // Synchronize with active animalReview item
-            setAnimalReviews(prev => prev.map((item, idx) => {
-                if (idx === selectedAnimalIdx) {
-                    return {
-                        ...item,
-                        species: animalType,
-                        breed: editedResult.breed,
-                        ageCategory: editedResult.ageCategory,
-                        gender: editedResult.gender,
-                        suggestedName: editedResult.suggestedName,
-                    };
-                }
-                return item;
-            }));
+            setAnimalReviews((prev) =>
+                prev.map((item, idx) => {
+                    if (idx === selectedAnimalIdx) {
+                        return {
+                            ...item,
+                            species: animalType,
+                            breed: editedResult.breed,
+                            ageCategory: editedResult.ageCategory,
+                            gender: editedResult.gender,
+                            suggestedName: editedResult.suggestedName,
+                        };
+                    }
+                    return item;
+                }),
+            );
         }
 
         setIsEditing(false);
@@ -575,23 +643,29 @@ export default function RescuePage() {
             <Header />
 
             <main className="py-12 pb-24">
-                <div className="max-w-7xl mx-auto px-4">
-
+                <div className="mx-auto max-w-7xl px-4">
                     {/* ══════════════════════════════════════════════════════════ */}
                     {/* ── AI-ASSISTED ANIMAL IDENTIFICATION — REPORT RESCUE FORM ── */}
                     {/* ══════════════════════════════════════════════════════════ */}
                     <div className="mb-24">
                         {/* Section Header */}
-                        <div className="text-center mb-16">
-                            <div className="inline-flex items-center gap-3 bg-paw-navy/10 text-paw-navy px-6 py-2 rounded-full mb-6 border-2 border-paw-navy/20">
-                                <Sparkles size={20} className="text-paw-orange animate-pulse" />
-                                <span className="text-sm font-black uppercase tracking-widest">PAW-AI · Inside Report Rescue</span>
+                        <div className="mb-16 text-center">
+                            <div className="mb-6 inline-flex items-center gap-3 rounded-full border-2 border-paw-navy/20 bg-paw-navy/10 px-6 py-2 text-paw-navy">
+                                <Sparkles
+                                    size={20}
+                                    className="animate-pulse text-paw-orange"
+                                />
+                                <span className="text-sm font-black tracking-widest uppercase">
+                                    PAW-AI · Inside Report Rescue
+                                </span>
                             </div>
-                            <h1 className="text-5xl md:text-6xl font-black text-paw-navy mb-6 leading-tight">
+                            <h1 className="mb-6 text-5xl leading-tight font-black text-paw-navy md:text-6xl">
                                 AI-Assisted Animal Identification
                             </h1>
-                            <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed font-bold">
-                                Choose how you want to report: use AI for full reporting, identify animals only, or enter details manually.
+                            <p className="mx-auto max-w-2xl text-lg leading-relaxed font-bold text-gray-500">
+                                Choose how you want to report: use AI for full
+                                reporting, identify animals only, or enter
+                                details manually.
                             </p>
                         </div>
 
@@ -600,62 +674,94 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+                                className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3"
                             >
                                 {/* CARD 1: Use AI for Reporting */}
                                 <motion.div
-                                    whileHover={{ scale: 1.03, boxShadow: '0 20px 60px rgba(255, 107, 0, 0.3)' }}
+                                    whileHover={{
+                                        scale: 1.03,
+                                        boxShadow:
+                                            '0 20px 60px rgba(255, 107, 0, 0.3)',
+                                    }}
                                     onClick={() => handleModeSelect('ai-full')}
-                                    className="bg-gradient-to-br from-white to-orange-50/50 p-8 rounded-[40px] border-2 border-paw-orange/20 shadow-xl cursor-pointer transition-all group"
+                                    className="group cursor-pointer rounded-[40px] border-2 border-paw-orange/20 bg-gradient-to-br from-white to-orange-50/50 p-8 shadow-xl transition-all"
                                 >
-                                    <div className="w-16 h-16 bg-paw-orange rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-paw-orange/30">
+                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-paw-orange text-white shadow-lg shadow-paw-orange/30 transition-transform group-hover:scale-110">
                                         <Brain size={32} />
                                     </div>
-                                    <h3 className="text-2xl font-black text-paw-navy mb-4">Use AI for Reporting</h3>
-                                    <p className="text-gray-600 font-bold mb-6 leading-relaxed">
-                                        Upload a photo and let AI identify the animal. Results auto-fill the rescue form for quick submission.
+                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
+                                        Use AI for Reporting
+                                    </h3>
+                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                        Upload a photo and let AI identify the
+                                        animal. Results auto-fill the rescue
+                                        form for quick submission.
                                     </p>
-                                    <div className="flex items-center gap-2 text-paw-orange font-black text-sm">
+                                    <div className="flex items-center gap-2 text-sm font-black text-paw-orange">
                                         <span>GET STARTED</span>
-                                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                        <ArrowRight
+                                            size={16}
+                                            className="transition-transform group-hover:translate-x-1"
+                                        />
                                     </div>
                                 </motion.div>
 
                                 {/* CARD 2: AI Identification Only */}
                                 <motion.div
-                                    whileHover={{ scale: 1.03, boxShadow: '0 20px 60px rgba(30, 50, 100, 0.3)' }}
+                                    whileHover={{
+                                        scale: 1.03,
+                                        boxShadow:
+                                            '0 20px 60px rgba(30, 50, 100, 0.3)',
+                                    }}
                                     onClick={() => handleModeSelect('ai-only')}
-                                    className="bg-gradient-to-br from-white to-blue-50/50 p-8 rounded-[40px] border-2 border-paw-navy/20 shadow-xl cursor-pointer transition-all group"
+                                    className="group cursor-pointer rounded-[40px] border-2 border-paw-navy/20 bg-gradient-to-br from-white to-blue-50/50 p-8 shadow-xl transition-all"
                                 >
-                                    <div className="w-16 h-16 bg-paw-navy rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-paw-navy/30">
+                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-paw-navy text-white shadow-lg shadow-paw-navy/30 transition-transform group-hover:scale-110">
                                         <Sparkles size={32} />
                                     </div>
-                                    <h3 className="text-2xl font-black text-paw-navy mb-4">AI Identification Only</h3>
-                                    <p className="text-gray-600 font-bold mb-6 leading-relaxed">
-                                        Just want to identify an animal? Get AI suggestions without submitting a rescue report.
+                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
+                                        AI Identification Only
+                                    </h3>
+                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                        Just want to identify an animal? Get AI
+                                        suggestions without submitting a rescue
+                                        report.
                                     </p>
-                                    <div className="flex items-center gap-2 text-paw-navy font-black text-sm">
+                                    <div className="flex items-center gap-2 text-sm font-black text-paw-navy">
                                         <span>IDENTIFY NOW</span>
-                                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                        <ArrowRight
+                                            size={16}
+                                            className="transition-transform group-hover:translate-x-1"
+                                        />
                                     </div>
                                 </motion.div>
 
                                 {/* CARD 3: Manual Entry */}
                                 <motion.div
-                                    whileHover={{ scale: 1.03, boxShadow: '0 20px 60px rgba(100, 100, 100, 0.3)' }}
+                                    whileHover={{
+                                        scale: 1.03,
+                                        boxShadow:
+                                            '0 20px 60px rgba(100, 100, 100, 0.3)',
+                                    }}
                                     onClick={() => handleModeSelect('manual')}
-                                    className="bg-gradient-to-br from-white to-gray-50/50 p-8 rounded-[40px] border-2 border-gray-200 shadow-xl cursor-pointer transition-all group"
+                                    className="group cursor-pointer rounded-[40px] border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50/50 p-8 shadow-xl transition-all"
                                 >
-                                    <div className="w-16 h-16 bg-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-gray-700/30">
+                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg shadow-gray-700/30 transition-transform group-hover:scale-110">
                                         <Pencil size={32} />
                                     </div>
-                                    <h3 className="text-2xl font-black text-paw-navy mb-4">Manual Entry</h3>
-                                    <p className="text-gray-600 font-bold mb-6 leading-relaxed">
-                                        Prefer to enter all details yourself? Skip AI and fill out the form manually.
+                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
+                                        Manual Entry
+                                    </h3>
+                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                        Prefer to enter all details yourself?
+                                        Skip AI and fill out the form manually.
                                     </p>
-                                    <div className="flex items-center gap-2 text-gray-700 font-black text-sm">
+                                    <div className="flex items-center gap-2 text-sm font-black text-gray-700">
                                         <span>ENTER MANUALLY</span>
-                                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                        <ArrowRight
+                                            size={16}
+                                            className="transition-transform group-hover:translate-x-1"
+                                        />
                                     </div>
                                 </motion.div>
                             </motion.div>
@@ -668,25 +774,30 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="max-w-4xl mx-auto"
+                                className="mx-auto max-w-4xl"
                             >
                                 <button
                                     onClick={handleReset}
-                                    className="flex items-center gap-2 text-gray-600 font-bold mb-8 hover:text-paw-orange transition-colors"
+                                    className="mb-8 flex items-center gap-2 font-bold text-gray-600 transition-colors hover:text-paw-orange"
                                 >
                                     <X size={20} />
                                     <span>Back to selection</span>
                                 </button>
 
                                 {/* Wizard Progress Bar */}
-                                <div className="max-w-2xl mx-auto mb-12 px-4">
+                                <div className="mx-auto mb-12 max-w-2xl px-4">
                                     <div className="relative flex items-center justify-between">
                                         {/* Background connecting track */}
-                                        <div className="absolute left-6 right-6 top-5 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0">
+                                        <div className="absolute top-5 right-6 left-6 z-0 h-1 -translate-y-1/2 rounded-full bg-gray-200">
                                             <div
-                                                className="h-full bg-paw-orange rounded-full transition-all duration-300"
+                                                className="h-full rounded-full bg-paw-orange transition-all duration-300"
                                                 style={{
-                                                    width: wizardStep === 1 ? '0%' : wizardStep === 2 ? '50%' : '100%'
+                                                    width:
+                                                        wizardStep === 1
+                                                            ? '0%'
+                                                            : wizardStep === 2
+                                                              ? '50%'
+                                                              : '100%',
                                                 }}
                                             />
                                         </div>
@@ -695,21 +806,35 @@ export default function RescuePage() {
                                         {[
                                             { num: 1, label: 'Upload Photo' },
                                             { num: 2, label: 'AI Results' },
-                                            { num: 3, label: 'Complete Report' }
+                                            {
+                                                num: 3,
+                                                label: 'Complete Report',
+                                            },
                                         ].map((step) => (
-                                            <div key={step.num} className="relative z-10 flex flex-col items-center">
+                                            <div
+                                                key={step.num}
+                                                className="relative z-10 flex flex-col items-center"
+                                            >
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 ring-4 ring-paw-bg ${
+                                                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ring-4 ring-paw-bg transition-all duration-300 ${
                                                         wizardStep >= step.num
                                                             ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/30'
                                                             : 'bg-gray-200 text-gray-400'
                                                     }`}
                                                 >
-                                                    {wizardStep > step.num ? <CheckCircle2 size={20} /> : step.num}
+                                                    {wizardStep > step.num ? (
+                                                        <CheckCircle2
+                                                            size={20}
+                                                        />
+                                                    ) : (
+                                                        step.num
+                                                    )}
                                                 </div>
                                                 <span
-                                                    className={`text-xs font-black mt-2 uppercase tracking-widest text-center whitespace-nowrap ${
-                                                        wizardStep >= step.num ? 'text-paw-orange' : 'text-gray-400'
+                                                    className={`mt-2 text-center text-xs font-black tracking-widest whitespace-nowrap uppercase ${
+                                                        wizardStep >= step.num
+                                                            ? 'text-paw-orange'
+                                                            : 'text-gray-400'
                                                     }`}
                                                 >
                                                     {step.label}
@@ -728,56 +853,86 @@ export default function RescuePage() {
                                             exit={{ opacity: 0, x: -20 }}
                                             className="space-y-6"
                                         >
-                                            <div className="text-center mb-8">
-                                                <h2 className="text-3xl font-black text-paw-navy mb-4">Step 1: Upload Animal Photo</h2>
-                                                <p className="text-gray-600 font-bold">Upload a clear photo for AI identification</p>
+                                            <div className="mb-8 text-center">
+                                                <h2 className="mb-4 text-3xl font-black text-paw-navy">
+                                                    Step 1: Upload Animal Photo
+                                                </h2>
+                                                <p className="font-bold text-gray-600">
+                                                    Upload a clear photo for AI
+                                                    identification
+                                                </p>
                                             </div>
 
                                             {/* How AI Helps */}
-                                            <div className="bg-gradient-to-br from-paw-orange/5 to-orange-50/30 rounded-3xl p-6 space-y-4 border-2 border-paw-orange/10">
-                                                <h3 className="text-lg font-black text-paw-navy flex items-center gap-2">
-                                                    <Sparkles size={20} className="text-paw-orange" />
+                                            <div className="space-y-4 rounded-3xl border-2 border-paw-orange/10 bg-gradient-to-br from-paw-orange/5 to-orange-50/30 p-6">
+                                                <h3 className="flex items-center gap-2 text-lg font-black text-paw-navy">
+                                                    <Sparkles
+                                                        size={20}
+                                                        className="text-paw-orange"
+                                                    />
                                                     How AI Helps You
                                                 </h3>
                                                 <div className="space-y-3">
                                                     {[
                                                         'Identifies possible animal breed using image analysis',
                                                         'Suggests basic attributes such as age category and gender',
-                                                        'Automatically fills rescue report details to reduce manual input'
+                                                        'Automatically fills rescue report details to reduce manual input',
                                                     ].map((text, idx) => (
-                                                        <div key={idx} className="flex gap-3 items-start">
-                                                            <div className="w-6 h-6 bg-paw-orange/20 rounded-lg flex items-center justify-center text-paw-orange shrink-0 font-black text-xs">{idx + 1}</div>
-                                                            <p className="text-gray-600 font-bold text-sm leading-tight pt-0.5">{text}</p>
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-start gap-3"
+                                                        >
+                                                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-paw-orange/20 text-xs font-black text-paw-orange">
+                                                                {idx + 1}
+                                                            </div>
+                                                            <p className="pt-0.5 text-sm leading-tight font-bold text-gray-600">
+                                                                {text}
+                                                            </p>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
 
                                             {!imageUploaded && !analyzing ? (
-                                                <div className="border-4 border-dashed border-paw-orange/30 rounded-3xl p-12 text-center hover:border-paw-orange/50 transition-all cursor-pointer bg-gradient-to-br from-white to-orange-50/10">
+                                                <div className="cursor-pointer rounded-3xl border-4 border-dashed border-paw-orange/30 bg-gradient-to-br from-white to-orange-50/10 p-12 text-center transition-all hover:border-paw-orange/50">
                                                     <input
                                                         type="file"
                                                         id="rescue-file-upload"
                                                         accept="image/*,video/*"
-                                                        onChange={handleFileChange}
+                                                        onChange={
+                                                            handleFileChange
+                                                        }
                                                         className="hidden"
                                                     />
-                                                    <label htmlFor="rescue-file-upload" className="cursor-pointer flex flex-col items-center justify-center w-full">
-                                                        <div className="w-20 h-20 bg-paw-orange rounded-3xl flex items-center justify-center text-white mb-6 hover:scale-110 transition-transform shadow-xl shadow-paw-orange/30">
+                                                    <label
+                                                        htmlFor="rescue-file-upload"
+                                                        className="flex w-full cursor-pointer flex-col items-center justify-center"
+                                                    >
+                                                        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-paw-orange text-white shadow-xl shadow-paw-orange/30 transition-transform hover:scale-110">
                                                             <Camera size={36} />
                                                         </div>
-                                                        <h3 className="text-2xl font-black text-paw-navy mb-3">Upload a Photo</h3>
-                                                        <p className="text-gray-500 font-bold mb-6 max-w-sm">
-                                                            Upload a clear image (JPG or PNG). AI will generate identification suggestions.
+                                                        <h3 className="mb-3 text-2xl font-black text-paw-navy">
+                                                            Upload a Photo
+                                                        </h3>
+                                                        <p className="mb-6 max-w-sm font-bold text-gray-500">
+                                                            Upload a clear image
+                                                            (JPG or PNG). AI
+                                                            will generate
+                                                            identification
+                                                            suggestions.
                                                         </p>
-                                                        <div className="bg-paw-navy text-white px-10 py-4 rounded-2xl font-black hover:bg-paw-orange transition-all shadow-xl flex items-center gap-3">
-                                                            <Upload size={18} /> SELECT FILE
+                                                        <div className="flex items-center gap-3 rounded-2xl bg-paw-navy px-10 py-4 font-black text-white shadow-xl transition-all hover:bg-paw-orange">
+                                                            <Upload size={18} />{' '}
+                                                            SELECT FILE
                                                         </div>
-                                                        <p className="text-xs text-gray-400 font-bold mt-4">or drag and drop here</p>
+                                                        <p className="mt-4 text-xs font-bold text-gray-400">
+                                                            or drag and drop
+                                                            here
+                                                        </p>
                                                     </label>
                                                 </div>
                                             ) : analyzing ? (
-                                                <div className="rounded-3xl p-8 text-center bg-white border-2 border-paw-orange/20 shadow-xl">
+                                                <div className="rounded-3xl border-2 border-paw-orange/20 bg-white p-8 text-center shadow-xl">
                                                     <LoadingTimeUI
                                                         isLoading={analyzing}
                                                         variant="card"
@@ -787,20 +942,30 @@ export default function RescuePage() {
                                                         showProgress={true}
                                                         showTime={true}
                                                         showStatusHint={true}
-                                                        className="border-0 shadow-none bg-transparent p-0"
+                                                        className="border-0 bg-transparent p-0 shadow-none"
                                                     />
                                                 </div>
                                             ) : null}
 
                                             {/* Disclaimer */}
-                                            <div className="bg-paw-navy rounded-3xl p-6 text-white">
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <ShieldCheck className="text-paw-yellow" size={20} />
-                                                    <h4 className="font-black">Disclaimer</h4>
+                                            <div className="rounded-3xl bg-paw-navy p-6 text-white">
+                                                <div className="mb-3 flex items-center gap-3">
+                                                    <ShieldCheck
+                                                        className="text-paw-yellow"
+                                                        size={20}
+                                                    />
+                                                    <h4 className="font-black">
+                                                        Disclaimer
+                                                    </h4>
                                                 </div>
-                                                <p className="text-white/80 text-sm font-bold leading-relaxed">
-                                                    This AI feature provides suggested identification only and may not always be accurate.
-                                                    Users are encouraged to review and edit the information before submission.
+                                                <p className="text-sm leading-relaxed font-bold text-white/80">
+                                                    This AI feature provides
+                                                    suggested identification
+                                                    only and may not always be
+                                                    accurate. Users are
+                                                    encouraged to review and
+                                                    edit the information before
+                                                    submission.
                                                 </p>
                                             </div>
                                         </motion.div>
@@ -814,183 +979,449 @@ export default function RescuePage() {
                                             exit={{ opacity: 0, x: -20 }}
                                             className="space-y-6"
                                         >
-                                            <div className="text-center mb-6">
-                                                <h2 className="text-3xl font-black text-paw-navy mb-4">Step 2: Review AI Identification</h2>
-                                                <p className="text-gray-600 font-bold">Review and edit the AI-generated details</p>
+                                            <div className="mb-6 text-center">
+                                                <h2 className="mb-4 text-3xl font-black text-paw-navy">
+                                                    Step 2: Review AI
+                                                    Identification
+                                                </h2>
+                                                <p className="font-bold text-gray-600">
+                                                    Review and edit the
+                                                    AI-generated details
+                                                </p>
                                             </div>
 
                                             {/* Uploaded Photo Preview */}
                                             {filePreviews.length > 0 && (
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-3xl p-3 border-2 border-gray-100 bg-white">
-                                                    {filePreviews.map((preview, index) => {
-                                                        const file = uploadedFiles[index];
-                                                        return (
-                                                            <div key={index} className="relative rounded-2xl overflow-hidden aspect-video border bg-gray-50 flex items-center justify-center">
-                                                                {file?.type.startsWith('image/') ? (
-                                                                    <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <video src={preview} controls className="w-full h-full object-cover" />
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                <div className="grid grid-cols-2 gap-3 rounded-3xl border-2 border-gray-100 bg-white p-3 sm:grid-cols-3">
+                                                    {filePreviews.map(
+                                                        (preview, index) => {
+                                                            const file =
+                                                                uploadedFiles[
+                                                                    index
+                                                                ];
+                                                            return (
+                                                                <div
+                                                                    key={index}
+                                                                    className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
+                                                                >
+                                                                    {file?.type.startsWith(
+                                                                        'image/',
+                                                                    ) ? (
+                                                                        <img
+                                                                            src={
+                                                                                preview
+                                                                            }
+                                                                            alt={`Preview ${index}`}
+                                                                            className="h-full w-full object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <video
+                                                                            src={
+                                                                                preview
+                                                                            }
+                                                                            controls
+                                                                            className="h-full w-full object-cover"
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        },
+                                                    )}
                                                 </div>
                                             )}
 
                                             {/* AI Results */}
-                                            <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-3xl p-6 border-2 border-paw-orange/20 space-y-5">
+                                            <div className="space-y-5 rounded-3xl border-2 border-paw-orange/20 bg-gradient-to-br from-amber-50/50 to-orange-50/30 p-6">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-paw-orange rounded-2xl flex items-center justify-center text-white shadow-lg">
-                                                            <Sparkles size={20} />
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-paw-orange text-white shadow-lg">
+                                                            <Sparkles
+                                                                size={20}
+                                                            />
                                                         </div>
                                                         <div>
-                                                            <h3 className="font-black text-paw-navy">AI Identification Results</h3>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <CheckCircle2 size={12} className="text-green-600" />
-                                                                <span className="text-xs font-black text-green-600">{aiResult.confidence}% Confidence</span>
+                                                            <h3 className="font-black text-paw-navy">
+                                                                AI
+                                                                Identification
+                                                                Results
+                                                            </h3>
+                                                            <div className="mt-1 flex items-center gap-2">
+                                                                <CheckCircle2
+                                                                    size={12}
+                                                                    className="text-green-600"
+                                                                />
+                                                                <span className="text-xs font-black text-green-600">
+                                                                    {
+                                                                        aiResult.confidence
+                                                                    }
+                                                                    % Confidence
+                                                                </span>
                                                             </div>
-
                                                         </div>
                                                     </div>
                                                     <button
-                                                        onClick={() => isEditing ? handleSaveEdit() : setIsEditing(true)}
-                                                        className={`px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${isEditing
-                                                            ? 'bg-paw-navy text-white hover:bg-paw-orange'
-                                                            : 'bg-white text-paw-orange border-2 border-paw-orange/30 hover:bg-paw-orange hover:text-white'
-                                                            }`}
+                                                        onClick={() =>
+                                                            isEditing
+                                                                ? handleSaveEdit()
+                                                                : setIsEditing(
+                                                                      true,
+                                                                  )
+                                                        }
+                                                        className={`rounded-xl px-4 py-2 text-xs font-black tracking-widest uppercase transition-all ${
+                                                            isEditing
+                                                                ? 'bg-paw-navy text-white hover:bg-paw-orange'
+                                                                : 'border-2 border-paw-orange/30 bg-white text-paw-orange hover:bg-paw-orange hover:text-white'
+                                                        }`}
                                                     >
-                                                        {isEditing ? 'Save' : 'Edit'}
+                                                        {isEditing
+                                                            ? 'Save'
+                                                            : 'Edit'}
                                                     </button>
                                                 </div>
 
                                                 {/* Multi-Animal Detected Selector */}
                                                 {animalReviews.length > 1 && (
-                                                    <div className="bg-white/95 backdrop-blur rounded-2xl p-4 border-2 border-paw-orange/30 space-y-3 shadow-sm">
+                                                    <div className="space-y-3 rounded-2xl border-2 border-paw-orange/30 bg-white/95 p-4 shadow-sm backdrop-blur">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-black uppercase tracking-wider text-paw-navy flex items-center gap-2">
-                                                                <Brain size={16} className="text-paw-orange" />
-                                                                Multi-Species Detection ({animalReviews.length} Animals Detected)
+                                                            <span className="flex items-center gap-2 text-xs font-black tracking-wider text-paw-navy uppercase">
+                                                                <Brain
+                                                                    size={16}
+                                                                    className="text-paw-orange"
+                                                                />
+                                                                Multi-Species
+                                                                Detection (
+                                                                {
+                                                                    animalReviews.length
+                                                                }{' '}
+                                                                Animals
+                                                                Detected)
                                                             </span>
-                                                            <span className="text-[11px] font-bold text-paw-orange bg-orange-50 px-2.5 py-0.5 rounded-full border border-paw-orange/20">
-                                                                {animalReviews.filter(a => a.included).length} of {animalReviews.length} selected for rescue
+                                                            <span className="rounded-full border border-paw-orange/20 bg-orange-50 px-2.5 py-0.5 text-[11px] font-bold text-paw-orange">
+                                                                {
+                                                                    animalReviews.filter(
+                                                                        (a) =>
+                                                                            a.included,
+                                                                    ).length
+                                                                }{' '}
+                                                                of{' '}
+                                                                {
+                                                                    animalReviews.length
+                                                                }{' '}
+                                                                selected for
+                                                                rescue
                                                             </span>
                                                         </div>
-                                                        <div className="grid sm:grid-cols-2 gap-2">
-                                                            {animalReviews.map((animal, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    onClick={() => handleSelectAnimal(idx)}
-                                                                    className={`p-3 rounded-2xl cursor-pointer transition-all border-2 flex items-center justify-between gap-2 ${
-                                                                        selectedAnimalIdx === idx
-                                                                            ? 'bg-orange-50/80 border-paw-orange shadow-md shadow-paw-orange/10'
-                                                                            : 'bg-white border-gray-100 hover:border-paw-orange/30'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center gap-2.5">
-                                                                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs ${
-                                                                            selectedAnimalIdx === idx ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
-                                                                        }`}>
-                                                                            #{idx + 1}
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-black text-paw-navy flex items-center gap-1.5">
-                                                                                <span>{animal.species}: {animal.breed}</span>
-                                                                                {selectedAnimalIdx === idx && (
-                                                                                    <span className="text-[9px] bg-paw-orange text-white px-1.5 py-0.2 rounded-md font-bold">
-                                                                                        Active
-                                                                                    </span>
-                                                                                )}
-                                                                            </p>
-                                                                            <p className="text-[10px] text-gray-400 font-bold">
-                                                                                {animal.ageCategory.split(':')[0]} &middot; {animal.confidence}% conf
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleToggleIncludeAnimal(idx);
-                                                                        }}
-                                                                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg border transition-all ${
-                                                                            animal.included
-                                                                                ? 'bg-green-500 text-white border-green-600'
-                                                                                : 'bg-gray-100 text-gray-400 border-gray-200'
+                                                        <div className="grid gap-2 sm:grid-cols-2">
+                                                            {animalReviews.map(
+                                                                (
+                                                                    animal,
+                                                                    idx,
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            idx
+                                                                        }
+                                                                        onClick={() =>
+                                                                            handleSelectAnimal(
+                                                                                idx,
+                                                                            )
+                                                                        }
+                                                                        className={`flex cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 transition-all ${
+                                                                            selectedAnimalIdx ===
+                                                                            idx
+                                                                                ? 'border-paw-orange bg-orange-50/80 shadow-md shadow-paw-orange/10'
+                                                                                : 'border-gray-100 bg-white hover:border-paw-orange/30'
                                                                         }`}
                                                                     >
-                                                                        {animal.included ? '✓ Included' : '+ Excluded'}
-                                                                    </button>
-                                                                </div>
-                                                            ))}
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <div
+                                                                                className={`flex h-7 w-7 items-center justify-center rounded-xl text-xs font-black ${
+                                                                                    selectedAnimalIdx ===
+                                                                                    idx
+                                                                                        ? 'bg-paw-orange text-white'
+                                                                                        : 'bg-gray-100 text-gray-500'
+                                                                                }`}
+                                                                            >
+                                                                                #
+                                                                                {idx +
+                                                                                    1}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="flex items-center gap-1.5 text-xs font-black text-paw-navy">
+                                                                                    <span>
+                                                                                        {
+                                                                                            animal.species
+                                                                                        }
+                                                                                        :{' '}
+                                                                                        {
+                                                                                            animal.breed
+                                                                                        }
+                                                                                    </span>
+                                                                                    {selectedAnimalIdx ===
+                                                                                        idx && (
+                                                                                        <span className="py-0.2 rounded-md bg-paw-orange px-1.5 text-[9px] font-bold text-white">
+                                                                                            Active
+                                                                                        </span>
+                                                                                    )}
+                                                                                </p>
+                                                                                <p className="text-[10px] font-bold text-gray-400">
+                                                                                    {
+                                                                                        animal.ageCategory.split(
+                                                                                            ':',
+                                                                                        )[0]
+                                                                                    }{' '}
+                                                                                    &middot;{' '}
+                                                                                    {
+                                                                                        animal.confidence
+                                                                                    }
+                                                                                    %
+                                                                                    conf
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(
+                                                                                e,
+                                                                            ) => {
+                                                                                e.stopPropagation();
+                                                                                handleToggleIncludeAnimal(
+                                                                                    idx,
+                                                                                );
+                                                                            }}
+                                                                            className={`rounded-lg border px-2.5 py-1 text-[10px] font-black transition-all ${
+                                                                                animal.included
+                                                                                    ? 'border-green-600 bg-green-500 text-white'
+                                                                                    : 'border-gray-200 bg-gray-100 text-gray-400'
+                                                                            }`}
+                                                                        >
+                                                                            {animal.included
+                                                                                ? '✓ Included'
+                                                                                : '+ Excluded'}
+                                                                        </button>
+                                                                    </div>
+                                                                ),
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 <AnimatePresence mode="wait">
                                                     {!isEditing ? (
-                                                        <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-3">
-                                                            <div className="bg-white rounded-2xl p-4 col-span-2">
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Breed</p>
-                                                                <p className="font-black text-paw-navy">{aiResult.breed}</p>
+                                                        <motion.div
+                                                            key="view"
+                                                            initial={{
+                                                                opacity: 0,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                            }}
+                                                            className="grid grid-cols-2 gap-3"
+                                                        >
+                                                            <div className="col-span-2 rounded-2xl bg-white p-4">
+                                                                <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Breed
+                                                                </p>
+                                                                <p className="font-black text-paw-navy">
+                                                                    {
+                                                                        aiResult.breed
+                                                                    }
+                                                                </p>
                                                             </div>
-                                                            <div className="bg-white rounded-2xl p-4">
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Age</p>
-                                                                <p className="font-black text-paw-navy text-sm">{aiResult.ageCategory}</p>
+                                                            <div className="rounded-2xl bg-white p-4">
+                                                                <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Age
+                                                                </p>
+                                                                <p className="text-sm font-black text-paw-navy">
+                                                                    {
+                                                                        aiResult.ageCategory
+                                                                    }
+                                                                </p>
                                                             </div>
-                                                            <div className="bg-white rounded-2xl p-4">
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Gender</p>
-                                                                <p className="font-black text-paw-navy">{aiResult.gender}</p>
+                                                            <div className="rounded-2xl bg-white p-4">
+                                                                <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Gender
+                                                                </p>
+                                                                <p className="font-black text-paw-navy">
+                                                                    {
+                                                                        aiResult.gender
+                                                                    }
+                                                                </p>
                                                             </div>
-                                                            <div className="bg-white rounded-2xl p-4 col-span-2">
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Suggested Name</p>
-                                                                <p className="font-black text-paw-navy">{aiResult.suggestedName}</p>
+                                                            <div className="col-span-2 rounded-2xl bg-white p-4">
+                                                                <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Suggested
+                                                                    Name
+                                                                </p>
+                                                                <p className="font-black text-paw-navy">
+                                                                    {
+                                                                        aiResult.suggestedName
+                                                                    }
+                                                                </p>
                                                             </div>
                                                         </motion.div>
                                                     ) : (
-                                                        <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                                                        <motion.div
+                                                            key="edit"
+                                                            initial={{
+                                                                opacity: 0,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                            }}
+                                                            className="space-y-4"
+                                                        >
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Breed</label>
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Breed
+                                                                </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={editedResult?.breed ?? ''}
-                                                                    onChange={(e) => setEditedResult(prev => prev ? { ...prev, breed: e.target.value } : null)}
-                                                                    className="w-full bg-white p-4 rounded-2xl border-2 border-paw-orange/30 focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                                    value={
+                                                                        editedResult?.breed ??
+                                                                        ''
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setEditedResult(
+                                                                            (
+                                                                                prev,
+                                                                            ) =>
+                                                                                prev
+                                                                                    ? {
+                                                                                          ...prev,
+                                                                                          breed: e
+                                                                                              .target
+                                                                                              .value,
+                                                                                      }
+                                                                                    : null,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                                 />
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 <div>
-                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Age Category</label>
+                                                                    <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                        Age
+                                                                        Category
+                                                                    </label>
                                                                     <select
-                                                                        value={editedResult?.ageCategory ?? ''}
-                                                                        onChange={(e) => setEditedResult(prev => prev ? { ...prev, ageCategory: e.target.value } : null)}
-                                                                        className="w-full bg-white p-4 rounded-2xl border-2 border-paw-orange/30 focus:border-paw-orange outline-none font-bold text-paw-navy text-sm"
+                                                                        value={
+                                                                            editedResult?.ageCategory ??
+                                                                            ''
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setEditedResult(
+                                                                                (
+                                                                                    prev,
+                                                                                ) =>
+                                                                                    prev
+                                                                                        ? {
+                                                                                              ...prev,
+                                                                                              ageCategory:
+                                                                                                  e
+                                                                                                      .target
+                                                                                                      .value,
+                                                                                          }
+                                                                                        : null,
+                                                                            )
+                                                                        }
+                                                                        className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 text-sm font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                                     >
-                                                                        {currentAgeCategories.map((cat) => (
-                                                                            <option key={cat} value={cat}>{cat}</option>
-                                                                        ))}
+                                                                        {currentAgeCategories.map(
+                                                                            (
+                                                                                cat,
+                                                                            ) => (
+                                                                                <option
+                                                                                    key={
+                                                                                        cat
+                                                                                    }
+                                                                                    value={
+                                                                                        cat
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        cat
+                                                                                    }
+                                                                                </option>
+                                                                            ),
+                                                                        )}
                                                                     </select>
                                                                 </div>
                                                                 <div>
-                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Gender</label>
+                                                                    <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                        Gender
+                                                                    </label>
                                                                     <select
-                                                                        value={editedResult?.gender ?? ''}
-                                                                        onChange={(e) => setEditedResult(prev => prev ? { ...prev, gender: e.target.value } : null)}
-                                                                        className="w-full bg-white p-4 rounded-2xl border-2 border-paw-orange/30 focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                                        value={
+                                                                            editedResult?.gender ??
+                                                                            ''
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setEditedResult(
+                                                                                (
+                                                                                    prev,
+                                                                                ) =>
+                                                                                    prev
+                                                                                        ? {
+                                                                                              ...prev,
+                                                                                              gender: e
+                                                                                                  .target
+                                                                                                  .value,
+                                                                                          }
+                                                                                        : null,
+                                                                            )
+                                                                        }
+                                                                        className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                                     >
-                                                                        <option value="Male">Male</option>
-                                                                        <option value="Female">Female</option>
-                                                                        <option value="Unknown">Unknown</option>
+                                                                        <option value="Male">
+                                                                            Male
+                                                                        </option>
+                                                                        <option value="Female">
+                                                                            Female
+                                                                        </option>
+                                                                        <option value="Unknown">
+                                                                            Unknown
+                                                                        </option>
                                                                     </select>
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Suggested Name</label>
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Suggested
+                                                                    Name
+                                                                </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={editedResult?.suggestedName ?? ''}
-                                                                    onChange={(e) => setEditedResult(prev => prev ? { ...prev, suggestedName: e.target.value } : null)}
-                                                                    className="w-full bg-white p-4 rounded-2xl border-2 border-paw-orange/30 focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                                    value={
+                                                                        editedResult?.suggestedName ??
+                                                                        ''
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setEditedResult(
+                                                                            (
+                                                                                prev,
+                                                                            ) =>
+                                                                                prev
+                                                                                    ? {
+                                                                                          ...prev,
+                                                                                          suggestedName:
+                                                                                              e
+                                                                                                  .target
+                                                                                                  .value,
+                                                                                      }
+                                                                                    : null,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                                 />
                                                             </div>
                                                         </motion.div>
@@ -999,66 +1430,133 @@ export default function RescuePage() {
                                             </div>
 
                                             {/* Auto-Filled Details */}
-                                            <div className="bg-white rounded-3xl p-6 border-2 border-gray-100 space-y-4">
-                                                <h3 className="font-black text-paw-navy flex items-center gap-2">
-                                                    <FileText size={18} className="text-paw-orange" />
+                                            <div className="space-y-4 rounded-3xl border-2 border-gray-100 bg-white p-6">
+                                                <h3 className="flex items-center gap-2 font-black text-paw-navy">
+                                                    <FileText
+                                                        size={18}
+                                                        className="text-paw-orange"
+                                                    />
                                                     Auto-Filled Report Details
                                                 </h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Animal Type</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Animal Type
+                                                        </label>
                                                         <select
                                                             value={animalType}
                                                             onChange={(e) => {
-                                                                setAnimalType(e.target.value as 'Dog' | 'Cat');
-                                                                setAgeCategory(e.target.value === 'Dog' ? dogAgeCategories[0] : catAgeCategories[0]);
+                                                                setAnimalType(
+                                                                    e.target
+                                                                        .value as
+                                                                        | 'Dog'
+                                                                        | 'Cat',
+                                                                );
+                                                                setAgeCategory(
+                                                                    e.target
+                                                                        .value ===
+                                                                        'Dog'
+                                                                        ? dogAgeCategories[0]
+                                                                        : catAgeCategories[0],
+                                                                );
                                                             }}
-                                                            className="w-full bg-paw-bg p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                         >
-                                                            <option value="Dog">Dog</option>
-                                                            <option value="Cat">Cat</option>
+                                                            <option value="Dog">
+                                                                Dog
+                                                            </option>
+                                                            <option value="Cat">
+                                                                Cat
+                                                            </option>
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Breed</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Breed
+                                                        </label>
                                                         <input
                                                             type="text"
                                                             value={breed}
-                                                            onChange={(e) => setBreed(e.target.value)}
-                                                            className="w-full bg-paw-bg p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                            onChange={(e) =>
+                                                                setBreed(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Age Category</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Age Category
+                                                        </label>
                                                         <select
                                                             value={ageCategory}
-                                                            onChange={(e) => setAgeCategory(e.target.value)}
-                                                            className="w-full bg-paw-bg p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none font-bold text-paw-navy text-sm"
+                                                            onChange={(e) =>
+                                                                setAgeCategory(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 text-sm font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                         >
-                                                            {currentAgeCategories.map((cat) => (
-                                                                <option key={cat} value={cat}>{cat}</option>
-                                                            ))}
+                                                            {currentAgeCategories.map(
+                                                                (cat) => (
+                                                                    <option
+                                                                        key={
+                                                                            cat
+                                                                        }
+                                                                        value={
+                                                                            cat
+                                                                        }
+                                                                    >
+                                                                        {cat}
+                                                                    </option>
+                                                                ),
+                                                            )}
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Gender</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Gender
+                                                        </label>
                                                         <select
                                                             value={gender}
-                                                            onChange={(e) => setGender(e.target.value)}
-                                                            className="w-full bg-paw-bg p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                            onChange={(e) =>
+                                                                setGender(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                         >
-                                                            <option value="Male">Male</option>
-                                                            <option value="Female">Female</option>
-                                                            <option value="Unknown">Unknown</option>
+                                                            <option value="Male">
+                                                                Male
+                                                            </option>
+                                                            <option value="Female">
+                                                                Female
+                                                            </option>
+                                                            <option value="Unknown">
+                                                                Unknown
+                                                            </option>
                                                         </select>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Suggested Name</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Suggested Name
+                                                        </label>
                                                         <input
                                                             type="text"
-                                                            value={suggestedName}
-                                                            onChange={(e) => setSuggestedName(e.target.value)}
-                                                            className="w-full bg-paw-bg p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none font-bold text-paw-navy"
+                                                            value={
+                                                                suggestedName
+                                                            }
+                                                            onChange={(e) =>
+                                                                setSuggestedName(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
                                                         />
                                                     </div>
                                                 </div>
@@ -1066,9 +1564,10 @@ export default function RescuePage() {
 
                                             <button
                                                 onClick={() => setWizardStep(3)}
-                                                className="w-full bg-paw-orange text-white py-5 rounded-2xl font-black hover:bg-orange-600 transition-all shadow-xl flex items-center justify-center gap-3"
+                                                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-paw-orange py-5 font-black text-white shadow-xl transition-all hover:bg-orange-600"
                                             >
-                                                CONTINUE TO REPORT DETAILS <ArrowRight size={20} />
+                                                CONTINUE TO REPORT DETAILS{' '}
+                                                <ArrowRight size={20} />
                                             </button>
                                         </motion.div>
                                     )}
@@ -1081,133 +1580,251 @@ export default function RescuePage() {
                                             exit={{ opacity: 0, x: -20 }}
                                             className="space-y-6"
                                         >
-                                            <div className="text-center mb-6">
-                                                <h2 className="text-3xl font-black text-paw-navy mb-4">Step 3: Complete Rescue Report</h2>
-                                                <p className="text-gray-600 font-bold">Add incident details and location</p>
+                                            <div className="mb-6 text-center">
+                                                <h2 className="mb-4 text-3xl font-black text-paw-navy">
+                                                    Step 3: Complete Rescue
+                                                    Report
+                                                </h2>
+                                                <p className="font-bold text-gray-600">
+                                                    Add incident details and
+                                                    location
+                                                </p>
                                             </div>
 
-                                            <div className="bg-white rounded-3xl p-6 border-2 border-gray-100 space-y-6">
+                                            <div className="space-y-6 rounded-3xl border-2 border-gray-100 bg-white p-6">
                                                 <div>
-                                                    <label className="text-sm font-black uppercase tracking-widest text-gray-500 mb-2 block">Incident Description *</label>
+                                                    <label className="mb-2 block text-sm font-black tracking-widest text-gray-500 uppercase">
+                                                        Incident Description *
+                                                    </label>
                                                     <textarea
                                                         value={incidentDesc}
-                                                        onChange={(e) => setIncidentDesc(e.target.value)}
-                                                        className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold min-h-[120px]"
+                                                        onChange={(e) =>
+                                                            setIncidentDesc(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="min-h-[120px] w-full rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                         placeholder="Describe what you observed..."
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-sm font-black uppercase tracking-widest text-gray-500 mb-2 block">Location / Landmark *</label>
-                                                    <div className="flex flex-col sm:flex-row gap-3">
+                                                    <label className="mb-2 block text-sm font-black tracking-widest text-gray-500 uppercase">
+                                                        Location / Landmark *
+                                                    </label>
+                                                    <div className="flex flex-col gap-3 sm:flex-row">
                                                         <input
                                                             type="text"
                                                             value={location}
-                                                            onChange={(e) => setLocation(e.target.value)}
-                                                            className="flex-1 p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
+                                                            onChange={(e) =>
+                                                                setLocation(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                             placeholder="Type manually or pin your location"
                                                         />
                                                         <button
                                                             type="button"
-                                                            disabled={detectingLocation}
-                                                            onClick={handleDetectLocation}
-                                                            className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                                                            disabled={
+                                                                detectingLocation
+                                                            }
+                                                            onClick={
+                                                                handleDetectLocation
+                                                            }
+                                                            className="flex items-center justify-center gap-2 rounded-2xl bg-paw-navy px-6 py-4 font-black whitespace-nowrap text-white transition-all hover:bg-paw-orange disabled:cursor-not-allowed disabled:opacity-60 sm:py-0"
                                                         >
                                                             {detectingLocation ? (
-                                                                <Spinner showTime showProgress label="Detecting..." size="xs" />
+                                                                <Spinner
+                                                                    showProgress
+                                                                    label="Detecting..."
+                                                                    size="xs"
+                                                                />
                                                             ) : (
                                                                 <>
-                                                                    <MapPin size={18} />
-                                                                    <span className="hidden sm:inline">Pin Location</span>
-                                                                    <span className="sm:hidden">Pin My Location</span>
+                                                                    <MapPin
+                                                                        size={
+                                                                            18
+                                                                        }
+                                                                    />
+                                                                    <span className="hidden sm:inline">
+                                                                        Pin
+                                                                        Location
+                                                                    </span>
+                                                                    <span className="sm:hidden">
+                                                                        Pin My
+                                                                        Location
+                                                                    </span>
                                                                 </>
                                                             )}
                                                         </button>
                                                     </div>
-                                                    <p className="text-xs text-gray-400 font-bold mt-2">Click "Pin Location" to detect your address</p>
+                                                    <p className="mt-2 text-xs font-bold text-gray-400">
+                                                        Click "Pin Location" to
+                                                        detect your address
+                                                    </p>
                                                 </div>
 
                                                 {/* Contact Details */}
                                                 {user ? (
-                                                    <div className="bg-emerald-50/60 p-6 rounded-3xl border-2 border-emerald-500/20 space-y-4">
+                                                    <div className="space-y-4 rounded-3xl border-2 border-emerald-500/20 bg-emerald-50/60 p-6">
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2.5">
-                                                                <ShieldCheck className="text-emerald-600" size={20} />
-                                                                <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">
-                                                                    Your Contact Information (Logged In)
+                                                                <ShieldCheck
+                                                                    className="text-emerald-600"
+                                                                    size={20}
+                                                                />
+                                                                <h4 className="text-sm font-black tracking-wider text-paw-navy uppercase">
+                                                                    Your Contact
+                                                                    Information
+                                                                    (Logged In)
                                                                 </h4>
                                                             </div>
-                                                            <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                                                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
                                                                 Verified Account
                                                             </span>
                                                         </div>
-                                                        <div className="grid md:grid-cols-2 gap-4">
+                                                        <div className="grid gap-4 md:grid-cols-2">
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name</label>
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Name
+                                                                </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={contactName}
-                                                                    onChange={(e) => setContactName(e.target.value)}
-                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                                    placeholder={user.name || 'Reporter Name'}
+                                                                    value={
+                                                                        contactName
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setContactName(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
+                                                                    placeholder={
+                                                                        user.name ||
+                                                                        'Reporter Name'
+                                                                    }
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
-                                                                    Phone Number (For Responders)
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Phone Number
+                                                                    (For
+                                                                    Responders)
                                                                 </label>
                                                                 <PhoneInput
-                                                                    value={contactPhone}
-                                                                    onChange={(val) => setContactPhone(val)}
-                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                                    value={
+                                                                        contactPhone
+                                                                    }
+                                                                    onChange={(
+                                                                        val,
+                                                                    ) =>
+                                                                        setContactPhone(
+                                                                            val,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
                                                                     placeholder="+63 9XX XXX XXXX"
                                                                 />
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email</label>
+                                                            <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                Email
+                                                            </label>
                                                             <input
                                                                 type="email"
-                                                                value={contactEmail}
-                                                                onChange={(e) => setContactEmail(e.target.value)}
-                                                                className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                                placeholder={user.email || 'email@example.com'}
+                                                                value={
+                                                                    contactEmail
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setContactEmail(
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
+                                                                placeholder={
+                                                                    user.email ||
+                                                                    'email@example.com'
+                                                                }
                                                             />
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
-                                                        <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
-                                                        <div className="grid md:grid-cols-2 gap-4">
+                                                    <div className="space-y-4 rounded-3xl border-2 border-paw-orange/10 bg-orange-50/50 p-6">
+                                                        <h4 className="text-sm font-black tracking-wider text-paw-navy uppercase">
+                                                            Your Contact
+                                                            Information
+                                                            (Required for
+                                                            Guests)
+                                                        </h4>
+                                                        <div className="grid gap-4 md:grid-cols-2">
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name *</label>
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Name *
+                                                                </label>
                                                                 <input
                                                                     type="text"
                                                                     required
-                                                                    value={contactName}
-                                                                    onChange={(e) => setContactName(e.target.value)}
-                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                    value={
+                                                                        contactName
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setContactName(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                                     placeholder="Reporter Name"
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
+                                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                    Phone *
+                                                                </label>
                                                                 <PhoneInput
                                                                     required
-                                                                    value={contactPhone}
-                                                                    onChange={(val) => setContactPhone(val)}
-                                                                    className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                    value={
+                                                                        contactPhone
+                                                                    }
+                                                                    onChange={(
+                                                                        val,
+                                                                    ) =>
+                                                                        setContactPhone(
+                                                                            val,
+                                                                        )
+                                                                    }
+                                                                    className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                                     placeholder="+63 9XX XXX XXXX"
                                                                 />
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email (Optional)</label>
+                                                            <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                Email (Optional)
+                                                            </label>
                                                             <input
                                                                 type="email"
-                                                                value={contactEmail}
-                                                                onChange={(e) => setContactEmail(e.target.value)}
-                                                                className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                                value={
+                                                                    contactEmail
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setContactEmail(
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                                 placeholder="email@example.com"
                                                             />
                                                         </div>
@@ -1215,95 +1832,191 @@ export default function RescuePage() {
                                                 )}
 
                                                 {/* Summary */}
-                                                <div className="bg-gradient-to-br from-paw-orange/5 to-orange-50/30 rounded-2xl p-5 border-2 border-paw-orange/10 space-y-3">
+                                                <div className="space-y-3 rounded-2xl border-2 border-paw-orange/10 bg-gradient-to-br from-paw-orange/5 to-orange-50/30 p-5">
                                                     <div className="flex items-center justify-between">
-                                                        <h4 className="font-black text-paw-navy text-sm">Report Summary</h4>
-                                                        {animalReviews.filter(a => a.included).length > 1 && (
-                                                            <span className="text-[10px] font-black uppercase tracking-wider bg-paw-orange text-white px-2.5 py-0.5 rounded-full">
-                                                                🐾 {animalReviews.filter(a => a.included).length} Animals in Report
+                                                        <h4 className="text-sm font-black text-paw-navy">
+                                                            Report Summary
+                                                        </h4>
+                                                        {animalReviews.filter(
+                                                            (a) => a.included,
+                                                        ).length > 1 && (
+                                                            <span className="rounded-full bg-paw-orange px-2.5 py-0.5 text-[10px] font-black tracking-wider text-white uppercase">
+                                                                🐾{' '}
+                                                                {
+                                                                    animalReviews.filter(
+                                                                        (a) =>
+                                                                            a.included,
+                                                                    ).length
+                                                                }{' '}
+                                                                Animals in
+                                                                Report
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    {animalReviews.filter(a => a.included).length > 1 ? (
+                                                    {animalReviews.filter(
+                                                        (a) => a.included,
+                                                    ).length > 1 ? (
                                                         <div className="space-y-2 border-b border-paw-orange/10 pb-3">
-                                                            {animalReviews.filter(a => a.included).map((an, i) => (
-                                                                <div key={i} className="bg-white p-3 rounded-xl border border-paw-orange/20 flex items-center justify-between text-xs">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="w-5 h-5 bg-paw-orange/10 text-paw-orange rounded-md flex items-center justify-center font-black text-[10px]">
-                                                                            #{i + 1}
-                                                                        </span>
-                                                                        <div>
-                                                                            <p className="font-black text-paw-navy">{an.species} · {an.breed}</p>
-                                                                            <p className="text-[10px] text-gray-400 font-bold">{an.ageCategory.split(':')[0]} · {an.gender}</p>
+                                                            {animalReviews
+                                                                .filter(
+                                                                    (a) =>
+                                                                        a.included,
+                                                                )
+                                                                .map(
+                                                                    (an, i) => (
+                                                                        <div
+                                                                            key={
+                                                                                i
+                                                                            }
+                                                                            className="flex items-center justify-between rounded-xl border border-paw-orange/20 bg-white p-3 text-xs"
+                                                                        >
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-paw-orange/10 text-[10px] font-black text-paw-orange">
+                                                                                    #
+                                                                                    {i +
+                                                                                        1}
+                                                                                </span>
+                                                                                <div>
+                                                                                    <p className="font-black text-paw-navy">
+                                                                                        {
+                                                                                            an.species
+                                                                                        }{' '}
+                                                                                        ·{' '}
+                                                                                        {
+                                                                                            an.breed
+                                                                                        }
+                                                                                    </p>
+                                                                                    <p className="text-[10px] font-bold text-gray-400">
+                                                                                        {
+                                                                                            an.ageCategory.split(
+                                                                                                ':',
+                                                                                            )[0]
+                                                                                        }{' '}
+                                                                                        ·{' '}
+                                                                                        {
+                                                                                            an.gender
+                                                                                        }
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            {an.suggestedName && (
+                                                                                <span className="rounded-lg bg-paw-bg px-2 py-1 text-[11px] font-bold text-paw-navy">
+                                                                                    "
+                                                                                    {
+                                                                                        an.suggestedName
+                                                                                    }
+                                                                                    "
+                                                                                </span>
+                                                                            )}
                                                                         </div>
-                                                                    </div>
-                                                                    {an.suggestedName && (
-                                                                        <span className="text-[11px] font-bold text-paw-navy bg-paw-bg px-2 py-1 rounded-lg">
-                                                                            "{an.suggestedName}"
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            ))}
+                                                                    ),
+                                                                )}
                                                         </div>
                                                     ) : (
                                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                                             <div>
-                                                                <p className="text-gray-400 font-bold">Animal</p>
-                                                                <p className="font-black text-paw-navy">{animalType} - {breed || 'Unspecified'}</p>
+                                                                <p className="font-bold text-gray-400">
+                                                                    Animal
+                                                                </p>
+                                                                <p className="font-black text-paw-navy">
+                                                                    {animalType}{' '}
+                                                                    -{' '}
+                                                                    {breed ||
+                                                                        'Unspecified'}
+                                                                </p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-gray-400 font-bold">Age/Gender</p>
-                                                                <p className="font-black text-paw-navy">{ageCategory.split(':')[0]} / {gender}</p>
+                                                                <p className="font-bold text-gray-400">
+                                                                    Age/Gender
+                                                                </p>
+                                                                <p className="font-black text-paw-navy">
+                                                                    {
+                                                                        ageCategory.split(
+                                                                            ':',
+                                                                        )[0]
+                                                                    }{' '}
+                                                                    / {gender}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    <div className="pt-2 border-t border-paw-orange/10 text-xs">
-                                                        <p className="text-gray-400 font-bold">Reporter Contact</p>
+                                                    <div className="border-t border-paw-orange/10 pt-2 text-xs">
+                                                        <p className="font-bold text-gray-400">
+                                                            Reporter Contact
+                                                        </p>
                                                         <p className="font-black text-paw-navy">
-                                                            {contactName || (user ? user.name : 'Guest')}
-                                                            {contactPhone ? ` · ${contactPhone}` : ''}
-                                                            {contactEmail ? ` · ${contactEmail}` : (user?.email ? ` · ${user.email}` : '')}
+                                                            {contactName ||
+                                                                (user
+                                                                    ? user.name
+                                                                    : 'Guest')}
+                                                            {contactPhone
+                                                                ? ` · ${contactPhone}`
+                                                                : ''}
+                                                            {contactEmail
+                                                                ? ` · ${contactEmail}`
+                                                                : user?.email
+                                                                  ? ` · ${user.email}`
+                                                                  : ''}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Disclaimer */}
-                                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                <AlertTriangle size={14} className="text-gray-400 shrink-0 mt-0.5" />
-                                                <p className="text-xs font-bold text-gray-400 leading-tight">
-                                                    This AI feature provides suggested identification only and may not always be accurate.
-                                                    Users are encouraged to review and edit the information before submission.
+                                            <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                                                <AlertTriangle
+                                                    size={14}
+                                                    className="mt-0.5 shrink-0 text-gray-400"
+                                                />
+                                                <p className="text-xs leading-tight font-bold text-gray-400">
+                                                    This AI feature provides
+                                                    suggested identification
+                                                    only and may not always be
+                                                    accurate. Users are
+                                                    encouraged to review and
+                                                    edit the information before
+                                                    submission.
                                                 </p>
                                             </div>
 
                                             <div className="flex gap-3">
                                                 <button
-                                                    onClick={() => setWizardStep(2)}
-                                                    className="px-8 bg-gray-200 text-paw-navy py-5 rounded-2xl font-black hover:bg-gray-300 transition-all"
+                                                    onClick={() =>
+                                                        setWizardStep(2)
+                                                    }
+                                                    className="rounded-2xl bg-gray-200 px-8 py-5 font-black text-paw-navy transition-all hover:bg-gray-300"
                                                 >
                                                     BACK
                                                 </button>
                                                 <button
                                                     disabled={submitting}
-                                                    onClick={() => handleSubmit('AI-Assisted Reporting')}
-                                                    className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl flex items-center justify-center gap-3 uppercase disabled:opacity-50"
+                                                    onClick={() =>
+                                                        handleSubmit(
+                                                            'AI-Assisted Reporting',
+                                                        )
+                                                    }
+                                                    className="flex flex-1 items-center justify-center gap-3 rounded-2xl bg-red-600 py-5 font-black text-white uppercase shadow-xl transition-all hover:bg-red-700 disabled:opacity-50"
                                                 >
                                                     {submitting ? (
                                                         <LoadingTimeUI
-                                                            isLoading={submitting}
+                                                            isLoading={
+                                                                submitting
+                                                            }
                                                             variant="inline"
                                                             size="sm"
                                                             label="SUBMITTING REPORT..."
                                                             showProgress
-                                                            showTime
+                                                            showTime={false}
                                                             className="text-white"
                                                         />
                                                     ) : (
                                                         <>
-                                                            <span>SUBMIT RESCUE REPORT</span>
+                                                            <span>
+                                                                SUBMIT RESCUE
+                                                                REPORT
+                                                            </span>
                                                             <Siren size={20} />
                                                         </>
                                                     )}
@@ -1322,11 +2035,11 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="max-w-4xl mx-auto"
+                                className="mx-auto max-w-4xl"
                             >
                                 <button
                                     onClick={handleReset}
-                                    className="flex items-center gap-2 text-gray-600 font-bold mb-8 hover:text-paw-orange transition-colors"
+                                    className="mb-8 flex items-center gap-2 font-bold text-gray-600 transition-colors hover:text-paw-orange"
                                 >
                                     <X size={20} />
                                     <span>Back to selection</span>
@@ -1337,7 +2050,7 @@ export default function RescuePage() {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="bg-white aspect-video rounded-[60px] border-4 border-dashed border-paw-navy/30 flex flex-col items-center justify-center p-12 text-center shadow-2xl"
+                                        className="flex aspect-video flex-col items-center justify-center rounded-[60px] border-4 border-dashed border-paw-navy/30 bg-white p-12 text-center shadow-2xl"
                                     >
                                         <input
                                             type="file"
@@ -1346,15 +2059,22 @@ export default function RescuePage() {
                                             onChange={handleFileChange}
                                             className="hidden"
                                         />
-                                        <label htmlFor="ai-only-upload" className="cursor-pointer flex flex-col items-center justify-center w-full">
-                                            <div className="w-24 h-24 bg-paw-navy rounded-[32px] flex items-center justify-center text-white mb-8 hover:scale-110 transition-transform shadow-xl shadow-paw-navy/30">
+                                        <label
+                                            htmlFor="ai-only-upload"
+                                            className="flex w-full cursor-pointer flex-col items-center justify-center"
+                                        >
+                                            <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[32px] bg-paw-navy text-white shadow-xl shadow-paw-navy/30 transition-transform hover:scale-110">
                                                 <Camera size={40} />
                                             </div>
-                                            <h3 className="text-3xl font-black text-paw-navy mb-4">Upload Animal Photo</h3>
-                                            <p className="text-gray-400 font-bold mb-8 max-w-md">
-                                                Upload a clear image (JPG or PNG). AI will generate identification suggestions.
+                                            <h3 className="mb-4 text-3xl font-black text-paw-navy">
+                                                Upload Animal Photo
+                                            </h3>
+                                            <p className="mb-8 max-w-md font-bold text-gray-400">
+                                                Upload a clear image (JPG or
+                                                PNG). AI will generate
+                                                identification suggestions.
                                             </p>
-                                            <div className="bg-paw-navy text-white px-12 py-5 rounded-[24px] font-black text-xl hover:bg-paw-orange transition-all shadow-xl flex items-center gap-3">
+                                            <div className="flex items-center gap-3 rounded-[24px] bg-paw-navy px-12 py-5 text-xl font-black text-white shadow-xl transition-all hover:bg-paw-orange">
                                                 <Upload size={20} /> SELECT FILE
                                             </div>
                                         </label>
@@ -1366,7 +2086,7 @@ export default function RescuePage() {
                                     <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="bg-white aspect-video rounded-[60px] flex flex-col items-center justify-center p-12 text-center shadow-2xl border-2 border-paw-navy/10"
+                                        className="flex aspect-video flex-col items-center justify-center rounded-[60px] border-2 border-paw-navy/10 bg-white p-12 text-center shadow-2xl"
                                     >
                                         <div className="w-full max-w-md">
                                             <LoadingTimeUI
@@ -1378,7 +2098,7 @@ export default function RescuePage() {
                                                 showProgress={true}
                                                 showTime={true}
                                                 showStatusHint={true}
-                                                className="border-0 shadow-none bg-transparent"
+                                                className="border-0 bg-transparent shadow-none"
                                             />
                                         </div>
                                     </motion.div>
@@ -1392,123 +2112,227 @@ export default function RescuePage() {
                                         className="space-y-6"
                                     >
                                         {/* Notice Banner */}
-                                        <div className="bg-blue-50 border-2 border-blue-200 rounded-[32px] p-6 flex items-center gap-4">
-                                            <Info size={24} className="text-blue-600 shrink-0" />
+                                        <div className="flex items-center gap-4 rounded-[32px] border-2 border-blue-200 bg-blue-50 p-6">
+                                            <Info
+                                                size={24}
+                                                className="shrink-0 text-blue-600"
+                                            />
                                             <div>
-                                                <p className="font-black text-blue-900 mb-1">This is an AI identification preview.</p>
-                                                <p className="text-sm font-bold text-blue-700">No report will be submitted. This is for identification purposes only.</p>
+                                                <p className="mb-1 font-black text-blue-900">
+                                                    This is an AI identification
+                                                    preview.
+                                                </p>
+                                                <p className="text-sm font-bold text-blue-700">
+                                                    No report will be submitted.
+                                                    This is for identification
+                                                    purposes only.
+                                                </p>
                                             </div>
                                         </div>
 
                                         {/* Uploaded file preview */}
                                         {filePreviews.length > 0 && (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-3xl p-3 border-2 border-gray-100 bg-white">
-                                                {filePreviews.map((preview, index) => {
-                                                    const file = uploadedFiles[index];
-                                                    return (
-                                                        <div key={index} className="relative rounded-2xl overflow-hidden aspect-video border bg-gray-50 flex items-center justify-center">
-                                                            {file?.type.startsWith('image/') ? (
-                                                                <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <video src={preview} controls className="w-full h-full object-cover" />
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
+                                            <div className="grid grid-cols-2 gap-3 rounded-3xl border-2 border-gray-100 bg-white p-3 sm:grid-cols-3">
+                                                {filePreviews.map(
+                                                    (preview, index) => {
+                                                        const file =
+                                                            uploadedFiles[
+                                                                index
+                                                            ];
+                                                        return (
+                                                            <div
+                                                                key={index}
+                                                                className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
+                                                            >
+                                                                {file?.type.startsWith(
+                                                                    'image/',
+                                                                ) ? (
+                                                                    <img
+                                                                        src={
+                                                                            preview
+                                                                        }
+                                                                        alt={`Preview ${index}`}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <video
+                                                                        src={
+                                                                            preview
+                                                                        }
+                                                                        controls
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    },
+                                                )}
                                             </div>
                                         )}
 
                                         {/* Multi-Animal Detected Selector in AI-Only Mode */}
                                         {animalReviews.length > 1 && (
-                                            <div className="bg-white rounded-3xl p-4 border-2 border-paw-navy/20 space-y-3 shadow-md">
+                                            <div className="space-y-3 rounded-3xl border-2 border-paw-navy/20 bg-white p-4 shadow-md">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-paw-navy flex items-center gap-2">
-                                                        <Brain size={16} className="text-paw-orange" />
-                                                        Multi-Species Identification ({animalReviews.length} Animals Detected)
+                                                    <span className="flex items-center gap-2 text-xs font-black tracking-wider text-paw-navy uppercase">
+                                                        <Brain
+                                                            size={16}
+                                                            className="text-paw-orange"
+                                                        />
+                                                        Multi-Species
+                                                        Identification (
+                                                        {animalReviews.length}{' '}
+                                                        Animals Detected)
                                                     </span>
-                                                    <span className="text-[11px] font-bold text-paw-navy bg-blue-50 px-2.5 py-0.5 rounded-full border border-paw-navy/10">
-                                                        Click an animal to inspect
+                                                    <span className="rounded-full border border-paw-navy/10 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-paw-navy">
+                                                        Click an animal to
+                                                        inspect
                                                     </span>
                                                 </div>
-                                                <div className="grid sm:grid-cols-2 gap-2">
-                                                    {animalReviews.map((animal, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            type="button"
-                                                            onClick={() => handleSelectAnimal(idx)}
-                                                            className={`p-3 rounded-2xl transition-all border-2 text-left flex items-center justify-between gap-2 ${
-                                                                selectedAnimalIdx === idx
-                                                                    ? 'bg-blue-50 border-paw-navy shadow-md shadow-paw-navy/10'
-                                                                    : 'bg-white border-gray-100 hover:border-paw-navy/30'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-center gap-2.5">
-                                                                <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs ${
-                                                                    selectedAnimalIdx === idx ? 'bg-paw-navy text-white' : 'bg-gray-100 text-gray-500'
-                                                                }`}>
-                                                                    #{idx + 1}
+                                                <div className="grid gap-2 sm:grid-cols-2">
+                                                    {animalReviews.map(
+                                                        (animal, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleSelectAnimal(
+                                                                        idx,
+                                                                    )
+                                                                }
+                                                                className={`flex items-center justify-between gap-2 rounded-2xl border-2 p-3 text-left transition-all ${
+                                                                    selectedAnimalIdx ===
+                                                                    idx
+                                                                        ? 'border-paw-navy bg-blue-50 shadow-md shadow-paw-navy/10'
+                                                                        : 'border-gray-100 bg-white hover:border-paw-navy/30'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div
+                                                                        className={`flex h-7 w-7 items-center justify-center rounded-xl text-xs font-black ${
+                                                                            selectedAnimalIdx ===
+                                                                            idx
+                                                                                ? 'bg-paw-navy text-white'
+                                                                                : 'bg-gray-100 text-gray-500'
+                                                                        }`}
+                                                                    >
+                                                                        #
+                                                                        {idx +
+                                                                            1}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-paw-navy">
+                                                                            {
+                                                                                animal.species
+                                                                            }
+                                                                            :{' '}
+                                                                            {
+                                                                                animal.breed
+                                                                            }
+                                                                        </p>
+                                                                        <p className="text-[10px] font-bold text-gray-400">
+                                                                            {
+                                                                                animal.ageCategory.split(
+                                                                                    ':',
+                                                                                )[0]
+                                                                            }{' '}
+                                                                            &middot;{' '}
+                                                                            {
+                                                                                animal.confidence
+                                                                            }
+                                                                            %
+                                                                            conf
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <p className="text-xs font-black text-paw-navy">
-                                                                        {animal.species}: {animal.breed}
-                                                                    </p>
-                                                                    <p className="text-[10px] text-gray-400 font-bold">
-                                                                        {animal.ageCategory.split(':')[0]} &middot; {animal.confidence}% conf
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            {selectedAnimalIdx === idx && (
-                                                                <span className="text-[9px] bg-paw-navy text-white px-2 py-0.5 rounded-md font-bold">
-                                                                    Viewing
-                                                                </span>
-                                                            )}
-                                                        </button>
-                                                    ))}
+                                                                {selectedAnimalIdx ===
+                                                                    idx && (
+                                                                    <span className="rounded-md bg-paw-navy px-2 py-0.5 text-[9px] font-bold text-white">
+                                                                        Viewing
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                        ),
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
 
                                         {/* AI Result Card */}
-                                        <div className="bg-gradient-to-br from-white to-blue-50/60 rounded-[40px] p-8 shadow-2xl shadow-paw-navy/10 border-2 border-paw-navy/20">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className="w-12 h-12 bg-paw-navy rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                        <div className="rounded-[40px] border-2 border-paw-navy/20 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-2xl shadow-paw-navy/10">
+                                            <div className="mb-6 flex items-center gap-3">
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-paw-navy text-white shadow-lg">
                                                     <Sparkles size={24} />
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3">
-                                                        <h4 className="text-2xl font-black text-paw-navy">AI Identification Results</h4>
-                                                        <div className="inline-flex items-center gap-1.5 bg-green-100 px-3 py-1 rounded-full">
-                                                            <CheckCircle2 size={14} className="text-green-600" />
-                                                            <span className="text-xs font-black text-green-600">{aiResult.confidence}% Confidence</span>
+                                                        <h4 className="text-2xl font-black text-paw-navy">
+                                                            AI Identification
+                                                            Results
+                                                        </h4>
+                                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1">
+                                                            <CheckCircle2
+                                                                size={14}
+                                                                className="text-green-600"
+                                                            />
+                                                            <span className="text-xs font-black text-green-600">
+                                                                {
+                                                                    aiResult.confidence
+                                                                }
+                                                                % Confidence
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <p className={`text-xs font-black mt-2 ${aiResult.isConfident ? 'text-green-600' : 'text-amber-600'
-                                                        }`}>
-                                                        {aiResult.confidenceLevel} confidence · {aiResult.confidenceMessage}
+                                                    <p
+                                                        className={`mt-2 text-xs font-black ${
+                                                            aiResult.isConfident
+                                                                ? 'text-green-600'
+                                                                : 'text-amber-600'
+                                                        }`}
+                                                    >
+                                                        {
+                                                            aiResult.confidenceLevel
+                                                        }{' '}
+                                                        confidence ·{' '}
+                                                        {
+                                                            aiResult.confidenceMessage
+                                                        }
                                                     </p>
                                                 </div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-white rounded-2xl p-4 border-2 border-paw-navy/10 col-span-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Identified Breed</p>
-                                                    <p className="font-black text-paw-navy text-lg">{aiResult.breed}</p>
+                                                <div className="col-span-2 rounded-2xl border-2 border-paw-navy/10 bg-white p-4">
+                                                    <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Identified Breed
+                                                    </p>
+                                                    <p className="text-lg font-black text-paw-navy">
+                                                        {aiResult.breed}
+                                                    </p>
                                                 </div>
-                                                <div className="bg-white rounded-2xl p-4 border-2 border-paw-navy/10 col-span-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Age Category</p>
-                                                    <p className="font-black text-paw-navy">{aiResult.ageCategory}</p>
+                                                <div className="col-span-2 rounded-2xl border-2 border-paw-navy/10 bg-white p-4">
+                                                    <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Age Category
+                                                    </p>
+                                                    <p className="font-black text-paw-navy">
+                                                        {aiResult.ageCategory}
+                                                    </p>
                                                 </div>
                                                 {/* <div className="bg-white rounded-2xl p-4 border-2 border-paw-navy/10">
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Gender</p>
                                                     <p className="font-black text-paw-navy">{aiResult.gender}</p>
                                                 </div> */}
-                                                <div className="bg-white rounded-2xl p-4 border-2 border-paw-navy/10 col-span-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Suggested Name</p>
-                                                    <p className="font-black text-paw-navy">{aiResult.suggestedName}</p>
+                                                <div className="col-span-2 rounded-2xl border-2 border-paw-navy/10 bg-white p-4">
+                                                    <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Suggested Name
+                                                    </p>
+                                                    <p className="font-black text-paw-navy">
+                                                        {aiResult.suggestedName}
+                                                    </p>
                                                 </div>
                                                 {/* Mixed Breed Detection */}
-                                                <div className="bg-white rounded-2xl p-4 border-2 border-paw-navy/10 col-span-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                                                <div className="col-span-2 rounded-2xl border-2 border-paw-navy/10 bg-white p-4">
+                                                    <p className="mb-1 text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                         Mixed Breed Detection
                                                     </p>
                                                     <p className="font-black text-paw-navy">
@@ -1519,43 +2343,67 @@ export default function RescuePage() {
                                                 </div>
                                                 {/* Similar Breeds */}
                                                 <div className="mt-6">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Similar Breeds</p>
-                                                    {aiResult.similarBreeds.length > 0 ? (
+                                                    <p className="mb-3 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Similar Breeds
+                                                    </p>
+                                                    {aiResult.similarBreeds
+                                                        .length > 0 ? (
                                                         <div className="flex flex-wrap gap-2">
-                                                            {aiResult.similarBreeds.map((breed, idx) => (
-                                                                <span
-                                                                    key={idx}
-                                                                    className="bg-white px-4 py-2 rounded-full text-sm font-bold text-paw-navy border-2 border-paw-navy/20"
-                                                                >
-                                                                    {breed.name} ({(breed.confidence * 100).toFixed(1)}%)
-                                                                </span>
-                                                            ))}
+                                                            {aiResult.similarBreeds.map(
+                                                                (
+                                                                    breed,
+                                                                    idx,
+                                                                ) => (
+                                                                    <span
+                                                                        key={
+                                                                            idx
+                                                                        }
+                                                                        className="rounded-full border-2 border-paw-navy/20 bg-white px-4 py-2 text-sm font-bold text-paw-navy"
+                                                                    >
+                                                                        {
+                                                                            breed.name
+                                                                        }{' '}
+                                                                        (
+                                                                        {(
+                                                                            breed.confidence *
+                                                                            100
+                                                                        ).toFixed(
+                                                                            1,
+                                                                        )}
+                                                                        %)
+                                                                    </span>
+                                                                ),
+                                                            )}
                                                         </div>
                                                     ) : (
                                                         <p className="text-sm font-bold text-gray-400">
-                                                            No similar breeds above confidence threshold.
+                                                            No similar breeds
+                                                            above confidence
+                                                            threshold.
                                                         </p>
                                                     )}
                                                 </div>
                                             </div>
-
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row gap-4">
+                                        <div className="flex flex-col gap-4 sm:flex-row">
                                             <button
                                                 onClick={() => {
                                                     setMode('ai-full');
                                                     setWizardStep(2);
-                                                    toast.info('Switched to full rescue report mode with your AI findings.');
+                                                    toast.info(
+                                                        'Switched to full rescue report mode with your AI findings.',
+                                                    );
                                                 }}
-                                                className="flex-1 bg-paw-orange text-white py-6 rounded-[24px] font-black text-lg hover:bg-orange-600 transition-all shadow-xl flex items-center justify-center gap-3"
+                                                className="flex flex-1 items-center justify-center gap-3 rounded-[24px] bg-paw-orange py-6 text-lg font-black text-white shadow-xl transition-all hover:bg-orange-600"
                                             >
                                                 <Siren size={24} />
-                                                SUBMIT RESCUE REPORT FOR THIS ANIMAL
+                                                SUBMIT RESCUE REPORT FOR THIS
+                                                ANIMAL
                                             </button>
                                             <button
                                                 onClick={handleReset}
-                                                className="sm:w-auto px-8 bg-paw-navy text-white py-6 rounded-[24px] font-black text-lg hover:bg-gray-800 transition-all shadow-xl flex items-center justify-center gap-3"
+                                                className="flex items-center justify-center gap-3 rounded-[24px] bg-paw-navy px-8 py-6 text-lg font-black text-white shadow-xl transition-all hover:bg-gray-800 sm:w-auto"
                                             >
                                                 IDENTIFY ANOTHER ANIMAL
                                             </button>
@@ -1572,94 +2420,186 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="max-w-4xl mx-auto"
+                                className="mx-auto max-w-4xl"
                             >
                                 <button
                                     onClick={handleReset}
-                                    className="flex items-center gap-2 text-gray-600 font-bold mb-8 hover:text-paw-orange transition-colors"
+                                    className="mb-8 flex items-center gap-2 font-bold text-gray-600 transition-colors hover:text-paw-orange"
                                 >
                                     <X size={20} />
                                     <span>Back to selection</span>
                                 </button>
 
                                 {/* Manual Entry Form */}
-                                <div className="bg-white rounded-[40px] p-10 shadow-2xl border-2 border-gray-200">
-                                    <div className="flex items-center gap-3 mb-8">
-                                        <div className="w-12 h-12 bg-gray-700 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                <div className="rounded-[40px] border-2 border-gray-200 bg-white p-10 shadow-2xl">
+                                    <div className="mb-8 flex items-center gap-3">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg">
                                             <FileText size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-2xl font-black text-paw-navy">Manual Rescue Report</h3>
-                                            <p className="text-sm font-bold text-gray-500">Enter all details yourself without AI assistance</p>
+                                            <h3 className="text-2xl font-black text-paw-navy">
+                                                Manual Rescue Report
+                                            </h3>
+                                            <p className="text-sm font-bold text-gray-500">
+                                                Enter all details yourself
+                                                without AI assistance
+                                            </p>
                                         </div>
                                     </div>
 
                                     {/* Notice */}
-                                    <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 mb-8 flex items-start gap-3">
-                                        <Info size={16} className="text-gray-600 shrink-0 mt-0.5" />
-                                        <p className="text-sm font-bold text-gray-600">No AI assistance used. All details are user-provided.</p>
+                                    <div className="mb-8 flex items-start gap-3 rounded-2xl border-2 border-gray-200 bg-gray-50 p-4">
+                                        <Info
+                                            size={16}
+                                            className="mt-0.5 shrink-0 text-gray-600"
+                                        />
+                                        <p className="text-sm font-bold text-gray-600">
+                                            No AI assistance used. All details
+                                            are user-provided.
+                                        </p>
                                     </div>
 
                                     <div className="space-y-6">
                                         {/* Upload Photo */}
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 block">Upload Photo (Optional)</label>
+                                            <label className="mb-3 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                Upload Photo (Optional)
+                                            </label>
                                             <input
                                                 type="file"
                                                 id="manual-upload"
                                                 accept="image/*,video/*"
                                                 multiple
                                                 onChange={async (e) => {
-                                                    const files = e.target.files ? Array.from(e.target.files) : [];
-                                                    if (files.length === 0) return;
+                                                    const files = e.target.files
+                                                        ? Array.from(
+                                                              e.target.files,
+                                                          )
+                                                        : [];
+                                                    if (files.length === 0)
+                                                        return;
 
                                                     setUploadedFiles(files);
 
-                                                    const newPreviews: string[] = [];
+                                                    const newPreviews: string[] =
+                                                        [];
                                                     for (const file of files) {
-                                                        if (file.type.startsWith('image/')) {
-                                                            const reader = new FileReader();
-                                                            const preview = await new Promise<string>((resolve) => {
-                                                                reader.onloadend = () => resolve(reader.result as string);
-                                                                reader.readAsDataURL(file);
-                                                            });
-                                                            newPreviews.push(preview);
-                                                        } else if (file.type.startsWith('video/')) {
-                                                            newPreviews.push(URL.createObjectURL(file));
+                                                        if (
+                                                            file.type.startsWith(
+                                                                'image/',
+                                                            )
+                                                        ) {
+                                                            const reader =
+                                                                new FileReader();
+                                                            const preview =
+                                                                await new Promise<string>(
+                                                                    (
+                                                                        resolve,
+                                                                    ) => {
+                                                                        reader.onloadend =
+                                                                            () =>
+                                                                                resolve(
+                                                                                    reader.result as string,
+                                                                                );
+                                                                        reader.readAsDataURL(
+                                                                            file,
+                                                                        );
+                                                                    },
+                                                                );
+                                                            newPreviews.push(
+                                                                preview,
+                                                            );
+                                                        } else if (
+                                                            file.type.startsWith(
+                                                                'video/',
+                                                            )
+                                                        ) {
+                                                            newPreviews.push(
+                                                                URL.createObjectURL(
+                                                                    file,
+                                                                ),
+                                                            );
                                                         }
                                                     }
-                                                    setFilePreviews(newPreviews);
+                                                    setFilePreviews(
+                                                        newPreviews,
+                                                    );
                                                 }}
                                                 className="hidden"
                                             />
                                             <label
                                                 htmlFor="manual-upload"
-                                                className="block border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                                                className="block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-gray-400"
                                             >
                                                 {uploadedFiles.length === 0 ? (
                                                     <>
-                                                        <Camera size={32} className="mx-auto text-gray-400 mb-3" />
-                                                        <p className="font-bold text-gray-600">Click to upload photos</p>
-                                                        <p className="text-sm text-gray-400 font-bold mt-1">JPG, PNG or Videos (Multiple allowed)</p>
+                                                        <Camera
+                                                            size={32}
+                                                            className="mx-auto mb-3 text-gray-400"
+                                                        />
+                                                        <p className="font-bold text-gray-600">
+                                                            Click to upload
+                                                            photos
+                                                        </p>
+                                                        <p className="mt-1 text-sm font-bold text-gray-400">
+                                                            JPG, PNG or Videos
+                                                            (Multiple allowed)
+                                                        </p>
                                                     </>
                                                 ) : (
                                                     <div className="space-y-4">
                                                         <div className="grid grid-cols-3 gap-2">
-                                                            {filePreviews.map((preview, idx) => (
-                                                                <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
-                                                                    {uploadedFiles[idx]?.type.startsWith('image/') ? (
-                                                                        <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <video src={preview} className="w-full h-full object-cover" />
-                                                                    )}
-                                                                </div>
-                                                            ))}
+                                                            {filePreviews.map(
+                                                                (
+                                                                    preview,
+                                                                    idx,
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            idx
+                                                                        }
+                                                                        className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border bg-gray-50"
+                                                                    >
+                                                                        {uploadedFiles[
+                                                                            idx
+                                                                        ]?.type.startsWith(
+                                                                            'image/',
+                                                                        ) ? (
+                                                                            <img
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                alt="Upload preview"
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <video
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                ),
+                                                            )}
                                                         </div>
                                                         <div className="flex items-center justify-center gap-2">
-                                                            <CheckCircle2 size={18} className="text-green-600" />
-                                                            <p className="font-bold text-green-600">{uploadedFiles.length} files selected</p>
+                                                            <CheckCircle2
+                                                                size={18}
+                                                                className="text-green-600"
+                                                            />
+                                                            <p className="font-bold text-green-600">
+                                                                {
+                                                                    uploadedFiles.length
+                                                                }{' '}
+                                                                files selected
+                                                            </p>
                                                         </div>
-                                                        <p className="text-xs text-gray-400 font-bold">Click to change files</p>
+                                                        <p className="text-xs font-bold text-gray-400">
+                                                            Click to change
+                                                            files
+                                                        </p>
                                                     </div>
                                                 )}
                                             </label>
@@ -1668,30 +2608,54 @@ export default function RescuePage() {
                                         {/* Animal Type and Breed */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Animal Type</label>
+                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Animal Type
+                                                </label>
                                                 <div className="relative">
                                                     <select
                                                         value={animalType}
                                                         onChange={(e) => {
-                                                            setAnimalType(e.target.value as 'Dog' | 'Cat');
+                                                            setAnimalType(
+                                                                e.target
+                                                                    .value as
+                                                                    | 'Dog'
+                                                                    | 'Cat',
+                                                            );
                                                             // Reset age category to first option when animal type changes
-                                                            setAgeCategory(e.target.value === 'Dog' ? dogAgeCategories[0] : catAgeCategories[0]);
+                                                            setAgeCategory(
+                                                                e.target
+                                                                    .value ===
+                                                                    'Dog'
+                                                                    ? dogAgeCategories[0]
+                                                                    : catAgeCategories[0],
+                                                            );
                                                         }}
-                                                        className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold appearance-none"
+                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                     >
-                                                        <option value="Dog">Dog</option>
-                                                        <option value="Cat">Cat</option>
+                                                        <option value="Dog">
+                                                            Dog
+                                                        </option>
+                                                        <option value="Cat">
+                                                            Cat
+                                                        </option>
                                                     </select>
-                                                    <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    <ChevronDown
+                                                        size={16}
+                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
+                                                    />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Animal Breed</label>
+                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Animal Breed
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={breed}
-                                                    onChange={(e) => setBreed(e.target.value)}
-                                                    className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
+                                                    onChange={(e) =>
+                                                        setBreed(e.target.value)
+                                                    }
+                                                    className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                     placeholder="e.g. Aspin, Domestic Short Hair"
                                                 />
                                             </div>
@@ -1700,172 +2664,289 @@ export default function RescuePage() {
                                         {/* Age and Gender */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Age Category</label>
+                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Age Category
+                                                </label>
                                                 <div className="relative">
                                                     <select
                                                         value={ageCategory}
-                                                        onChange={(e) => setAgeCategory(e.target.value)}
-                                                        className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold appearance-none text-sm"
+                                                        onChange={(e) =>
+                                                            setAgeCategory(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 text-sm font-bold transition-all outline-none focus:border-paw-orange"
                                                     >
-                                                        {currentAgeCategories.map((category) => (
-                                                            <option key={category} value={category}>{category}</option>
-                                                        ))}
+                                                        {currentAgeCategories.map(
+                                                            (category) => (
+                                                                <option
+                                                                    key={
+                                                                        category
+                                                                    }
+                                                                    value={
+                                                                        category
+                                                                    }
+                                                                >
+                                                                    {category}
+                                                                </option>
+                                                            ),
+                                                        )}
                                                     </select>
-                                                    <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    <ChevronDown
+                                                        size={16}
+                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
+                                                    />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Gender</label>
+                                                <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Gender
+                                                </label>
                                                 <div className="relative">
                                                     <select
                                                         value={gender}
-                                                        onChange={(e) => setGender(e.target.value)}
-                                                        className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold appearance-none"
+                                                        onChange={(e) =>
+                                                            setGender(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                     >
-                                                        <option value="Male">Male</option>
-                                                        <option value="Female">Female</option>
-                                                        <option value="Unknown">Unknown</option>
+                                                        <option value="Male">
+                                                            Male
+                                                        </option>
+                                                        <option value="Female">
+                                                            Female
+                                                        </option>
+                                                        <option value="Unknown">
+                                                            Unknown
+                                                        </option>
                                                     </select>
-                                                    <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    <ChevronDown
+                                                        size={16}
+                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Suggested Name */}
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Suggested Name</label>
+                                            <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                Suggested Name
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={suggestedName}
-                                                onChange={(e) => setSuggestedName(e.target.value)}
-                                                className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
+                                                onChange={(e) =>
+                                                    setSuggestedName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                 placeholder="e.g. Buddy, Luna"
                                             />
                                         </div>
 
                                         {/* Description */}
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Description / Condition</label>
+                                            <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                Description / Condition
+                                            </label>
                                             <textarea
                                                 value={incidentDesc}
-                                                onChange={(e) => setIncidentDesc(e.target.value)}
-                                                className="w-full p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold min-h-[120px]"
+                                                onChange={(e) =>
+                                                    setIncidentDesc(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="min-h-[120px] w-full rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                 placeholder="Describe the animal's condition and situation..."
                                             />
                                         </div>
 
                                         {/* Location */}
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Location / Landmark</label>
-                                            <div className="flex flex-col sm:flex-row gap-3">
+                                            <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                Location / Landmark
+                                            </label>
+                                            <div className="flex flex-col gap-3 sm:flex-row">
                                                 <input
                                                     type="text"
                                                     value={location}
-                                                    onChange={(e) => setLocation(e.target.value)}
-                                                    className="flex-1 p-5 bg-paw-bg border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold"
+                                                    onChange={(e) =>
+                                                        setLocation(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="flex-1 rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
                                                     placeholder="Type manually or pin your location"
                                                 />
                                                 <button
                                                     type="button"
                                                     disabled={detectingLocation}
-                                                    onClick={handleDetectLocation}
-                                                    className="px-6 py-4 sm:py-0 bg-paw-navy text-white rounded-2xl font-black hover:bg-paw-orange disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                                                    onClick={
+                                                        handleDetectLocation
+                                                    }
+                                                    className="flex items-center justify-center gap-2 rounded-2xl bg-paw-navy px-6 py-4 font-black whitespace-nowrap text-white transition-all hover:bg-paw-orange disabled:cursor-not-allowed disabled:opacity-60 sm:py-0"
                                                 >
                                                     {detectingLocation ? (
-                                                        <Spinner showTime showProgress label="Detecting..." size="xs" />
+                                                        <Spinner
+                                                            showProgress
+                                                            label="Detecting..."
+                                                            size="xs"
+                                                        />
                                                     ) : (
                                                         <>
                                                             <MapPin size={18} />
-                                                            <span className="hidden sm:inline">Pin Location</span>
-                                                            <span className="sm:hidden">Pin My Location</span>
+                                                            <span className="hidden sm:inline">
+                                                                Pin Location
+                                                            </span>
+                                                            <span className="sm:hidden">
+                                                                Pin My Location
+                                                            </span>
                                                         </>
                                                     )}
                                                 </button>
                                             </div>
-                                            <p className="text-xs text-gray-400 font-bold mt-2 ml-1">Click "Pin Location" to detect your address</p>
+                                            <p className="mt-2 ml-1 text-xs font-bold text-gray-400">
+                                                Click "Pin Location" to detect
+                                                your address
+                                            </p>
                                         </div>
 
                                         {/* Contact Details */}
                                         {user ? (
-                                            <div className="bg-emerald-50/60 p-6 rounded-3xl border-2 border-emerald-500/20 space-y-4">
+                                            <div className="space-y-4 rounded-3xl border-2 border-emerald-500/20 bg-emerald-50/60 p-6">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2.5">
-                                                        <ShieldCheck className="text-emerald-600" size={20} />
-                                                        <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">
-                                                            Your Contact Information (Logged In)
+                                                        <ShieldCheck
+                                                            className="text-emerald-600"
+                                                            size={20}
+                                                        />
+                                                        <h4 className="text-sm font-black tracking-wider text-paw-navy uppercase">
+                                                            Your Contact
+                                                            Information (Logged
+                                                            In)
                                                         </h4>
                                                     </div>
-                                                    <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
                                                         Verified Account
                                                     </span>
                                                 </div>
-                                                <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="grid gap-4 md:grid-cols-2">
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Name
+                                                        </label>
                                                         <input
                                                             type="text"
                                                             value={contactName}
-                                                            onChange={(e) => setContactName(e.target.value)}
-                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                            placeholder={user.name || 'Reporter Name'}
+                                                            onChange={(e) =>
+                                                                setContactName(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
+                                                            placeholder={
+                                                                user.name ||
+                                                                'Reporter Name'
+                                                            }
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
-                                                            Phone Number (For Responders)
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Phone Number (For
+                                                            Responders)
                                                         </label>
                                                         <PhoneInput
                                                             value={contactPhone}
-                                                            onChange={(val) => setContactPhone(val)}
-                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
+                                                            onChange={(val) =>
+                                                                setContactPhone(
+                                                                    val,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
                                                             placeholder="+63 9XX XXX XXXX"
                                                         />
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email</label>
+                                                    <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Email
+                                                    </label>
                                                     <input
                                                         type="email"
                                                         value={contactEmail}
-                                                        onChange={(e) => setContactEmail(e.target.value)}
-                                                        className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-sm text-paw-navy"
-                                                        placeholder={user.email || 'email@example.com'}
+                                                        onChange={(e) =>
+                                                            setContactEmail(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
+                                                        placeholder={
+                                                            user.email ||
+                                                            'email@example.com'
+                                                        }
                                                     />
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-orange-50/50 p-6 rounded-3xl border-2 border-paw-orange/10 space-y-4">
-                                                <h4 className="font-black text-paw-navy text-sm uppercase tracking-wider">Your Contact Information (Required for Guests)</h4>
-                                                <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-4 rounded-3xl border-2 border-paw-orange/10 bg-orange-50/50 p-6">
+                                                <h4 className="text-sm font-black tracking-wider text-paw-navy uppercase">
+                                                    Your Contact Information
+                                                    (Required for Guests)
+                                                </h4>
+                                                <div className="grid gap-4 md:grid-cols-2">
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Name *</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Name *
+                                                        </label>
                                                         <input
                                                             type="text"
                                                             required
                                                             value={contactName}
-                                                            onChange={(e) => setContactName(e.target.value)}
-                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                            onChange={(e) =>
+                                                                setContactName(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                             placeholder="Reporter Name"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone *</label>
+                                                        <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                            Phone *
+                                                        </label>
                                                         <PhoneInput
                                                             required
                                                             value={contactPhone}
-                                                            onChange={(val) => setContactPhone(val)}
-                                                            className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                            onChange={(val) =>
+                                                                setContactPhone(
+                                                                    val,
+                                                                )
+                                                            }
+                                                            className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                             placeholder="+63 9XX XXX XXXX"
                                                         />
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email (Optional)</label>
+                                                    <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                        Email (Optional)
+                                                    </label>
                                                     <input
                                                         type="email"
                                                         value={contactEmail}
-                                                        onChange={(e) => setContactEmail(e.target.value)}
-                                                        className="w-full p-4 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-paw-navy"
+                                                        onChange={(e) =>
+                                                            setContactEmail(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
                                                         placeholder="email@example.com"
                                                     />
                                                 </div>
@@ -1875,8 +2956,10 @@ export default function RescuePage() {
                                         {/* Submit Button */}
                                         <button
                                             disabled={submitting}
-                                            onClick={() => handleSubmit('Manual Entry')}
-                                            className="w-full bg-red-600 text-white py-6 rounded-2xl font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/30 flex items-center justify-center gap-3 uppercase disabled:opacity-50"
+                                            onClick={() =>
+                                                handleSubmit('Manual Entry')
+                                            }
+                                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-red-600 py-6 text-xl font-black text-white uppercase shadow-xl shadow-red-600/30 transition-all hover:bg-red-700 disabled:opacity-50"
                                         >
                                             {submitting ? (
                                                 <LoadingTimeUI
@@ -1885,12 +2968,14 @@ export default function RescuePage() {
                                                     size="md"
                                                     label="SUBMITTING REPORT..."
                                                     showProgress
-                                                    showTime
+                                                    showTime={false}
                                                     className="text-white"
                                                 />
                                             ) : (
                                                 <>
-                                                    <span>SUBMIT RESCUE REPORT</span>
+                                                    <span>
+                                                        SUBMIT RESCUE REPORT
+                                                    </span>
                                                     <Siren size={24} />
                                                 </>
                                             )}
@@ -1907,17 +2992,24 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="max-w-3xl mx-auto"
+                                className="mx-auto max-w-3xl"
                             >
-                                <div className="bg-gradient-to-br from-green-50 to-white rounded-[60px] p-12 shadow-2xl border-2 border-green-200 text-center">
+                                <div className="rounded-[60px] border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-12 text-center shadow-2xl">
                                     {/* Success Icon */}
                                     <motion.div
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
-                                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                        className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-500/30"
+                                        transition={{
+                                            delay: 0.2,
+                                            type: 'spring',
+                                            stiffness: 200,
+                                        }}
+                                        className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 shadow-xl shadow-green-500/30"
                                     >
-                                        <CheckCircle2 size={48} className="text-white" />
+                                        <CheckCircle2
+                                            size={48}
+                                            className="text-white"
+                                        />
                                     </motion.div>
 
                                     {/* Thank You Message */}
@@ -1926,35 +3018,69 @@ export default function RescuePage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.4 }}
                                     >
-                                        <h2 className="text-4xl md:text-5xl font-black text-paw-navy mb-4">
+                                        <h2 className="mb-4 text-4xl font-black text-paw-navy md:text-5xl">
                                             Thank You!
                                         </h2>
-                                        <p className="text-xl text-gray-600 font-bold mb-6">
-                                            Your rescue report has been submitted successfully
+                                        <p className="mb-6 text-xl font-bold text-gray-600">
+                                            Your rescue report has been
+                                            submitted successfully
                                         </p>
-                                        <div className="bg-white rounded-2xl p-6 mb-8 border-2 border-green-100">
-                                            <p className="text-sm font-black text-green-700 uppercase tracking-widest mb-2">
+                                        <div className="mb-8 rounded-2xl border-2 border-green-100 bg-white p-6">
+                                            <p className="mb-2 text-sm font-black tracking-widest text-green-700 uppercase">
                                                 Report Type
                                             </p>
-                                            <p className="text-lg font-bold text-paw-navy">{submittedMode}</p>
+                                            <p className="text-lg font-bold text-paw-navy">
+                                                {submittedMode}
+                                            </p>
                                         </div>
-                                        <div className="bg-green-50 rounded-2xl p-6 mb-8 border-2 border-green-200">
+                                        <div className="mb-8 rounded-2xl border-2 border-green-200 bg-green-50 p-6">
                                             <div className="flex items-start gap-4">
-                                                <Info size={24} className="text-green-600 shrink-0 mt-1" />
+                                                <Info
+                                                    size={24}
+                                                    className="mt-1 shrink-0 text-green-600"
+                                                />
                                                 <div className="text-left">
-                                                    <p className="font-bold text-green-900 mb-2">What happens next?</p>
-                                                    <ul className="text-sm text-green-700 font-bold space-y-2">
+                                                    <p className="mb-2 font-bold text-green-900">
+                                                        What happens next?
+                                                    </p>
+                                                    <ul className="space-y-2 text-sm font-bold text-green-700">
                                                         <li className="flex items-start gap-2">
-                                                            <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-                                                            <span>Our dispatch team will verify your report within 15 minutes</span>
+                                                            <CheckCircle2
+                                                                size={16}
+                                                                className="mt-0.5 shrink-0"
+                                                            />
+                                                            <span>
+                                                                Our dispatch
+                                                                team will verify
+                                                                your report
+                                                                within 15
+                                                                minutes
+                                                            </span>
                                                         </li>
                                                         <li className="flex items-start gap-2">
-                                                            <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-                                                            <span>Nearby volunteers will be notified for immediate response</span>
+                                                            <CheckCircle2
+                                                                size={16}
+                                                                className="mt-0.5 shrink-0"
+                                                            />
+                                                            <span>
+                                                                Nearby
+                                                                volunteers will
+                                                                be notified for
+                                                                immediate
+                                                                response
+                                                            </span>
                                                         </li>
                                                         <li className="flex items-start gap-2">
-                                                            <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-                                                            <span>You'll receive updates via SMS once rescue is complete</span>
+                                                            <CheckCircle2
+                                                                size={16}
+                                                                className="mt-0.5 shrink-0"
+                                                            />
+                                                            <span>
+                                                                You'll receive
+                                                                updates via SMS
+                                                                once rescue is
+                                                                complete
+                                                            </span>
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -1962,17 +3088,19 @@ export default function RescuePage() {
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
                                             <button
                                                 onClick={handleBackToSelection}
-                                                className="bg-paw-orange text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-orange-600 transition-all shadow-xl flex items-center justify-center gap-3"
+                                                className="flex items-center justify-center gap-3 rounded-2xl bg-paw-orange px-10 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-orange-600"
                                             >
                                                 <Sparkles size={20} />
                                                 REPORT ANOTHER RESCUE
                                             </button>
                                             <button
-                                                onClick={() => window.location.href = '/'}
-                                                className="bg-paw-navy text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-gray-800 transition-all shadow-xl flex items-center justify-center gap-3"
+                                                onClick={() =>
+                                                    (window.location.href = '/')
+                                                }
+                                                className="flex items-center justify-center gap-3 rounded-2xl bg-paw-navy px-10 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-gray-800"
                                             >
                                                 <Heart size={20} />
                                                 BACK TO HOME
@@ -1980,14 +3108,20 @@ export default function RescuePage() {
                                         </div>
 
                                         {/* Emergency Contact */}
-                                        <div className="mt-8 pt-8 border-t-2 border-gray-200">
-                                            <p className="text-sm font-bold text-gray-500 mb-3">Need immediate assistance?</p>
+                                        <div className="mt-8 border-t-2 border-gray-200 pt-8">
+                                            <p className="mb-3 text-sm font-bold text-gray-500">
+                                                Need immediate assistance?
+                                            </p>
                                             <a
                                                 href="tel:+639123456789"
-                                                className="inline-flex items-center gap-2 text-red-600 font-black text-lg hover:text-red-700 transition-colors"
+                                                className="inline-flex items-center gap-2 text-lg font-black text-red-600 transition-colors hover:text-red-700"
                                             >
-                                                <Siren size={20} className="animate-bounce" />
-                                                Call Emergency Hotline: +63 912 345 6789
+                                                <Siren
+                                                    size={20}
+                                                    className="animate-bounce"
+                                                />
+                                                Call Emergency Hotline: +63 912
+                                                345 6789
                                             </a>
                                         </div>
                                     </motion.div>
@@ -1998,18 +3132,42 @@ export default function RescuePage() {
 
                     {/* ── Rescue Process ── */}
                     <div className="mb-24">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl font-black text-paw-navy mb-4">Our Rescue Process</h2>
-                            <p className="text-gray-500 font-bold max-w-2xl mx-auto">
-                                From report to recovery, we follow a strict protocol to ensure the safety and health of every stray.
+                        <div className="mb-16 text-center">
+                            <h2 className="mb-4 text-4xl font-black text-paw-navy">
+                                Our Rescue Process
+                            </h2>
+                            <p className="mx-auto max-w-2xl font-bold text-gray-500">
+                                From report to recovery, we follow a strict
+                                protocol to ensure the safety and health of
+                                every stray.
                             </p>
                         </div>
-                        <div className="grid md:grid-cols-4 gap-8">
+                        <div className="grid gap-8 md:grid-cols-4">
                             {[
-                                { id: 1, title: 'Report', desc: 'Community members report incidents via the app or SOS hotline.', icon: <MessageSquare /> },
-                                { id: 2, title: 'Verify', desc: 'Dispatchers verify the report and assess urgency levels.', icon: <Activity /> },
-                                { id: 3, title: 'Respond', desc: 'Nearby volunteers or the rapid response team is deployed.', icon: <Siren /> },
-                                { id: 4, title: 'Rehabilitate', desc: 'The animal is taken to a vet partner for medical care.', icon: <Heart /> },
+                                {
+                                    id: 1,
+                                    title: 'Report',
+                                    desc: 'Community members report incidents via the app or SOS hotline.',
+                                    icon: <MessageSquare />,
+                                },
+                                {
+                                    id: 2,
+                                    title: 'Verify',
+                                    desc: 'Dispatchers verify the report and assess urgency levels.',
+                                    icon: <Activity />,
+                                },
+                                {
+                                    id: 3,
+                                    title: 'Respond',
+                                    desc: 'Nearby volunteers or the rapid response team is deployed.',
+                                    icon: <Siren />,
+                                },
+                                {
+                                    id: 4,
+                                    title: 'Rehabilitate',
+                                    desc: 'The animal is taken to a vet partner for medical care.',
+                                    icon: <Heart />,
+                                },
                             ].map((step, i) => (
                                 <motion.div
                                     key={step.id}
@@ -2017,21 +3175,26 @@ export default function RescuePage() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
-                                    className="bg-white p-8 rounded-[40px] shadow-2xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/10 transition-all text-center group"
+                                    className="group rounded-[40px] border-2 border-transparent bg-white p-8 text-center shadow-2xl shadow-paw-navy/5 transition-all hover:border-paw-orange/10"
                                 >
-                                    <div className="w-16 h-16 bg-paw-bg rounded-2xl flex items-center justify-center text-paw-orange mx-auto mb-6 group-hover:bg-paw-orange group-hover:text-white transition-all shadow-xl shadow-black/5">
+                                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-paw-bg text-paw-orange shadow-xl shadow-black/5 transition-all group-hover:bg-paw-orange group-hover:text-white">
                                         {step.icon}
                                     </div>
-                                    <span className="text-[10px] font-black text-paw-orange uppercase tracking-[0.2em] mb-2 block">Step 0{step.id}</span>
-                                    <h3 className="text-xl font-black text-paw-navy mb-4">{step.title}</h3>
-                                    <p className="text-gray-400 font-bold text-sm leading-relaxed">{step.desc}</p>
+                                    <span className="mb-2 block text-[10px] font-black tracking-[0.2em] text-paw-orange uppercase">
+                                        Step 0{step.id}
+                                    </span>
+                                    <h3 className="mb-4 text-xl font-black text-paw-navy">
+                                        {step.title}
+                                    </h3>
+                                    <p className="text-sm leading-relaxed font-bold text-gray-400">
+                                        {step.desc}
+                                    </p>
                                 </motion.div>
                             ))}
                         </div>
                     </div>
 
                     {/* ── Call to Action ── */}
-
                 </div>
             </main>
 

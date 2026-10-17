@@ -1014,7 +1014,7 @@ export default function AdoptionManagement({
                               } ${(isToggling || isDeleting) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               {isToggling ? (
-                                <Spinner size="xs" showTime showProgress className="text-white" />
+                                <Spinner size="xs" showProgress className="text-white" />
                               ) : (
                                 <Check size={14} />
                               )}
@@ -1091,7 +1091,7 @@ export default function AdoptionManagement({
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                               title="Delete need"
                             >
-                              {isDeleting ? <Spinner size="xs" showTime showProgress className="text-red-500" /> : <Trash2 size={15} />}
+                              {isDeleting ? <Spinner size="xs" showProgress className="text-red-500" /> : <Trash2 size={15} />}
                             </button>
                           </div>
                         </div>
@@ -1264,7 +1264,6 @@ export default function AdoptionManagement({
                       {needProcessing ? (
                         <Spinner
                           size="xs"
-                          showTime
                           showProgress
                           label={editingNeed ? 'Saving Changes...' : 'Adding Item...'}
                         />
