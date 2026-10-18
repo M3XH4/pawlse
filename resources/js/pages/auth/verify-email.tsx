@@ -137,7 +137,7 @@ export default function VerifyEmail({
                         disabled={processing || data.otp.length !== 6}
                         className="w-full rounded-xl bg-paw-navy py-4 font-black uppercase tracking-widest text-white shadow-xl hover:bg-paw-orange disabled:cursor-not-allowed disabled:bg-gray-300"
                     >
-                        {processing && <Spinner />}
+                        {processing && <Spinner showProgress={false} />}
                         Verify email
                     </Button>
                 </form>
@@ -152,7 +152,7 @@ export default function VerifyEmail({
                                 className="w-full gap-2 rounded-xl font-black uppercase tracking-widest"
                             >
                                 {resending ? (
-                                    <Spinner />
+                                    <Spinner showProgress={false} />
                                 ) : (
                                     <RefreshCw aria-hidden="true" size={16} />
                                 )}

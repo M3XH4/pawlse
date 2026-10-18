@@ -96,7 +96,7 @@ export default function Login({
                                 disabled={processing}
                                 data-test="login-button"
                             >
-                                {processing && <Spinner />}
+                                {processing && <Spinner showProgress={false} />}
                                 <span className="truncate">{processing ? 'AUTHENTICATING...' : 'LOG IN'}</span>
                                 {!processing && <LogIn size={20} className="md:w-6 md:h-6 shrink-0" />}
                             </Button>

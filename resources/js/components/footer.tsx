@@ -3,9 +3,11 @@ import { Mail, Phone, MapPin, Facebook, Instagram, ArrowRight, X, FileText, Shie
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import logo from '@/assets/logo.png';
+import { ContactModal } from '@/components/contact/contact-modal';
 
 export function Footer() {
   const [activeModal, setActiveModal] = useState<'privacy' | 'terms' | 'safety' | 'faq' | null>(null);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
 
   return (
     <>
@@ -293,6 +295,12 @@ export function Footer() {
         )}
       </AnimatePresence>
 
+      {/* Modern Contact Modal */}
+      <ContactModal
+        isOpen={contactModalOpen}
+        onClose={() => setContactModalOpen(false)}
+      />
+
       <footer className="bg-paw-navy text-white overflow-hidden relative">
       {/* Decorative Wave */}
       {/* <div className="absolute top-0 left-0 w-full overflow-hidden leading-none rotate-180">
@@ -410,6 +418,16 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li key="Contact Us">
+                <button
+                  type="button"
+                  onClick={() => setContactModalOpen(true)}
+                  className="text-white/60 font-bold hover:text-paw-orange transition-colors flex items-center gap-2 group cursor-pointer"
+                >
+                  <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-paw-orange" />
+                  Contact Us
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -447,19 +465,20 @@ export function Footer() {
                   <span className="text-xs font-black text-paw-orange uppercase tracking-widest mt-1 block group-hover:text-white">Tap to Call →</span>
                 </div>
               </a>
-              <a
-                href="mailto:hello@pawlse.org"
-                className="flex items-start gap-4 group cursor-pointer"
+              <button
+                type="button"
+                onClick={() => setContactModalOpen(true)}
+                className="flex items-start gap-4 group cursor-pointer text-left w-full"
               >
                 <div className="bg-white/5 p-3 rounded-xl text-paw-green group-hover:bg-paw-green group-hover:text-white transition-all shadow-lg border border-white/10">
                   <Mail size={20} />
                 </div>
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-1">Send Email</span>
-                  <p className="text-sm font-bold italic">hello@pawlse.org / rescue@pawlse.org</p>
+                  <p className="text-sm font-bold italic text-white">hello@pawlse.org / rescue@pawlse.org</p>
                   <span className="text-xs font-black text-paw-green uppercase tracking-widest mt-1 block group-hover:text-white">Send Message →</span>
                 </div>
-              </a>
+              </button>
             </div>
           </div>
         </div>

@@ -94,7 +94,7 @@ export default function Register() {
                                 disabled={processing}
                                 className={`w-full py-3 md:py-4 lg:py-6 rounded-xl md:rounded-[2rem] font-black text-sm md:text-base lg:text-lg tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 md:gap-4 ${processing ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-paw-navy text-white hover:bg-paw-orange'}`}
                             >
-                                {processing && <Spinner />}
+                                {processing && <Spinner showProgress={false} />}
                                 {processing ? 'CREATING ACCOUNT...' : 'REGISTER NOW'}
                                 {!processing && <UserPlus size={20} className="md:w-6 md:h-6" />}
                             </Button>

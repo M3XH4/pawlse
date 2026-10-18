@@ -10,6 +10,7 @@ import { ScrollToTopButton } from '@/components/scroll-to-top-button';
 import { AboutSections } from '@/components/sections/about-section';
 import { AdoptionSection } from '@/components/sections/adoption-section';
 import { CategoryStrip } from '@/components/sections/category-strip-section';
+import { ContactSection } from '@/components/contact/contact-section';
 import { DonationDashboard } from '@/components/sections/donation-dashboard-section';
 import { Events } from '@/components/sections/events-section';
 import { FAQSection } from '@/components/sections/faq-section';
@@ -87,6 +88,9 @@ export default function Welcome({ pets = [], missingPets = [], events = [], dona
                 </div>
                 <ScrollRevealWrapper>
                     <AboutSections />
+                </ScrollRevealWrapper>
+                <ScrollRevealWrapper delay={0.1}>
+                    <ContactSection />
                 </ScrollRevealWrapper>
                 <ScrollRevealWrapper delay={0.1}>
                     <FAQSection />

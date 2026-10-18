@@ -277,7 +277,9 @@ class VolunteerManagementController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $certificateNumber = 'CERT-'.date('Y').'-'.Str::upper(Str::random(6));
+        do {
+            $certificateNumber = 'CERT-'.date('Y').'-'.Str::upper(Str::random(6));
+        } while (Certificate::where('certificate_number', $certificateNumber)->exists());
 
         $certificate = Certificate::query()->create([
             'user_id' => $validated['user_id'],

@@ -20,6 +20,7 @@ use App\Http\Controllers\Adoptions\AdoptionApplicationController;
 use App\Http\Controllers\AnimalOverviewController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
@@ -72,6 +73,7 @@ Route::get('/adopt/{pet}', [AdoptController::class, 'show'])->name('adopt.show')
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
 Route::post('/shelter-visits', [ShelterVisitController::class, 'store'])->name('shelter-visits.store');
 Route::post('/rehoming-requests', [RehomingRequestController::class, 'store'])->name('rehoming-requests.store');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:5,1');
 
 Route::get('/donate', [DonateController::class, 'index'])->name('donate');
 Route::post('/donate/cash', [DonateController::class, 'storeCash'])->name('donate.store-cash');

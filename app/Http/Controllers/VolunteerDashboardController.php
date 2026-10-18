@@ -157,13 +157,17 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $certificates = Certificate::with('event')
+        $latestApplication = $user->volunteerApplications()->latest()->first();
+        $volunteerRole = $latestApplication?->role ?? 'Volunteer';
+
+        $certificates = Certificate::with(['event', 'user'])
             ->where('user_id', $user->id)
             ->latest()
             ->paginate(5);
 
         return Inertia::render('volunteer/certificates', [
             'certificates' => $certificates,
+            'defaultRole' => $volunteerRole,
         ]);
     }
 

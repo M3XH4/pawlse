@@ -727,7 +727,8 @@ export default function VolunteerManagement({
             {isCertOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
-                        <h3 className="font-fredoka text-xl font-bold mb-4 text-[#0B2340] dark:text-white">Issue Recognition Certificate</h3>
+                        <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">Issue Recognition Certificate</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-4">Generates an official certificate using the ISF Certificate of Participation template with a unique ID and verification code.</p>
                         <form onSubmit={handleCertSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Recipient Volunteer *</label>

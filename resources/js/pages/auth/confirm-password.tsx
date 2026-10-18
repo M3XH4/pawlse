@@ -33,7 +33,7 @@ export default function ConfirmPassword() {
                                 disabled={processing}
                                 data-test="confirm-password-button"
                             >
-                                {processing && <Spinner />}
+                                {processing && <Spinner showProgress={false} />}
                                 Confirm password
                             </Button>
                         </div>

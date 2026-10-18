@@ -34,6 +34,7 @@ import profile_mildred_nabong from '@/assets/profiles/mildred_nabong.jpg';
 import profile_persal_lacasan from '@/assets/profiles/persal_lacasan.jpg';
 import profile_trusty_espinosa from '@/assets/profiles/trusty_espinosa.jpg';
 import profile_welmar_espinosa from '@/assets/profiles/welmar_espinosa.jpg';
+import { ContactSection } from '@/components/contact/contact-section';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
@@ -1514,6 +1515,8 @@ export default function About({
           </div>
         </div>
       </section>
+
+      <ContactSection />
 
       <Footer />
     </div>

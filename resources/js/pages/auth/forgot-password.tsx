@@ -60,7 +60,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
-                                    {processing && <Spinner />}
+                                    {processing && <Spinner showProgress={false} />}
                                     <span className="truncate">{processing ? 'SENDING LINK...' : 'SEND RESET LINK'}</span>
                                     {!processing && <Send size={20} className="md:w-6 md:h-6 shrink-0" />}
                                 </Button>

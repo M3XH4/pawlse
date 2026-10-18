@@ -94,7 +94,7 @@ export default function ResetPassword({ token, email }: Props) {
                                     disabled={processing}
                                     data-test="reset-password-button"
                                 >
-                                    {processing && <Spinner />}
+                                    {processing && <Spinner showProgress={false} />}
                                     <span className="truncate">{processing ? 'RESETTING PASSWORD...' : 'RESET PASSWORD'}</span>
                                     {!processing && <KeyRound size={20} className="md:w-6 md:h-6 shrink-0" />}
                                 </Button>
