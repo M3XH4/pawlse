@@ -298,6 +298,7 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
 
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings');
     Route::post('system-settings', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+    Route::post('system-settings/maintenance/toggle', [SystemSettingsController::class, 'toggleMaintenance'])->name('system-settings.maintenance.toggle');
 
     Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');

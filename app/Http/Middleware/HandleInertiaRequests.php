@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\CareSustainability;
+use App\Models\SystemSetting;
 use App\Services\NotificationPayloadFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -57,6 +58,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'isMaintenanceMode' => fn () => (bool) (SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
                 'user' => $request->user(),
