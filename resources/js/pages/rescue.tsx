@@ -15,6 +15,7 @@ import {
     ChevronDown,
     Upload,
     AlertTriangle,
+    AlertCircle,
     MapPin,
     FileText,
 } from 'lucide-react';
@@ -103,9 +104,44 @@ export type AnimalReviewItem = {
 
 type ReportMode = 'selection' | 'ai-full' | 'ai-only' | 'manual' | 'success';
 
-export default function RescuePage() {
+export interface RescuePageProps {
+    aiStatus?: {
+        enabled: boolean;
+        available: boolean;
+        reporting_enabled: boolean;
+        identifying_enabled: boolean;
+        reporting_active: boolean;
+        identifying_active: boolean;
+        reporting_disabled_reason?: 'admin_disabled' | 'service_unavailable' | null;
+        identifying_disabled_reason?: 'admin_disabled' | 'service_unavailable' | null;
+        reporting_message?: string | null;
+        identifying_message?: string | null;
+        health?: {
+            is_healthy: boolean;
+            status: string;
+            message?: string;
+        };
+    };
+}
+
+export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const { auth } = usePage().props as any;
     const user = auth?.user;
+
+    const isAiReportingDisabled = aiStatus ? !aiStatus.reporting_active : false;
+    const isAiIdentifyingDisabled = aiStatus ? !aiStatus.identifying_active : false;
+
+    const reportingDisabledMessage =
+        aiStatus?.reporting_message ||
+        (aiStatus?.reporting_disabled_reason === 'service_unavailable'
+            ? 'AI service is currently unavailable or unreachable. Please use Manual Entry to submit a rescue report.'
+            : 'AI reporting is currently disabled by the administrator. Please use Manual Entry.');
+
+    const identifyingDisabledMessage =
+        aiStatus?.identifying_message ||
+        (aiStatus?.identifying_disabled_reason === 'service_unavailable'
+            ? 'AI service is currently unavailable or unreachable. AI animal identification is temporarily disabled.'
+            : 'AI identification is currently disabled by the administrator.');
 
     // Mode selection
     const [mode, setMode] = useState<ReportMode>('selection');
@@ -598,6 +634,14 @@ export default function RescuePage() {
     };
 
     const handleModeSelect = (selectedMode: ReportMode) => {
+        if (selectedMode === 'ai-full' && isAiReportingDisabled) {
+            toast.error(reportingDisabledMessage);
+            return;
+        }
+        if (selectedMode === 'ai-only' && isAiIdentifyingDisabled) {
+            toast.error(identifyingDisabledMessage);
+            return;
+        }
         setMode(selectedMode);
         // Reset states when changing modes
         setImageUploaded(false);
@@ -674,96 +718,220 @@ export default function RescuePage() {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3"
+                                className="mx-auto max-w-6xl space-y-6"
                             >
-                                {/* CARD 1: Use AI for Reporting */}
-                                <motion.div
-                                    whileHover={{
-                                        scale: 1.03,
-                                        boxShadow:
-                                            '0 20px 60px rgba(255, 107, 0, 0.3)',
-                                    }}
-                                    onClick={() => handleModeSelect('ai-full')}
-                                    className="group cursor-pointer rounded-[40px] border-2 border-paw-orange/20 bg-gradient-to-br from-white to-orange-50/50 p-8 shadow-xl transition-all"
-                                >
-                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-paw-orange text-white shadow-lg shadow-paw-orange/30 transition-transform group-hover:scale-110">
-                                        <Brain size={32} />
+                                {(isAiReportingDisabled || isAiIdentifyingDisabled) && (
+                                    <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs font-semibold text-amber-900 shadow-xs flex items-center gap-3">
+                                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                                        <span>
+                                            {isAiReportingDisabled && isAiIdentifyingDisabled
+                                                ? (aiStatus?.reporting_disabled_reason === 'service_unavailable'
+                                                    ? 'AI microservice is currently offline or unreachable. AI Report and AI Identification are temporarily disabled, but Manual Entry is fully functional.'
+                                                    : 'AI features have been disabled by the system administrator. Manual Entry is fully operational.')
+                                                : 'Some AI features are currently restricted. Manual Entry remains fully available.'}
+                                        </span>
                                     </div>
-                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
-                                        Use AI for Reporting
-                                    </h3>
-                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
-                                        Upload a photo and let AI identify the
-                                        animal. Results auto-fill the rescue
-                                        form for quick submission.
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm font-black text-paw-orange">
-                                        <span>GET STARTED</span>
-                                        <ArrowRight
-                                            size={16}
-                                            className="transition-transform group-hover:translate-x-1"
-                                        />
-                                    </div>
-                                </motion.div>
+                                )}
 
-                                {/* CARD 2: AI Identification Only */}
-                                <motion.div
-                                    whileHover={{
-                                        scale: 1.03,
-                                        boxShadow:
-                                            '0 20px 60px rgba(30, 50, 100, 0.3)',
-                                    }}
-                                    onClick={() => handleModeSelect('ai-only')}
-                                    className="group cursor-pointer rounded-[40px] border-2 border-paw-navy/20 bg-gradient-to-br from-white to-blue-50/50 p-8 shadow-xl transition-all"
-                                >
-                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-paw-navy text-white shadow-lg shadow-paw-navy/30 transition-transform group-hover:scale-110">
-                                        <Sparkles size={32} />
-                                    </div>
-                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
-                                        AI Identification Only
-                                    </h3>
-                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
-                                        Just want to identify an animal? Get AI
-                                        suggestions without submitting a rescue
-                                        report.
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm font-black text-paw-navy">
-                                        <span>IDENTIFY NOW</span>
-                                        <ArrowRight
-                                            size={16}
-                                            className="transition-transform group-hover:translate-x-1"
-                                        />
-                                    </div>
-                                </motion.div>
+                                <div className="grid gap-8 md:grid-cols-3">
+                                    {/* CARD 1: Use AI for Reporting */}
+                                    <motion.div
+                                        whileHover={
+                                            !isAiReportingDisabled
+                                                ? {
+                                                      scale: 1.03,
+                                                      boxShadow:
+                                                          '0 20px 60px rgba(255, 107, 0, 0.3)',
+                                                  }
+                                                : undefined
+                                        }
+                                        onClick={() => {
+                                            if (isAiReportingDisabled) {
+                                                toast.error(reportingDisabledMessage);
+                                                return;
+                                            }
+                                            handleModeSelect('ai-full');
+                                        }}
+                                        className={`group rounded-[40px] border-2 p-8 shadow-xl transition-all ${
+                                            isAiReportingDisabled
+                                                ? 'cursor-not-allowed border-gray-200 bg-gray-50/90 opacity-75 select-none shadow-none'
+                                                : 'cursor-pointer border-paw-orange/20 bg-gradient-to-br from-white to-orange-50/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div
+                                                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg transition-transform ${
+                                                    isAiReportingDisabled
+                                                        ? 'bg-gray-400 shadow-none'
+                                                        : 'bg-paw-orange shadow-paw-orange/30 group-hover:scale-110'
+                                                }`}
+                                            >
+                                                <Brain size={32} />
+                                            </div>
+                                            {isAiReportingDisabled && (
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900">
+                                                    <AlertTriangle size={12} className="shrink-0 text-amber-600" />
+                                                    {aiStatus?.reporting_disabled_reason === 'service_unavailable'
+                                                        ? 'Service Unavailable'
+                                                        : 'Disabled by Admin'}
+                                                </span>
+                                            )}
+                                        </div>
 
-                                {/* CARD 3: Manual Entry */}
-                                <motion.div
-                                    whileHover={{
-                                        scale: 1.03,
-                                        boxShadow:
-                                            '0 20px 60px rgba(100, 100, 100, 0.3)',
-                                    }}
-                                    onClick={() => handleModeSelect('manual')}
-                                    className="group cursor-pointer rounded-[40px] border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50/50 p-8 shadow-xl transition-all"
-                                >
-                                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg shadow-gray-700/30 transition-transform group-hover:scale-110">
-                                        <Pencil size={32} />
-                                    </div>
-                                    <h3 className="mb-4 text-2xl font-black text-paw-navy">
-                                        Manual Entry
-                                    </h3>
-                                    <p className="mb-6 leading-relaxed font-bold text-gray-600">
-                                        Prefer to enter all details yourself?
-                                        Skip AI and fill out the form manually.
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm font-black text-gray-700">
-                                        <span>ENTER MANUALLY</span>
-                                        <ArrowRight
-                                            size={16}
-                                            className="transition-transform group-hover:translate-x-1"
-                                        />
-                                    </div>
-                                </motion.div>
+                                        <h3 className={`mb-4 text-2xl font-black ${
+                                            isAiReportingDisabled ? 'text-gray-500' : 'text-paw-navy'
+                                        }`}>
+                                            Use AI for Reporting
+                                        </h3>
+
+                                        {isAiReportingDisabled ? (
+                                            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs font-bold text-amber-900 leading-relaxed shadow-xs">
+                                                <p className="flex items-start gap-2">
+                                                    <AlertCircle size={15} className="shrink-0 text-amber-600 mt-0.5" />
+                                                    <span>{reportingDisabledMessage}</span>
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                                Upload a photo and let AI identify the
+                                                animal. Results auto-fill the rescue
+                                                form for quick submission.
+                                            </p>
+                                        )}
+
+                                        <div className={`flex items-center gap-2 text-sm font-black ${
+                                            isAiReportingDisabled ? 'text-gray-400' : 'text-paw-orange'
+                                        }`}>
+                                            <span>{isAiReportingDisabled ? 'DISABLED' : 'GET STARTED'}</span>
+                                            {!isAiReportingDisabled && (
+                                                <ArrowRight
+                                                    size={16}
+                                                    className="transition-transform group-hover:translate-x-1"
+                                                />
+                                            )}
+                                        </div>
+                                    </motion.div>
+
+                                    {/* CARD 2: AI Identification Only */}
+                                    <motion.div
+                                        whileHover={
+                                            !isAiIdentifyingDisabled
+                                                ? {
+                                                      scale: 1.03,
+                                                      boxShadow:
+                                                          '0 20px 60px rgba(30, 50, 100, 0.3)',
+                                                  }
+                                                : undefined
+                                        }
+                                        onClick={() => {
+                                            if (isAiIdentifyingDisabled) {
+                                                toast.error(identifyingDisabledMessage);
+                                                return;
+                                            }
+                                            handleModeSelect('ai-only');
+                                        }}
+                                        className={`group rounded-[40px] border-2 p-8 shadow-xl transition-all ${
+                                            isAiIdentifyingDisabled
+                                                ? 'cursor-not-allowed border-gray-200 bg-gray-50/90 opacity-75 select-none shadow-none'
+                                                : 'cursor-pointer border-paw-navy/20 bg-gradient-to-br from-white to-blue-50/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div
+                                                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg transition-transform ${
+                                                    isAiIdentifyingDisabled
+                                                        ? 'bg-gray-400 shadow-none'
+                                                        : 'bg-paw-navy shadow-paw-navy/30 group-hover:scale-110'
+                                                }`}
+                                            >
+                                                <Sparkles size={32} />
+                                            </div>
+                                            {isAiIdentifyingDisabled && (
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900">
+                                                    <AlertTriangle size={12} className="shrink-0 text-amber-600" />
+                                                    {aiStatus?.identifying_disabled_reason === 'service_unavailable'
+                                                        ? 'Service Unavailable'
+                                                        : 'Disabled by Admin'}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className={`mb-4 text-2xl font-black ${
+                                            isAiIdentifyingDisabled ? 'text-gray-500' : 'text-paw-navy'
+                                        }`}>
+                                            AI Identification Only
+                                        </h3>
+
+                                        {isAiIdentifyingDisabled ? (
+                                            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs font-bold text-amber-900 leading-relaxed shadow-xs">
+                                                <p className="flex items-start gap-2">
+                                                    <AlertCircle size={15} className="shrink-0 text-amber-600 mt-0.5" />
+                                                    <span>{identifyingDisabledMessage}</span>
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                                Just want to identify an animal? Get AI
+                                                suggestions without submitting a rescue
+                                                report.
+                                            </p>
+                                        )}
+
+                                        <div className={`flex items-center gap-2 text-sm font-black ${
+                                            isAiIdentifyingDisabled ? 'text-gray-400' : 'text-paw-navy'
+                                        }`}>
+                                            <span>{isAiIdentifyingDisabled ? 'DISABLED' : 'IDENTIFY NOW'}</span>
+                                            {!isAiIdentifyingDisabled && (
+                                                <ArrowRight
+                                                    size={16}
+                                                    className="transition-transform group-hover:translate-x-1"
+                                                />
+                                            )}
+                                        </div>
+                                    </motion.div>
+
+                                    {/* CARD 3: Manual Entry */}
+                                    <motion.div
+                                        whileHover={{
+                                            scale: 1.03,
+                                            boxShadow:
+                                                '0 20px 60px rgba(100, 100, 100, 0.3)',
+                                        }}
+                                        onClick={() => handleModeSelect('manual')}
+                                        className={`group cursor-pointer rounded-[40px] border-2 bg-gradient-to-br from-white p-8 shadow-xl transition-all ${
+                                            isAiReportingDisabled || isAiIdentifyingDisabled
+                                                ? 'border-paw-orange/40 to-orange-50/40 ring-2 ring-paw-orange/30'
+                                                : 'border-gray-200 to-gray-50/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg shadow-gray-700/30 transition-transform group-hover:scale-110">
+                                                <Pencil size={32} />
+                                            </div>
+                                            {(isAiReportingDisabled || isAiIdentifyingDisabled) && (
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800">
+                                                    <CheckCircle2 size={12} className="shrink-0 text-emerald-600" />
+                                                    Recommended
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className="mb-4 text-2xl font-black text-paw-navy">
+                                            Manual Entry
+                                        </h3>
+                                        <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                            Prefer to enter all details yourself?
+                                            Skip AI and fill out the form manually.
+                                        </p>
+                                        <div className="flex items-center gap-2 text-sm font-black text-gray-700 group-hover:text-paw-orange transition-colors">
+                                            <span>ENTER MANUALLY</span>
+                                            <ArrowRight
+                                                size={16}
+                                                className="transition-transform group-hover:translate-x-1"
+                                            />
+                                        </div>
+                                    </motion.div>
+                                </div>
                             </motion.div>
                         )}
 

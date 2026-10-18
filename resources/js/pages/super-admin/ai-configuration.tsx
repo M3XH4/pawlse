@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { 
     Sparkles, Percent, Target, Zap, CheckCircle2, XCircle, RotateCcw,
-    AlertCircle, Activity
+    AlertCircle, Activity, Power, RefreshCw, AlertTriangle, ShieldCheck, Check
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
@@ -23,6 +23,19 @@ interface PaginationLink {
     active: boolean;
 }
 
+interface ServiceHealth {
+    is_healthy: boolean;
+    status: string;
+    status_label: string;
+    url: string;
+    latency_ms: number | null;
+    device: string | null;
+    classes_loaded: number | null;
+    message: string;
+    error: string | null;
+    checked_at: string;
+}
+
 interface AiConfigurationProps {
     settings: {
         ai_enabled: boolean;
@@ -31,6 +44,7 @@ interface AiConfigurationProps {
         ai_confidence_threshold: number;
         ai_auto_validation: boolean;
     };
+    service_health?: ServiceHealth;
     logs: {
         data: PredictionLog[];
         links: PaginationLink[];
@@ -43,7 +57,7 @@ interface AiConfigurationProps {
     };
 }
 
-export default function AiConfiguration({ settings, logs, stats }: AiConfigurationProps) {
+export default function AiConfiguration({ settings, service_health, logs, stats }: AiConfigurationProps) {
     const { data, setData, post, processing } = useForm({
         ai_enabled: settings.ai_enabled,
         ai_reporting_enabled: settings.ai_reporting_enabled,
@@ -51,6 +65,70 @@ export default function AiConfiguration({ settings, logs, stats }: AiConfigurati
         ai_confidence_threshold: settings.ai_confidence_threshold,
         ai_auto_validation: settings.ai_auto_validation,
     });
+
+    const [isToggling, setIsToggling] = useState(false);
+    const [checkingHealth, setCheckingHealth] = useState(false);
+    const [health, setHealth] = useState<ServiceHealth | undefined>(service_health);
+
+    useEffect(() => {
+        if (service_health) {
+            setHealth(service_health);
+        }
+    }, [service_health]);
+
+    useEffect(() => {
+        setData('ai_enabled', settings.ai_enabled);
+    }, [settings.ai_enabled]);
+
+    const handleQuickToggleAi = () => {
+        setIsToggling(true);
+        router.post(
+            '/account/super-admin/ai-configuration/toggle',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    const willBeEnabled = !settings.ai_enabled;
+                    setData('ai_enabled', willBeEnabled);
+                    toast.success(
+                        willBeEnabled
+                            ? 'AI features enabled successfully.'
+                            : 'AI features disabled. Public rescue AI boxes are deactivated.'
+                    );
+                },
+                onError: () => {
+                    toast.error('Failed to toggle AI features.');
+                },
+                onFinish: () => {
+                    setIsToggling(false);
+                },
+            }
+        );
+    };
+
+    const handleRefreshHealth = async () => {
+        setCheckingHealth(true);
+        try {
+            const res = await fetch('/account/super-admin/ai-configuration/health', {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                const healthData: ServiceHealth = await res.json();
+                setHealth(healthData);
+                if (healthData.is_healthy) {
+                    toast.success('AI service is online and healthy.');
+                } else {
+                    toast.warning('AI service is unreachable or offline.');
+                }
+            } else {
+                toast.error('Failed to check AI health status.');
+            }
+        } catch (e) {
+            toast.error('Error connecting to AI health check.');
+        } finally {
+            setCheckingHealth(false);
+        }
+    };
 
     const handleSaveConfig = (e: React.FormEvent) => {
         e.preventDefault();
@@ -100,7 +178,64 @@ export default function AiConfiguration({ settings, logs, stats }: AiConfigurati
             title="AI Configuration"
             description="Manage integrated machine learning services, confidence settings, and review predictive model performance"
         >
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="space-y-6">
+                {/* AI Master Feature Control Card */}
+                <div className={`rounded-2xl border p-6 shadow-xs transition-all ${
+                    data.ai_enabled
+                        ? 'border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                        : 'border-rose-200 bg-rose-50/30 dark:border-rose-900/40 dark:bg-rose-950/20'
+                }`}>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2.5">
+                                <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">
+                                    AI Feature Master Switch
+                                </h3>
+                                {data.ai_enabled ? (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                                        </span>
+                                        Enabled & Active
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800 dark:border-rose-800 dark:bg-rose-900/50 dark:text-rose-300">
+                                        <span className="h-2 w-2 rounded-full bg-rose-500" />
+                                        Disabled
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {data.ai_enabled
+                                    ? 'AI features are active. Users can use AI for reporting and identification on the rescue report page.'
+                                    : 'AI features are deactivated. The "Use AI for Reporting" and "AI Identification Only" boxes are disabled on the rescue page, while Manual Entry remains accessible.'}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={isToggling}
+                            onClick={handleQuickToggleAi}
+                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-50 ${
+                                data.ai_enabled
+                                    ? 'bg-rose-600 text-white hover:bg-rose-500 shadow-rose-600/20'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/20'
+                            }`}
+                        >
+                            <Power className={`h-4 w-4 ${isToggling ? 'animate-spin' : ''}`} />
+                            <span>
+                                {isToggling
+                                    ? 'Updating...'
+                                    : data.ai_enabled
+                                    ? 'Disable AI Features'
+                                    : 'Enable AI Features'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-3">
                 {/* Left Columns: Config Panel & Logs */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Settings Form */}
@@ -314,8 +449,107 @@ export default function AiConfiguration({ settings, logs, stats }: AiConfigurati
                     </div>
                 </div>
 
-                {/* Right Column: Stats Overview */}
+                {/* Right Column: Service Health & Stats Overview */}
                 <div className="space-y-6">
+                    {/* Live AI Microservice Health Widget */}
+                    <div className={`rounded-2xl border p-5 shadow-xs transition-all ${
+                        health?.is_healthy
+                            ? 'border-gray-150 bg-white dark:border-slate-800 dark:bg-slate-900'
+                            : 'border-rose-200 bg-rose-50/40 dark:border-rose-900/40 dark:bg-rose-950/20'
+                    }`}>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-fredoka text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-indigo-500" />
+                                AI Service Connectivity
+                            </h3>
+                            <button
+                                type="button"
+                                disabled={checkingHealth}
+                                onClick={handleRefreshHealth}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                                title="Check connection to AI microservice"
+                            >
+                                <RefreshCw className={`h-3 w-3 ${checkingHealth ? 'animate-spin' : ''}`} />
+                                <span>Check API</span>
+                            </button>
+                        </div>
+
+                        {health?.is_healthy ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="relative flex h-2.5 w-2.5">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                                    </span>
+                                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                        Online & Healthy
+                                    </span>
+                                    {health.latency_ms !== null && (
+                                        <span className="ml-auto text-[11px] font-mono text-gray-500">
+                                            {health.latency_ms}ms
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-850/40 p-3 space-y-1.5 text-xs">
+                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                        <span>Endpoint:</span>
+                                        <span className="font-mono text-gray-800 dark:text-gray-200 truncate max-w-[170px]" title={health.url}>
+                                            {health.url}
+                                        </span>
+                                    </div>
+                                    {health.device && (
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                            <span>Device:</span>
+                                            <span className="font-semibold uppercase text-indigo-600 dark:text-indigo-400">
+                                                {health.device}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {health.classes_loaded !== null && (
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                            <span>Classes Loaded:</span>
+                                            <span className="font-semibold text-gray-800 dark:text-gray-200">
+                                                {health.classes_loaded}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-gray-400">
+                                    Service is responding normally. AI inference endpoints are operational.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                                    <span className="text-xs font-bold text-rose-700 dark:text-rose-400">
+                                        Unreachable / Offline
+                                    </span>
+                                </div>
+
+                                <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-100/50 dark:bg-rose-950/40 p-3 space-y-1 text-xs text-rose-800 dark:text-rose-300">
+                                    <p className="font-bold flex items-center gap-1.5">
+                                        <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+                                        Cannot connect to AI service
+                                    </p>
+                                    <p className="text-[11px] leading-relaxed">
+                                        The endpoint <code className="font-mono bg-rose-200/60 dark:bg-rose-900/60 px-1 py-0.5 rounded">{health?.url || 'AI API'}</code> is unreachable or not responding.
+                                    </p>
+                                    {health?.error && (
+                                        <p className="text-[10px] text-rose-600 dark:text-rose-400 font-mono mt-1">
+                                            Error: {health.error}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 p-2.5 text-[11px] text-amber-800 dark:text-amber-300">
+                                    <strong>Status:</strong> When the AI service is unreachable, AI Report and AI Identification boxes are automatically disabled on the public rescue page with an unavailability message.
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Performance Cards */}
                     <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                         <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">AI Health Statistics</h3>
@@ -361,6 +595,7 @@ export default function AiConfiguration({ settings, logs, stats }: AiConfigurati
                     </div>
                 </div>
             </div>
-        </DashboardSectionPage>
-    );
+        </div>
+    </DashboardSectionPage>
+);
 }

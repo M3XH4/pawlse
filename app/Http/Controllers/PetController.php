@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\AiPredictionLog;
 use App\Models\SystemSetting;
+use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
 class PetController extends Controller
 {
-    public function index()
+    public function index(AiService $aiService)
     {
-        return Inertia::render('rescue');
+        return Inertia::render('rescue', [
+            'aiStatus' => $aiService->getAiFeatureStatus(),
+        ]);
     }
 
     public function predict(Request $request)

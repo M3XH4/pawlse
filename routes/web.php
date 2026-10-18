@@ -87,7 +87,7 @@ Route::post('/volunteer/apply', [VolunteerController::class, 'store'])->name('vo
 Route::get('/volunteer/switch', [VolunteerController::class, 'switchRole'])->name('volunteer.switch')->middleware('auth');
 Route::get('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
 
-Route::inertia('/rescue', 'rescue')->name('rescue');
+Route::get('/rescue', [PetController::class, 'index'])->name('rescue');
 Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])->name('pet-reports.store-rescue');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
@@ -294,6 +294,8 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
 
     Route::get('ai-configuration', [AiConfigController::class, 'index'])->name('ai-configuration');
     Route::post('ai-configuration/settings', [AiConfigController::class, 'updateSettings'])->name('ai-configuration.settings');
+    Route::post('ai-configuration/toggle', [AiConfigController::class, 'toggleAiFeatures'])->name('ai-configuration.toggle');
+    Route::get('ai-configuration/health', [AiConfigController::class, 'healthCheck'])->name('ai-configuration.health');
     Route::post('ai-configuration/logs/{log}/accuracy', [AiConfigController::class, 'toggleAccuracy'])->name('ai-configuration.logs.accuracy');
 
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings');

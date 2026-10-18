@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AiPredictionLog;
 use App\Models\AuditLog;
 use App\Models\SystemSetting;
+use App\Services\AiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,7 +19,7 @@ class AiConfigController extends Controller
     /**
      * Display AI Configuration screen.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, AiService $aiService): Response
     {
         $settings = SystemSetting::getValue('ai_settings', [
             'ai_enabled' => true,
@@ -25,6 +28,8 @@ class AiConfigController extends Controller
             'ai_confidence_threshold' => 0.70,
             'ai_auto_validation' => false,
         ]);
+
+        $serviceHealth = $aiService->checkHealth(true);
 
         // Paginate logs
         $logs = AiPredictionLog::latest()
@@ -53,6 +58,7 @@ class AiConfigController extends Controller
 
         return Inertia::render('super-admin/ai-configuration', [
             'settings' => $settings,
+            'service_health' => $serviceHealth,
             'logs' => $logs,
             'stats' => [
                 'total_requests' => $totalRequests,
@@ -60,6 +66,53 @@ class AiConfigController extends Controller
                 'accuracy_rate' => round($accuracyRate, 2),
             ],
         ]);
+    }
+
+    /**
+     * Quick toggle to enable or disable AI features globally.
+     */
+    public function toggleAiFeatures(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'enabled' => ['nullable', 'boolean'],
+        ]);
+
+        $settings = SystemSetting::getValue('ai_settings', [
+            'ai_enabled' => true,
+            'ai_reporting_enabled' => true,
+            'ai_identifying_enabled' => true,
+            'ai_confidence_threshold' => 0.70,
+            'ai_auto_validation' => false,
+        ]);
+
+        $newState = $request->has('enabled')
+            ? (bool) $request->boolean('enabled')
+            : ! ((bool) ($settings['ai_enabled'] ?? true));
+
+        $settings['ai_enabled'] = $newState;
+        SystemSetting::setValue('ai_settings', $settings);
+
+        Cache::forget('ai_service_health');
+
+        $actionWord = $newState ? 'Enabled' : 'Disabled';
+        AuditLog::log('ai_features_toggle', "{$actionWord} AI Features globally");
+
+        return redirect()->back()->with(
+            'success',
+            $newState
+                ? 'AI features have been enabled successfully.'
+                : 'AI features have been disabled. Public AI report and identification boxes are now deactivated.'
+        );
+    }
+
+    /**
+     * Live health check endpoint for the AI microservice.
+     */
+    public function healthCheck(AiService $aiService): JsonResponse
+    {
+        $health = $aiService->checkHealth(true);
+
+        return response()->json($health);
     }
 
     /**
@@ -82,6 +135,8 @@ class AiConfigController extends Controller
             'ai_confidence_threshold',
             'ai_auto_validation',
         ]));
+
+        Cache::forget('ai_service_health');
 
         AuditLog::log('ai_settings_update', 'Updated AI Service Configurations');
 
