@@ -60,6 +60,8 @@ export function DashboardSidebar({
             href: '/volunteer/switch',
             match: '/volunteer/switch',
             icon: Zap,
+            method: 'post',
+            as: 'button',
         });
     }
 
@@ -129,6 +131,8 @@ export function DashboardSidebar({
                         <span key={item.href} onClick={onClose}>
                             <DashboardNavLink
                                 href={item.href}
+                                method={item.method}
+                                as={item.as}
                                 active={
                                     currentUrl === item.match ||
                                     currentUrl.startsWith(`${item.match}/`)

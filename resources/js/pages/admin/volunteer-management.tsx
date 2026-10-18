@@ -54,6 +54,11 @@ interface TaskModel {
     feeding_schedule?: {
         zone: string;
     } | null;
+    pet_report?: {
+        id: number;
+        pet_name?: string | null;
+        species?: string | null;
+    } | null;
 }
 
 interface EventDropdownModel {
@@ -504,8 +509,24 @@ export default function VolunteerManagement({
                                             <tr key={task.id} className="text-gray-700 dark:text-gray-300">
                                                 <td className="py-4 font-bold text-[#0B2340] dark:text-white">{task.user?.name}</td>
                                                 <td className="py-4">
-                                                    <p className="font-bold">{task.event ? task.event.title : task.feeding_schedule?.zone}</p>
-                                                    <p className="text-xs text-gray-400 font-bold">{task.event ? 'Event Proper' : 'Feeding Zone Route'}</p>
+                                                    <p className="font-bold">
+                                                        {task.event
+                                                            ? task.event.title
+                                                            : task.feeding_schedule
+                                                                ? task.feeding_schedule.zone
+                                                                : task.pet_report
+                                                                    ? `Rescue: ${task.pet_report.pet_name || `Report #${task.pet_report.id}`}`
+                                                                    : 'General Assignment'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 font-bold">
+                                                        {task.event
+                                                            ? 'Event Proper'
+                                                            : task.feeding_schedule
+                                                                ? 'Feeding Zone Route'
+                                                                : task.pet_report
+                                                                    ? 'Emergency Rescue'
+                                                                    : 'Task'}
+                                                    </p>
                                                 </td>
                                                 <td className="py-4">{task.role}</td>
                                                 <td className="py-4 font-bold">{parseFloat(task.hours_logged)} hrs</td>

@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\DonationStatus;
+use App\Enums\DonationType;
 use App\Models\Donation;
 use App\Models\PetReport;
 use App\Models\User;
@@ -10,6 +12,33 @@ uses(RefreshDatabase::class);
 
 test('admin reports analytics page renders and loads expected timeline data', function () {
     $admin = User::factory()->admin()->create();
+
+    Donation::create([
+        'public_reference' => 'REF-COMP',
+        'donor_name' => 'Completed Donor',
+        'donor_email' => 'completed@example.com',
+        'type' => DonationType::Cash->value,
+        'amount' => 500,
+        'status' => DonationStatus::Completed->value,
+    ]);
+
+    Donation::create([
+        'public_reference' => 'REF-INKIND',
+        'donor_name' => 'InKind Donor',
+        'donor_email' => 'inkind@example.com',
+        'type' => DonationType::InKind->value,
+        'amount' => null,
+        'status' => DonationStatus::Verified->value,
+    ]);
+
+    Donation::create([
+        'public_reference' => 'REF-SPONSOR',
+        'donor_name' => 'Sponsor Donor',
+        'donor_email' => 'sponsor@example.com',
+        'type' => DonationType::FeedingSponsorship->value,
+        'amount' => 1200,
+        'status' => DonationStatus::Completed->value,
+    ]);
 
     $response = $this->actingAs($admin)
         ->get(route('account.admin.reports-analytics'));
@@ -26,6 +55,10 @@ test('admin reports analytics page renders and loads expected timeline data', fu
             ->has('years')
             ->has('animalBreakdown')
             ->has('donationBreakdown')
+            ->where('donationBreakdown.cash', 1)
+            ->where('donationBreakdown.inkind', 1)
+            ->where('donationBreakdown.sponsor', 1)
+            ->where('summary.donations.total_cash', 500)
         );
 });
 

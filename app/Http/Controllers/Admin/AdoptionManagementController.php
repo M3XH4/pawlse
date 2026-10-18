@@ -397,6 +397,7 @@ class AdoptionManagementController extends Controller
     {
         $validated = $request->validate([
             'intake_notes' => ['nullable', 'string', 'max:1000'],
+            'admitted_at' => ['nullable', 'date'],
         ]);
 
         return DB::transaction(function () use ($request, $rehomingRequest, $validated) {
@@ -433,7 +434,7 @@ class AdoptionManagementController extends Controller
                 'vaccinated' => ! empty($rehomingRequest->health_notes),
                 'status' => ShelterAnimalStatus::Available,
                 'photo_url' => $photoUrl,
-                'admitted_at' => now(),
+                'admitted_at' => $validated['admitted_at'] ?? now(),
             ]);
 
             $rehomingRequest->update([

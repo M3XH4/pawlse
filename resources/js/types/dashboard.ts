@@ -38,6 +38,8 @@ export type DashboardNavItem = {
     match: string;
     icon: LucideIcon;
     badge?: number;
+    method?: 'get' | 'post';
+    as?: 'a' | 'button';
 };
 
 export type DashboardChrome = {

@@ -7,6 +7,7 @@ use App\Models\BlogPost;
 use App\Models\BlogPostReaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -78,13 +79,22 @@ class BlogManagementController extends Controller
             'category' => ['required', 'string', Rule::in(array_keys(BlogPost::CATEGORIES))],
             'summary' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
-            'featured_image' => ['nullable', 'string', 'max:2048'],
+            'featured_image' => ['nullable'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'reading_time_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
             'status' => ['required', 'string', Rule::in(['published', 'draft', 'archived'])],
             'is_featured' => ['boolean'],
         ]);
+
+        $featuredImageUrl = null;
+        if ($request->hasFile('featured_image')) {
+            $request->validate(['featured_image' => ['file', 'image', 'max:8192']]);
+            $path = $request->file('featured_image')->store('blog', 'public');
+            $featuredImageUrl = Storage::url($path);
+        } elseif (is_string($request->input('featured_image')) && trim($request->input('featured_image')) !== '') {
+            $featuredImageUrl = trim($request->input('featured_image'));
+        }
 
         $baseSlug = Str::slug($validated['title']);
         $slug = $baseSlug;
@@ -104,7 +114,7 @@ class BlogManagementController extends Controller
             'category' => $validated['category'],
             'summary' => $validated['summary'] ?? null,
             'content' => $validated['content'],
-            'featured_image' => $validated['featured_image'] ?? null,
+            'featured_image' => $featuredImageUrl,
             'tags' => $validated['tags'] ?? [],
             'reading_time_minutes' => $readingTime,
             'status' => $validated['status'],
@@ -125,13 +135,23 @@ class BlogManagementController extends Controller
             'category' => ['required', 'string', Rule::in(array_keys(BlogPost::CATEGORIES))],
             'summary' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
-            'featured_image' => ['nullable', 'string', 'max:2048'],
+            'featured_image' => ['nullable'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'reading_time_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
             'status' => ['required', 'string', Rule::in(['published', 'draft', 'archived'])],
             'is_featured' => ['boolean'],
         ]);
+
+        $featuredImageUrl = $post->featured_image;
+        if ($request->hasFile('featured_image')) {
+            $request->validate(['featured_image' => ['file', 'image', 'max:8192']]);
+            $path = $request->file('featured_image')->store('blog', 'public');
+            $featuredImageUrl = Storage::url($path);
+        } elseif ($request->has('featured_image')) {
+            $inputImage = $request->input('featured_image');
+            $featuredImageUrl = is_string($inputImage) && trim($inputImage) !== '' ? trim($inputImage) : null;
+        }
 
         $wordCount = str_word_count(strip_tags($validated['content']));
         $readingTime = $validated['reading_time_minutes'] ?? (int) max(1, ceil($wordCount / 200));
@@ -146,7 +166,7 @@ class BlogManagementController extends Controller
             'category' => $validated['category'],
             'summary' => $validated['summary'] ?? null,
             'content' => $validated['content'],
-            'featured_image' => $validated['featured_image'] ?? null,
+            'featured_image' => $featuredImageUrl,
             'tags' => $validated['tags'] ?? [],
             'reading_time_minutes' => $readingTime,
             'status' => $validated['status'],

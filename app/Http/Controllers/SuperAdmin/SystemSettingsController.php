@@ -24,10 +24,15 @@ class SystemSettingsController extends Controller
             'registration_enabled' => true,
             'maintenance_mode' => false,
             'maintenance_message' => 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!',
+            'payment_simulation_enabled' => (bool) config('services.payment.simulation_enabled', false),
         ]);
 
         if (! isset($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';
+        }
+
+        if (! isset($settings['payment_simulation_enabled'])) {
+            $settings['payment_simulation_enabled'] = (bool) config('services.payment.simulation_enabled', false);
         }
 
         return Inertia::render('super-admin/system-settings', [
@@ -47,6 +52,7 @@ class SystemSettingsController extends Controller
             'registration_enabled' => ['required', 'boolean'],
             'maintenance_mode' => ['required', 'boolean'],
             'maintenance_message' => ['nullable', 'string', 'max:500'],
+            'payment_simulation_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = $request->only([
@@ -57,6 +63,8 @@ class SystemSettingsController extends Controller
             'maintenance_mode',
             'maintenance_message',
         ]);
+
+        $settings['payment_simulation_enabled'] = (bool) $request->input('payment_simulation_enabled', false);
 
         if (empty($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';

@@ -2,6 +2,7 @@
 
 use App\Models\Backup;
 use App\Models\FeedingSchedule;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\PetReport;
 use App\Models\SystemSetting;
@@ -104,12 +105,20 @@ test('automation backup status endpoint returns accurate health information', fu
 });
 
 test('automation inventory alerts endpoint returns low stock and expiring items', function () {
-    InventoryItem::create([
+    $item = InventoryItem::create([
         'name' => 'Dog Kibble Adult',
         'category' => 'Food',
         'quantity' => 2,
         'min_threshold' => 5,
         'unit' => 'bags',
+    ]);
+
+    InventoryBatch::create([
+        'inventory_item_id' => $item->id,
+        'batch_number' => 'BATCH-001',
+        'quantity' => 10,
+        'initial_quantity' => 10,
+        'expires_at' => now()->addDays(5),
     ]);
 
     $response = $this->withHeaders(['X-Automation-Key' => 'secret-automation-key-999'])
@@ -128,6 +137,8 @@ test('automation inventory alerts endpoint returns low stock and expiring items'
 
     expect($response->json('has_alerts'))->toBeTrue();
     expect($response->json('low_stock_count'))->toBe(1);
+    expect($response->json('expiring_batches_count'))->toBe(1);
+    expect($response->json('expiring_batches.0.batch_number'))->toBe('BATCH-001');
 });
 
 test('automation upcoming feeding endpoint returns scheduled routes', function () {

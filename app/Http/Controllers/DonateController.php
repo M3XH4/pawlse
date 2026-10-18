@@ -17,12 +17,14 @@ use App\Models\FeedingSponsorship;
 use App\Models\InKindDonation;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\PaymentProof;
 use App\Models\ResourceFile;
 use App\Models\ShelterAnimal;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\DonationReceivedNotification;
 use App\Notifications\DonationVerifiedNotification;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -417,7 +419,12 @@ class DonateController extends Controller
 
     public function checkout($ref): Response
     {
-        $donation = Donation::with(['payments', 'feedingSponsorship'])->where('public_reference', $ref)->firstOrFail();
+        $donation = Donation::with(['payments', 'feedingSponsorship', 'proofs'])->where('public_reference', $ref)->firstOrFail();
+
+        $systemSettings = SystemSetting::getValue('system_settings', []);
+        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? (config('services.payment.simulation_enabled') || app()->environment(['local', 'testing'])));
+
+        $latestProof = $donation->proofs->last();
 
         return Inertia::render('checkout', [
             'donation' => [
@@ -437,14 +444,137 @@ class DonateController extends Controller
                     'preferred_date' => $donation->feedingSponsorship->preferred_date,
                     'occasion' => $donation->feedingSponsorship->occasion,
                 ] : null,
+                'latest_proof' => $latestProof ? [
+                    'original_filename' => $latestProof->original_filename,
+                    'uploaded_at' => $latestProof->uploaded_at ? $latestProof->uploaded_at->format('M j, Y g:i A') : null,
+                    'url' => $latestProof->url,
+                ] : null,
+            ],
+            'simulation_enabled' => $simulationEnabled,
+            'official_accounts' => [
+                'gcash' => [
+                    'account_name' => 'PAWLSE Stray Care Initiative',
+                    'account_number' => '0917-888-PAWL',
+                    'qr_image' => null,
+                ],
+                'maya' => [
+                    'account_name' => 'PAWLSE Iligan Stray Feeders',
+                    'account_number' => '0918-999-STRAY',
+                    'qr_image' => null,
+                ],
+                'bank_transfer' => [
+                    'bank_name' => 'BDO Unibank',
+                    'account_name' => 'PAWLSE Welfare Fund',
+                    'account_number' => '0012-3456-7890',
+                ],
             ],
         ]);
+    }
+
+    /**
+     * Submit manual payment proof (receipt & reference) for offline verification.
+     */
+    public function submitProof(Request $request, $ref): RedirectResponse
+    {
+        $donation = Donation::with(['payments'])->where('public_reference', $ref)->firstOrFail();
+
+        if ($donation->status === DonationStatus::Completed->value) {
+            return redirect()->back()->with('error', 'This donation is already verified and completed.');
+        }
+
+        $validated = $request->validate([
+            'payment_reference' => ['required', 'string', 'max:100'],
+            'proof_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'proof' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'payment_method' => ['nullable', 'string', 'in:gcash,maya,bank_transfer,paypal'],
+            'payment_channel' => ['nullable', 'string', 'in:gcash,maya,bank_transfer,paypal'],
+        ]);
+
+        $file = $request->file('proof') ?? $request->file('proof_image');
+        if (! $file) {
+            return redirect()->back()->withErrors(['proof' => 'The payment receipt image is required.']);
+        }
+
+        $path = $file->store('donation_proofs', 'public');
+
+        DB::transaction(function () use ($donation, $validated, $path, $file) {
+            $paymentMethod = $validated['payment_method'] ?? $validated['payment_channel'] ?? 'gcash';
+            $payment = $donation->payments()->first();
+
+            if (! $payment) {
+                $payment = Payment::create([
+                    'donation_id' => $donation->id,
+                    'method' => $paymentMethod,
+                    'provider' => $paymentMethod,
+                    'amount' => (int) ($donation->amount ?: 0),
+                    'payment_reference' => $validated['payment_reference'],
+                    'status' => PaymentStatus::Pending->value,
+                ]);
+            } else {
+                $payment->update([
+                    'payment_reference' => $validated['payment_reference'],
+                    'method' => $paymentMethod,
+                    'provider' => $paymentMethod,
+                    'status' => PaymentStatus::Pending->value,
+                ]);
+            }
+
+            PaymentProof::create([
+                'donation_id' => $donation->id,
+                'payment_id' => $payment->id,
+                'disk' => 'public',
+                'path' => $path,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'uploaded_at' => now(),
+            ]);
+
+            $oldStatus = $donation->status;
+            $donation->update([
+                'status' => DonationStatus::PaymentProofSubmitted->value,
+            ]);
+
+            DB::table('donation_audit_logs')->insert([
+                'donation_id' => $donation->id,
+                'action' => 'proof_uploaded',
+                'old_status' => $oldStatus,
+                'new_status' => DonationStatus::PaymentProofSubmitted->value,
+                'performed_by' => auth()->id(),
+                'notes' => 'Donor uploaded payment receipt proof with reference: '.$validated['payment_reference'],
+                'created_at' => now(),
+            ]);
+
+            DB::table('donation_status_histories')->insert([
+                'donation_id' => $donation->id,
+                'status' => DonationStatus::PaymentProofSubmitted->value,
+                'changed_by' => auth()->id(),
+                'reason' => 'Payment receipt uploaded by donor.',
+                'created_at' => now(),
+            ]);
+        });
+
+        AuditLog::log('donation_proof_uploaded', "Uploaded proof of payment for donation #{$donation->public_reference} (Ref: {$validated['payment_reference']})");
+
+        return redirect()->back()->with('success', 'Thank you! Your payment proof has been uploaded. An administrator will verify and acknowledge your donation shortly.');
     }
 
     public function pay(Request $request, $ref)
     {
         $donation = Donation::with(['payments', 'feedingSponsorship'])->where('public_reference', $ref)->firstOrFail();
         $payment = $donation->payments->first();
+
+        $systemSettings = SystemSetting::getValue('system_settings', []);
+        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? (config('services.payment.simulation_enabled') || app()->environment(['local', 'testing'])));
+
+        // Guard against unauthorized simulation when simulation is disabled
+        if (! $simulationEnabled && ! (auth()->check() && auth()->user()->hasRole([Role::Admin->value, Role::SuperAdmin->value]))) {
+            abort(403, 'Payment simulation is disabled. Please upload official proof of payment for administrator verification.');
+        }
+
+        if ($donation->status === DonationStatus::Completed->value) {
+            return redirect()->route('donate')->with('info', 'This donation is already completed.');
+        }
 
         $action = $request->input('action'); // 'success' or 'fail'
 

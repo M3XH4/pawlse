@@ -27,7 +27,7 @@ class RescueManagementController extends Controller
         $typeFilter = $request->input('type', 'All');
         $duplicateFilter = $request->input('duplicate', 'All'); // All, Yes, No
 
-        $reportsQuery = PetReport::with(['photos', 'assignedVolunteer', 'duplicateOf'])
+        $reportsQuery = PetReport::with(['photos', 'assignedVolunteer', 'duplicateOf', 'aiPredictionLog'])
             ->when($statusFilter !== 'All', function ($query) use ($statusFilter) {
                 $query->where('status', $statusFilter);
             })

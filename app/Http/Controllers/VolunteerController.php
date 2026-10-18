@@ -130,6 +130,15 @@ class VolunteerController extends Controller
             return redirect()->route('login');
         }
 
+        if ($user->hasRole([Role::Admin->value, Role::SuperAdmin->value]) || in_array($user->role, [Role::Admin->value, Role::SuperAdmin->value], true)) {
+            return redirect()->route('account.volunteer.index');
+        }
+
+        // Prevent state mutation on GET requests (e.g. browser prefetching or spidering)
+        if ($request->isMethod('get')) {
+            return redirect()->route($user->role === Role::Volunteer->value ? 'account.volunteer.index' : 'account.user.volunteer-status');
+        }
+
         $application = VolunteerApplication::query()
             ->where('user_id', $user->id)
             ->where('status', 'approved')
@@ -163,13 +172,24 @@ class VolunteerController extends Controller
             return redirect()->route('login');
         }
 
-        $user->forceFill([
-            'role' => Role::User->value,
-        ])->save();
+        // Prevent state mutation on GET requests
+        if ($request->isMethod('get')) {
+            return redirect()->route('account.user.index');
+        }
 
-        $user->syncRoles([Role::User]);
+        if ($user->hasRole([Role::Admin->value, Role::SuperAdmin->value]) || in_array($user->role, [Role::Admin->value, Role::SuperAdmin->value], true)) {
+            return redirect()->route('account.user.index');
+        }
 
-        AuditLog::log('role_switch_user', 'Switched active role back to user');
+        if ($user->role === Role::Volunteer->value || $user->hasRole(Role::Volunteer->value)) {
+            $user->forceFill([
+                'role' => Role::User->value,
+            ])->save();
+
+            $user->syncRoles([Role::User]);
+
+            AuditLog::log('role_switch_user', 'Switched active role back to user');
+        }
 
         return redirect()->route('account.user.index');
     }

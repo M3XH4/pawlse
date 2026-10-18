@@ -22,7 +22,8 @@ class FosterCareController extends Controller
     public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        $isAdmin = $user->hasRole(Role::Admin->value) || $user->hasRole(Role::SuperAdmin->value);
+        $isVolunteerRoute = $request->routeIs('account.volunteer.*');
+        $isAdmin = ($user->hasRole(Role::Admin->value) || $user->hasRole(Role::SuperAdmin->value)) && ! $isVolunteerRoute;
 
         if (! $user->isApprovedFosterParent()) {
             if ($isAdmin) {
@@ -122,10 +123,10 @@ class FosterCareController extends Controller
                 ];
             });
 
-        // Determine context/layout theme: if user is admin viewing personal foster pets
-        $isAdmin = $user->hasRole(Role::Admin->value) || $user->hasRole(Role::SuperAdmin->value);
-        $theme = $isAdmin ? 'admin' : 'volunteer';
-        $page = $isAdmin ? 'admin/my-foster-pets' : 'volunteer/foster-care';
+        // Determine context/layout theme: if user is on admin route viewing personal foster pets
+        $isAdminContext = ($user->hasRole(Role::Admin->value) || $user->hasRole(Role::SuperAdmin->value)) && ! $isVolunteerRoute;
+        $theme = $isAdminContext ? 'admin' : 'volunteer';
+        $page = $isAdminContext ? 'admin/my-foster-pets' : 'volunteer/foster-care';
 
         return Inertia::render($page, [
             'fosterParent' => $fosterParent ? [
@@ -143,7 +144,7 @@ class FosterCareController extends Controller
             'activePlacements' => $activePlacements,
             'historyPlacements' => $historyPlacements,
             'theme' => $theme,
-            'isAdmin' => $isAdmin,
+            'isAdmin' => $isAdminContext,
         ]);
     }
 

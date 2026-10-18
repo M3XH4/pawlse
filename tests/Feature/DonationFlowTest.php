@@ -7,8 +7,13 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSponsorship;
 use App\Models\Payment;
+use App\Models\PaymentProof;
 use App\Models\ShelterAnimal;
+use App\Models\SystemSetting;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('guest can initiate cash donation and get redirected to checkout', function () {
     $response = $this->post(route('donate.store-cash'), [
@@ -237,4 +242,108 @@ test('guest can schedule in-kind donation linked to an animal donation need', fu
     expect($donation->inKindDonation)->not->toBeNull();
     expect($donation->inKindDonation->animal_donation_need_id)->toBe($need->id);
     expect($donation->inKindDonation->quantity)->toBe('2 bags');
+});
+
+test('donor can upload proof of payment which transitions donation to payment_proof_submitted', function () {
+    Storage::fake('public');
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-PROOF-TEST',
+        'donor_name' => 'Charlie Donor',
+        'donor_email' => 'charlie@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 2000,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $file = UploadedFile::fake()->image('receipt.jpg', 600, 800);
+
+    $response = $this->post(route('donate.checkout.proof', $donation->public_reference), [
+        'payment_reference' => 'GCASH-REF-998877',
+        'proof' => $file,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $donation->refresh();
+    expect($donation->status)->toBe(DonationStatus::PaymentProofSubmitted->value);
+
+    $proof = PaymentProof::where('donation_id', $donation->id)->first();
+    expect($proof)->not->toBeNull();
+    expect($proof->original_filename)->toBe('receipt.jpg');
+    expect($proof->file_size)->toBeGreaterThan(0);
+    Storage::disk('public')->assertExists($proof->path);
+});
+
+test('guest cannot simulate payment when payment simulation is disabled in system settings', function () {
+    SystemSetting::setValue('system_settings', [
+        'payment_simulation_enabled' => false,
+    ]);
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-SIM-GUARD',
+        'donor_name' => 'Gated User',
+        'donor_email' => 'gated@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 500,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $response = $this->post(route('donate.pay', $donation->public_reference), [
+        'action' => 'success',
+        'method' => 'gcash',
+    ]);
+
+    $response->assertForbidden();
+    expect($donation->fresh()->status)->toBe(DonationStatus::PendingPayment->value);
+});
+
+test('admin can simulate payment even when public payment simulation is disabled', function () {
+    $this->seed(RoleSeeder::class);
+    $admin = User::factory()->admin()->create();
+
+    SystemSetting::setValue('system_settings', [
+        'payment_simulation_enabled' => false,
+    ]);
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-ADMIN-SIM',
+        'donor_name' => 'Admin Test Donor',
+        'donor_email' => 'admintest@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 1000,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('donate.pay', $donation->public_reference), [
+        'action' => 'success',
+        'method' => 'gcash',
+    ]);
+
+    $response->assertRedirect(route('donate'));
+    expect($donation->fresh()->status)->toBe(DonationStatus::Completed->value);
+});
+
+test('super admin can toggle payment_simulation_enabled in system settings', function () {
+    $this->seed(RoleSeeder::class);
+    $superAdmin = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($superAdmin)->post(route('account.super-admin.system-settings.update'), [
+        'app_name' => 'PAWLSE Shelter',
+        'contact_email' => 'shelter@pawlse.test',
+        'contact_phone' => '09123456789',
+        'registration_enabled' => true,
+        'maintenance_mode' => false,
+        'payment_simulation_enabled' => false,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $settings = SystemSetting::getValue('system_settings', []);
+    expect($settings['payment_simulation_enabled'])->toBeFalse();
 });

@@ -145,11 +145,24 @@ class PetReport extends Model
                     $isMatch = true;
                 }
             } else {
-                // Exact or substring match on locations
-                $loc1 = strtolower(trim($this->location));
-                $loc2 = strtolower(trim($candidate->location));
-                if ($loc1 === $loc2 || str_contains($loc1, $loc2) || str_contains($loc2, $loc1)) {
-                    $isMatch = true;
+                // Exact, high similarity, or significant length-bounded substring match
+                $loc1 = strtolower(trim((string) $this->location));
+                $loc2 = strtolower(trim((string) $candidate->location));
+                if ($loc1 !== '' && $loc2 !== '') {
+                    if ($loc1 === $loc2) {
+                        $isMatch = true;
+                    } else {
+                        similar_text($loc1, $loc2, $percent);
+                        $minLen = min(strlen($loc1), strlen($loc2));
+                        $maxLen = max(strlen($loc1), strlen($loc2));
+                        $isSub = (str_contains($loc1, $loc2) || str_contains($loc2, $loc1))
+                            && $minLen >= 12
+                            && ($minLen / $maxLen >= 0.45);
+
+                        if ($percent >= 80 || $isSub) {
+                            $isMatch = true;
+                        }
+                    }
                 }
             }
 

@@ -95,6 +95,8 @@ export default function UserVolunteerStatus({ application }: VolunteerStatusProp
                                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                                     <Link
                                         href="/volunteer/switch"
+                                        method="post"
+                                        as="button"
                                         className="w-full sm:w-auto px-6 py-3.5 bg-green-600 text-white hover:bg-green-700 font-black text-sm uppercase tracking-widest rounded-2xl text-center shadow-lg shadow-green-600/20"
                                     >
                                         Switch to Volunteer Dashboard

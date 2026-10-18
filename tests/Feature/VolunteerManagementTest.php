@@ -280,21 +280,53 @@ test('approved user can switch their role to volunteer and switch back to user d
         'reference_number' => 'VOL-123456',
     ]);
 
-    // Test switch to volunteer
+    // Test switch to volunteer via POST
     $response = $this->actingAs($user)
-        ->get(route('volunteer.switch'));
+        ->post(route('volunteer.switch'));
 
     $response->assertRedirect(route('account.volunteer.index'));
     $user->refresh();
     expect($user->role)->toBe(Role::Volunteer->value);
 
-    // Test switch back to user
+    // Test switch back to user via POST
     $response = $this->actingAs($user)
-        ->get(route('volunteer.switch-user'));
+        ->post(route('volunteer.switch-user'));
 
     $response->assertRedirect(route('account.user.index'));
     $user->refresh();
     expect($user->role)->toBe(Role::User->value);
+});
+
+test('admin or superadmin role is preserved when accessing volunteer switch routes', function () {
+    $admin = User::factory()->admin()->create();
+    $superAdmin = User::factory()->superAdmin()->create();
+
+    // Admin accessing switch-user should NOT be demoted to user
+    $this->actingAs($admin)
+        ->get(route('volunteer.switch-user'))
+        ->assertRedirect(route('account.user.index'));
+
+    $admin->refresh();
+    expect($admin->role)->toBe(Role::Admin->value)
+        ->and($admin->hasRole(Role::Admin->value))->toBeTrue();
+
+    // Admin accessing switch should NOT be demoted to volunteer
+    $this->actingAs($admin)
+        ->get(route('volunteer.switch'))
+        ->assertRedirect(route('account.volunteer.index'));
+
+    $admin->refresh();
+    expect($admin->role)->toBe(Role::Admin->value)
+        ->and($admin->hasRole(Role::Admin->value))->toBeTrue();
+
+    // SuperAdmin accessing switch-user should NOT be demoted to user
+    $this->actingAs($superAdmin)
+        ->post(route('volunteer.switch-user'))
+        ->assertRedirect(route('account.user.index'));
+
+    $superAdmin->refresh();
+    expect($superAdmin->role)->toBe(Role::SuperAdmin->value)
+        ->and($superAdmin->hasRole(Role::SuperAdmin->value))->toBeTrue();
 });
 
 test('user can view volunteer onboarding status inside user dashboard', function () {

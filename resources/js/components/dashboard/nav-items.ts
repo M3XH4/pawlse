@@ -69,8 +69,10 @@ export function navItem(
     href: string,
     icon: LucideIcon,
     match = href,
+    method: 'get' | 'post' = 'get',
+    as?: 'a' | 'button',
 ): DashboardNavItem {
-    return { title, href, match, icon };
+    return { title, href, match, icon, method, as };
 }
 
 export const userNavItems: DashboardNavItem[] = [
@@ -95,7 +97,7 @@ export const volunteerNavItems: DashboardNavItem[] = [
     navItem('My Rescue Reports', volunteerRescueReports.url(), FileText),
     navItem('Help Desk & Support', '/account/volunteer/help-desk', LifeBuoy),
     navItem('Account Settings', volunteerAccountSettings.url(), Settings),
-    navItem('Switch to User Dashboard', '/volunteer/switch-user', User),
+    navItem('Switch to User Dashboard', '/volunteer/switch-user', User, '/volunteer/switch-user', 'post', 'button'),
 ];
 
 export const superAdminNavItems: DashboardNavItem[] = [

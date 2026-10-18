@@ -6,6 +6,8 @@ use App\Models\AuditLog;
 use App\Models\ShelterVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ShelterVisitController extends Controller
@@ -27,24 +29,27 @@ class ShelterVisitController extends Controller
             'additional_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        if (! empty($validated['preferred_time_slot'])) {
-            $existingVisitorsCount = ShelterVisit::whereDate('preferred_date', $validated['preferred_date'])
-                ->where('preferred_time_slot', $validated['preferred_time_slot'])
-                ->whereIn('status', ['pending', 'confirmed'])
-                ->sum('number_of_visitors');
+        $visit = DB::transaction(function () use ($validated, $request) {
+            if (! empty($validated['preferred_time_slot'])) {
+                $existingVisitorsCount = (int) ShelterVisit::whereDate('preferred_date', $validated['preferred_date'])
+                    ->where('preferred_time_slot', $validated['preferred_time_slot'])
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->lockForUpdate()
+                    ->sum('number_of_visitors');
 
-            if ($existingVisitorsCount + (int) $validated['number_of_visitors'] > 10) {
-                return back()->withErrors([
-                    'preferred_time_slot' => 'The selected date and time slot has reached maximum visitor capacity (10 visitors limit). Please select another time slot or date.',
-                ]);
+                if ($existingVisitorsCount + (int) $validated['number_of_visitors'] > 10) {
+                    throw ValidationException::withMessages([
+                        'preferred_time_slot' => 'The selected date and time slot has reached maximum visitor capacity (10 visitors limit). Please select another time slot or date.',
+                    ]);
+                }
             }
-        }
 
-        $visit = ShelterVisit::create([
-            ...$validated,
-            'user_id' => $request->user()?->id,
-            'status' => 'pending',
-        ]);
+            return ShelterVisit::create([
+                ...$validated,
+                'user_id' => $request->user()?->id,
+                'status' => 'pending',
+            ]);
+        });
 
         AuditLog::log('shelter_visit_request', "Shelter visit requested by {$visit->full_name} for {$visit->preferred_date->format('Y-m-d')}");
 

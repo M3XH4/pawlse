@@ -12,7 +12,8 @@ import {
     RefreshCw, 
     Info, 
     MessageSquare,
-    ShieldCheck
+    ShieldCheck,
+    CreditCard
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
@@ -33,6 +34,7 @@ interface SystemSettingsProps {
         registration_enabled: boolean;
         maintenance_mode: boolean;
         maintenance_message?: string;
+        payment_simulation_enabled?: boolean;
     };
 }
 
@@ -46,6 +48,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         registration_enabled: settings.registration_enabled,
         maintenance_mode: settings.maintenance_mode,
         maintenance_message: settings.maintenance_message || defaultMaintenanceMessage,
+        payment_simulation_enabled: settings.payment_simulation_enabled ?? false,
     });
 
     // Quick toggle modal state
@@ -252,6 +255,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-400 mt-0.5">
                                         When checked, users can register new accounts. If disabled, new users can only be created by system admins.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-indigo-100 bg-indigo-50/10 dark:border-indigo-950/20 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="payment_simulation_enabled"
+                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-1"
+                                    checked={data.payment_simulation_enabled}
+                                    onChange={(e) => setData('payment_simulation_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="payment_simulation_enabled"
+                                        className="text-sm font-bold text-indigo-950 dark:text-indigo-300 flex items-center gap-1"
+                                    >
+                                        <CreditCard className="h-4 w-4 text-indigo-500" />
+                                        Enable Payment Gateway Simulation (Sandbox Demo)
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, the checkout page allows one-click sandbox payments for demos. When disabled, donors must provide a reference number and upload proof of payment for admin verification.
                                     </p>
                                 </div>
                             </div>

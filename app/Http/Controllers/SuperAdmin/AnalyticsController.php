@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SuperAdmin;
 
+use App\Enums\DonationStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
@@ -30,6 +31,8 @@ class AnalyticsController extends Controller
         $period = $request->query('period', '30d');
         [$start, $end, $prevStart, $prevEnd, $interval] = $this->resolvePeriods($period);
 
+        $validDonationStatuses = [DonationStatus::Verified->value, DonationStatus::Completed->value];
+
         // ── 1. Summary Metrics & Period-over-Period Deltas ─────────────────────
         $currentUsers = User::whereBetween('created_at', [$start, $end])->count();
         $prevUsers = User::whereBetween('created_at', [$prevStart, $prevEnd])->count();
@@ -41,15 +44,15 @@ class AnalyticsController extends Controller
         $prevAdoptions = AdoptionApplication::whereBetween('created_at', [$prevStart, $prevEnd])->count();
 
         $currentDonationsAmount = (float) Donation::whereBetween('created_at', [$start, $end])
-            ->where('status', 'verified')
+            ->whereIn('status', $validDonationStatuses)
             ->sum('amount');
         $prevDonationsAmount = (float) Donation::whereBetween('created_at', [$prevStart, $prevEnd])
-            ->where('status', 'verified')
+            ->whereIn('status', $validDonationStatuses)
             ->sum('amount');
 
         $currentDonationsCount = Donation::whereBetween('created_at', [$start, $end])->count();
         $currentVerifiedDonationsCount = Donation::whereBetween('created_at', [$start, $end])
-            ->where('status', 'verified')
+            ->whereIn('status', $validDonationStatuses)
             ->count();
         $avgDonationAmount = $currentVerifiedDonationsCount > 0
             ? round($currentDonationsAmount / $currentVerifiedDonationsCount, 2)
@@ -319,7 +322,7 @@ class AnalyticsController extends Controller
             ['New Registered Users', User::whereBetween('created_at', [$start, $end])->count(), User::whereBetween('created_at', [$prevStart, $prevEnd])->count(), $this->calculateDelta(User::whereBetween('created_at', [$start, $end])->count(), User::whereBetween('created_at', [$prevStart, $prevEnd])->count()).'%'],
             ['Rescue / Missing Reports', PetReport::whereBetween('created_at', [$start, $end])->count(), PetReport::whereBetween('created_at', [$prevStart, $prevEnd])->count(), $this->calculateDelta(PetReport::whereBetween('created_at', [$start, $end])->count(), PetReport::whereBetween('created_at', [$prevStart, $prevEnd])->count()).'%'],
             ['Adoption Applications', AdoptionApplication::whereBetween('created_at', [$start, $end])->count(), AdoptionApplication::whereBetween('created_at', [$prevStart, $prevEnd])->count(), $this->calculateDelta(AdoptionApplication::whereBetween('created_at', [$start, $end])->count(), AdoptionApplication::whereBetween('created_at', [$prevStart, $prevEnd])->count()).'%'],
-            ['Total Verified Donations (PHP)', Donation::whereBetween('created_at', [$start, $end])->where('status', 'verified')->sum('amount'), Donation::whereBetween('created_at', [$prevStart, $prevEnd])->where('status', 'verified')->sum('amount'), $this->calculateDelta((float) Donation::whereBetween('created_at', [$start, $end])->where('status', 'verified')->sum('amount'), (float) Donation::whereBetween('created_at', [$prevStart, $prevEnd])->where('status', 'verified')->sum('amount')).'%'],
+            ['Total Verified Donations (PHP)', Donation::whereBetween('created_at', [$start, $end])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount'), Donation::whereBetween('created_at', [$prevStart, $prevEnd])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount'), $this->calculateDelta((float) Donation::whereBetween('created_at', [$start, $end])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount'), (float) Donation::whereBetween('created_at', [$prevStart, $prevEnd])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount')).'%'],
             ['Suspicious Login Alerts', LoginAttempt::where('is_suspicious', true)->whereBetween('created_at', [$start, $end])->count(), LoginAttempt::where('is_suspicious', true)->whereBetween('created_at', [$prevStart, $prevEnd])->count(), $this->calculateDelta(LoginAttempt::where('is_suspicious', true)->whereBetween('created_at', [$start, $end])->count(), LoginAttempt::where('is_suspicious', true)->whereBetween('created_at', [$prevStart, $prevEnd])->count()).'%'],
             ['AI Predictions Processed', AiPredictionLog::whereBetween('created_at', [$start, $end])->count(), AiPredictionLog::whereBetween('created_at', [$prevStart, $prevEnd])->count(), $this->calculateDelta(AiPredictionLog::whereBetween('created_at', [$start, $end])->count(), AiPredictionLog::whereBetween('created_at', [$prevStart, $prevEnd])->count()).'%'],
             ['Backups Created', Backup::whereBetween('created_at', [$start, $end])->count(), Backup::whereBetween('created_at', [$prevStart, $prevEnd])->count(), '-'],
@@ -451,7 +454,7 @@ class AnalyticsController extends Controller
         $rescues = PetReport::whereBetween('created_at', [$start, $end])->select('created_at')->get();
         $adoptions = AdoptionApplication::whereBetween('created_at', [$start, $end])->select('created_at')->get();
         $donations = Donation::whereBetween('created_at', [$start, $end])
-            ->where('status', 'verified')
+            ->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])
             ->select('created_at', 'amount')
             ->get();
 

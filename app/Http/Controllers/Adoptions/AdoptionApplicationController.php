@@ -28,7 +28,7 @@ class AdoptionApplicationController extends Controller
         $user = $request->user();
 
         $applications = AdoptionApplication::where('user_id', $user->id)
-            ->with(['shelterAnimal'])
+            ->with(['shelterAnimal', 'files'])
             ->latest()
             ->get();
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DonationStatus;
+use App\Enums\DonationType;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
@@ -21,6 +23,8 @@ class ReportsAnalyticsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $validDonationStatuses = [DonationStatus::Verified->value, DonationStatus::Completed->value];
+
         // 1. Monthly Data (Current Year)
         $monthlyRescues = [];
         $monthlyAdoptions = [];
@@ -32,7 +36,7 @@ class ReportsAnalyticsController extends Controller
             $months[] = $monthName;
             $monthlyRescues[] = PetReport::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->count();
             $monthlyAdoptions[] = AdoptionApplication::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->count();
-            $monthlyDonations[] = (float) Donation::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->where('status', 'verified')->sum('amount');
+            $monthlyDonations[] = (float) Donation::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->whereIn('status', $validDonationStatuses)->sum('amount');
         }
 
         // 2. Weekly Data (Last 8 Weeks)
@@ -49,7 +53,7 @@ class ReportsAnalyticsController extends Controller
             $weeks[] = $label;
             $weeklyRescues[] = PetReport::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
             $weeklyAdoptions[] = AdoptionApplication::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
-            $weeklyDonations[] = (float) Donation::whereBetween('created_at', [$startOfWeek, $endOfWeek])->where('status', 'verified')->sum('amount');
+            $weeklyDonations[] = (float) Donation::whereBetween('created_at', [$startOfWeek, $endOfWeek])->whereIn('status', $validDonationStatuses)->sum('amount');
         }
 
         // 3. Yearly Data (Last 3 Years)
@@ -63,7 +67,7 @@ class ReportsAnalyticsController extends Controller
             $years[] = (string) $year;
             $yearlyRescues[] = PetReport::whereYear('created_at', $year)->count();
             $yearlyAdoptions[] = AdoptionApplication::whereYear('created_at', $year)->count();
-            $yearlyDonations[] = (float) Donation::whereYear('created_at', $year)->where('status', 'verified')->sum('amount');
+            $yearlyDonations[] = (float) Donation::whereYear('created_at', $year)->whereIn('status', $validDonationStatuses)->sum('amount');
         }
 
         // 4. Summaries
@@ -81,9 +85,9 @@ class ReportsAnalyticsController extends Controller
                 'pending' => AdoptionApplication::where('status', 'pending')->count(),
             ],
             'donations' => [
-                'total_cash' => (float) Donation::where('type', 'cash')->where('status', 'verified')->sum('amount'),
-                'total_cash_count' => Donation::where('type', 'cash')->where('status', 'verified')->count(),
-                'total_inkind_count' => Donation::where('type', 'in-kind')->where('status', 'verified')->count(),
+                'total_cash' => (float) Donation::where('type', DonationType::Cash->value)->whereIn('status', $validDonationStatuses)->sum('amount'),
+                'total_cash_count' => Donation::where('type', DonationType::Cash->value)->whereIn('status', $validDonationStatuses)->count(),
+                'total_inkind_count' => Donation::whereIn('type', [DonationType::InKind->value, 'in-kind'])->whereIn('status', $validDonationStatuses)->count(),
             ],
             'volunteers' => [
                 'total' => User::where('role', Role::Volunteer->value)->count(),
@@ -101,9 +105,9 @@ class ReportsAnalyticsController extends Controller
                 'others' => PetReport::whereRaw('LOWER(animal_type) NOT IN (?, ?)', ['cat', 'dog'])->count(),
             ],
             'donationBreakdown' => [
-                'cash' => Donation::where('type', 'cash')->where('status', 'verified')->count(),
-                'inkind' => Donation::where('type', 'in-kind')->where('status', 'verified')->count(),
-                'sponsor' => Donation::where('type', 'sponsor')->where('status', 'verified')->count(),
+                'cash' => Donation::where('type', DonationType::Cash->value)->whereIn('status', $validDonationStatuses)->count(),
+                'inkind' => Donation::whereIn('type', [DonationType::InKind->value, 'in-kind'])->whereIn('status', $validDonationStatuses)->count(),
+                'sponsor' => Donation::whereIn('type', [DonationType::FeedingSponsorship->value, 'sponsor'])->whereIn('status', $validDonationStatuses)->count(),
             ],
             'monthly' => [
                 'rescues' => $monthlyRescues,
@@ -160,8 +164,8 @@ class ReportsAnalyticsController extends Controller
                 fputcsv($file, ['Adoptions', 'Approved Applications', AdoptionApplication::where('status', 'approved')->count()]);
                 fputcsv($file, ['Adoptions', 'Pending Applications', AdoptionApplication::where('status', 'pending')->count()]);
 
-                fputcsv($file, ['Donations', 'Total Cash Donations (PHP)', Donation::where('type', 'cash')->where('status', 'verified')->sum('amount')]);
-                fputcsv($file, ['Donations', 'Verified In-Kind Donations', Donation::where('type', 'in-kind')->where('status', 'verified')->count()]);
+                fputcsv($file, ['Donations', 'Total Cash Donations (PHP)', Donation::where('type', DonationType::Cash->value)->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount')]);
+                fputcsv($file, ['Donations', 'Verified In-Kind Donations', Donation::whereIn('type', [DonationType::InKind->value, 'in-kind'])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->count()]);
 
                 fputcsv($file, ['Volunteers', 'Active Volunteers Count', User::where('role', Role::Volunteer->value)->count()]);
                 fputcsv($file, ['Volunteers', 'Pending Applications Count', VolunteerApplication::where('status', 'pending')->count()]);
@@ -174,7 +178,7 @@ class ReportsAnalyticsController extends Controller
                     $monthName = date('F', mktime(0, 0, 0, $m, 1));
                     $rescues = PetReport::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->count();
                     $adoptions = AdoptionApplication::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->count();
-                    $donations = Donation::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->where('status', 'verified')->sum('amount');
+                    $donations = Donation::whereYear('created_at', now()->year)->whereMonth('created_at', $m)->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount');
                     fputcsv($file, [$monthName, $rescues, $adoptions, (float) $donations]);
                 }
 

@@ -61,8 +61,7 @@ class VolunteerManagementController extends Controller
         $volunteers = $volunteersQuery->latest()->paginate(10, ['*'], 'vols_page')->withQueryString();
 
         // 3. Assigned Tasks
-        $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule'])
-            ->whereNull('pet_report_id')
+        $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule', 'petReport'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%");
@@ -70,6 +69,10 @@ class VolunteerManagementController extends Controller
                     $q->where('title', 'like', "%{$search}%");
                 })->orWhereHas('feedingSchedule', function ($q) use ($search) {
                     $q->where('zone', 'like', "%{$search}%");
+                })->orWhereHas('petReport', function ($q) use ($search) {
+                    $q->where('pet_name', 'like', "%{$search}%")
+                        ->orWhere('species', 'like', "%{$search}%")
+                        ->orWhere('landmark', 'like', "%{$search}%");
                 });
             });
 

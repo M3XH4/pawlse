@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\CareSustainability;
 use App\Models\Donation;
+use App\Models\Event;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
@@ -193,7 +194,11 @@ class DonationMonitoringController extends Controller
             ->sum('amount');
 
         $pendingCash = Donation::query()
-            ->where('status', DonationStatus::PendingPayment->value)
+            ->whereIn('status', [
+                DonationStatus::PendingPayment->value,
+                DonationStatus::PaymentProofSubmitted->value,
+                DonationStatus::PendingVerification->value,
+            ])
             ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
             ->count();
 
@@ -692,6 +697,32 @@ class DonationMonitoringController extends Controller
                     user: auth()->user(),
                     donation: $donation
                 );
+            }
+
+            // If feeding sponsorship, approve and schedule event if not already created
+            if ($donation->type === DonationType::FeedingSponsorship->value && $donation->feedingSponsorship) {
+                $donation->feedingSponsorship->update([
+                    'status' => 'completed',
+                ]);
+
+                $donorDisplay = $donation->anonymous ? 'Anonymous' : $donation->donor_name;
+
+                Event::firstOrCreate([
+                    'title' => 'Sponsored Feeding Day by '.$donorDisplay,
+                    'date' => $donation->feedingSponsorship->preferred_date,
+                ], [
+                    'category' => 'Feeding',
+                    'time' => '09:00 AM',
+                    'location' => 'Iligan City Stray Shelter / Feeding Route',
+                    'spots' => 10,
+                    'desc' => "This feeding day is fully sponsored by a generous donor!\n".
+                              "Sponsor: {$donorDisplay}\n".
+                              ($donation->feedingSponsorship->occasion ? "Occasion: {$donation->feedingSponsorship->occasion}\n" : '').
+                              ($donation->feedingSponsorship->message ? "Message: \"{$donation->feedingSponsorship->message}\"\n" : '').
+                              'Volunteers are invited to join us in preparing and distributing food for our stray friends in Iligan.',
+                    'keywords' => json_encode(['feeding', 'sponsored', 'strays']),
+                    'status' => 'open',
+                ]);
             }
 
             $userToNotify = $donation->user ?? ($donation->user_id ? \App\Models\User::find($donation->user_id) : null);

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\DonationStatus;
+use App\Enums\DonationType;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
@@ -51,10 +53,10 @@ class AutomationController extends Controller
                     'last_7_days' => AdoptionApplication::where('created_at', '>=', $sevenDaysAgo)->count(),
                 ],
                 'donations' => [
-                    'total_cash_amount' => (float) Donation::where('type', 'cash')->where('status', 'verified')->sum('amount'),
-                    'verified_cash_count' => Donation::where('type', 'cash')->where('status', 'verified')->count(),
-                    'verified_inkind_count' => Donation::where('type', 'in-kind')->where('status', 'verified')->count(),
-                    'last_7_days_cash_amount' => (float) Donation::where('type', 'cash')->where('status', 'verified')->where('created_at', '>=', $sevenDaysAgo)->sum('amount'),
+                    'total_cash_amount' => (float) Donation::where('type', DonationType::Cash->value)->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->sum('amount'),
+                    'verified_cash_count' => Donation::where('type', DonationType::Cash->value)->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->count(),
+                    'verified_inkind_count' => Donation::whereIn('type', [DonationType::InKind->value, 'in-kind'])->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->count(),
+                    'last_7_days_cash_amount' => (float) Donation::where('type', DonationType::Cash->value)->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])->where('created_at', '>=', $sevenDaysAgo)->sum('amount'),
                 ],
                 'volunteers' => [
                     'active_count' => User::where('role', Role::Volunteer->value)->count(),
@@ -155,7 +157,8 @@ class AutomationController extends Controller
 
         $expiringBatches = InventoryBatch::query()
             ->with('item')
-            ->where('expiry_date', '<=', now()->addDays(30))
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', now()->addDays(30))
             ->where('quantity', '>', 0)
             ->get()
             ->map(function ($batch) {
@@ -164,8 +167,8 @@ class AutomationController extends Controller
                     'item_name' => $batch->item?->name ?? 'Unknown',
                     'batch_number' => $batch->batch_number,
                     'quantity' => $batch->quantity,
-                    'expiry_date' => $batch->expiry_date?->toDateString(),
-                    'days_until_expiry' => $batch->expiry_date ? (int) now()->diffInDays($batch->expiry_date, false) : 0,
+                    'expiry_date' => $batch->expires_at?->toDateString(),
+                    'days_until_expiry' => $batch->expires_at ? (int) now()->diffInDays($batch->expires_at, false) : 0,
                 ];
             });
 

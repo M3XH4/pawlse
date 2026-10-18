@@ -8,16 +8,22 @@ export function DashboardNavLink({
     icon,
     children,
     collapsed = false,
+    method = 'get',
+    as,
 }: {
     href: string;
     active: boolean;
     icon: ReactNode;
     children: ReactNode;
     collapsed?: boolean;
+    method?: 'get' | 'post';
+    as?: 'a' | 'button';
 }) {
     return (
         <Link
             href={href}
+            method={method}
+            as={as || (method === 'post' ? 'button' : undefined)}
             title={typeof children === 'string' ? children : undefined}
             aria-current={active ? 'page' : undefined}
             className={cn(

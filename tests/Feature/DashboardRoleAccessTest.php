@@ -73,14 +73,24 @@ test('users cannot access other role dashboards', function (string $state, strin
     ['user', 'account.volunteer.index'],
     ['user', 'account.admin.dashboard'],
     ['user', 'account.super-admin.dashboard'],
-    ['volunteer', 'account.user.index'],
     ['volunteer', 'account.admin.dashboard'],
     ['volunteer', 'account.super-admin.dashboard'],
-    ['admin', 'account.user.index'],
     ['admin', 'account.volunteer.index'],
     ['admin', 'account.super-admin.dashboard'],
-    ['superAdmin', 'account.user.index'],
     ['superAdmin', 'account.volunteer.index'],
+]);
+
+test('all roles can access personal user dashboard records', function (string $state) {
+    $user = User::factory()->{$state}()->create();
+
+    $this->actingAs($user)
+        ->get(route('account.user.index'))
+        ->assertOk();
+})->with([
+    'user',
+    'volunteer',
+    'admin',
+    'superAdmin',
 ]);
 
 test('super admins can access admin dashboards but admins cannot access super admin dashboards', function () {

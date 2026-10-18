@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
+use App\Models\User;
+use App\Notifications\RescueTaskAssignedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +28,7 @@ class AiValidationController extends Controller
         $confidenceFilter = $request->input('confidence_level', 'All'); // High, Medium, Low, All
         $typeFilter = $request->input('type', 'All'); // rescue, missing, sos, All
 
-        $reportsQuery = PetReport::with(['photos', 'aiPredictionLog', 'user'])
+        $reportsQuery = PetReport::with(['photos', 'aiPredictionLog', 'user', 'assignedVolunteer'])
             ->whereNotNull('ai_prediction_log_id')
             ->when($statusFilter !== 'All', function ($query) use ($statusFilter) {
                 $query->where('ai_validation_status', $statusFilter);
@@ -82,8 +86,13 @@ class AiValidationController extends Controller
             ->whereNotNull('ai_prediction_logs.confidence')
             ->avg('ai_prediction_logs.confidence') ?? 0;
 
+        $volunteers = User::query()
+            ->where('role', Role::Volunteer->value)
+            ->get();
+
         return Inertia::render('admin/ai-validation', [
             'reports' => $reports,
+            'volunteers' => $volunteers,
             'stats' => [
                 'total_ai_reports' => $totalAiReports,
                 'pending_validation' => $pendingValidation,
@@ -101,7 +110,7 @@ class AiValidationController extends Controller
     }
 
     /**
-     * Approve AI predicted details for a pet report.
+     * Approve AI predicted details for a pet report and optionally assign a volunteer for rescue dispatch.
      */
     public function approve(Request $request, PetReport $report): RedirectResponse
     {
@@ -109,10 +118,42 @@ class AiValidationController extends Controller
             abort(400, 'This report does not contain AI prediction details.');
         }
 
-        // 1. Update report validation status
-        $report->update([
-            'ai_validation_status' => 'approved',
+        $validated = $request->validate([
+            'volunteer_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // 1. Update report validation status and optional dispatch assignment
+        $reportUpdates = [
+            'ai_validation_status' => 'approved',
+        ];
+
+        $volunteerAssigned = false;
+        if (! empty($validated['volunteer_id'])) {
+            $volunteer = User::query()->findOrFail($validated['volunteer_id']);
+            $reportUpdates['assigned_volunteer_id'] = $volunteer->id;
+            $reportUpdates['status'] = 'assigned';
+            $volunteerAssigned = true;
+        }
+
+        $report->update($reportUpdates);
+
+        if ($volunteerAssigned && isset($volunteer)) {
+            $taskType = match ($report->type) {
+                'sos' => 'Emergency SOS Responder',
+                'missing' => 'Missing Search Team',
+                default => 'Rescue Responder (Rescue)',
+            };
+
+            AssignedTask::create([
+                'user_id' => $volunteer->id,
+                'pet_report_id' => $report->id,
+                'role' => $taskType,
+                'status' => 'pending',
+                'hours_logged' => 0.00,
+            ]);
+
+            $volunteer->notify(new RescueTaskAssignedNotification($report));
+        }
 
         // 2. Update accuracy calibration log
         $report->aiPredictionLog->update([
@@ -120,11 +161,11 @@ class AiValidationController extends Controller
         ]);
 
         // 3. Log audit action
-        AuditLog::log('ai_validation_approve', "Approved AI details for report #{$report->id}");
+        AuditLog::log('ai_validation_approve', "Approved AI details for report #{$report->id}".($volunteerAssigned ? " and dispatched volunteer #{$volunteer->id}" : ''));
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'AI details approved successfully.',
+            'message' => $volunteerAssigned ? 'AI details approved and volunteer dispatched successfully.' : 'AI details approved successfully.',
         ]);
 
         return redirect()->back();

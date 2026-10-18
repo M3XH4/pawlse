@@ -30,6 +30,11 @@ class UserNotificationController extends Controller
                 while (ob_get_level() > 0) {
                     ob_end_flush();
                 }
+
+                // Explicitly save and close session so PHP-FPM process doesn't block other tabs/requests
+                if (session()->isStarted()) {
+                    session()->save();
+                }
             }
 
             $unreadCount = $user->unreadNotifications()->count();
@@ -37,6 +42,7 @@ class UserNotificationController extends Controller
             $seenIds = $latestNotification ? [$latestNotification->id] : [];
             $lastUnreadCount = $unreadCount;
 
+            echo "retry: 3000\n\n";
             echo "event: init\n";
             echo 'data: '.json_encode([
                 'unreadCount' => $unreadCount,
@@ -50,7 +56,7 @@ class UserNotificationController extends Controller
             }
 
             $startTime = time();
-            $maxExecutionSeconds = 25;
+            $maxExecutionSeconds = 15;
             $lastEventsTimestamp = microtime(true);
 
             while (time() - $startTime < $maxExecutionSeconds) {
@@ -110,7 +116,7 @@ class UserNotificationController extends Controller
                     }
                 }
 
-                sleep(1);
+                sleep(2);
             }
         }, 200, [
             'Content-Type' => 'text/event-stream',

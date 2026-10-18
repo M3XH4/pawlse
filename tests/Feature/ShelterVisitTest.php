@@ -83,3 +83,28 @@ test('admin can complete or cancel a shelter visit', function () {
     $visit->refresh();
     expect($visit->status)->toBe('completed');
 });
+
+test('submitting shelter visit respects maximum visitor capacity per slot', function () {
+    $date = now()->addDays(5)->format('Y-m-d');
+    $slot = 'Morning (9:00 AM - 12:00 PM)';
+
+    // Existing booking with 8 visitors
+    ShelterVisit::factory()->create([
+        'preferred_date' => $date,
+        'preferred_time_slot' => $slot,
+        'number_of_visitors' => 8,
+        'status' => 'confirmed',
+    ]);
+
+    // Attempting to book 3 visitors (8 + 3 = 11 > 10)
+    $response = $this->post(route('shelter-visits.store'), [
+        'full_name' => 'John Overcapacity',
+        'contact_number' => '09123456789',
+        'preferred_date' => $date,
+        'preferred_time_slot' => $slot,
+        'number_of_visitors' => 3,
+        'purpose' => 'Shelter Tour',
+    ]);
+
+    $response->assertSessionHasErrors(['preferred_time_slot']);
+});

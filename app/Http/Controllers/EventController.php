@@ -253,8 +253,12 @@ class EventController extends Controller
             return redirect()->back();
         }
 
+        $requestedRole = $request->validate([
+            'role' => ['nullable', 'string', 'max:100'],
+        ])['role'] ?? null;
+
         try {
-            DB::transaction(function () use ($schedule, $user) {
+            DB::transaction(function () use ($schedule, $user, $requestedRole) {
                 /** @var FeedingSchedule|null $lockedSchedule */
                 $lockedSchedule = FeedingSchedule::query()->where('id', $schedule->id)->lockForUpdate()->first();
 
@@ -273,14 +277,34 @@ class EventController extends Controller
                     throw new \RuntimeException('You have already joined this feeding route.');
                 }
 
+                // Check capacity limit if volunteer quota is defined
+                if ($lockedSchedule->volunteers > 0) {
+                    $activeVolunteersCount = AssignedTask::query()
+                        ->where('feeding_schedule_id', $lockedSchedule->id)
+                        ->whereIn('status', ['pending', 'completed'])
+                        ->lockForUpdate()
+                        ->count();
+
+                    if ($activeVolunteersCount >= $lockedSchedule->volunteers) {
+                        throw new \RuntimeException('This feeding route has reached its volunteer capacity.');
+                    }
+                }
+
+                $volunteerRole = $requestedRole
+                    ?? VolunteerApplication::query()
+                        ->where('user_id', $user->id)
+                        ->where('status', 'approved')
+                        ->value('role')
+                    ?? 'Food Carrier';
+
                 AssignedTask::query()->create([
                     'user_id' => $user->id,
                     'feeding_schedule_id' => $lockedSchedule->id,
-                    'role' => 'Food Carrier',
+                    'role' => $volunteerRole,
                     'status' => 'pending',
                 ]);
 
-                AuditLog::log('volunteer_join_feeding_route', "Joined feeding route zone '{$lockedSchedule->zone}' on {$lockedSchedule->day}");
+                AuditLog::log('volunteer_join_feeding_route', "Joined feeding route zone '{$lockedSchedule->zone}' on {$lockedSchedule->day} as {$volunteerRole}");
             });
         } catch (\RuntimeException $e) {
             Inertia::flash('toast', [

@@ -47,8 +47,7 @@ class Backup extends Model
             $backupFile = "{$filename}.sql";
             $dest = "{$dir}/{$backupFile}";
 
-            $sql = self::generateMysqlDump();
-            file_put_contents($dest, $sql);
+            self::writeMysqlDump($dest);
             $size = filesize($dest);
         }
 
@@ -80,21 +79,48 @@ class Backup extends Model
                 copy($filePath, $dbPath);
             }
         } else {
-            // MySQL
-            $sql = file_get_contents($filePath);
+            // MySQL - stream execution line-by-line to avoid loading giant SQL dumps into memory
+            $handle = fopen($filePath, 'r');
+            if ($handle === false) {
+                return false;
+            }
+
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            DB::unprepared($sql);
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            try {
+                $statement = '';
+                while (($line = fgets($handle)) !== false) {
+                    $trimmed = trim($line);
+                    if ($trimmed === '' || str_starts_with($trimmed, '--') || str_starts_with($trimmed, '/*')) {
+                        continue;
+                    }
+                    $statement .= $line;
+                    if (str_ends_with($trimmed, ';')) {
+                        DB::unprepared($statement);
+                        $statement = '';
+                    }
+                }
+                if (trim($statement) !== '') {
+                    DB::unprepared($statement);
+                }
+            } finally {
+                fclose($handle);
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
         }
 
         return true;
     }
 
     /**
-     * Generate MySQL database dump.
+     * Stream MySQL database dump directly to file in chunks to prevent memory exhaustion.
      */
-    private static function generateMysqlDump(): string
+    public static function writeMysqlDump(string $dest): void
     {
+        $handle = fopen($dest, 'w');
+        if ($handle === false) {
+            throw new \RuntimeException("Unable to open backup file for writing: {$dest}");
+        }
+
         $tables = [];
         $dbName = config('database.connections.mysql.database');
 
@@ -105,38 +131,53 @@ class Backup extends Model
             $tables[] = $row->{$keyName} ?? current((array) $row);
         }
 
-        $out = "-- PAWLSE Database Dump\n";
-        $out .= '-- Generated at: '.now()->toDateTimeString()."\n";
-        $out .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+        fwrite($handle, "-- PAWLSE Database Dump\n");
+        fwrite($handle, '-- Generated at: '.now()->toDateTimeString()."\n");
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;\n\n");
 
         foreach ($tables as $table) {
-            $out .= "DROP TABLE IF EXISTS `{$table}`;\n";
+            fwrite($handle, "DROP TABLE IF EXISTS `{$table}`;\n");
 
             $create = DB::select("SHOW CREATE TABLE `{$table}`");
-            $createSql = (array) $create[0];
-            $out .= $createSql['Create Table'].";\n\n";
-
-            $rows = DB::table($table)->get();
-            if ($rows->count() > 0) {
-                $out .= "INSERT INTO `{$table}` VALUES \n";
-                $insertRows = [];
-                foreach ($rows as $row) {
-                    $values = [];
-                    foreach ((array) $row as $val) {
-                        if ($val === null) {
-                            $values[] = 'NULL';
-                        } else {
-                            $values[] = "'".addslashes($val)."'";
-                        }
-                    }
-                    $insertRows[] = '('.implode(', ', $values).')';
-                }
-                $out .= implode(",\n", $insertRows).";\n\n";
+            if (! empty($create)) {
+                $createSql = (array) $create[0];
+                fwrite($handle, ($createSql['Create Table'] ?? '').";\n\n");
             }
+
+            DB::table($table)->orderBy(DB::raw('1'))->chunk(250, function ($rows) use ($handle, $table) {
+                if ($rows->count() > 0) {
+                    fwrite($handle, "INSERT INTO `{$table}` VALUES \n");
+                    $insertRows = [];
+                    foreach ($rows as $row) {
+                        $values = [];
+                        foreach ((array) $row as $val) {
+                            if ($val === null) {
+                                $values[] = 'NULL';
+                            } else {
+                                $values[] = "'".addslashes((string) $val)."'";
+                            }
+                        }
+                        $insertRows[] = '('.implode(', ', $values).')';
+                    }
+                    fwrite($handle, implode(",\n", $insertRows).";\n\n");
+                }
+            });
         }
 
-        $out .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;\n");
+        fclose($handle);
+    }
 
-        return $out;
+    /**
+     * Generate MySQL database dump as string (kept for backwards compatibility).
+     */
+    public static function generateMysqlDump(): string
+    {
+        $tempPath = tempnam(sys_get_temp_dir(), 'dump_');
+        self::writeMysqlDump($tempPath);
+        $content = file_get_contents($tempPath) ?: '';
+        @unlink($tempPath);
+
+        return $content;
     }
 }

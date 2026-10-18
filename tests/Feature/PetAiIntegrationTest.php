@@ -6,8 +6,10 @@ use App\Models\SystemSetting;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -285,4 +287,12 @@ test('storeRescue accepts multi-animal reviewed payload and formats incident sum
         ->and($report->description)->toContain('[Multi-Animal Incident - 2 Animals Reviewed]')
         ->and($report->description)->toContain('Animal #1: Dog · Golden Retriever')
         ->and($report->description)->toContain('Animal #2: Dog · French Bulldog');
+});
+
+test('ai prediction endpoints have rate limiting middleware applied', function () {
+    $predictRoute = Route::getRoutes()->match(Request::create('/ai/predict', 'POST'));
+    expect($predictRoute->gatherMiddleware())->toContain('throttle:30,1');
+
+    $generateNamesRoute = Route::getRoutes()->match(Request::create('/ai/generate-names', 'POST'));
+    expect($generateNamesRoute->gatherMiddleware())->toContain('throttle:60,1');
 });

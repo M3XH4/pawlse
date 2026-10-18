@@ -29,6 +29,7 @@ use App\Http\Controllers\FosterCareController;
 use App\Http\Controllers\HelpDeskController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HonorController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\RehomingRequestController;
@@ -55,7 +56,7 @@ use App\Http\Controllers\VolunteerDashboardController;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
-$userDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::User)];
+$userDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using([Role::User, Role::Volunteer, Role::Admin, Role::SuperAdmin])];
 $volunteerDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::Volunteer)];
 $adminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using([Role::Admin, Role::SuperAdmin])];
 $superAdminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role::SuperAdmin)];
@@ -81,11 +82,15 @@ Route::post('/donate/in-kind', [DonateController::class, 'storeInKind'])->name('
 Route::post('/donate/sponsor', [DonateController::class, 'storeSponsor'])->name('donate.store-sponsor');
 Route::get('/checkout/{ref}', [DonateController::class, 'checkout'])->name('donate.checkout');
 Route::post('/checkout/{ref}/pay', [DonateController::class, 'pay'])->name('donate.pay');
+Route::post('/checkout/{ref}/proof', [DonateController::class, 'submitProof'])->name('donate.checkout.proof');
+Route::post('/webhooks/payment', [PaymentWebhookController::class, 'handle'])->name('webhooks.payment');
 
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/apply', [VolunteerController::class, 'store'])->name('volunteer.apply')->middleware('auth');
-Route::get('/volunteer/switch', [VolunteerController::class, 'switchRole'])->name('volunteer.switch')->middleware('auth');
-Route::get('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
+Route::post('/volunteer/switch', [VolunteerController::class, 'switchRole'])->name('volunteer.switch')->middleware('auth');
+Route::get('/volunteer/switch', [VolunteerController::class, 'switchRole'])->middleware('auth');
+Route::post('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
+Route::get('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->middleware('auth');
 
 Route::get('/rescue', [PetController::class, 'index'])->name('rescue');
 Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])->name('pet-reports.store-rescue');
@@ -107,8 +112,8 @@ Route::post('/pet-reports/missing', [PetReportController::class, 'storeMissing']
 Route::inertia('/sos', 'sos')->name('sos');
 Route::post('/pet-reports/sos', [PetReportController::class, 'storeSos'])->name('pet-reports.store-sos');
 
-Route::post('/ai/predict', [PetController::class, 'predict']);
-Route::post('/ai/generate-names', [PetController::class, 'generateNames']);
+Route::post('/ai/predict', [PetController::class, 'predict'])->middleware('throttle:30,1');
+Route::post('/ai/generate-names', [PetController::class, 'generateNames'])->middleware('throttle:60,1');
 
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', [EmailVerificationOtpController::class, 'show'])

@@ -253,3 +253,37 @@ test('admin can reject AI details and correct the report details', function () {
     $log->refresh();
     expect($log->is_accurate)->toBeFalse();
 });
+
+test('admin can approve AI details and dispatch volunteer simultaneously', function () {
+    $log = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'confidence' => 0.95,
+        'is_accurate' => null,
+    ]);
+
+    $report = PetReport::create([
+        'type' => 'rescue',
+        'animal_type' => 'Dog',
+        'location' => 'Tibanga Plaza',
+        'ai_prediction_log_id' => $log->id,
+        'ai_validation_status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->post("/account/admin/ai-validation/{$report->id}/approve", [
+            'volunteer_id' => $this->volunteer->id,
+        ]);
+
+    $response->assertRedirect();
+
+    $report->refresh();
+    expect($report->ai_validation_status)->toBe('approved');
+    expect($report->status)->toBe('assigned');
+    expect($report->assigned_volunteer_id)->toBe($this->volunteer->id);
+
+    $this->assertDatabaseHas('assigned_tasks', [
+        'user_id' => $this->volunteer->id,
+        'pet_report_id' => $report->id,
+        'status' => 'pending',
+    ]);
+});

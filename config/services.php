@@ -38,4 +38,10 @@ return [
         ],
     ],
 
+    'payment' => [
+        'simulation_enabled' => env('PAYMENT_SIMULATION_ENABLED', false),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET', ''),
+        'gateway_driver' => env('PAYMENT_GATEWAY_DRIVER', 'manual'),
+    ],
+
 ];

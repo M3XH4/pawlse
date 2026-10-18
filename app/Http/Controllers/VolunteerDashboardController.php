@@ -37,13 +37,11 @@ class VolunteerDashboardController extends Controller
         $completedTasksCount = AssignedTask::query()
             ->where('user_id', $user->id)
             ->where('status', 'completed')
-            ->whereNull('pet_report_id')
             ->count();
 
         $pendingTasksCount = AssignedTask::query()
             ->where('user_id', $user->id)
             ->where('status', 'pending')
-            ->whereNull('pet_report_id')
             ->count();
 
         return Inertia::render('volunteer/volunteer-status', [
@@ -79,10 +77,9 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $tasks = AssignedTask::with(['event', 'feedingSchedule'])
+        $tasks = AssignedTask::with(['event', 'feedingSchedule', 'petReport'])
             ->where('user_id', $user->id)
             ->where('status', 'pending')
-            ->whereNull('pet_report_id')
             ->latest()
             ->paginate(5);
 
@@ -118,7 +115,17 @@ class VolunteerDashboardController extends Controller
             }
         }
 
-        $taskTitle = $task->event?->title ?? $task->feedingSchedule?->zone ?? 'Assignment';
+        if ($task->pet_report_id !== null) {
+            $report = $task->petReport;
+            if ($report !== null && $report->assigned_volunteer_id === $user->id) {
+                $report->update([
+                    'assigned_volunteer_id' => null,
+                    'status' => 'pending',
+                ]);
+            }
+        }
+
+        $taskTitle = $task->event?->title ?? $task->feedingSchedule?->zone ?? ($task->petReport ? 'Rescue #'.$task->petReport->id : 'Assignment');
         $task->delete();
 
         AuditLog::log('volunteer_cancel_task', "Cancelled volunteer task assignment for '{$taskTitle}'");
@@ -138,10 +145,9 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $history = AssignedTask::with(['event', 'feedingSchedule'])
+        $history = AssignedTask::with(['event', 'feedingSchedule', 'petReport'])
             ->where('user_id', $user->id)
             ->where('status', 'completed')
-            ->whereNull('pet_report_id')
             ->latest()
             ->paginate(5);
 
