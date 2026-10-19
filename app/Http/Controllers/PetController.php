@@ -7,6 +7,7 @@ use App\Models\SystemSetting;
 use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PetController extends Controller
@@ -20,6 +21,8 @@ class PetController extends Controller
 
     public function predict(Request $request)
     {
+        @set_time_limit(120);
+
         $settings = SystemSetting::getValue('ai_settings', [
             'ai_enabled' => true,
             'ai_reporting_enabled' => true,
@@ -56,10 +59,19 @@ class PetController extends Controller
                 ->post($aiUrl.'/predict');
 
             if ($response->failed()) {
+                $errorData = $response->json();
+                $errorMessage = is_array($errorData) && isset($errorData['message'])
+                    ? $errorData['message']
+                    : (is_array($errorData) && isset($errorData['detail']) ? $errorData['detail'] : 'AI service encountered an error processing the image.');
+
+                Log::warning('AI predict returned failure response: '.$response->status(), [
+                    'body' => $errorData,
+                ]);
+
                 return response()->json([
                     'accepted' => false,
-                    'message' => 'AI service encountered an error processing the image.',
-                    'error' => $response->json(),
+                    'message' => $errorMessage,
+                    'error' => $errorData,
                 ], 500);
             }
 
@@ -76,6 +88,10 @@ class PetController extends Controller
 
             return response()->json(array_merge($data, ['prediction_log_id' => $log->id]));
         } catch (\Throwable $e) {
+            Log::error('AI predict failed: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'accepted' => false,
                 'message' => 'AI service is currently unavailable or unreachable.',
@@ -85,6 +101,8 @@ class PetController extends Controller
 
     public function generateNames(Request $request)
     {
+        @set_time_limit(60);
+
         $settings = SystemSetting::getValue('ai_settings', [
             'ai_enabled' => true,
             'ai_reporting_enabled' => true,
