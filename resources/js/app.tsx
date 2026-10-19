@@ -1,7 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { BookmarkProvider } from '@/context/BookmarkContext';
+import { BookmarkProvider } from '@/context/bookmark-context';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';

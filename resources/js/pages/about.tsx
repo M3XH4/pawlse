@@ -28,12 +28,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useMemo } from 'react';
-import profile_james_bautista from '@/assets/profiles/james_bautista.jpg';
-import profile_leamarie_hempesao from '@/assets/profiles/leamarie_hempesao.jpg';
-import profile_mildred_nabong from '@/assets/profiles/mildred_nabong.jpg';
-import profile_persal_lacasan from '@/assets/profiles/persal_lacasan.jpg';
-import profile_trusty_espinosa from '@/assets/profiles/trusty_espinosa.jpg';
-import profile_welmar_espinosa from '@/assets/profiles/welmar_espinosa.jpg';
 import { ContactSection } from '@/components/contact/contact-section';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -101,7 +95,7 @@ const TEAM_MEMBERS = [
     location: 'Santiago, Iligan City',
     since: 2020,
     quote: 'Every stray animal deserves a compassionate voice, safe shelter, and a genuine chance to thrive.',
-    img: profile_trusty_espinosa,
+    img: '/images/profiles/trusty_espinosa.jpg',
     story: 'As the founder and head admin of Iligan Stray Feeders, Trusty Choice Espinosa has dedicated his life to creating a compassionate community for stray animals in Iligan City. What started as a personal mission to help the voiceless has grown into a movement that touches countless lives. Based in Santiago, Iligan City at 40 years old, Trusty continues to lead with unwavering dedication, proving that every stray deserves a voice.',
     achievements: ['Founded Iligan Stray Feeders in 2020', 'Built comprehensive citywide rescue network', 'Pioneered community education & animal welfare advocacy']
   },
@@ -113,7 +107,7 @@ const TEAM_MEMBERS = [
     location: 'Santiago, Iligan City',
     since: 2020,
     quote: 'Effective rescue work requires combining compassionate hearts with data-driven strategy.',
-    img: profile_welmar_espinosa,
+    img: '/images/profiles/welmar_espinosa.jpg',
     story: 'As co-founder and analyst, Welmar-Joy Espinosa brings strategic vision and data-driven decision-making to ISF. His analytical approach has transformed operations by tracking rescue data, monitoring resource allocation, and analyzing community response patterns. At 43 years old from Santiago, Iligan City, he proves that effective rescue work requires both heart and head.',
     achievements: ['Strategic planning & data-driven resource allocation', 'Spearheaded feeding zone analytics & metrics', 'Program development & operational architect']
   },
@@ -125,7 +119,7 @@ const TEAM_MEMBERS = [
     location: 'Bagong Silang, Iligan City',
     since: 2020,
     quote: 'On-the-ground action speaks loudest—every prompt rescue saves a precious innocent life.',
-    img: profile_leamarie_hempesao,
+    img: '/images/profiles/leamarie_hempesao.jpg',
     story: 'At just 21 years old from Bagong Silang, Iligan City, Leamarie Hempesao leads ISF operations with remarkable maturity. She orchestrates daily rescues, manages volunteers, and ensures every animal receives proper care. Her hands-on approach and natural leadership abilities make her an invaluable asset to the team.',
     achievements: ['Coordinates daily field rescue operations', 'Lead volunteer coordinator & field dispatcher', 'Emergency rapid response coordinator']
   },
@@ -137,7 +131,7 @@ const TEAM_MEMBERS = [
     location: 'Sta. Elena, Iligan City',
     since: 2020,
     quote: 'Empowering volunteers with structure and clear documentation scales our community impact.',
-    img: profile_james_bautista,
+    img: '/images/profiles/james_bautista.jpg',
     story: 'James Darrel Bautista, 29, from Sta. Elena brings structure and clarity to ISF operations. He ensures every new volunteer receives comprehensive training and maintains meticulous records of every rescue and adoption. His systems allow ISF to operate efficiently while scaling impact.',
     achievements: ['Comprehensive volunteer onboarding & training programs', 'Complete rescue, medical, and adoption logs', 'Volunteer community engagement systems']
   },
@@ -149,7 +143,7 @@ const TEAM_MEMBERS = [
     location: 'Kiwalan, Iligan City',
     since: 2020,
     quote: 'With gentle daily care and patient love, even the most traumatized animals learn to trust again.',
-    img: profile_mildred_nabong,
+    img: '/images/profiles/mildred_nabong.jpg',
     story: 'At 57 years old from Kiwalan, Iligan City, Mildred Nabong brings decades of compassion to her role as Shelter Warden. She oversees daily shelter operations, knows every animal by name, and has turned the shelter into a healing space where traumatized animals learn to trust again.',
     achievements: ['Daily shelter care & sanctuary operations manager', 'Specialized trauma rehabilitation & nursing', 'Created a loving haven for recovered rescues']
   },
@@ -161,7 +155,7 @@ const TEAM_MEMBERS = [
     location: 'San Francisco, Iligan City',
     since: 2020,
     quote: 'Bridging strategic insight with grassroots rescue action ensures our mission endures.',
-    img: profile_persal_lacasan,
+    img: '/images/profiles/persal_lacasan.jpg',
     story: 'Persal Lacasan, 40, from San Francisco serves as both advisor and operations support. His unique position bridges strategic thinking with hands-on execution, providing guidance on difficult decisions while staying actively involved in daily rescue work.',
     achievements: ['Strategic advisor for NGO growth & compliance', 'Community liaison & local government coordination', 'Hands-on emergency rescue support specialist']
   },

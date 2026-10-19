@@ -3,9 +3,9 @@ import { Heart, Info, ArrowRight, CheckCircle2, User, Clock, Sparkles, Dog, Cat 
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { AdoptionWizard } from '@/components/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { useBookmarks } from '@/context/BookmarkContext';
+import { useBookmarks } from '@/context/bookmark-context';
 
 const defaultPets = [
   {

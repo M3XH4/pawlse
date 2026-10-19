@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
   Heart,
@@ -27,7 +27,7 @@ import {
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { AdoptionWizard } from '@/components/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ShareModal } from '@/components/adoption/share-modal';
 import { ShelterVisitModal } from '@/components/adoption/shelter-visit-modal';
 import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
@@ -360,7 +360,7 @@ export default function PetShow({ pet }: PetShowProps) {
 
           {/* Tab Navigation Buttons */}
           <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto py-2 no-scrollbar mb-8">
-            {availableTabs.map((tab) => {
+            {availableTabs.map((tab: TabType) => {
               const isActive = activeTab === tab;
               return (
                 <button

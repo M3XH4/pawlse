@@ -2,7 +2,6 @@ import { Link } from '@inertiajs/react';
 import { Mail, Phone, MapPin, Facebook, Instagram, ArrowRight, X, FileText, Shield, AlertTriangle, HelpCircle, MessageCircle, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
-import logo from '@/assets/logo.png';
 import { ContactModal } from '@/components/contact/contact-modal';
 
 export function Footer() {
@@ -362,7 +361,7 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-4 mb-8 group">
               <div className="w-16 h-16 rounded-full overflow-hidden shadow-xl shadow-paw-orange/20 group-hover:rotate-12 transition-transform bg-white">
-                <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+                <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-3xl font-black tracking-tighter text-white leading-none uppercase">ILIGAN</h1>

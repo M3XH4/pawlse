@@ -22,8 +22,8 @@ import {
     DashboardCard,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { TicketDetailModal } from '@/components/help-desk/TicketDetailModal';
-import { FrequentProblemsManagerModal } from '@/components/help-desk/FrequentProblemsManagerModal';
+import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
+import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
 

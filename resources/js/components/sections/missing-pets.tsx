@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { useBookmarks } from '@/context/BookmarkContext';
+import { useBookmarks } from '@/context/bookmark-context';
 
 const SEARCH_SUGGESTIONS = [
     { keyword: 'Bamba', type: 'name', category: 'Pet Name' },

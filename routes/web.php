@@ -87,10 +87,8 @@ Route::post('/webhooks/payment', [PaymentWebhookController::class, 'handle'])->n
 
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/apply', [VolunteerController::class, 'store'])->name('volunteer.apply')->middleware('auth');
-Route::post('/volunteer/switch', [VolunteerController::class, 'switchRole'])->name('volunteer.switch')->middleware('auth');
-Route::get('/volunteer/switch', [VolunteerController::class, 'switchRole'])->middleware('auth');
-Route::post('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
-Route::get('/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->middleware('auth');
+Route::match(['get', 'post'], '/volunteer/switch', [VolunteerController::class, 'switchRole'])->name('volunteer.switch')->middleware('auth');
+Route::match(['get', 'post'], '/volunteer/switch-user', [VolunteerController::class, 'switchUser'])->name('volunteer.switch-user')->middleware('auth');
 
 Route::get('/rescue', [PetController::class, 'index'])->name('rescue');
 Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])->name('pet-reports.store-rescue');

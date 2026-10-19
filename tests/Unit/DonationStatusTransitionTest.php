@@ -1,7 +1,7 @@
 <?php
 
-use App\Donations\DonationStatusTransition;
 use App\Enums\DonationStatus;
+use App\Services\Donations\DonationStatusTransition;
 
 test('valid donation status transitions succeed', function () {
     expect(DonationStatusTransition::canTransition(

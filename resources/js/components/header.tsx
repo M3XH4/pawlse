@@ -3,7 +3,6 @@ import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import logo from '@/assets/logo.png';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { CareTimerDrawer } from '@/components/care-sustainability/care-timer-drawer';
 
@@ -209,7 +208,7 @@ export function Header() {
         <div className="w-full max-w-full mx-auto flex flex-nowrap items-center justify-between gap-2 lg:gap-4">
           <Link href="/" className="flex flex-nowrap items-center gap-3 group shrink-0" style={{ whiteSpace: 'nowrap' }}>
             <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-paw-orange/20 group-hover:scale-110 transition-transform bg-transparent shrink-0">
-              <img src={logo} alt="Iligan Stray Feeders Logo" className="w-full h-full object-contain" />
+              <img src="/images/logo.png" alt="Iligan Stray Feeders Logo" className="w-full h-full object-contain" />
             </div>
             <div className="shrink-0" style={{ whiteSpace: 'nowrap' }}>
               <h1 className="text-xl md:text-2xl font-black tracking-tighter text-paw-navy dark:text-white leading-none" style={{ whiteSpace: 'nowrap' }}>ILIGAN</h1>

@@ -2,12 +2,6 @@
 import { Users, ArrowRight, User, MapPin, Sparkles, X } from 'lucide-react';
 import { motion, AnimatePresence, useAnimationFrame } from 'motion/react';
 import React, { useState, useRef } from 'react';
-import profile_james_bautista from '@/assets/profiles/james_bautista.jpg';
-import profile_leamarie_hempesao from '@/assets/profiles/leamarie_hempesao.jpg';
-import profile_mildred_nabong from '@/assets/profiles/mildred_nabong.jpg';
-import profile_persal_lacasan from '@/assets/profiles/persal_lacasan.jpg';
-import profile_trusty_espinosa from '@/assets/profiles/trusty_espinosa.jpg';
-import profile_welmar_espinosa from '@/assets/profiles/welmar_espinosa.jpg';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 const teamMembers = [
@@ -15,7 +9,7 @@ const teamMembers = [
   {
     name: 'Trusty Choice Espinosa',
     role: 'Chancellor / Head Admin / Founder',
-    img: profile_trusty_espinosa,
+    img: '/images/profiles/trusty_espinosa.jpg',
     yearsActive: '40 years old',
     rescues: 'Santiago, Iligan City',
     story: `As the founder and head admin of Iligan Stray Feeders, Trusty Choice Espinosa has dedicated his life to creating a compassionate community for stray animals in Iligan City. What started as a personal mission to help the voiceless has grown into a movement that touches countless lives - both human and animal.
@@ -32,7 +26,7 @@ At 40 years old and based in Santiago, Iligan City, Trusty continues to lead wit
   {
     name: 'Welmar-Joy Espinosa',
     role: 'Analyst / Co-Founder',
-    img: profile_welmar_espinosa,
+    img: '/images/profiles/welmar_espinosa.jpg',
     yearsActive: '43 years old',
     rescues: 'Santiago, Iligan City',
     story: `As co-founder and analyst of Iligan Stray Feeders, Welmar-Joy Espinosa brings strategic vision and data-driven decision-making to the organization's mission. While others see individual animals in need, Welmar-Joy sees patterns, systems, and opportunities for systematic change.
@@ -50,7 +44,7 @@ At 43 years old and based in Santiago, Iligan City, Welmar-Joy continues to blen
   {
     name: 'Leamarie Hempesao',
     role: 'Operations Head',
-    img: profile_leamarie_hempesao,
+    img: '/images/profiles/leamarie_hempesao.jpg',
     yearsActive: '21 years old',
     rescues: 'Bagong Silang, Iligan City',
     story: `At just 21 years old, Leamarie Hempesao leads ISF's operations with remarkable maturity and dedication. As Operations Head, she orchestrates the daily heartbeat of the organization - coordinating rescues, managing volunteers, and ensuring every animal receives the care they need.
@@ -67,7 +61,7 @@ Despite her young age, Leamarie has earned the respect of volunteers twice her a
   {
     name: 'James Darrel Bautista',
     role: 'Onboarding / Documentation Head',
-    img: profile_james_bautista,
+    img: '/images/profiles/james_bautista.jpg',
     yearsActive: '29 years old',
     rescues: 'Sta. Elena, Iligan City',
     story: `James Darrel Bautista brings structure and clarity to ISF's growing operations as the Onboarding and Documentation Head. At 29 years old, he understands that effective rescue work requires more than just good intentions - it needs systems, records, and proper training.
@@ -84,7 +78,7 @@ James believes that good documentation honors both the animals served and the pe
   {
     name: 'Mildred Nabong',
     role: 'Shelter Warden',
-    img: profile_mildred_nabong,
+    img: '/images/profiles/mildred_nabong.jpg',
     yearsActive: '57 years old',
     rescues: 'Kiwalan, Iligan City',
     story: `At 57 years old, Mildred Nabong brings decades of life experience and boundless compassion to her role as Shelter Warden. The animals at ISF's shelter don't just have a caretaker - they have a guardian, an advocate, and in many ways, a second mother.
@@ -101,7 +95,7 @@ Mildred often says she's learned more from the animals than she's taught them. T
   {
     name: 'Persal Lacasan',
     role: 'Advisor / Operations',
-    img: profile_persal_lacasan,
+    img: '/images/profiles/persal_lacasan.jpg',
     yearsActive: '40 years old',
     rescues: 'San Francisco, Iligan City',
     story: `Persal Lacasan serves as both advisor and operations support, bringing 40 years of life wisdom and practical experience to ISF. His unique position allows him to bridge strategic thinking with hands-on execution, making him an invaluable resource for the entire team.

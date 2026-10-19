@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { AdoptionWizard } from '@/components/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';

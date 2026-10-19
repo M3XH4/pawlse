@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Donations;
+namespace App\Services\Donations;
 
 use App\Enums\DonationStatus;
 use InvalidArgumentException;

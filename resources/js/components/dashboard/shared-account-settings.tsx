@@ -479,8 +479,8 @@ export default function SharedAccountSettings({
                                 method="put"
                                 options={{
                                     preserveScroll: true,
-                                    onSuccess: () => toast.success('Password updated successfully!'),
                                 }}
+                                onSuccess={() => toast.success('Password updated successfully!')}
                                 resetOnSuccess
                                 className="space-y-6 max-w-xl"
                             >

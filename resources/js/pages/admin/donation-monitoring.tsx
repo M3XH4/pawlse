@@ -1840,8 +1840,8 @@ export default function DonationMonitoring({
                                             <div className="text-[11px] text-paw-navy dark:text-orange-200 font-bold bg-white/90 dark:bg-gray-900/80 p-2.5 rounded-xl border border-orange-200/60 flex items-center justify-between">
                                                 <span>Live Care Timer Extension:</span>
                                                 <span className="text-paw-orange font-black">
-                                                    +{((parseFloat(verifyForm.estimated_value) / (sustainability.daily_shelter_cost || 5000)) * 24).toFixed(1)} hrs
-                                                    {' '}(+{(parseFloat(verifyForm.estimated_value) / (sustainability.daily_shelter_cost || 5000)).toFixed(2)} days)
+                                                    +{((parseFloat(verifyForm.estimated_value) / (sustainability.daily_cost || 5000)) * 24).toFixed(1)} hrs
+                                                    {' '}(+{(parseFloat(verifyForm.estimated_value) / (sustainability.daily_cost || 5000)).toFixed(2)} days)
                                                 </span>
                                             </div>
                                         )}

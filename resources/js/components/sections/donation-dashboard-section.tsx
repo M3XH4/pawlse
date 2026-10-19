@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Wallet, TrendingUp, History, Info, Filter, ArrowRight, ShieldCheck, User, Clock, Heart, Plus, Minus, Camera, FileText, Phone, Mail } from 'lucide-react';
 import React, { useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { SubmissionReceipt } from '@/components/submission-receipt';
+import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useMounted } from '@/hooks/use-mounted';
 

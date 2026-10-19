@@ -13,9 +13,9 @@ import {
     DashboardCard,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { FrequentProblemsAccordion } from '@/components/help-desk/FrequentProblemsAccordion';
-import { CreateTicketModal } from '@/components/help-desk/CreateTicketModal';
-import { TicketDetailModal } from '@/components/help-desk/TicketDetailModal';
+import { FrequentProblemsAccordion } from '@/components/help-desk/frequent-problems-accordion';
+import { CreateTicketModal } from '@/components/help-desk/create-ticket-modal';
+import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
 

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { SubmissionReceipt } from '@/components/submission-receipt';
+import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 
 type Event = {

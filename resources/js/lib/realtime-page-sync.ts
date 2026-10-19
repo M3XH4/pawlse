@@ -20,10 +20,7 @@ function debouncedReload(): void {
     }
 
     reloadTimer = setTimeout(() => {
-        router.reload({
-            preserveScroll: true,
-            preserveState: true,
-        });
+        router.reload();
     }, 250);
 }
 

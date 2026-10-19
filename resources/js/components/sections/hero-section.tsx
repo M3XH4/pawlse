@@ -2,8 +2,6 @@ import { router } from '@inertiajs/react';
 import { PawPrint, Heart } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import React from 'react';
-import heroImage from '@/assets/hero-image.png';
-import overlayImage from '@/assets/overlay-image.jpg';
 
 export function Hero() {
   const navigate = router.visit;
@@ -35,7 +33,7 @@ export function Hero() {
       <div
         className="absolute inset-0 z-0 pointer-events-none opacity-10"
         style={{
-          backgroundImage: `url(${overlayImage})`,
+          backgroundImage: 'url(/images/overlay-image.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat'
@@ -204,7 +202,7 @@ export function Hero() {
           className="relative w-[60vw] max-w-[950px] min-w-[650px]"
         >
           <img
-            src={heroImage}
+            src="/images/hero-image.png"
             alt="Happy Cat and Dog"
             className="w-full h-auto object-contain drop-shadow-2xl"
           />
@@ -224,7 +222,7 @@ export function Hero() {
         >
           <div className="relative w-[100vw] max-w-[500px]">
             <img
-              src={heroImage}
+              src="/images/hero-image.png"
               alt="Happy Cat and Dog"
               className="w-full h-auto object-contain drop-shadow-2xl"
             />

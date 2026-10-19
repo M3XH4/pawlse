@@ -29,7 +29,7 @@ import { EventShareDropdown } from '@/components/events/event-share-dropdown';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { useBookmarks } from '@/context/BookmarkContext';
+import { useBookmarks } from '@/context/bookmark-context';
 import {
     formatEventDate,
     formatEventTime,

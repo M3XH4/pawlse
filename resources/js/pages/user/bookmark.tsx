@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bookmark, Trash2, Calendar, MapPin, Heart, ExternalLink } from 'lucide-react';
-import { useBookmarks } from '@/context/BookmarkContext';
+import { useBookmarks } from '@/context/bookmark-context';
 import { Link } from '@inertiajs/react';
 import {
     DashboardCard,
