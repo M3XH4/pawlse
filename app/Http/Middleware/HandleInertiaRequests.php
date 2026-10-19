@@ -58,16 +58,16 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'isMaintenanceMode' => fn () => (bool) (SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false),
+            'isMaintenanceMode' => fn () => (bool) rescue(fn () => SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false, false, false),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
                 'user' => $request->user(),
             ],
             'can_switch_to_volunteer' => $request->user()
-                ? $request->user()->volunteerApplications()->where('status', 'approved')->exists()
+                ? rescue(fn () => $request->user()->volunteerApplications()->where('status', 'approved')->exists(), false, false)
                 : false,
             'is_foster_parent' => $request->user()
-                ? $request->user()->isApprovedFosterParent()
+                ? rescue(fn () => $request->user()->isApprovedFosterParent(), false, false)
                 : false,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'dashboardRole' => $dashboardRole,
