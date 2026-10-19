@@ -8,9 +8,12 @@ import {
     Phone,
     Navigation,
     Hospital,
+    Plus,
+    Upload,
+    X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
@@ -79,10 +82,13 @@ const NEARBY_VETS = [
 
 export default function SOS() {
     const [submitted, setSubmitted] = useState(false);
+    const [submittedLocation, setSubmittedLocation] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [detectingLocation, setDetectingLocation] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState({
         animalType: '',
         location: '',
@@ -93,6 +99,16 @@ export default function SOS() {
         situationType: '',
     });
 
+    useEffect(() => {
+        return () => {
+            filePreviews.forEach((preview) => {
+                if (preview.startsWith('blob:')) {
+                    URL.revokeObjectURL(preview);
+                }
+            });
+        };
+    }, []);
+
     const handleInputChange = (
         e: React.ChangeEvent<
             HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -102,26 +118,79 @@ export default function SOS() {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const processFiles = (filesToAdd: File[]) => {
+        const validFiles: File[] = [];
+        const validPreviews: string[] = [];
+
+        for (const file of filesToAdd) {
+            const isImage =
+                file.type.startsWith('image/') ||
+                /\.(jpe?g|png|webp|gif|bmp|heic|heif|svg)$/i.test(file.name);
+
+            if (!isImage) {
+                toast.error(`"${file.name}" is not a supported image file.`);
+                continue;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error(`"${file.name}" exceeds the 10MB limit.`);
+                continue;
+            }
+
+            validFiles.push(file);
+            validPreviews.push(URL.createObjectURL(file));
+        }
+
+        if (validFiles.length > 0) {
+            setUploadedFiles((prev) => [...prev, ...validFiles]);
+            setFilePreviews((prev) => [...prev, ...validPreviews]);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
         if (files.length === 0) return;
-
-        setUploadedFiles(files);
-
-        const newPreviews: string[] = [];
-        for (const file of files) {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                const preview = await new Promise<string>((resolve) => {
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                });
-                newPreviews.push(preview);
-            } else if (file.type.startsWith('video/')) {
-                newPreviews.push(URL.createObjectURL(file));
-            }
+        processFiles(files);
+        if (e.target) {
+            e.target.value = '';
         }
-        setFilePreviews(newPreviews);
+    };
+
+    const handleRemoveFile = (indexToRemove: number) => {
+        const previewToRevoke = filePreviews[indexToRemove];
+        if (previewToRevoke && previewToRevoke.startsWith('blob:')) {
+            URL.revokeObjectURL(previewToRevoke);
+        }
+        setUploadedFiles((prev) =>
+            prev.filter((_, idx) => idx !== indexToRemove),
+        );
+        setFilePreviews((prev) =>
+            prev.filter((_, idx) => idx !== indexToRemove),
+        );
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = e.dataTransfer.files
+            ? Array.from(e.dataTransfer.files)
+            : [];
+        if (files.length > 0) {
+            processFiles(files);
+        }
     };
 
     const handleDetectLocation = () => {
@@ -196,11 +265,17 @@ export default function SOS() {
             data.append('images[]', file);
         });
 
+        const targetLocation = formData.location;
+
         router.post('/pet-reports/sos', data, {
+            preserveState: true,
+            preserveScroll: true,
             onSuccess: () => {
+                setSubmittedLocation(targetLocation);
                 setSubmitted(true);
                 toast.success('SOS report submitted successfully!');
                 setSubmitting(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
             onError: (errors) => {
                 const message = Object.values(errors).flat().join(' ');
@@ -423,88 +498,142 @@ export default function SOS() {
 
                                     {/* Photo Upload */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                            Upload Photo/Video (if safe to do
-                                            so)
-                                        </label>
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <label className="block text-sm font-black tracking-widest text-gray-400 uppercase">
+                                                Upload Photo Evidence (if safe
+                                                to do so)
+                                            </label>
+                                            {uploadedFiles.length > 0 && (
+                                                <span className="text-xs font-bold text-red-600">
+                                                    {uploadedFiles.length} file
+                                                    {uploadedFiles.length > 1
+                                                        ? 's'
+                                                        : ''}{' '}
+                                                    attached
+                                                </span>
+                                            )}
+                                        </div>
                                         <input
+                                            ref={fileInputRef}
                                             type="file"
                                             id="file-upload"
-                                            accept="image/*,video/*"
+                                            accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                                             multiple
                                             onChange={handleFileChange}
                                             className="hidden"
                                         />
-                                        <label
-                                            htmlFor="file-upload"
-                                            className="block cursor-pointer rounded-2xl border-4 border-dashed border-gray-200 bg-gray-50 p-8 text-center transition-all hover:border-red-300"
-                                        >
-                                            {uploadedFiles.length === 0 ? (
-                                                <>
-                                                    <Camera
-                                                        size={40}
-                                                        className="mx-auto mb-3 text-gray-400"
-                                                    />
-                                                    <p className="mb-1 font-black text-gray-900">
-                                                        Upload evidence
-                                                    </p>
-                                                    <p className="text-sm font-bold text-gray-500">
-                                                        Photo or video of the
-                                                        situation (Max 10MB,
-                                                        multiple allowed)
-                                                    </p>
-                                                </>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {filePreviews.map(
-                                                            (preview, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border bg-gray-50"
+
+                                        {uploadedFiles.length === 0 ? (
+                                            <div
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                onClick={() =>
+                                                    fileInputRef.current?.click()
+                                                }
+                                                className={`block cursor-pointer rounded-2xl border-4 border-dashed p-8 text-center transition-all ${
+                                                    isDragging
+                                                        ? 'scale-[1.01] border-red-500 bg-red-50/50'
+                                                        : 'border-gray-200 bg-gray-50 hover:border-red-300'
+                                                }`}
+                                            >
+                                                <Camera
+                                                    size={40}
+                                                    className="mx-auto mb-3 text-gray-400"
+                                                />
+                                                <p className="mb-1 font-black text-gray-900">
+                                                    Click to upload or drag
+                                                    photos here
+                                                </p>
+                                                <p className="text-sm font-bold text-gray-500">
+                                                    Photo of the situation (PNG,
+                                                    JPG, WEBP, HEIC up to 10MB,
+                                                    multiple allowed)
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                className={`rounded-2xl border-2 p-4 transition-all ${
+                                                    isDragging
+                                                        ? 'border-red-500 bg-red-50/40'
+                                                        : 'border-gray-100 bg-gray-50/60'
+                                                }`}
+                                            >
+                                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                                    {filePreviews.map(
+                                                        (preview, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                className="relative aspect-video overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 shadow-sm sm:aspect-square"
+                                                            >
+                                                                <img
+                                                                    src={
+                                                                        preview
+                                                                    }
+                                                                    alt="Upload preview"
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.stopPropagation();
+                                                                        handleRemoveFile(
+                                                                            idx,
+                                                                        );
+                                                                    }}
+                                                                    className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-colors hover:bg-red-600"
+                                                                    title="Remove photo"
                                                                 >
-                                                                    {uploadedFiles[
-                                                                        idx
-                                                                    ]?.type.startsWith(
-                                                                        'image/',
-                                                                    ) ? (
-                                                                        <img
-                                                                            src={
-                                                                                preview
-                                                                            }
-                                                                            alt="Upload preview"
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <video
-                                                                            src={
-                                                                                preview
-                                                                            }
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    )}
-                                                                </div>
-                                                            ),
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <CheckCircle2
-                                                            size={20}
-                                                            className="text-green-600"
-                                                        />
-                                                        <p className="font-black text-green-600">
-                                                            {
-                                                                uploadedFiles.length
-                                                            }{' '}
-                                                            files selected
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-xs font-bold text-gray-400">
-                                                        Click to change files
-                                                    </p>
+                                                                    <X
+                                                                        size={
+                                                                            14
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            fileInputRef.current?.click()
+                                                        }
+                                                        className="flex aspect-video cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-300 bg-white text-gray-500 transition-colors hover:border-red-500 hover:text-red-600 sm:aspect-square"
+                                                        title="Add more photos"
+                                                    >
+                                                        <Plus size={24} />
+                                                        <span className="text-xs font-bold">
+                                                            Add More
+                                                        </span>
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </label>
+                                                <div className="mt-3 flex items-center justify-between text-xs font-bold text-gray-400">
+                                                    <span>
+                                                        {uploadedFiles.length}{' '}
+                                                        file
+                                                        {uploadedFiles.length >
+                                                        1
+                                                            ? 's'
+                                                            : ''}{' '}
+                                                        selected
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            fileInputRef.current?.click()
+                                                        }
+                                                        className="cursor-pointer text-red-600 hover:underline"
+                                                    >
+                                                        Upload more
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Contact Info */}
@@ -607,7 +736,9 @@ export default function SOS() {
                                     Emergency responders and nearby volunteers
                                     have been notified. Help is on the way to{' '}
                                     <span className="font-black text-red-600">
-                                        {formData.location}
+                                        {submittedLocation ||
+                                            formData.location ||
+                                            'the reported location'}
                                     </span>
                                     .
                                 </p>
@@ -751,6 +882,7 @@ export default function SOS() {
                                 <button
                                     onClick={() => {
                                         setSubmitted(false);
+                                        setSubmittedLocation('');
                                         setFormData({
                                             animalType: '',
                                             location: '',
@@ -759,6 +891,11 @@ export default function SOS() {
                                             contactName: '',
                                             contactPhone: '',
                                             situationType: '',
+                                        });
+                                        filePreviews.forEach((preview) => {
+                                            if (preview.startsWith('blob:')) {
+                                                URL.revokeObjectURL(preview);
+                                            }
                                         });
                                         setUploadedFiles([]);
                                         setFilePreviews([]);

@@ -14,6 +14,7 @@ use App\Notifications\RescueReportSubmittedNotification;
 use App\Notifications\RescueStatusUpdatedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
@@ -197,6 +198,21 @@ class PetReportController extends Controller
      */
     public function storeSos(Request $request)
     {
+        if (! $request->has('animalType') && $request->has('animal_type')) {
+            $request->merge(['animalType' => $request->input('animal_type')]);
+        }
+        if (! $request->has('situationType') && $request->has('situation_type')) {
+            $request->merge(['situationType' => $request->input('situation_type')]);
+        }
+        if (! $request->has('contactName') && $request->has('contact_name')) {
+            $request->merge(['contactName' => $request->input('contact_name')]);
+        }
+        if (! $request->has('contactPhone') && $request->has('contact_phone')) {
+            $request->merge(['contactPhone' => $request->input('contact_phone')]);
+        }
+        $isMultiple = is_array($request->file('images'));
+        $imageRule = ['max:10240', 'mimes:jpeg,png,jpg,gif,svg,webp,heic,heif,bmp'];
+
         $validated = $request->validate([
             'animalType' => ['required', 'string', 'in:Dog,Cat,Other'],
             'location' => ['required', 'string', 'max:255'],
@@ -205,8 +221,8 @@ class PetReportController extends Controller
             'description' => ['required', 'string', 'max:1000'],
             'contactName' => ['nullable', 'string', 'max:255'],
             'contactPhone' => ['nullable', 'string', 'max:255'],
-            'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'max:10240'],
+            'images' => $isMultiple ? ['nullable', 'array'] : ['nullable', ...$imageRule],
+            'images.*' => $imageRule,
             'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
 
@@ -264,14 +280,20 @@ class PetReportController extends Controller
     protected function uploadPhotos(Request $request, PetReport $report)
     {
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $path = $file->store('pet_reports', 'public');
-                $report->photos()->create([
-                    'path' => '/storage/'.$path,
-                    'original_filename' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getClientMimeType(),
-                    'file_size' => $file->getSize(),
-                ]);
+            $files = $request->file('images');
+            if (! is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
+                if ($file instanceof UploadedFile && $file->isValid()) {
+                    $path = $file->store('pet_reports', 'public');
+                    $report->photos()->create([
+                        'path' => '/storage/'.$path,
+                        'original_filename' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getClientMimeType() ?: 'image/jpeg',
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
             }
         }
     }

@@ -354,6 +354,8 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     });
 
     router.post('/pet-reports/missing', data, {
+        preserveState: true,
+        preserveScroll: true,
         onSuccess: () => {
             setReportSubmitted(true);
             toast.success('Missing pet report submitted successfully!');

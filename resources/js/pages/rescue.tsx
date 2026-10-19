@@ -574,11 +574,14 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         });
 
         router.post('/pet-reports/rescue', formData, {
+            preserveState: true,
+            preserveScroll: true,
             onSuccess: () => {
                 setSubmittedMode(modeType);
                 setMode('success');
                 toast.success('Rescue report submitted successfully!');
                 setSubmitting(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
             onError: (errors) => {
                 const message = Object.values(errors).flat().join(' ');

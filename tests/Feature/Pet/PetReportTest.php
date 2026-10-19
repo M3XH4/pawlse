@@ -102,6 +102,36 @@ test('guest can submit an SOS emergency report', function () {
         'urgency' => 'high',
         'is_duplicate' => false,
     ]);
+
+    $report = PetReport::where('type', 'sos')->first();
+    expect($report->photos)->toHaveCount(1);
+    Storage::disk('public')->assertExists(str_replace('/storage/', '', $report->photos->first()->path));
+});
+
+test('guest can submit an SOS emergency report with a single image file and snake_case fields', function () {
+    $response = $this->post('/pet-reports/sos', [
+        'situation_type' => 'Injured',
+        'animal_type' => 'Cat',
+        'location' => '8.228500, 124.246000',
+        'urgency' => 'high',
+        'description' => 'Kitten trapped under car.',
+        'contact_name' => 'Helper',
+        'contact_phone' => '09111111111',
+        'images' => UploadedFile::fake()->image('kitten.png'),
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('pet_reports', [
+        'type' => 'sos',
+        'situation_type' => 'Injured',
+        'animal_type' => 'Cat',
+        'urgency' => 'high',
+        'contact_name' => 'Helper',
+    ]);
+
+    $report = PetReport::where('type', 'sos')->where('animal_type', 'Cat')->first();
+    expect($report->photos)->toHaveCount(1);
+    Storage::disk('public')->assertExists(str_replace('/storage/', '', $report->photos->first()->path));
 });
 
 test('authenticated user reports are linked to their account', function () {
