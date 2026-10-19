@@ -289,7 +289,9 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             });
 
             if (!response.ok) {
-                throw new Error('AI prediction failed');
+                const errData = await response.json().catch(() => null);
+                const errMsg = errData?.message || 'AI prediction failed. Please try again.';
+                throw new Error(errMsg);
             }
 
             const data = await response.json();
@@ -410,9 +412,9 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             } else {
                 toast.success('AI identification complete!');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error('AI identification failed. Please try again.');
+            toast.error(error?.message || 'AI identification failed. Please try again.');
             setImageUploaded(false);
         } finally {
             setAnalyzing(false);

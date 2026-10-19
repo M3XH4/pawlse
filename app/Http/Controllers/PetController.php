@@ -41,13 +41,19 @@ class PetController extends Controller
         ]);
 
         try {
+            $aiUrl = rtrim((string) config('services.ai.url', 'http://127.0.0.1:8000'), '/');
+            $imageFile = $request->file('image');
+
             $response = Http::timeout(120)
+                ->withHeaders([
+                    'X-Internal-Token' => (string) config('services.ai.secret'),
+                ])
                 ->attach(
                     'file',
-                    file_get_contents($request->file('image')),
-                    $request->file('image')->getClientOriginalName()
+                    fopen($imageFile->getRealPath(), 'r'),
+                    $imageFile->getClientOriginalName()
                 )
-                ->post(config('services.ai.url').'/predict');
+                ->post($aiUrl.'/predict');
 
             if ($response->failed()) {
                 return response()->json([
@@ -97,10 +103,15 @@ class PetController extends Controller
         ]);
 
         try {
-            $response = Http::timeout(60)->post(config('services.ai.url').'/generate-names', [
-                'species' => $request->species,
-                'gender' => $request->gender,
-            ]);
+            $aiUrl = rtrim((string) config('services.ai.url', 'http://127.0.0.1:8000'), '/');
+            $response = Http::timeout(60)
+                ->withHeaders([
+                    'X-Internal-Token' => (string) config('services.ai.secret'),
+                ])
+                ->post($aiUrl.'/generate-names', [
+                    'species' => $request->species,
+                    'gender' => $request->gender,
+                ]);
 
             $data = $response->json();
 

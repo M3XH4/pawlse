@@ -39,6 +39,9 @@ class AiService
             try {
                 $response = Http::timeout(2)
                     ->acceptJson()
+                    ->withHeaders([
+                        'X-Internal-Token' => (string) config('services.ai.secret'),
+                    ])
                     ->get(rtrim($url, '/').'/health');
 
                 $latencyMs = (int) round((microtime(true) - $startTime) * 1000);

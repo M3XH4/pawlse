@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\AiPredictionLog;
+use App\Models\PetReport;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -206,4 +208,51 @@ test('rescue page aiStatus indicates service_unavailable when ai service is offl
                 ->etc()
             )
         );
+});
+
+test('super admin can calibrate prediction accuracy and sync linked report status', function () {
+    $log = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'confidence' => 0.88,
+        'input_data' => ['image' => 'dog.jpg'],
+        'output_data' => ['species' => 'dog', 'breed' => 'Golden Retriever'],
+        'is_accurate' => null,
+    ]);
+
+    $report = PetReport::create([
+        'type' => 'rescue',
+        'animal_type' => 'Dog',
+        'breed' => 'Golden Retriever',
+        'location' => 'Central Plaza',
+        'status' => 'pending',
+        'ai_prediction_log_id' => $log->id,
+        'ai_validation_status' => 'pending',
+        'contact_name' => 'John',
+    ]);
+
+    $response = $this->actingAs($this->superAdmin)
+        ->post(route('account.super-admin.ai-configuration.logs.accuracy', $log), [
+            'is_accurate' => true,
+        ]);
+
+    $response->assertRedirect();
+    expect($log->fresh()->is_accurate)->toBeTrue()
+        ->and($report->fresh()->ai_validation_status)->toBe('approved');
+});
+
+test('super admin can update ai configuration settings', function () {
+    $response = $this->actingAs($this->superAdmin)
+        ->post(route('account.super-admin.ai-configuration.settings'), [
+            'ai_enabled' => true,
+            'ai_reporting_enabled' => true,
+            'ai_identifying_enabled' => false,
+            'ai_confidence_threshold' => 0.85,
+            'ai_auto_validation' => true,
+        ]);
+
+    $response->assertRedirect();
+    $settings = SystemSetting::getValue('ai_settings');
+    expect($settings['ai_identifying_enabled'])->toBeFalse()
+        ->and($settings['ai_confidence_threshold'])->toBe(0.85)
+        ->and($settings['ai_auto_validation'])->toBeTrue();
 });

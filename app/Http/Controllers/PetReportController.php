@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Events\PetRescueSubmittedEvent;
+use App\Models\AiPredictionLog;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\RescueReportSubmittedNotification;
 use App\Notifications\RescueStatusUpdatedNotification;
@@ -63,6 +65,8 @@ class PetReportController extends Controller
             $description = trim(($description ?? '').$multiBreakdown);
         }
 
+        $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+
         $report = PetReport::create([
             'user_id' => $user ? $user->id : null,
             'type' => 'rescue',
@@ -78,7 +82,7 @@ class PetReportController extends Controller
             'contact_phone' => ! empty($validated['contact_phone']) ? $validated['contact_phone'] : null,
             'contact_email' => ! empty($validated['contact_email']) ? $validated['contact_email'] : ($user ? $user->email : null),
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
-            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
+            'ai_validation_status' => $aiResolution['status'],
         ]);
 
         $this->uploadPhotos($request, $report);
@@ -91,6 +95,10 @@ class PetReportController extends Controller
         PetRescueSubmittedEvent::dispatch($report);
 
         AuditLog::log('rescue_report_submit', "Submitted rescue report at {$validated['location']}");
+
+        if ($aiResolution['auto_approved']) {
+            AuditLog::log('ai_auto_validation', "Automatically approved AI details for rescue report #{$report->id} (confidence: {$aiResolution['confidence']})");
+        }
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -136,6 +144,8 @@ class PetReportController extends Controller
             $desc .= "\n\nDistinguishing Features: ".$validated['distinguishingFeatures'];
         }
 
+        $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+
         $report = PetReport::create([
             'user_id' => $user ? $user->id : null,
             'type' => 'missing',
@@ -151,7 +161,7 @@ class PetReportController extends Controller
             'contact_phone' => $validated['contactPhone'],
             'contact_email' => $validated['contactEmail'] ?? null,
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
-            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
+            'ai_validation_status' => $aiResolution['status'],
         ]);
 
         $this->uploadPhotos($request, $report);
@@ -162,6 +172,10 @@ class PetReportController extends Controller
         }
 
         AuditLog::log('missing_report_submit', "Submitted missing pet report for '{$validated['petName']}'");
+
+        if ($aiResolution['auto_approved']) {
+            AuditLog::log('ai_auto_validation', "Automatically approved AI details for missing pet report #{$report->id} (confidence: {$aiResolution['confidence']})");
+        }
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -198,6 +212,8 @@ class PetReportController extends Controller
 
         $user = Auth::user();
 
+        $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+
         $report = PetReport::create([
             'user_id' => $user ? $user->id : null,
             'type' => 'sos',
@@ -211,7 +227,7 @@ class PetReportController extends Controller
             'contact_phone' => $validated['contactPhone'] ?? null,
             'contact_email' => $user ? $user->email : null,
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
-            'ai_validation_status' => isset($validated['ai_prediction_log_id']) ? 'pending' : null,
+            'ai_validation_status' => $aiResolution['status'],
         ]);
 
         $this->uploadPhotos($request, $report);
@@ -222,6 +238,10 @@ class PetReportController extends Controller
         }
 
         AuditLog::log('sos_report_submit', "Submitted SOS report at {$validated['location']}");
+
+        if ($aiResolution['auto_approved']) {
+            AuditLog::log('ai_auto_validation', "Automatically approved AI details for SOS emergency report #{$report->id} (confidence: {$aiResolution['confidence']})");
+        }
 
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
@@ -437,5 +457,37 @@ class PetReportController extends Controller
         ]);
 
         return redirect()->back();
+    }
+
+    /**
+     * Determine initial AI validation status based on system settings and prediction confidence.
+     *
+     * @return array{status: ?string, auto_approved: bool, confidence: ?float}
+     */
+    private function resolveAiValidationStatus(?int $predictionLogId): array
+    {
+        if (empty($predictionLogId)) {
+            return ['status' => null, 'auto_approved' => false, 'confidence' => null];
+        }
+
+        $settings = SystemSetting::getValue('ai_settings', [
+            'ai_enabled' => true,
+            'ai_auto_validation' => false,
+            'ai_confidence_threshold' => 0.70,
+        ]);
+
+        $log = AiPredictionLog::find($predictionLogId);
+        $confidence = $log?->confidence !== null ? (float) $log->confidence : null;
+
+        $autoValidate = ! empty($settings['ai_auto_validation']);
+        $threshold = (float) ($settings['ai_confidence_threshold'] ?? 0.70);
+
+        if ($autoValidate && $confidence !== null && $confidence >= $threshold) {
+            $log?->update(['is_accurate' => true]);
+
+            return ['status' => 'approved', 'auto_approved' => true, 'confidence' => $confidence];
+        }
+
+        return ['status' => 'pending', 'auto_approved' => false, 'confidence' => $confidence];
     }
 }

@@ -296,3 +296,67 @@ test('ai prediction endpoints have rate limiting middleware applied', function (
     $generateNamesRoute = Route::getRoutes()->match(Request::create('/ai/generate-names', 'POST'));
     expect($generateNamesRoute->gatherMiddleware())->toContain('throttle:60,1');
 });
+
+test('rescue report is auto-validated when ai_auto_validation is enabled and confidence meets threshold', function () {
+    SystemSetting::setValue('ai_settings', [
+        'ai_enabled' => true,
+        'ai_reporting_enabled' => true,
+        'ai_identifying_enabled' => true,
+        'ai_confidence_threshold' => 0.80,
+        'ai_auto_validation' => true,
+    ]);
+
+    $predictionLog = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'confidence' => 0.88,
+        'input_data' => ['image' => 'sample.jpg'],
+        'output_data' => ['species' => 'cat', 'breed' => 'Siamese'],
+        'is_accurate' => null,
+    ]);
+
+    $response = $this->post('/pet-reports/rescue', [
+        'animal_type' => 'Cat',
+        'breed' => 'Siamese',
+        'location' => 'Main Highway, Barangay Central',
+        'contact_name' => 'Jane Rescuer',
+        'contact_phone' => '+63 912 345 6789',
+        'ai_prediction_log_id' => $predictionLog->id,
+    ]);
+
+    $response->assertRedirect();
+    $report = PetReport::latest('id')->first();
+    expect($report->ai_validation_status)->toBe('approved')
+        ->and($predictionLog->fresh()->is_accurate)->toBeTrue();
+});
+
+test('rescue report remains pending when confidence is below auto-validation threshold', function () {
+    SystemSetting::setValue('ai_settings', [
+        'ai_enabled' => true,
+        'ai_reporting_enabled' => true,
+        'ai_identifying_enabled' => true,
+        'ai_confidence_threshold' => 0.80,
+        'ai_auto_validation' => true,
+    ]);
+
+    $predictionLog = AiPredictionLog::create([
+        'feature' => 'pet_prediction',
+        'confidence' => 0.65,
+        'input_data' => ['image' => 'sample.jpg'],
+        'output_data' => ['species' => 'dog', 'breed' => 'Aspin'],
+        'is_accurate' => null,
+    ]);
+
+    $response = $this->post('/pet-reports/rescue', [
+        'animal_type' => 'Dog',
+        'breed' => 'Aspin',
+        'location' => 'Pala-o Market',
+        'contact_name' => 'Jane Rescuer',
+        'contact_phone' => '+63 912 345 6789',
+        'ai_prediction_log_id' => $predictionLog->id,
+    ]);
+
+    $response->assertRedirect();
+    $report = PetReport::latest('id')->first();
+    expect($report->ai_validation_status)->toBe('pending')
+        ->and($predictionLog->fresh()->is_accurate)->toBeNull();
+});

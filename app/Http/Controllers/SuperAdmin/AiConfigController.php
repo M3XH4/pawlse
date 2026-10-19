@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AiPredictionLog;
 use App\Models\AuditLog;
+use App\Models\PetReport;
 use App\Models\SystemSetting;
 use App\Services\AiService;
 use Illuminate\Http\JsonResponse;
@@ -155,6 +156,14 @@ class AiConfigController extends Controller
         $log->update([
             'is_accurate' => $request->is_accurate,
         ]);
+
+        if ($request->is_accurate !== null) {
+            PetReport::where('ai_prediction_log_id', $log->id)
+                ->where('ai_validation_status', 'pending')
+                ->update([
+                    'ai_validation_status' => $request->is_accurate ? 'approved' : 'rejected',
+                ]);
+        }
 
         $accuracyStr = $request->is_accurate === null ? 'cleared' : ($request->is_accurate ? 'accurate' : 'inaccurate');
         AuditLog::log('ai_log_calibrate', "Calibrated AI prediction #{$log->id} as {$accuracyStr}");

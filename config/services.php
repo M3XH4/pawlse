@@ -15,6 +15,7 @@ return [
     */
     'ai' => [
         'url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
+        'secret' => env('AI_SERVICE_SECRET', 'pawlse_internal_ai_secret_key_2026'),
     ],
 
     'postmark' => [
