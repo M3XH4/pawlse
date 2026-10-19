@@ -26,7 +26,39 @@ export default defineConfig({
         tailwindcss(),
         wayfinder({
             formVariants: true,
-            command: process.env.WAYFINDER_COMMAND ?? (process.env.DOCKER_BUILD ? 'echo skipping wayfinder' : 'php artisan wayfinder:generate'),
+            command:
+                process.env.WAYFINDER_COMMAND ??
+                (process.env.DOCKER_BUILD
+                    ? 'echo skipping wayfinder'
+                    : 'php artisan wayfinder:generate'),
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (
+                        id.includes('node_modules/react/') ||
+                        id.includes('node_modules/react-dom/')
+                    ) {
+                        return 'react-vendor';
+                    }
+                    if (
+                        id.includes('node_modules/recharts') ||
+                        id.includes('node_modules/d3-') ||
+                        id.includes('node_modules/victory-vendor')
+                    ) {
+                        return 'recharts-vendor';
+                    }
+                    if (id.includes('node_modules/lucide-react')) {
+                        return 'lucide-vendor';
+                    }
+                    if (id.includes('node_modules/motion')) {
+                        return 'motion-vendor';
+                    }
+                },
+            },
+        },
+    },
+    chunkSizeWarningLimit: 1000,
 });
