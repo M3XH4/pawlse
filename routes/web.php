@@ -202,6 +202,7 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::put('animal-records/{animal}', [AnimalMasterRecordController::class, 'update'])->name('animal-records.update');
     Route::delete('animal-records/{animal}', [AnimalMasterRecordController::class, 'destroy'])->name('animal-records.destroy');
     Route::post('animal-records/{animal}/medical', [AnimalMasterRecordController::class, 'storeMedicalRecord'])->name('animal-records.medical.store');
+    Route::put('animal-records/medical/{medicalRecord}', [AnimalMasterRecordController::class, 'updateMedicalRecord'])->name('animal-records.medical.update');
     Route::delete('animal-records/medical/{medicalRecord}', [AnimalMasterRecordController::class, 'deleteMedicalRecord'])->name('animal-records.medical.destroy');
 
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');

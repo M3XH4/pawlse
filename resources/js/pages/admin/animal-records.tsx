@@ -54,6 +54,8 @@ interface MedicalRecordItem {
     veterinarian: string | null;
     batch_number: string | null;
     dosage: string | null;
+    severity?: string | null;
+    treatment_plan?: string | null;
     status: string;
     notes: string | null;
     created_at?: string;
@@ -80,13 +82,16 @@ interface AnimalRecord {
     gender: string;
     color: string | null;
     weight: string | null;
-    microchip_id: string | null;
     status: string;
     status_label: string;
     current_location: string;
     raw_location: string | null;
     photo_url: string | null;
     vaccinated: boolean;
+    has_active_condition?: boolean;
+    active_condition_title?: string | null;
+    active_condition_type?: string | null;
+    active_condition_severity?: string | null;
     behavior: string | null;
     special_needs: string | null;
     story: string | null;
@@ -106,8 +111,12 @@ interface AnimalRecord {
         is_vaccinated: boolean;
         total_records_count: number;
         vaccines_count: number;
+        conditions_count?: number;
+        active_conditions_count?: number;
         other_records_count: number;
         vaccinations: MedicalRecordItem[];
+        conditions?: MedicalRecordItem[];
+        active_conditions?: MedicalRecordItem[];
         treatments: MedicalRecordItem[];
         all_records: MedicalRecordItem[];
         next_due?: MedicalRecordItem | null;
@@ -215,6 +224,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     const [animalToEdit, setAnimalToEdit] = useState<AnimalRecord | null>(null);
     const [isAddMedicalOpen, setIsAddMedicalOpen] = useState(false);
     const [medicalTargetAnimal, setMedicalTargetAnimal] = useState<AnimalRecord | null>(null);
+    const [medicalPresetType, setMedicalPresetType] = useState<string>('vaccination');
     const [animalToDelete, setAnimalToDelete] = useState<AnimalRecord | null>(null);
 
     // Keep side panel in sync when data refreshes
@@ -308,7 +318,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     };
 
     // Open log medical modal
-    const handleStartMedical = (animal: AnimalRecord) => {
+    const handleStartMedical = (animal: AnimalRecord, presetType: string = 'vaccination') => {
+        setMedicalPresetType(presetType);
         setMedicalTargetAnimal(animal);
         setIsAddMedicalOpen(true);
     };
@@ -513,7 +524,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by ID (#ANM-001), name, breed, microchip, color, or location..."
+                            placeholder="Search by ID (#ANM-001), name, breed, color, or location..."
                             className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:border-paw-orange dark:text-white"
                         />
                         {search && (
@@ -693,16 +704,13 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[11px] border border-gray-200 dark:border-gray-700">
                                                         {animal.code}
                                                     </span>
-                                                    {animal.microchip_id && (
+                                                    {animal.has_active_condition && (
                                                         <span
-                                                            title={`Microchip ID: ${animal.microchip_id}`}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleCopy(animal.microchip_id!, 'Microchip ID');
-                                                            }}
-                                                            className="text-gray-400 hover:text-paw-orange cursor-pointer"
+                                                            title={`Active Condition: ${animal.active_condition_title || 'Needs Care'}`}
+                                                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 flex items-center gap-1 border border-rose-200 dark:border-rose-900"
                                                         >
-                                                            <Tag className="h-3 w-3" />
+                                                            <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                                                            <span className="truncate max-w-[80px]">{animal.active_condition_title || 'Injured/Ill'}</span>
                                                         </span>
                                                     )}
                                                 </div>
@@ -803,7 +811,15 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     </button>
 
                                                     <button
-                                                        onClick={() => handleStartMedical(animal)}
+                                                        onClick={() => handleStartMedical(animal, 'injury')}
+                                                        title="Log Injury or Disease"
+                                                        className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                                                    >
+                                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleStartMedical(animal, 'vaccination')}
                                                         title="Add Vaccine or Medical Checkup"
                                                         className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors"
                                                     >
@@ -928,7 +944,14 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                 <Edit3 className="h-3.5 w-3.5" />
                                             </button>
                                             <button
-                                                onClick={() => handleStartMedical(animal)}
+                                                onClick={() => handleStartMedical(animal, 'injury')}
+                                                title="Log Injury or Disease"
+                                                className="p-2 text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition-colors"
+                                            >
+                                                <AlertTriangle className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleStartMedical(animal, 'vaccination')}
                                                 title="Add Vaccine or Medical Checkup"
                                                 className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition-colors"
                                             >
@@ -1053,16 +1076,10 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         <MapPin className="h-4 w-4 text-paw-orange shrink-0" />
                                         <span>Current Location: <strong className="text-[#0B2340] dark:text-white">{selectedAnimal.current_location}</strong></span>
                                     </div>
-                                    {selectedAnimal.microchip_id && (
-                                        <div
-                                            onClick={() => handleCopy(selectedAnimal.microchip_id!, 'Microchip ID')}
-                                            className="flex items-center gap-1.5 text-gray-500 hover:text-paw-orange cursor-pointer font-mono"
-                                            title="Click to copy microchip"
-                                        >
-                                            <Tag className="h-3 w-3" />
-                                            <span>Chip: {selectedAnimal.microchip_id}</span>
-                                            <Copy className="h-3 w-3" />
-                                        </div>
+                                    {selectedAnimal.has_active_condition && (
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 flex items-center gap-1 border border-rose-200 dark:border-rose-900">
+                                            <AlertTriangle className="h-3 w-3" /> Medical Attention
+                                        </span>
                                     )}
                                 </div>
 
@@ -1130,8 +1147,18 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     <strong className="text-gray-800 dark:text-gray-200 text-sm">{selectedAnimal.color || 'Standard'}</strong>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-400 block">Microchip ID</span>
-                                                    <strong className="text-gray-800 dark:text-gray-200 font-mono text-sm">{selectedAnimal.microchip_id || 'None Registered'}</strong>
+                                                    <span className="text-gray-400 block">Medical Status</span>
+                                                    <strong className="text-gray-800 dark:text-gray-200 text-sm">
+                                                        {selectedAnimal.has_active_condition ? (
+                                                            <span className="text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
+                                                                <AlertTriangle className="h-3.5 w-3.5" /> {selectedAnimal.active_condition_title}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                                                <Check className="h-3.5 w-3.5" /> Healthy / Clear
+                                                            </span>
+                                                        )}
+                                                    </strong>
                                                 </div>
                                                 <div>
                                                     <span className="text-gray-400 block">Admission Date</span>
@@ -1219,12 +1246,20 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={() => handleStartMedical(selectedAnimal)}
-                                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
-                                            >
-                                                <Plus className="h-3.5 w-3.5 stroke-[3]" /> Log Vaccine / Medical
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleStartMedical(selectedAnimal, 'injury')}
+                                                    className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                                                >
+                                                    <AlertTriangle className="h-3.5 w-3.5 stroke-[2.5]" /> Log Injury / Disease
+                                                </button>
+                                                <button
+                                                    onClick={() => handleStartMedical(selectedAnimal, 'vaccination')}
+                                                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5 stroke-[3]" /> Log Vaccine / Exam
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {/* Next Due Alert if any */}
@@ -1234,6 +1269,142 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                 <span>Upcoming Booster/Checkup: <strong>{selectedAnimal.medical_history.next_due.title}</strong> scheduled for <strong>{selectedAnimal.medical_history.next_due.next_due_date}</strong></span>
                                             </div>
                                         )}
+
+                                        {/* Injuries & Diseases Section */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <AlertTriangle className="h-4 w-4 text-rose-500" />
+                                                    <span>Injuries & Disease History ({selectedAnimal.medical_history.conditions_count || 0})</span>
+                                                </h4>
+                                                {(selectedAnimal.medical_history.active_conditions_count || 0) > 0 && (
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                                                        {selectedAnimal.medical_history.active_conditions_count} Active Issue{(selectedAnimal.medical_history.active_conditions_count || 0) > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {selectedAnimal.medical_history.conditions && selectedAnimal.medical_history.conditions.length > 0 ? (
+                                                <div className="space-y-3">
+                                                    {selectedAnimal.medical_history.conditions.map((cond) => {
+                                                        const isActive = ['active', 'under_treatment', 'scheduled', 'overdue', 'chronic'].includes(cond.status);
+                                                        const isInjury = cond.record_type === 'injury';
+
+                                                        return (
+                                                            <div
+                                                                key={cond.id}
+                                                                className={`p-4 rounded-2xl border transition-all ${
+                                                                    isActive
+                                                                        ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 shadow-xs'
+                                                                        : 'bg-white dark:bg-[#070e1c] border-gray-200 dark:border-gray-800'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div className="space-y-1.5 flex-1">
+                                                                        <div className="flex flex-wrap items-center gap-2">
+                                                                            <strong className="text-gray-900 dark:text-white font-bold text-sm">
+                                                                                {cond.title}
+                                                                            </strong>
+                                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                                                isInjury
+                                                                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                                                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                                                                            }`}>
+                                                                                {isInjury ? 'Injury / Trauma' : 'Disease / Infection'}
+                                                                            </span>
+                                                                            {cond.severity && (
+                                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                                                    cond.severity === 'critical' || cond.severity === 'severe'
+                                                                                        ? 'bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-200'
+                                                                                        : cond.severity === 'moderate'
+                                                                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+                                                                                        : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                                                                                }`}>
+                                                                                    {cond.severity}
+                                                                                </span>
+                                                                            )}
+                                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
+                                                                                cond.status === 'resolved' || cond.status === 'completed'
+                                                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                                                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                                                            }`}>
+                                                                                {cond.status.replace('_', ' ')}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-3 text-xs">
+                                                                            <span>Diagnosed: <strong>{cond.performed_date}</strong></span>
+                                                                            {cond.veterinarian && <span>Vet: <strong>{cond.veterinarian}</strong></span>}
+                                                                            {cond.next_due_date && <span>Follow-up: <strong>{cond.next_due_date}</strong></span>}
+                                                                        </div>
+
+                                                                        {cond.treatment_plan && (
+                                                                            <div className="mt-2 p-2.5 rounded-xl bg-white/80 dark:bg-[#0b1527] border border-gray-200/60 dark:border-gray-800 text-xs">
+                                                                                <span className="font-bold text-gray-700 dark:text-gray-300 block mb-0.5">Treatment Plan:</span>
+                                                                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{cond.treatment_plan}</p>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {cond.notes && (
+                                                                            <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-1">
+                                                                                Notes: {cond.notes}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        {isActive && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if (confirm(`Mark "${cond.title}" as resolved?`)) {
+                                                                                        router.put(`/account/admin/animal-records/medical/${cond.id}`, {
+                                                                                            status: 'resolved',
+                                                                                            update_animal_status: selectedAnimal.status === 'treatment' ? 'available' : undefined,
+                                                                                        }, {
+                                                                                            onSuccess: () => toast.success(`"${cond.title}" marked as resolved!`),
+                                                                                            onError: () => toast.error('Failed to update status.'),
+                                                                                        });
+                                                                                    }
+                                                                                }}
+                                                                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
+                                                                                title="Mark condition as resolved / cured"
+                                                                            >
+                                                                                <Check className="h-3 w-3" /> Resolve
+                                                                            </button>
+                                                                        )}
+
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                if (confirm(`Remove this record "${cond.title}"?`)) {
+                                                                                    router.delete(`/account/admin/animal-records/medical/${cond.id}`, {
+                                                                                        onSuccess: () => toast.success('Record removed'),
+                                                                                    });
+                                                                                }
+                                                                            }}
+                                                                            className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                                                            title="Delete record"
+                                                                        >
+                                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="p-6 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-400 flex flex-col items-center gap-2">
+                                                    <CheckCircle2 className="h-5 w-5 text-emerald-500/70" />
+                                                    <span>No injuries or diseases logged for this pet. Clean bill of health!</span>
+                                                    <button
+                                                        onClick={() => handleStartMedical(selectedAnimal, 'injury')}
+                                                        className="text-paw-orange font-bold hover:underline"
+                                                    >
+                                                        + Report Injury or Disease
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* Vaccination Records Section */}
                                         <div>
@@ -1568,8 +1739,14 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => handleStartMedical(selectedAnimal)}
-                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1"
+                                        onClick={() => handleStartMedical(selectedAnimal, 'injury')}
+                                        className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs"
+                                    >
+                                        <AlertTriangle className="h-3 w-3" /> Log Injury / Disease
+                                    </button>
+                                    <button
+                                        onClick={() => handleStartMedical(selectedAnimal, 'vaccination')}
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs"
                                     >
                                         <Plus className="h-3 w-3 stroke-[3]" /> Add Medical
                                     </button>
@@ -1610,6 +1787,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
             {isAddMedicalOpen && medicalTargetAnimal && (
                 <AddMedicalModal
                     animal={medicalTargetAnimal}
+                    initialType={medicalPresetType}
                     onClose={() => {
                         setIsAddMedicalOpen(false);
                         setMedicalTargetAnimal(null);
@@ -1664,7 +1842,6 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
         gender: 'male',
         color: '',
         weight: '',
-        microchip_id: '',
         current_location: 'Main Shelter - Kennel Area',
         status: 'available',
         behavior: '',
@@ -1794,8 +1971,8 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
                         </div>
                     </div>
 
-                    {/* Location, Microchip, Weight */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Location, Status */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Current Location *</label>
                             <input
@@ -1822,17 +1999,6 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
                                 <option value="adopted">Adopted</option>
                                 <option value="deceased">Deceased</option>
                             </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Microchip ID</label>
-                            <input
-                                type="text"
-                                value={data.microchip_id}
-                                onChange={(e) => setData('microchip_id', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                                placeholder="e.g. 985141000123456"
-                            />
                         </div>
                     </div>
 
@@ -1971,7 +2137,6 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
         gender: animal.gender,
         color: animal.color || '',
         weight: animal.weight || '',
-        microchip_id: animal.microchip_id || '',
         current_location: animal.raw_location || animal.current_location,
         status: animal.status,
         behavior: animal.behavior || '',
@@ -2055,7 +2220,7 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                     </div>
 
                     {/* Basic details */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Name</label>
                             <input
@@ -2074,15 +2239,6 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                                 value={data.breed}
                                 onChange={(e) => setData('breed', e.target.value)}
                                 className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Microchip ID</label>
-                            <input
-                                type="text"
-                                value={data.microchip_id}
-                                onChange={(e) => setData('microchip_id', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl font-mono"
                             />
                         </div>
                     </div>
@@ -2263,25 +2419,43 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
     );
 }
 
-/* SUBCOMPONENT: ADD MEDICAL / VACCINE MODAL */
-function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: () => void }) {
+/* SUBCOMPONENT: ADD MEDICAL / INJURY / DISEASE MODAL */
+function AddMedicalModal({
+    animal,
+    initialType = 'vaccination',
+    onClose,
+}: {
+    animal: AnimalRecord;
+    initialType?: string;
+    onClose: () => void;
+}) {
+    const isInitialCondition = initialType === 'injury' || initialType === 'disease';
     const { data, setData, post, processing } = useForm({
-        record_type: 'vaccination',
+        record_type: initialType,
         title: '',
         performed_date: new Date().toISOString().split('T')[0],
         next_due_date: '',
         veterinarian: '',
         batch_number: '',
         dosage: '',
-        status: 'completed',
+        severity: isInitialCondition ? 'moderate' : '',
+        treatment_plan: '',
+        status: isInitialCondition ? 'under_treatment' : 'completed',
         notes: '',
+        update_animal_status: isInitialCondition && animal.status === 'available' ? 'treatment' : '',
     });
+
+    const isCurrentCondition = data.record_type === 'injury' || data.record_type === 'disease';
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(`/account/admin/animal-records/${animal.id}/medical`, {
             onSuccess: () => {
-                toast.success('Medical/vaccine record added successfully!');
+                toast.success(
+                    isCurrentCondition
+                        ? `${data.record_type === 'injury' ? 'Injury' : 'Disease'} record logged successfully!`
+                        : 'Medical record added successfully!'
+                );
                 onClose();
             },
             onError: () => toast.error('Failed to log medical record.'),
@@ -2289,12 +2463,22 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div className="bg-white dark:bg-[#0B1527] rounded-3xl max-w-lg w-full border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+            <div className="bg-white dark:bg-[#0B1527] rounded-3xl max-w-lg w-full border border-gray-200 dark:border-gray-800 shadow-2xl my-8 overflow-hidden">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                     <div>
-                        <h3 className="text-xl font-bold font-fredoka text-[#0B2340] dark:text-white">
-                            Log Medical / Vaccine Entry
+                        <h3 className="text-xl font-bold font-fredoka text-[#0B2340] dark:text-white flex items-center gap-2">
+                            {isCurrentCondition ? (
+                                <>
+                                    <AlertTriangle className="h-5 w-5 text-rose-500" />
+                                    <span>Log {data.record_type === 'injury' ? 'Injury' : 'Disease / Illness'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Syringe className="h-5 w-5 text-emerald-500" />
+                                    <span>Log Medical / Vaccine Entry</span>
+                                </>
+                            )}
                         </h3>
                         <p className="text-xs text-gray-500">For {animal.name} ({animal.code})</p>
                     </div>
@@ -2303,23 +2487,37 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Record Type *</label>
                             <select
                                 value={data.record_type}
-                                onChange={(e) => setData('record_type', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                onChange={(e) => {
+                                    const nextType = e.target.value;
+                                    setData((prev) => ({
+                                        ...prev,
+                                        record_type: nextType,
+                                        status: (nextType === 'injury' || nextType === 'disease') ? 'under_treatment' : 'completed',
+                                        severity: (nextType === 'injury' || nextType === 'disease') ? (prev.severity || 'moderate') : '',
+                                    }));
+                                }}
+                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl font-medium"
                             >
-                                <option value="vaccination">Vaccination / Immunization</option>
-                                <option value="medical_checkup">Routine Checkup / Exam</option>
-                                <option value="surgery">Surgery / Spay-Neuter</option>
-                                <option value="treatment">Treatment / Wound Care</option>
-                                <option value="medication">Medication / Prescription</option>
-                                <option value="dental">Dental Cleaning</option>
-                                <option value="lab_test">Lab Test / Bloodwork</option>
-                                <option value="other">Other Clinical Care</option>
+                                <optgroup label="Health Conditions & Issues">
+                                    <option value="injury">Injury / Trauma / Wound</option>
+                                    <option value="disease">Disease / Illness / Infection</option>
+                                </optgroup>
+                                <optgroup label="Clinical Care & Preventive">
+                                    <option value="vaccination">Vaccination / Immunization</option>
+                                    <option value="medical_checkup">Routine Checkup / Exam</option>
+                                    <option value="surgery">Surgery / Spay-Neuter</option>
+                                    <option value="treatment">Treatment / Wound Care</option>
+                                    <option value="medication">Medication / Prescription</option>
+                                    <option value="dental">Dental Cleaning</option>
+                                    <option value="lab_test">Lab Test / Bloodwork</option>
+                                    <option value="other">Other Clinical Care</option>
+                                </optgroup>
                             </select>
                         </div>
 
@@ -2330,28 +2528,106 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                                 onChange={(e) => setData('status', e.target.value)}
                                 className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
                             >
-                                <option value="completed">Completed / Administered</option>
-                                <option value="scheduled">Scheduled / Pending</option>
-                                <option value="overdue">Overdue</option>
+                                {isCurrentCondition ? (
+                                    <>
+                                        <option value="under_treatment">Under Treatment / Active Care</option>
+                                        <option value="active">Active / Needs Attention</option>
+                                        <option value="scheduled">Scheduled for Vet Exam</option>
+                                        <option value="resolved">Resolved / Cured</option>
+                                        <option value="chronic">Chronic / Ongoing Management</option>
+                                        <option value="completed">Completed Assessment</option>
+                                    </>
+                                ) : (
+                                    <>
+                                        <option value="completed">Completed / Administered</option>
+                                        <option value="scheduled">Scheduled / Pending</option>
+                                        <option value="overdue">Overdue</option>
+                                    </>
+                                )}
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Procedure or Vaccine Name *</label>
+                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                            {data.record_type === 'injury'
+                                ? 'Injury Description / Diagnosis *'
+                                : data.record_type === 'disease'
+                                ? 'Disease / Condition Name *'
+                                : 'Procedure or Vaccine Name *'}
+                        </label>
                         <input
                             type="text"
                             required
                             value={data.title}
                             onChange={(e) => setData('title', e.target.value)}
                             className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            placeholder="e.g. Rabies Vaccine, DHPP Booster, Spay Surgery"
+                            placeholder={
+                                data.record_type === 'injury'
+                                    ? 'e.g. Fractured Left Hindleg, Deep Bite Wound, Corneal Scratch'
+                                    : data.record_type === 'disease'
+                                    ? 'e.g. Canine Parvovirus, Sarcoptic Mange, Tick Fever, Feline Flu'
+                                    : 'e.g. Anti-Rabies Vaccine, DHPP Booster, Spay Surgery'
+                            }
                         />
                     </div>
 
+                    {/* Condition specific: Severity & Animal Status Update */}
+                    {isCurrentCondition && (
+                        <div className="p-3.5 bg-rose-50/60 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-900/60 space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Condition Severity
+                                    </label>
+                                    <select
+                                        value={data.severity}
+                                        onChange={(e) => setData('severity', e.target.value)}
+                                        className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                    >
+                                        <option value="mild">Mild (Minor superficial issue)</option>
+                                        <option value="moderate">Moderate (Requires medication/monitoring)</option>
+                                        <option value="severe">Severe (Urgent vet care & restriction)</option>
+                                        <option value="critical">Critical (Life-threatening emergency)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Update Pet Master Status
+                                    </label>
+                                    <select
+                                        value={data.update_animal_status}
+                                        onChange={(e) => setData('update_animal_status', e.target.value)}
+                                        className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                    >
+                                        <option value="">Keep current status ({animal.status})</option>
+                                        <option value="treatment">Change to "Under Treatment"</option>
+                                        <option value="quarantine">Change to "Quarantine" (Infectious)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                    Treatment Protocol & Care Plan
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={data.treatment_plan}
+                                    onChange={(e) => setData('treatment_plan', e.target.value)}
+                                    className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                    placeholder="e.g. Wound cleaning twice daily, Amoxicillin 250mg BID x 7 days, splint check on Friday..."
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Date Performed *</label>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                {isCurrentCondition ? 'Incident / Diagnosis Date *' : 'Date Performed *'}
+                            </label>
                             <input
                                 type="date"
                                 required
@@ -2362,7 +2638,9 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Next Booster / Due Date</label>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                {isCurrentCondition ? 'Follow-up / Re-check Date' : 'Next Booster / Due Date'}
+                            </label>
                             <input
                                 type="date"
                                 value={data.next_due_date}
@@ -2385,13 +2663,21 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Batch / Serial No.</label>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                {isCurrentCondition ? 'Dosage / Rx' : 'Batch / Serial No.'}
+                            </label>
                             <input
                                 type="text"
-                                value={data.batch_number}
-                                onChange={(e) => setData('batch_number', e.target.value)}
+                                value={isCurrentCondition ? data.dosage : data.batch_number}
+                                onChange={(e) => {
+                                    if (isCurrentCondition) {
+                                        setData('dosage', e.target.value);
+                                    } else {
+                                        setData('batch_number', e.target.value);
+                                    }
+                                }}
                                 className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                                placeholder="e.g. VAC-99482"
+                                placeholder={isCurrentCondition ? 'e.g. 5ml syrup, 1 tab BID' : 'e.g. VAC-99482'}
                             />
                         </div>
                     </div>
@@ -2403,7 +2689,7 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            placeholder="Dosage notes, animal reaction, follow-up recommendations..."
+                            placeholder="Observations, behavioral reactions, wound progress, recovery status..."
                         />
                     </div>
 
@@ -2418,9 +2704,17 @@ function AddMedicalModal({ animal, onClose }: { animal: AnimalRecord; onClose: (
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                            className={`px-5 py-2 text-white rounded-xl text-xs font-bold shadow-xs ${
+                                isCurrentCondition
+                                    ? 'bg-rose-600 hover:bg-rose-700'
+                                    : 'bg-emerald-600 hover:bg-emerald-700'
+                            }`}
                         >
-                            {processing ? 'Logging...' : 'Save Medical Record'}
+                            {processing
+                                ? 'Logging...'
+                                : isCurrentCondition
+                                ? `Save ${data.record_type === 'injury' ? 'Injury' : 'Disease'} Log`
+                                : 'Save Medical Record'}
                         </button>
                     </div>
                 </form>

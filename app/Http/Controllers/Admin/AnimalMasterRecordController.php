@@ -55,7 +55,6 @@ class AnimalMasterRecordController extends Controller
                 $q->orWhere('name', 'like', "%{$search}%")
                     ->orWhere('breed', 'like', "%{$search}%")
                     ->orWhere('color', 'like', "%{$search}%")
-                    ->orWhere('microchip_id', 'like', "%{$search}%")
                     ->orWhere('current_location', 'like', "%{$search}%")
                     ->orWhere('adopter_name', 'like', "%{$search}%")
                     ->orWhere('rescue_location', 'like', "%{$search}%");
@@ -177,6 +176,8 @@ class AnimalMasterRecordController extends Controller
                     'veterinarian' => $m->veterinarian,
                     'batch_number' => $m->batch_number,
                     'dosage' => $m->dosage,
+                    'severity' => $m->severity,
+                    'treatment_plan' => $m->treatment_plan,
                     'status' => $m->status,
                     'notes' => $m->notes,
                     'created_at' => $m->created_at?->format('Y-m-d H:i'),
@@ -184,7 +185,9 @@ class AnimalMasterRecordController extends Controller
             });
 
             $vaccinationRecords = $medicalRecords->where('record_type', 'vaccination')->values();
-            $otherMedicalRecords = $medicalRecords->where('record_type', '!=', 'vaccination')->values();
+            $injuryAndDiseaseRecords = $medicalRecords->whereIn('record_type', ['injury', 'disease'])->values();
+            $otherMedicalRecords = $medicalRecords->whereNotIn('record_type', ['vaccination', 'injury', 'disease'])->values();
+            $activeConditions = $injuryAndDiseaseRecords->filter(fn ($r) => in_array($r['status'], ['active', 'under_treatment', 'scheduled', 'overdue', 'chronic'], true))->values();
 
             // Adoption applications
             $adoptionApps = $animal->adoptionApplications->map(function ($app) {
@@ -210,13 +213,16 @@ class AnimalMasterRecordController extends Controller
                 'gender' => $genderValue,
                 'color' => $animal->color,
                 'weight' => $animal->weight,
-                'microchip_id' => $animal->microchip_id,
                 'status' => $statusValue,
                 'status_label' => ucfirst(str_replace('_', ' ', $statusValue)),
                 'current_location' => $computedLocation,
                 'raw_location' => $animal->current_location,
                 'photo_url' => $animal->photo_url,
                 'vaccinated' => (bool) $animal->vaccinated,
+                'has_active_condition' => $activeConditions->isNotEmpty(),
+                'active_condition_title' => $activeConditions->first()['title'] ?? null,
+                'active_condition_type' => $activeConditions->first()['record_type'] ?? null,
+                'active_condition_severity' => $activeConditions->first()['severity'] ?? null,
                 'behavior' => $animal->behavior,
                 'special_needs' => $animal->special_needs,
                 'story' => $animal->story,
@@ -240,8 +246,12 @@ class AnimalMasterRecordController extends Controller
                     'is_vaccinated' => (bool) $animal->vaccinated,
                     'total_records_count' => $medicalRecords->count(),
                     'vaccines_count' => $vaccinationRecords->count(),
+                    'conditions_count' => $injuryAndDiseaseRecords->count(),
+                    'active_conditions_count' => $activeConditions->count(),
                     'other_records_count' => $otherMedicalRecords->count(),
                     'vaccinations' => $vaccinationRecords,
+                    'conditions' => $injuryAndDiseaseRecords,
+                    'active_conditions' => $activeConditions,
                     'treatments' => $otherMedicalRecords,
                     'all_records' => $medicalRecords,
                     'next_due' => $medicalRecords->whereNotNull('next_due_date')->sortBy('next_due_date')->first(),
@@ -326,7 +336,6 @@ class AnimalMasterRecordController extends Controller
             'gender' => ['required', 'string', 'in:male,female'],
             'color' => ['nullable', 'string', 'max:255'],
             'weight' => ['nullable', 'string', 'max:100'],
-            'microchip_id' => ['nullable', 'string', 'max:255'],
             'current_location' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:available,foster,pending,adopted,treatment,quarantine,deceased'],
             'behavior' => ['nullable', 'string', 'max:1000'],
@@ -366,7 +375,6 @@ class AnimalMasterRecordController extends Controller
                 'gender' => AnimalGender::from($validated['gender']),
                 'color' => $validated['color'] ?? 'Unknown',
                 'weight' => $validated['weight'] ?? null,
-                'microchip_id' => $validated['microchip_id'] ?? null,
                 'current_location' => $validated['current_location'] ?? 'Main Shelter - Kennel Area',
                 'status' => $status,
                 'behavior' => $validated['behavior'] ?? 'Friendly and playful',
@@ -419,7 +427,6 @@ class AnimalMasterRecordController extends Controller
             'gender' => ['required', 'string', 'in:male,female'],
             'color' => ['nullable', 'string', 'max:255'],
             'weight' => ['nullable', 'string', 'max:100'],
-            'microchip_id' => ['nullable', 'string', 'max:255'],
             'current_location' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:available,foster,pending,adopted,treatment,quarantine,deceased'],
             'behavior' => ['nullable', 'string', 'max:1000'],
@@ -469,7 +476,6 @@ class AnimalMasterRecordController extends Controller
             'gender' => AnimalGender::from($validated['gender']),
             'color' => $validated['color'] ?? $animal->color,
             'weight' => $validated['weight'] ?? $animal->weight,
-            'microchip_id' => $validated['microchip_id'] ?? $animal->microchip_id,
             'current_location' => $validated['current_location'] ?? $animal->current_location,
             'status' => $newStatus,
             'behavior' => $validated['behavior'] ?? $animal->behavior,
@@ -506,20 +512,23 @@ class AnimalMasterRecordController extends Controller
     }
 
     /**
-     * Add a vaccination or medical record entry for an animal.
+     * Add a vaccination, medical checkup, injury, or disease record entry for an animal.
      */
     public function storeMedicalRecord(Request $request, ShelterAnimal $animal): RedirectResponse
     {
         $validated = $request->validate([
-            'record_type' => ['required', 'string', 'in:vaccination,medical_checkup,surgery,treatment,medication,dental,lab_test,other'],
+            'record_type' => ['required', 'string', 'in:vaccination,medical_checkup,surgery,treatment,medication,dental,lab_test,injury,disease,other'],
             'title' => ['required', 'string', 'max:255'],
             'performed_date' => ['required', 'date'],
             'next_due_date' => ['nullable', 'date'],
             'veterinarian' => ['nullable', 'string', 'max:255'],
             'batch_number' => ['nullable', 'string', 'max:100'],
             'dosage' => ['nullable', 'string', 'max:100'],
-            'status' => ['required', 'string', 'in:completed,scheduled,overdue'],
+            'severity' => ['nullable', 'string', 'in:mild,moderate,severe,critical'],
+            'treatment_plan' => ['nullable', 'string', 'max:2000'],
+            'status' => ['required', 'string', 'in:completed,scheduled,overdue,active,under_treatment,resolved,chronic'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'update_animal_status' => ['nullable', 'string', 'in:treatment,quarantine,available'],
         ]);
 
         $record = AnimalMedicalRecord::create([
@@ -531,6 +540,8 @@ class AnimalMasterRecordController extends Controller
             'veterinarian' => $validated['veterinarian'] ?? null,
             'batch_number' => $validated['batch_number'] ?? null,
             'dosage' => $validated['dosage'] ?? null,
+            'severity' => $validated['severity'] ?? null,
+            'treatment_plan' => $validated['treatment_plan'] ?? null,
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,
             'created_by' => $request->user()?->id,
@@ -541,15 +552,97 @@ class AnimalMasterRecordController extends Controller
             $animal->update(['vaccinated' => true]);
         }
 
+        // If requested, update the animal's overall status (e.g. to treatment or quarantine)
+        if (! empty($validated['update_animal_status'])) {
+            $newStatus = ShelterAnimalStatus::from($validated['update_animal_status']);
+            $oldStatus = $animal->status instanceof ShelterAnimalStatus ? $animal->status->value : (string) $animal->status;
+            $animal->update(['status' => $newStatus]);
+
+            AuditLog::log('animal_status_change', "Status changed from '{$oldStatus}' to '{$newStatus->value}' due to {$validated['record_type']} record '{$validated['title']}' for '{$animal->name}'", [
+                'animal_id' => $animal->id,
+                'previous_status' => $oldStatus,
+                'new_status' => $newStatus->value,
+            ]);
+        }
+
         AuditLog::log('animal_medical_record_create', "Added {$validated['record_type']} record '{$validated['title']}' for '{$animal->name}'", [
             'animal_id' => $animal->id,
             'record_id' => $record->id,
+            'record_type' => $record->record_type,
+            'severity' => $record->severity,
             'title' => $record->title,
+        ]);
+
+        $label = match ($validated['record_type']) {
+            'injury' => 'Injury log',
+            'disease' => 'Disease/Illness log',
+            'vaccination' => 'Vaccination record',
+            default => 'Medical record',
+        };
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$label} '{$record->title}' logged successfully for {$animal->name}.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Update an existing medical record entry (e.g. mark injury/disease as resolved, update treatment plan).
+     */
+    public function updateMedicalRecord(Request $request, AnimalMedicalRecord $medicalRecord): RedirectResponse
+    {
+        $validated = $request->validate([
+            'record_type' => ['sometimes', 'required', 'string', 'in:vaccination,medical_checkup,surgery,treatment,medication,dental,lab_test,injury,disease,other'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'performed_date' => ['sometimes', 'required', 'date'],
+            'next_due_date' => ['nullable', 'date'],
+            'veterinarian' => ['nullable', 'string', 'max:255'],
+            'batch_number' => ['nullable', 'string', 'max:100'],
+            'dosage' => ['nullable', 'string', 'max:100'],
+            'severity' => ['nullable', 'string', 'in:mild,moderate,severe,critical'],
+            'treatment_plan' => ['nullable', 'string', 'max:2000'],
+            'status' => ['sometimes', 'required', 'string', 'in:completed,scheduled,overdue,active,under_treatment,resolved,chronic'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'update_animal_status' => ['nullable', 'string', 'in:treatment,quarantine,available'],
+        ]);
+
+        $medicalRecord->update([
+            'record_type' => $validated['record_type'] ?? $medicalRecord->record_type,
+            'title' => $validated['title'] ?? $medicalRecord->title,
+            'performed_date' => $validated['performed_date'] ?? $medicalRecord->performed_date,
+            'next_due_date' => array_key_exists('next_due_date', $validated) ? $validated['next_due_date'] : $medicalRecord->next_due_date,
+            'veterinarian' => array_key_exists('veterinarian', $validated) ? $validated['veterinarian'] : $medicalRecord->veterinarian,
+            'batch_number' => array_key_exists('batch_number', $validated) ? $validated['batch_number'] : $medicalRecord->batch_number,
+            'dosage' => array_key_exists('dosage', $validated) ? $validated['dosage'] : $medicalRecord->dosage,
+            'severity' => array_key_exists('severity', $validated) ? $validated['severity'] : $medicalRecord->severity,
+            'treatment_plan' => array_key_exists('treatment_plan', $validated) ? $validated['treatment_plan'] : $medicalRecord->treatment_plan,
+            'status' => $validated['status'] ?? $medicalRecord->status,
+            'notes' => array_key_exists('notes', $validated) ? $validated['notes'] : $medicalRecord->notes,
+        ]);
+
+        $animal = $medicalRecord->shelterAnimal()->withTrashed()->first();
+        if ($animal && ! empty($validated['update_animal_status'])) {
+            $newStatus = ShelterAnimalStatus::from($validated['update_animal_status']);
+            $oldStatus = $animal->status instanceof ShelterAnimalStatus ? $animal->status->value : (string) $animal->status;
+            $animal->update(['status' => $newStatus]);
+
+            AuditLog::log('animal_status_change', "Status changed from '{$oldStatus}' to '{$newStatus->value}' after updating medical record '{$medicalRecord->title}' for '{$animal->name}'", [
+                'animal_id' => $animal->id,
+                'previous_status' => $oldStatus,
+                'new_status' => $newStatus->value,
+            ]);
+        }
+
+        AuditLog::log('animal_medical_record_update', "Updated {$medicalRecord->record_type} record '{$medicalRecord->title}' for animal #{$medicalRecord->shelter_animal_id}", [
+            'record_id' => $medicalRecord->id,
+            'status' => $medicalRecord->status,
         ]);
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "Medical record '{$record->title}' logged successfully for {$animal->name}.",
+            'message' => "Medical record '{$medicalRecord->title}' updated successfully.",
         ]);
 
         return redirect()->back();
@@ -560,7 +653,7 @@ class AnimalMasterRecordController extends Controller
      */
     public function deleteMedicalRecord(AnimalMedicalRecord $medicalRecord): RedirectResponse
     {
-        $animal = $medicalRecord->shelterAnimal;
+        $animal = $medicalRecord->shelterAnimal()->withTrashed()->first();
         $title = $medicalRecord->title;
         $medicalRecord->delete();
 

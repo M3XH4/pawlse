@@ -42,13 +42,13 @@ test('non-admins cannot view animal master records page', function () {
     $response->assertForbidden();
 });
 
-test('admin can search animal records by name, breed, microchip, or id', function () {
+test('admin can search animal records by name, breed, color, or id', function () {
     $admin = User::factory()->admin()->create();
 
     $targetAnimal = ShelterAnimal::factory()->create([
         'name' => 'Zeus Unique Hound',
         'breed' => 'Doberman Pinscher',
-        'microchip_id' => '985123456789012',
+        'color' => 'Brindle Brown',
     ]);
 
     ShelterAnimal::factory()->count(5)->create(['name' => 'Normal Pet']);
@@ -62,8 +62,8 @@ test('admin can search animal records by name, breed, microchip, or id', functio
         ->where('animals.data.0.name', 'Zeus Unique Hound')
     );
 
-    // Search by microchip
-    $response = $this->actingAs($admin)->get(route('account.admin.animal-records', ['search' => '985123456789012']));
+    // Search by color
+    $response = $this->actingAs($admin)->get(route('account.admin.animal-records', ['search' => 'Brindle Brown']));
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->where('animals.total', 1)
@@ -118,7 +118,6 @@ test('admin can register a new animal master record', function () {
         'gender' => 'male',
         'color' => 'Golden Cream',
         'weight' => '22 kg',
-        'microchip_id' => '985000111222333',
         'current_location' => 'Main Shelter - Ward 3',
         'status' => 'available',
         'behavior' => 'Gentle with other pets and children',
@@ -138,7 +137,6 @@ test('admin can register a new animal master record', function () {
     $this->assertDatabaseHas('shelter_animals', [
         'name' => 'Barnaby',
         'breed' => 'Golden Retriever Mix',
-        'microchip_id' => '985000111222333',
         'current_location' => 'Main Shelter - Ward 3',
         'status' => ShelterAnimalStatus::Available,
         'vaccinated' => true,
@@ -295,5 +293,138 @@ test('computed location resolves foster parent location when animal is fostered'
         ->where('animals.data.0.current_location', 'Foster Home (Makati City Center)')
         ->where('animals.data.0.foster.is_active', true)
         ->where('animals.data.0.foster.parent_name', 'Jane Foster')
+    );
+});
+
+test('admin can log an injury record with severity and treatment plan, updating animal status to treatment', function () {
+    $admin = User::factory()->admin()->create();
+    $animal = ShelterAnimal::factory()->create([
+        'status' => ShelterAnimalStatus::Available,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('account.admin.animal-records.medical.store', $animal), [
+        'record_type' => 'injury',
+        'title' => 'Fractured Right Forelimb',
+        'performed_date' => '2026-06-10',
+        'next_due_date' => '2026-07-10',
+        'veterinarian' => 'Dr. Maria Santos, DVM',
+        'dosage' => 'Meloxicam 0.1mg/kg PO SID',
+        'severity' => 'severe',
+        'treatment_plan' => 'Splint applied, restrict kennel activity 4 weeks, change bandage weekly.',
+        'status' => 'under_treatment',
+        'update_animal_status' => 'treatment',
+        'notes' => 'Hit by vehicle before rescue. Animal is calm.',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('animal_medical_records', [
+        'shelter_animal_id' => $animal->id,
+        'record_type' => 'injury',
+        'title' => 'Fractured Right Forelimb',
+        'severity' => 'severe',
+        'treatment_plan' => 'Splint applied, restrict kennel activity 4 weeks, change bandage weekly.',
+        'status' => 'under_treatment',
+    ]);
+
+    $animal->refresh();
+    expect($animal->status)->toBe(ShelterAnimalStatus::Treatment);
+});
+
+test('admin can log a disease or illness record with quarantine status', function () {
+    $admin = User::factory()->admin()->create();
+    $animal = ShelterAnimal::factory()->create([
+        'status' => ShelterAnimalStatus::Available,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('account.admin.animal-records.medical.store', $animal), [
+        'record_type' => 'disease',
+        'title' => 'Canine Parvovirus',
+        'performed_date' => '2026-06-11',
+        'veterinarian' => 'Dr. Cruz, DVM',
+        'severity' => 'critical',
+        'treatment_plan' => 'IV fluids, antiemetics, broad-spectrum antibiotics, strict isolation.',
+        'status' => 'active',
+        'update_animal_status' => 'quarantine',
+        'notes' => 'Confirmed via antigen rapid test. Transferred to isolation ward immediately.',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('animal_medical_records', [
+        'shelter_animal_id' => $animal->id,
+        'record_type' => 'disease',
+        'title' => 'Canine Parvovirus',
+        'severity' => 'critical',
+        'status' => 'active',
+    ]);
+
+    $animal->refresh();
+    expect($animal->status)->toBe(ShelterAnimalStatus::Quarantine);
+});
+
+test('admin can update a medical record and mark an injury or disease as resolved', function () {
+    $admin = User::factory()->admin()->create();
+    $animal = ShelterAnimal::factory()->create([
+        'status' => ShelterAnimalStatus::Treatment,
+    ]);
+
+    $record = AnimalMedicalRecord::factory()->create([
+        'shelter_animal_id' => $animal->id,
+        'record_type' => 'injury',
+        'title' => 'Deep Bite Wound on Left Shoulder',
+        'performed_date' => '2026-06-01',
+        'severity' => 'moderate',
+        'status' => 'under_treatment',
+    ]);
+
+    $response = $this->actingAs($admin)->put(route('account.admin.animal-records.medical.update', $record), [
+        'status' => 'resolved',
+        'notes' => 'Wound completely epithelialized and healed. Stitches removed.',
+        'update_animal_status' => 'available',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $record->refresh();
+    expect($record->status)->toBe('resolved');
+    expect($record->notes)->toContain('Wound completely epithelialized');
+
+    $animal->refresh();
+    expect($animal->status)->toBe(ShelterAnimalStatus::Available);
+});
+
+test('animal master record inertia response includes injuries and active conditions and excludes microchip', function () {
+    $admin = User::factory()->admin()->create();
+    $animal = ShelterAnimal::factory()->create([
+        'name' => 'Rusty Recovery',
+        'status' => ShelterAnimalStatus::Treatment,
+    ]);
+
+    AnimalMedicalRecord::factory()->create([
+        'shelter_animal_id' => $animal->id,
+        'record_type' => 'injury',
+        'title' => 'Sprained Ankle',
+        'severity' => 'mild',
+        'status' => 'active',
+        'performed_date' => now()->toDateString(),
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('account.admin.animal-records'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('admin/animal-records')
+        ->where('animals.data.0.id', $animal->id)
+        ->where('animals.data.0.has_active_condition', true)
+        ->where('animals.data.0.active_condition_title', 'Sprained Ankle')
+        ->where('animals.data.0.active_condition_type', 'injury')
+        ->where('animals.data.0.active_condition_severity', 'mild')
+        ->where('animals.data.0.medical_history.conditions_count', 1)
+        ->where('animals.data.0.medical_history.active_conditions_count', 1)
+        ->missing('animals.data.0.microchip_id')
     );
 });
