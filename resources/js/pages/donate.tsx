@@ -821,17 +821,13 @@ export default function Donate({
                                     {auditPartner ? (
                                         <div className="space-y-4">
                                             <div className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                                                {auditPartner.image_url ? (
-                                                    <img
-                                                        src={auditPartner.image_url}
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-gray-200 shrink-0">
+                                                    <ImageWithFallback
+                                                        src={auditPartner.image_url || '/images/partners/audit-partner.jpg'}
                                                         alt={auditPartner.name}
-                                                        className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
+                                                        className="w-full h-full object-cover"
                                                     />
-                                                ) : (
-                                                    <div className="w-16 h-16 rounded-xl bg-paw-navy text-white flex items-center justify-center font-black text-xl shrink-0">
-                                                        {auditPartner.name.charAt(0)}
-                                                    </div>
-                                                )}
+                                                </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2 flex-wrap mb-1">
                                                         <h4 className="font-black text-paw-navy text-base truncate">{auditPartner.name}</h4>

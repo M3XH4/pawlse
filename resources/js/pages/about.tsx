@@ -24,7 +24,9 @@ import {
   ChevronDown,
   ChevronUp,
   UserCheck,
-  ArrowUpRight
+  ArrowUpRight,
+  ShieldCheck,
+  Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -335,6 +337,7 @@ const VOLUNTEER_HISTORY: VolunteerYearInfo[] = [
 interface AboutProps {
   veterinaryPartners?: any[];
   foodSupplyPartners?: any[];
+  auditPartners?: any[];
   collaboratorPartners?: any[];
   sponsorPartners?: any[];
   featuredSupporters?: any[];
@@ -349,6 +352,7 @@ interface AboutProps {
 export default function About({
   veterinaryPartners = [],
   foodSupplyPartners = [],
+  auditPartners = [],
   collaboratorPartners = [],
   sponsorPartners = [],
   featuredSupporters = [],
@@ -362,7 +366,7 @@ export default function About({
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   const [showVolunteers, setShowVolunteers] = useState(false);
-  const [partnerTab, setPartnerTab] = useState<'vet' | 'food' | 'collab' | 'sponsor'>('vet');
+  const [partnerTab, setPartnerTab] = useState<'vet' | 'food' | 'audit' | 'collab' | 'sponsor'>('vet');
   const [volunteerSearch, setVolunteerSearch] = useState('');
   const [volunteerYearFilter, setVolunteerYearFilter] = useState<'all' | string>('all');
   const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>({});
@@ -1201,6 +1205,18 @@ export default function About({
             </button>
 
             <button
+              onClick={() => setPartnerTab('audit')}
+              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                partnerTab === 'audit'
+                  ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
+              }`}
+            >
+              <ShieldCheck size={14} />
+              <span>Audit & Transparency</span>
+            </button>
+
+            <button
               onClick={() => setPartnerTab('collab')}
               className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
                 partnerTab === 'collab'
@@ -1209,7 +1225,7 @@ export default function About({
               }`}
             >
               <Users size={14} />
-              <span>Collaborators & Organizations</span>
+              <span>Collaborators</span>
             </button>
 
             <button
@@ -1221,7 +1237,7 @@ export default function About({
               }`}
             >
               <Heart size={14} />
-              <span>Sponsors & Supporters</span>
+              <span>Sponsors & Benefactors</span>
             </button>
           </div>
         </div>
@@ -1246,7 +1262,7 @@ export default function About({
                   href="/vet"
                   className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
                 >
-                  <span>View All</span>
+                  <span>View All Clinics</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>
@@ -1254,7 +1270,7 @@ export default function About({
               {/* Alert Banner */}
               <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
                 <AlertCircle size={16} className="text-amber-600 dark:text-[#FFAE33] shrink-0" />
-                <span>Some clinic details are still being collected from ISF and will be updated as information becomes available.</span>
+                <span>ISF maintains coordinated relationships with trusted clinics in Iligan City to provide prompt emergency medical treatment.</span>
               </div>
 
               {/* Clinic Cards Grid */}
@@ -1262,39 +1278,59 @@ export default function About({
                 {veterinaryPartners.slice(0, 3).map((clinic, idx) => (
                   <div 
                     key={clinic.id || idx}
-                    className="p-6 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4"
+                    className="p-5 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4 group"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm shrink-0">
-                          {clinic.logo_url || clinic.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <h4 className="font-black text-base text-paw-navy dark:text-white">{clinic.name}</h4>
-                          <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                            <MapPin size={11} className="text-[#FFAE33]" />
-                            <span>{clinic.city || 'Iligan City'}</span>
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {clinic.badge_title && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
-                            {clinic.badge_title}
-                          </span>
-                        )}
+                    <div>
+                      {/* Image Header with Fallback */}
+                      <div className="h-44 w-full overflow-hidden relative bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 border border-gray-200/60 dark:border-slate-700/60">
+                        <ImageWithFallback
+                          src={clinic.image_url || '/images/partners/dr-e.jpg'}
+                          alt={clinic.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                         {clinic.is_emergency && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-300 text-[10px] font-black uppercase tracking-wider">
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider shadow">
                             Emergency Option
                           </span>
                         )}
+                        {clinic.city && (
+                          <div className="absolute bottom-2 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                            <MapPin size={11} className="text-[#FFAE33]" />
+                            <span>{clinic.city}</span>
+                          </div>
+                        )}
                       </div>
 
-                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                        {clinic.short_description || clinic.description}
-                      </p>
+                      <div className="space-y-2">
+                        {clinic.badge_title && (
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                            {clinic.badge_title}
+                          </span>
+                        )}
+                        <h4 className="font-black text-lg text-paw-navy dark:text-white leading-tight">{clinic.name}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                          {clinic.short_description || clinic.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                      {clinic.operating_hours ? (
+                        <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate max-w-[180px]">
+                          <Clock size={12} className="text-amber-500 shrink-0" />
+                          <span className="truncate">{clinic.operating_hours}</span>
+                        </p>
+                      ) : <span />}
+
+                      {clinic.phone && (
+                        <a
+                          href={`tel:${clinic.phone.replace(/[^0-9+]/g, '')}`}
+                          className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                        >
+                          <Phone size={12} />
+                          <span>Call</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1305,7 +1341,7 @@ export default function About({
                   href="/vet"
                   className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider inline-flex items-center gap-1"
                 >
-                  <span>View Veterinary Partners</span>
+                  <span>View All Veterinary Partners & Directory</span>
                   <ArrowRight size={13} />
                 </Link>
               </div>
@@ -1322,15 +1358,15 @@ export default function About({
                     <span>Food & Supply Partners</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Businesses and community supporters helping provide food and essential supplies for animals under the care of Iligan Stray Feeders.
+                    Businesses and community supporters helping provide daily meals, dry food, and essential gear for animals under ISF care.
                   </p>
                 </div>
 
                 <Link
-                  href="/vet"
+                  href="/donate"
                   className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
                 >
-                  <span>View All</span>
+                  <span>Support Feeding</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>
@@ -1340,72 +1376,279 @@ export default function About({
                 {foodSupplyPartners.slice(0, 3).map((item, idx) => (
                   <div 
                     key={item.id || idx}
-                    className="p-6 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4"
+                    className="p-5 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4 group"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-                          {item.logo_url || (item.name ? item.name.substring(0, 2).toUpperCase() : 'FS')}
-                        </div>
-                        <div>
-                          <h4 className="font-black text-base text-paw-navy dark:text-white">{item.name}</h4>
-                          {item.operating_hours && (
-                            <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                              <Clock size={11} className="text-amber-500" />
-                              <span>{item.operating_hours}</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
+                    <div>
+                      {/* Image Header with Fallback */}
+                      <div className="h-44 w-full overflow-hidden relative bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 border border-gray-200/60 dark:border-slate-700/60">
+                        <ImageWithFallback
+                          src={item.image_url || '/images/partners/greenwich.png'}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                         {item.badge_title && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
                             {item.badge_title}
                           </span>
                         )}
+                        {item.city && (
+                          <div className="absolute bottom-2 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                            <MapPin size={11} className="text-[#FFAE33]" />
+                            <span>{item.city}</span>
+                          </div>
+                        )}
                       </div>
 
-                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                        {item.short_description || item.description}
-                      </p>
+                      <div className="space-y-2">
+                        <h4 className="font-black text-lg text-paw-navy dark:text-white leading-tight">{item.name}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                          {item.short_description || item.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                      {item.operating_hours ? (
+                        <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate">
+                          <Clock size={12} className="text-amber-500 shrink-0" />
+                          <span className="truncate">{item.operating_hours}</span>
+                        </p>
+                      ) : <span className="text-[11px] text-gray-400">Scheduled Support</span>}
+
+                      <Link
+                        href="/donate?tab=inkind"
+                        className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider flex items-center gap-0.5"
+                      >
+                        <span>Donate Food</span>
+                        <ChevronRight size={13} />
+                      </Link>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
 
-              <div className="pt-4 text-center">
+          {/* TAB 3: Audit & Transparency */}
+          {partnerTab === 'audit' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
+                    <ShieldCheck size={22} className="text-paw-orange" />
+                    <span>Independent Auditing & Financial Partners</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Accredited Certified Public Accounting and auditing firms ensuring ISF donation transparency, fund verification, and statutory compliance.
+                  </p>
+                </div>
+
                 <Link
-                  href="/vet"
-                  className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider inline-flex items-center gap-1"
+                  href="/donate"
+                  className="px-5 py-2.5 rounded-full bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shrink-0"
                 >
-                  <span>View Food & Supply Partners</span>
-                  <ArrowRight size={13} />
+                  <span>Transparency Center</span>
+                  <ArrowRight size={14} />
                 </Link>
+              </div>
+
+              {/* Audit Cards Grid */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                {auditPartners.length > 0 ? (
+                  auditPartners.map((auditor, idx) => (
+                    <div 
+                      key={auditor.id || idx}
+                      className="p-5 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4 group"
+                    >
+                      <div>
+                        {/* Image Header with Fallback */}
+                        <div className="h-44 w-full overflow-hidden relative bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 border border-gray-200/60 dark:border-slate-700/60">
+                          <ImageWithFallback
+                            src={auditor.image_url || '/images/partners/audit-partner.jpg'}
+                            alt={auditor.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow">
+                            Verified Auditor
+                          </span>
+                          {auditor.city && (
+                            <div className="absolute bottom-2 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                              <MapPin size={11} className="text-[#FFAE33]" />
+                              <span>{auditor.city}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 text-[10px] font-black uppercase tracking-wider">
+                            {auditor.badge_title || 'PRC-BOA ACCREDITED'}
+                          </span>
+                          <h4 className="font-black text-lg text-paw-navy dark:text-white leading-tight">{auditor.name}</h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                            {auditor.short_description || auditor.description}
+                          </p>
+
+                          {auditor.services && auditor.services.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {auditor.services.slice(0, 3).map((svc: string, sIdx: number) => (
+                                <span key={sIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-gray-100 dark:border-slate-600">
+                                  {svc}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                        {auditor.operating_hours ? (
+                          <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate">
+                            <Clock size={12} className="text-amber-500 shrink-0" />
+                            <span className="truncate">{auditor.operating_hours}</span>
+                          </p>
+                        ) : <span />}
+
+                        {auditor.website_url ? (
+                          <a
+                            href={auditor.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider flex items-center gap-0.5"
+                          >
+                            <span>Verify</span>
+                            <ArrowUpRight size={13} />
+                          </a>
+                        ) : (
+                          <Link
+                            href="/donate"
+                            className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider flex items-center gap-0.5"
+                          >
+                            <span>View Records</span>
+                            <ChevronRight size={13} />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-8 text-center text-gray-400">
+                    <p className="text-xs">Audit and transparency partners are currently being finalized.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* TAB 3 & 4: Collaborators & Sponsors */}
-          {(partnerTab === 'collab' || partnerTab === 'sponsor') && (
-            <div className="py-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto mb-2">
-                <Award size={22} />
-              </div>
-              <h4 className="font-black text-lg text-paw-navy dark:text-white">
-                {partnerTab === 'collab' ? 'Collaborators & Community Organizations' : 'Sponsors & Benefactors'}
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                Organizations, local government units, and sponsors collaborating with ISF to improve animal welfare in Northern Mindanao.
-              </p>
-              <div className="pt-2">
+          {/* TAB 4: Collaborators */}
+          {partnerTab === 'collab' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
+                    <Users size={22} className="text-paw-orange" />
+                    <span>Collaborators & Community Organizations</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Local government units, civil society groups, and animal welfare advocates partnering with ISF.
+                  </p>
+                </div>
+
                 <Link 
                   href="/honor" 
                   className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
                 >
-                  <span>Explore Community of Honor</span>
+                  <span>Explore Honor Wall</span>
                   <ArrowRight size={13} />
                 </Link>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                {collaboratorPartners.length > 0 ? (
+                  collaboratorPartners.map((partner, idx) => (
+                    <div 
+                      key={partner.id || idx}
+                      className="p-5 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4 group"
+                    >
+                      <div>
+                        <div className="h-44 w-full overflow-hidden relative bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 border border-gray-200/60 dark:border-slate-700/60">
+                          <ImageWithFallback
+                            src={partner.image_url || '/images/partners/dr-e.jpg'}
+                            alt={partner.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-purple-600 text-white text-[10px] font-black uppercase tracking-wider shadow">
+                            Collaborator
+                          </span>
+                        </div>
+                        <h4 className="font-black text-lg text-paw-navy dark:text-white leading-tight">{partner.name}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-3">
+                          {partner.short_description || partner.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-8 text-center text-gray-400 text-xs">
+                    Collaborating organizations list is being updated.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: Sponsors */}
+          {partnerTab === 'sponsor' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
+                    <Heart size={22} className="text-paw-orange" />
+                    <span>Sponsors & Benefactors</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Major corporate benefactors, philanthropic initiatives, and foundation supporters of Iligan Stray Feeders.
+                  </p>
+                </div>
+
+                <Link 
+                  href="/honor" 
+                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
+                >
+                  <span>Honor Wall</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                {sponsorPartners.length > 0 ? (
+                  sponsorPartners.map((partner, idx) => (
+                    <div 
+                      key={partner.id || idx}
+                      className="p-5 rounded-3xl bg-gray-50/80 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 flex flex-col justify-between hover:border-paw-orange/40 transition-all space-y-4 group"
+                    >
+                      <div>
+                        <div className="h-44 w-full overflow-hidden relative bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 border border-gray-200/60 dark:border-slate-700/60">
+                          <ImageWithFallback
+                            src={partner.image_url || '/images/partners/furpet.jpg'}
+                            alt={partner.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow">
+                            Sponsor
+                          </span>
+                        </div>
+                        <h4 className="font-black text-lg text-paw-navy dark:text-white leading-tight">{partner.name}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-3">
+                          {partner.short_description || partner.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-8 text-center text-gray-400 text-xs">
+                    Sponsoring organizations list is being updated.
+                  </div>
+                )}
               </div>
             </div>
           )}

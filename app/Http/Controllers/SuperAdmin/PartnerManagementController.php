@@ -54,6 +54,7 @@ class PartnerManagementController extends Controller
             'total' => Partner::count(),
             'veterinary' => Partner::where('category', 'veterinary')->count(),
             'food_supply' => Partner::where('category', 'food_supply')->count(),
+            'audit' => Partner::whereIn('category', ['audit', 'accounting'])->count(),
             'emergency' => Partner::where('is_emergency', true)->count(),
             'archived' => Partner::onlyTrashed()->count(),
         ];
@@ -100,6 +101,7 @@ class PartnerManagementController extends Controller
             $path = $request->file('image')->store('partners', 'public');
             $validated['image_url'] = '/storage/'.$path;
         }
+        unset($validated['image']);
 
         $validated['slug'] = Str::slug($validated['name']).'-'.Str::random(5);
 
@@ -145,6 +147,7 @@ class PartnerManagementController extends Controller
             $path = $request->file('image')->store('partners', 'public');
             $validated['image_url'] = '/storage/'.$path;
         }
+        unset($validated['image']);
 
         $partner->update($validated);
 

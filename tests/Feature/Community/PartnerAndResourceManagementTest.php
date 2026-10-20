@@ -8,6 +8,8 @@ use App\Models\User;
 use Database\Seeders\PartnerAndResourceSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
@@ -302,6 +304,7 @@ test('public about page renders successfully with partners network and community
             ->component('about')
             ->has('veterinaryPartners')
             ->has('foodSupplyPartners')
+            ->has('auditPartners')
             ->has('featuredSupporters')
             ->has('networkStats')
         );
@@ -386,4 +389,71 @@ test('super admin can create resource with audit_report or financial_audit categ
         'title' => '2025 Q4 Financial Transparency Report',
         'category' => 'audit_report',
     ]);
+});
+
+test('super admin can upload partner image file when creating and updating partner', function () {
+    Storage::fake('public');
+
+    $file = UploadedFile::fake()->image('audit_firm.jpg', 600, 400);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('account.super-admin.partners.store'), [
+            'name' => 'Veritas Audit & Assurance',
+            'category' => 'audit',
+            'badge_title' => 'PRC-BOA ACCREDITED',
+            'city' => 'Iligan City',
+            'image' => $file,
+            'is_emergency' => false,
+            'is_featured' => true,
+            'is_active' => true,
+            'display_order' => 1,
+        ])
+        ->assertRedirect();
+
+    $partner = Partner::where('name', 'Veritas Audit & Assurance')->first();
+    expect($partner)->not->toBeNull();
+    expect($partner->image_url)->toStartWith('/storage/partners/');
+
+    $storagePath = str_replace('/storage/', '', $partner->image_url);
+    Storage::disk('public')->assertExists($storagePath);
+
+    // Update with new image
+    $newFile = UploadedFile::fake()->image('audit_firm_updated.jpg', 800, 600);
+    $this->actingAs($this->superAdmin)
+        ->put(route('account.super-admin.partners.update', $partner), [
+            'name' => 'Veritas Audit & Assurance Updated',
+            'category' => 'audit',
+            'image' => $newFile,
+            'is_emergency' => false,
+            'is_featured' => true,
+            'is_active' => true,
+            'display_order' => 1,
+        ])
+        ->assertRedirect();
+
+    $updatedPartner = $partner->fresh();
+    expect($updatedPartner->name)->toBe('Veritas Audit & Assurance Updated');
+    $newStoragePath = str_replace('/storage/', '', $updatedPartner->image_url);
+    Storage::disk('public')->assertExists($newStoragePath);
+});
+
+test('partner seeder seeds Valdez Accounting & Audit Partners and renders on donate transparency section', function () {
+    $this->seed(PartnerAndResourceSeeder::class);
+
+    $auditPartner = Partner::where('category', 'audit')
+        ->where('slug', 'valdez-accounting-audit-partners')
+        ->first();
+
+    expect($auditPartner)->not->toBeNull();
+    expect($auditPartner->name)->toBe('Valdez Accounting & Audit Partners, CPAs');
+    expect($auditPartner->badge_title)->toBe('INDEPENDENT AUDITING PARTNER');
+    expect($auditPartner->is_emergency)->toBeFalse();
+
+    $this->get(route('donate'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('donate')
+            ->has('auditPartner')
+            ->where('auditPartner.name', 'Valdez Accounting & Audit Partners, CPAs')
+        );
 });

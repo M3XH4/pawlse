@@ -732,24 +732,40 @@ export default function VetPage({
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
+                            className="bg-white dark:bg-slate-900 rounded-[28px] sm:rounded-[36px] max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
                         >
-                            <button 
-                                onClick={() => setSelectedClinic(null)}
-                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase">
-                                    Veterinary Partner
-                                </span>
-                                {selectedClinic.is_emergency && (
-                                    <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-300 text-xs font-black uppercase">
-                                        Emergency Option
-                                    </span>
-                                )}
+                            {/* Clinic Image Banner in Modal */}
+                            <div className="relative h-48 sm:h-56 -mx-6 sm:-mx-8 -mt-6 sm:-mt-8 mb-6 overflow-hidden rounded-t-[28px] sm:rounded-t-[36px] bg-slate-100 dark:bg-slate-800">
+                                <ImageWithFallback 
+                                    src={selectedClinic.image_url || '/images/partners/dr-e.jpg'} 
+                                    alt={selectedClinic.name} 
+                                    className="w-full h-full object-cover" 
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                                <button 
+                                    onClick={() => setSelectedClinic(null)}
+                                    className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors cursor-pointer"
+                                    aria-label="Close modal"
+                                >
+                                    <X size={18} />
+                                </button>
+                                <div className="absolute bottom-4 left-6 right-6 flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-3 py-1 rounded-full bg-emerald-500/90 text-white text-[11px] font-black uppercase tracking-wider shadow">
+                                            Veterinary Partner
+                                        </span>
+                                        {selectedClinic.is_emergency && (
+                                            <span className="px-3 py-1 rounded-full bg-red-600 text-white text-[11px] font-black uppercase tracking-wider shadow">
+                                                Emergency Option
+                                            </span>
+                                        )}
+                                    </div>
+                                    {selectedClinic.badge_title && (
+                                        <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold uppercase shadow">
+                                            {selectedClinic.badge_title}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <h3 className="text-2xl font-black text-paw-navy dark:text-white">{selectedClinic.name}</h3>

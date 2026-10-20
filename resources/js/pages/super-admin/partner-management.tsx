@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-    Handshake, Plus, Search, Filter, Edit2, Trash2, X, Check, 
+    Handshake, Plus, Search, Edit2, Trash2, X, Check, 
     RotateCcw, Stethoscope, Package, AlertCircle, Phone, MapPin, 
-    Clock, ExternalLink, ShieldAlert, Sparkles, Building2, Eye, EyeOff
+    Clock, ExternalLink, ShieldAlert, Sparkles, Building2,
+    UploadCloud, Image as ImageIcon, ShieldCheck, Globe, Mail,
+    FileText, CheckCircle2, ChevronRight, Info
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { toast } from 'sonner';
+
+export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
 
 interface PartnerRecord {
     id: number;
     name: string;
     slug: string;
-    category: 'veterinary' | 'food_supply' | 'collaborator' | 'sponsor';
+    category: PartnerCategory;
     badge_title?: string | null;
     badges?: string[] | null;
     short_description?: string | null;
@@ -52,6 +57,7 @@ interface PartnerManagementProps {
         total: number;
         veterinary: number;
         food_supply: number;
+        audit?: number;
         emergency: number;
         archived: number;
     };
@@ -69,10 +75,16 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingPartner, setEditingPartner] = useState<PartnerRecord | null>(null);
 
+    // Image Upload & Preview State
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [showManualUrl, setShowManualUrl] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // Form for Create / Edit
-    const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
+    const { data, setData, processing, reset, errors, clearErrors } = useForm({
         name: '',
-        category: 'veterinary' as 'veterinary' | 'food_supply' | 'collaborator' | 'sponsor',
+        category: 'veterinary' as PartnerCategory,
         badge_title: '',
         badges_string: '',
         short_description: '',
@@ -84,6 +96,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
         website_url: '',
         operating_hours: '',
         services_string: '',
+        image: null as File | null,
         image_url: '',
         logo_url: '',
         is_emergency: false,
@@ -95,6 +108,9 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const openCreateModal = () => {
         clearErrors();
         reset();
+        setData('image', null);
+        setImagePreview(null);
+        setShowManualUrl(false);
         setIsCreateModalOpen(true);
     };
 
@@ -115,6 +131,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             website_url: partner.website_url || '',
             operating_hours: partner.operating_hours || '',
             services_string: partner.services ? partner.services.join(', ') : '',
+            image: null,
             image_url: partner.image_url || '',
             logo_url: partner.logo_url || '',
             is_emergency: partner.is_emergency,
@@ -122,12 +139,71 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             is_active: partner.is_active,
             display_order: partner.display_order,
         });
+        setImagePreview(partner.image_url || null);
+        setShowManualUrl(!partner.image_url?.startsWith('/storage/partners/'));
     };
 
     const closeModals = () => {
         setIsCreateModalOpen(false);
         setEditingPartner(null);
+        setImagePreview(null);
+        setShowManualUrl(false);
         reset();
+    };
+
+    const handleFileSelect = (file: File) => {
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please upload an image file (PNG, JPG, WEBP).');
+            return;
+        }
+        if (file.size > 4 * 1024 * 1024) {
+            toast.error('Image must be under 4MB.');
+            return;
+        }
+        setData('image', file);
+        const objectUrl = URL.createObjectURL(file);
+        setImagePreview(objectUrl);
+    };
+
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            handleFileSelect(e.target.files[0]);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setData((prev) => ({ ...prev, image: null, image_url: '' }));
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleCategorySelect = (cat: PartnerCategory) => {
+        setData((prev) => ({
+            ...prev,
+            category: cat,
+            // Automatically disable emergency contact for non-veterinary categories
+            is_emergency: cat === 'veterinary' ? prev.is_emergency : false,
+        }));
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -166,10 +242,16 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             ...data,
             badges,
             services,
+            is_emergency: data.category === 'veterinary' ? data.is_emergency : false,
         };
 
         if (editingPartner) {
-            router.put(`/account/super-admin/partners/${editingPartner.id}`, payload, {
+            router.post(`/account/super-admin/partners/${editingPartner.id}`, {
+                ...payload,
+                _method: 'PUT',
+            }, {
+                forceFormData: true,
+                preserveScroll: true,
                 onSuccess: () => {
                     toast.success('Partner updated successfully.');
                     closeModals();
@@ -178,6 +260,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             });
         } else {
             router.post('/account/super-admin/partners', payload, {
+                forceFormData: true,
+                preserveScroll: true,
                 onSuccess: () => {
                     toast.success('Partner added successfully.');
                     closeModals();
@@ -210,63 +294,157 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
         });
     };
 
+    // Category styling & labeling helpers
+    const getCategoryBadgeClass = (category: PartnerCategory) => {
+        switch (category) {
+            case 'veterinary':
+                return 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40';
+            case 'food_supply':
+                return 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40';
+            case 'audit':
+            case 'accounting':
+                return 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40';
+            case 'collaborator':
+                return 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40';
+            case 'sponsor':
+                return 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40';
+            default:
+                return 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300';
+        }
+    };
+
+    const getCategoryIcon = (category: PartnerCategory) => {
+        switch (category) {
+            case 'veterinary':
+                return <Stethoscope size={11} className="inline mr-1" />;
+            case 'food_supply':
+                return <Package size={11} className="inline mr-1" />;
+            case 'audit':
+            case 'accounting':
+                return <ShieldCheck size={11} className="inline mr-1" />;
+            case 'collaborator':
+                return <Handshake size={11} className="inline mr-1" />;
+            case 'sponsor':
+                return <Sparkles size={11} className="inline mr-1" />;
+            default:
+                return null;
+        }
+    };
+
+    // Category context dynamic text
+    const isVet = data.category === 'veterinary';
+    const isFood = data.category === 'food_supply';
+    const isAudit = data.category === 'audit' || data.category === 'accounting';
+
+    const getServicesLabel = () => {
+        if (isVet) return 'Veterinary Services & Specialties (comma-separated)';
+        if (isFood) return 'Provisions & Supplies Provided (comma-separated)';
+        if (isAudit) return 'Audit Scope & Professional Services (comma-separated)';
+        return 'Services or Collaboration Focus (comma-separated)';
+    };
+
+    const getServicesPlaceholder = () => {
+        if (isVet) return 'Emergency Response, Minor/Major Surgery, Vaccinations, Confinement';
+        if (isFood) return 'Kibble Bags, Rice Sacks, Canned Food, Vitamin Supplements, Feeding Bowls';
+        if (isAudit) return 'Annual Financial Audit, Donation Fund Verification, NGO Tax Compliance, Disbursement Review';
+        return 'Spay/Neuter Outreach, Community Feeding Support, Rescue Transport';
+    };
+
+    const getHoursLabel = () => {
+        if (isVet) return 'Clinic Consultation Hours';
+        if (isFood) return 'Store Hours or Supply Schedule';
+        if (isAudit) return 'Office Business Hours';
+        return 'Operating Hours / Office Schedule';
+    };
+
+    const getHoursPlaceholder = () => {
+        if (isVet) return 'Mon - Sat: 8:00 AM – 7:00 PM | Sun: 9:00 AM – 3:00 PM';
+        if (isFood) return 'Daily: 10:00 AM – 8:00 PM or Weekly Schedule';
+        if (isAudit) return 'Mon - Fri: 8:30 AM – 5:30 PM';
+        return 'Mon - Fri: 9:00 AM – 5:00 PM';
+    };
+
+    const getAddressLabel = () => {
+        if (isVet) return 'Clinic Address';
+        if (isFood) return 'Store / Supply Depot Address';
+        if (isAudit) return 'Office Address / Suite';
+        return 'Office / Physical Address';
+    };
+
+    const getBadgeTitlePlaceholder = () => {
+        if (isVet) return 'e.g. FREQUENTLY CONTACTED BY ISF';
+        if (isFood) return 'e.g. REGULAR FOOD SUPPORT';
+        if (isAudit) return 'e.g. INDEPENDENT AUDITING PARTNER';
+        return 'e.g. OFFICIAL SUPPORTER';
+    };
+
     return (
         <DashboardSectionPage
             title="Partner Management"
-            description="Manage veterinary clinics, food and supply donors, corporate partners, and emergency animal care network"
+            description="Manage veterinary clinics, food and supply donors, financial audit partners, and community welfare network"
         >
             <Head title="Partner Management | Super Admin" />
 
             <div className="space-y-6">
                 {/* 1. Metric Stats Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
                     <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-black">
+                        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-black shrink-0">
                             <Handshake size={20} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="text-xl font-black text-slate-800 dark:text-white">{stats.total}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Total Partners</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Total Partners</p>
                         </div>
                     </DashboardCard>
 
                     <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black shrink-0">
                             <Stethoscope size={20} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="text-xl font-black text-slate-800 dark:text-white">{stats.veterinary}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Vet Clinics</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Vet Clinics</p>
                         </div>
                     </DashboardCard>
 
                     <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black shrink-0">
                             <Package size={20} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="text-xl font-black text-slate-800 dark:text-white">{stats.food_supply}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Food / Supplies</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Food / Supplies</p>
                         </div>
                     </DashboardCard>
 
                     <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-black">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-black shrink-0">
+                            <ShieldCheck size={20} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.audit ?? 0}</span>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Audit & Legal</p>
+                        </div>
+                    </DashboardCard>
+
+                    <DashboardCard className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-black shrink-0">
                             <ShieldAlert size={20} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="text-xl font-black text-slate-800 dark:text-white">{stats.emergency}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Emergency Opts</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Emergency Opts</p>
                         </div>
                     </DashboardCard>
 
                     <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gray-500/10 text-gray-600 flex items-center justify-center font-black">
+                        <div className="w-10 h-10 rounded-2xl bg-gray-500/10 text-gray-600 flex items-center justify-center font-black shrink-0">
                             <RotateCcw size={20} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="text-xl font-black text-slate-800 dark:text-white">{stats.archived}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Archived</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase truncate">Archived</p>
                         </div>
                     </DashboardCard>
                 </div>
@@ -365,9 +543,13 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             {/* Partner Name & Image */}
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center font-black text-xs text-gray-600 dark:text-gray-300">
+                                                    <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center font-black text-xs text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-slate-700/60">
                                                         {partner.image_url ? (
-                                                            <img src={partner.image_url} alt={partner.name} className="w-full h-full object-cover" />
+                                                            <ImageWithFallback 
+                                                                src={partner.image_url} 
+                                                                alt={partner.name} 
+                                                                className="w-full h-full object-cover" 
+                                                            />
                                                         ) : (
                                                             <span>{partner.logo_url || partner.name.substring(0, 2).toUpperCase()}</span>
                                                         )}
@@ -384,13 +566,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
 
                                             {/* Category */}
                                             <td className="py-3 px-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                    partner.category === 'veterinary'
-                                                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                                                        : partner.category === 'food_supply'
-                                                        ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                                                        : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getCategoryBadgeClass(partner.category)}`}>
+                                                    {getCategoryIcon(partner.category)}
                                                     {partner.category.replace('_', ' ')}
                                                 </span>
                                             </td>
@@ -399,13 +576,19 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             <td className="py-3 px-4 space-y-1">
                                                 {partner.phone && (
                                                     <p className="flex items-center gap-1 text-[11px] text-slate-700 dark:text-slate-300">
-                                                        <Phone size={12} className="text-emerald-500" />
+                                                        <Phone size={12} className="text-emerald-500 shrink-0" />
                                                         <span>{partner.phone}</span>
+                                                    </p>
+                                                )}
+                                                {partner.email && (
+                                                    <p className="flex items-center gap-1 text-[10px] text-gray-500 truncate max-w-[180px]">
+                                                        <Mail size={11} className="text-blue-500 shrink-0" />
+                                                        <span className="truncate">{partner.email}</span>
                                                     </p>
                                                 )}
                                                 {partner.operating_hours && (
                                                     <p className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                        <Clock size={11} className="text-amber-500" />
+                                                        <Clock size={11} className="text-amber-500 shrink-0" />
                                                         <span className="truncate max-w-[180px]">{partner.operating_hours}</span>
                                                     </p>
                                                 )}
@@ -443,8 +626,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                                         onClick={() => handleToggleStatus(partner)}
                                                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-black cursor-pointer uppercase transition-colors ${
                                                             partner.is_active
-                                                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                                                                : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                                                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                                                : 'bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-950 dark:text-rose-300'
                                                         }`}
                                                         title="Click to toggle status"
                                                     >
@@ -459,7 +642,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                                     {partner.deleted_at ? (
                                                         <button
                                                             onClick={() => handleRestore(partner)}
-                                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors"
+                                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
                                                             title="Restore Partner"
                                                         >
                                                             <RotateCcw size={15} />
@@ -521,7 +704,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm"
                         onClick={closeModals}
                     >
                         <motion.div
@@ -529,63 +712,182 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto"
+                            className="bg-white dark:bg-slate-900 rounded-[28px] sm:rounded-[36px] max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto"
                         >
                             <button
                                 onClick={closeModals}
-                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
+                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
 
-                            <h3 className="text-2xl font-black text-paw-navy dark:text-white mb-1">
-                                {editingPartner ? 'Edit Partner' : 'Add New Partner'}
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-6">
-                                Provide partner details, contact options, emergency status, and categories
-                            </p>
+                            <div className="mb-6">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2 ${getCategoryBadgeClass(data.category)}`}>
+                                    {getCategoryIcon(data.category)}
+                                    {data.category.replace('_', ' ')}
+                                </span>
+                                <h3 className="text-2xl font-black text-paw-navy dark:text-white mb-1">
+                                    {editingPartner ? 'Edit Partner' : 'Add New Partner'}
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    Configure partner information, verified image, and category-tailored details
+                                </p>
+                            </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
+                                {/* Basic Identification */}
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Partner Name *</label>
+                                        <label className="block text-gray-500 mb-1">Partner / Organization Name *</label>
                                         <input
                                             type="text"
                                             required
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
-                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="e.g. Dr. E Veterinary Clinic"
+                                            className="w-full px-3.5 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700 focus:ring-2 focus:ring-paw-orange outline-none"
+                                            placeholder={isAudit ? 'e.g. Valdez Accounting & Audit Partners, CPAs' : isFood ? 'e.g. House of Rice' : 'e.g. Dr. E Veterinary Clinic'}
                                         />
                                         {errors.name && <p className="text-red-500 mt-1">{errors.name}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Category *</label>
+                                        <label className="block text-gray-500 mb-1">Partner Category *</label>
                                         <select
                                             value={data.category}
-                                            onChange={(e) => setData('category', e.target.value as any)}
-                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 font-bold"
+                                            onChange={(e) => handleCategorySelect(e.target.value as PartnerCategory)}
+                                            className="w-full px-3.5 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700 font-bold focus:ring-2 focus:ring-paw-orange outline-none"
                                         >
-                                            <option value="veterinary">Veterinary Partner</option>
-                                            <option value="food_supply">Food & Supply Partner</option>
-                                            <option value="audit">Audit & Financial Partner</option>
-                                            <option value="accounting">Accounting Partner</option>
-                                            <option value="collaborator">Collaborator</option>
-                                            <option value="sponsor">Sponsor</option>
+                                            <option value="veterinary">🩺 Veterinary Partner</option>
+                                            <option value="food_supply">📦 Food & Supply Partner</option>
+                                            <option value="audit">🛡️ Audit & Financial Partner</option>
+                                            <option value="accounting">📊 Accounting Partner</option>
+                                            <option value="collaborator">🤝 Collaborator / LGU Partner</option>
+                                            <option value="sponsor">✨ Benefactor / Sponsor</option>
                                         </select>
                                     </div>
                                 </div>
 
+                                {/* Image Upload with Live Preview */}
+                                <div>
+                                    <label className="block text-gray-500 mb-1.5 flex items-center justify-between">
+                                        <span>Partner Image / Logo (with Preview)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowManualUrl(!showManualUrl)}
+                                            className="text-[11px] text-paw-orange hover:underline font-bold"
+                                        >
+                                            {showManualUrl ? 'Switch to File Upload' : 'Or Enter URL Manually'}
+                                        </button>
+                                    </label>
+
+                                    {!showManualUrl ? (
+                                        <div className="space-y-3">
+                                            {/* Preview Box if image exists */}
+                                            {imagePreview ? (
+                                                <div className="relative rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-slate-50 dark:bg-slate-800/80 p-3 flex items-center gap-4">
+                                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border border-gray-200 dark:border-slate-600">
+                                                        <img
+                                                            src={imagePreview}
+                                                            alt="Partner Preview"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-1.5 text-emerald-600 font-black text-xs mb-1">
+                                                            <CheckCircle2 size={14} />
+                                                            <span>Image Selected</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-gray-500 truncate">
+                                                            {data.image ? data.image.name : (data.image_url || 'Current Partner Image')}
+                                                        </p>
+                                                        {data.image && (
+                                                            <p className="text-[10px] text-gray-400">
+                                                                {(data.image.size / 1024).toFixed(1)} KB
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => fileInputRef.current?.click()}
+                                                            className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                                                        >
+                                                            Change
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleRemoveImage}
+                                                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                                                            title="Remove Image"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onDragOver={handleDragOver}
+                                                    onDragLeave={handleDragLeave}
+                                                    onDrop={handleDrop}
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+                                                        isDragging 
+                                                            ? 'border-paw-orange bg-paw-orange/5 scale-[1.01]' 
+                                                            : 'border-gray-300 dark:border-slate-700 hover:border-paw-orange/60 bg-gray-50/50 dark:bg-slate-800/40'
+                                                    }`}
+                                                >
+                                                    <UploadCloud size={28} className="mx-auto text-paw-orange mb-2" />
+                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                                        Click to upload or drag & drop partner photo
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 mt-0.5">
+                                                        PNG, JPG, or WEBP (Max 4MB)
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                onChange={handleFileInputChange}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                value={data.image_url}
+                                                onChange={(e) => {
+                                                    setData('image_url', e.target.value);
+                                                    setImagePreview(e.target.value || null);
+                                                }}
+                                                className="w-full px-3.5 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700 focus:ring-2 focus:ring-paw-orange outline-none"
+                                                placeholder="/images/partners/audit-partner.jpg or https://..."
+                                            />
+                                            {imagePreview && (
+                                                <div className="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                                                    <img src={imagePreview} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
+                                                    <span className="text-[11px] text-gray-500">Live URL Preview</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {errors.image && <p className="text-red-500 mt-1">{errors.image}</p>}
+                                    {errors.image_url && <p className="text-red-500 mt-1">{errors.image_url}</p>}
+                                </div>
+
+                                {/* Badges & Summary */}
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Badge Title (Summary)</label>
+                                        <label className="block text-gray-500 mb-1">Badge Title (Card Summary Banner)</label>
                                         <input
                                             type="text"
                                             value={data.badge_title}
                                             onChange={(e) => setData('badge_title', e.target.value)}
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="e.g. Frequently Contacted by ISF"
+                                            placeholder={getBadgeTitlePlaceholder()}
                                         />
                                     </div>
 
@@ -596,19 +898,20 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             value={data.badges_string}
                                             onChange={(e) => setData('badges_string', e.target.value)}
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="Emergency Response, Trusted Partner"
+                                            placeholder={isAudit ? 'Independent Financial Auditor, PRC-BOA Accredited' : 'Emergency Response, Trusted Partner'}
                                         />
                                     </div>
                                 </div>
 
+                                {/* Descriptions */}
                                 <div>
-                                    <label className="block text-gray-500 mb-1">Short Description</label>
+                                    <label className="block text-gray-500 mb-1">Short Description (Summary for Cards)</label>
                                     <input
                                         type="text"
                                         value={data.short_description}
                                         onChange={(e) => setData('short_description', e.target.value)}
                                         className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                        placeholder="One-line summary for cards"
+                                        placeholder="One-line summary for partner cards and showcase headers"
                                     />
                                 </div>
 
@@ -619,24 +922,25 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                         value={data.description}
                                         onChange={(e) => setData('description', e.target.value)}
                                         className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                        placeholder="Detailed background or services"
+                                        placeholder="Detailed background, mission, facilities, or support scope"
                                     />
                                 </div>
 
+                                {/* Address & Location */}
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Address</label>
+                                        <label className="block text-gray-500 mb-1">{getAddressLabel()}</label>
                                         <input
                                             type="text"
                                             value={data.address}
                                             onChange={(e) => setData('address', e.target.value)}
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="e.g. Dao Hinaplanon Highway"
+                                            placeholder={isAudit ? 'Suite 302, Diocesan Pastoral Center, Lluch St.' : 'e.g. Dao Hinaplanon Highway'}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-gray-500 mb-1">City / Zone</label>
+                                        <label className="block text-gray-500 mb-1">City / Municipality</label>
                                         <input
                                             type="text"
                                             value={data.city}
@@ -647,7 +951,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                     </div>
                                 </div>
 
-                                <div className="grid sm:grid-cols-2 gap-4">
+                                {/* Contact Details */}
+                                <div className="grid sm:grid-cols-3 gap-3">
                                     <div>
                                         <label className="block text-gray-500 mb-1">Phone Number</label>
                                         <input
@@ -660,61 +965,77 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                     </div>
 
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Operating Hours</label>
+                                        <label className="block text-gray-500 mb-1">Email Address</label>
+                                        <input
+                                            type="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            placeholder="partner@contact.ph"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-gray-500 mb-1">{getHoursLabel()}</label>
                                         <input
                                             type="text"
                                             value={data.operating_hours}
                                             onChange={(e) => setData('operating_hours', e.target.value)}
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="Mon - Sat: 8:00 AM – 7:00 PM"
+                                            placeholder={getHoursPlaceholder()}
                                         />
                                     </div>
                                 </div>
 
+                                {/* Category-Fit Services / Scope & Website */}
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-gray-500 mb-1">Image URL / Path</label>
-                                        <input
-                                            type="text"
-                                            value={data.image_url}
-                                            onChange={(e) => setData('image_url', e.target.value)}
-                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="/images/partners/dr-e.jpg"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-gray-500 mb-1">Services (comma-separated)</label>
+                                        <label className="block text-gray-500 mb-1">{getServicesLabel()}</label>
                                         <input
                                             type="text"
                                             value={data.services_string}
                                             onChange={(e) => setData('services_string', e.target.value)}
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            placeholder="Emergency, Vaccinations, Surgery"
+                                            placeholder={getServicesPlaceholder()}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-gray-500 mb-1">Website or Audit Report Link</label>
+                                        <input
+                                            type="url"
+                                            value={data.website_url}
+                                            onChange={(e) => setData('website_url', e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            placeholder="https://iliganstrayfeeders.org/transparency"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Toggles */}
-                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 grid grid-cols-3 gap-3">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={data.is_emergency}
-                                            onChange={(e) => setData('is_emergency', e.target.checked)}
-                                            className="rounded text-red-600"
-                                        />
-                                        <span className="text-[11px] font-bold text-red-600">Emergency Contact</span>
-                                    </label>
+                                {/* Category-Aware Toggles */}
+                                <div className={`p-4 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 grid gap-3 ${
+                                    isVet ? 'grid-cols-3' : 'grid-cols-2'
+                                }`}>
+                                    {isVet && (
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.is_emergency}
+                                                onChange={(e) => setData('is_emergency', e.target.checked)}
+                                                className="rounded text-red-600 focus:ring-red-500"
+                                            />
+                                            <span className="text-[11px] font-bold text-red-600">Emergency Contact</span>
+                                        </label>
+                                    )}
 
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={data.is_featured}
                                             onChange={(e) => setData('is_featured', e.target.checked)}
-                                            className="rounded text-amber-500"
+                                            className="rounded text-amber-500 focus:ring-amber-400"
                                         />
-                                        <span className="text-[11px] font-bold text-amber-600">Featured (Top Banner)</span>
+                                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">Featured (Top Banner)</span>
                                     </label>
 
                                     <label className="flex items-center gap-2 cursor-pointer">
@@ -722,24 +1043,31 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             type="checkbox"
                                             checked={data.is_active}
                                             onChange={(e) => setData('is_active', e.target.checked)}
-                                            className="rounded text-emerald-600"
+                                            className="rounded text-emerald-600 focus:ring-emerald-500"
                                         />
-                                        <span className="text-[11px] font-bold text-emerald-600">Active Listing</span>
+                                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Active Listing</span>
                                     </label>
                                 </div>
+
+                                {!isVet && (
+                                    <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                                        <Info size={12} className="text-blue-500 shrink-0" />
+                                        <span>Emergency triage flags are reserved exclusively for licensed veterinary clinics.</span>
+                                    </p>
+                                )}
 
                                 <div className="pt-4 flex justify-end gap-2 border-t border-gray-100 dark:border-slate-800">
                                     <button
                                         type="button"
                                         onClick={closeModals}
-                                        className="px-4 py-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                        className="px-4 py-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="px-6 py-2 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20"
+                                        className="px-6 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20 cursor-pointer disabled:opacity-50 transition-all"
                                     >
                                         {editingPartner ? 'Update Partner' : 'Create Partner'}
                                     </button>

@@ -38,6 +38,11 @@ class AboutController extends Controller
             ->orderBy('display_order')
             ->get();
 
+        $auditPartners = Partner::active()
+            ->whereIn('category', ['audit', 'accounting'])
+            ->orderBy('display_order')
+            ->get();
+
         $featuredSupporters = CommunityHonor::public()
             ->whereIn('name', ['Miguel Burton', 'Councilor Derreck Siao', 'Leilani Fernandez'])
             ->orderBy('display_order')
@@ -60,6 +65,7 @@ class AboutController extends Controller
         return Inertia::render('about', [
             'veterinaryPartners' => $veterinaryPartners,
             'foodSupplyPartners' => $foodSupplyPartners,
+            'auditPartners' => $auditPartners,
             'collaboratorPartners' => $collaboratorPartners,
             'sponsorPartners' => $sponsorPartners,
             'featuredSupporters' => $featuredSupporters,
