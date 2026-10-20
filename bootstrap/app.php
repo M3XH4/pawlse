@@ -1,12 +1,15 @@
 <?php
 
+use App\Exceptions\InvalidDonationTransitionException;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\VerifyAutomationApiKey;
+use App\Support\UserFriendlyErrorResolver;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +17,6 @@ use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -51,9 +53,45 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
+            if ($exception instanceof InvalidDonationTransitionException) {
+                $feedback = UserFriendlyErrorResolver::resolveRedirectBackFeedback(422, $exception, $response);
+
+                if ($request->expectsJson() || $request->is('api/*', 'webhooks/*')) {
+                    return response()->json([
+                        'message' => $feedback['message'],
+                        'error_details' => [
+                            'status' => 422,
+                            'why_it_failed' => 'The donation status could not be updated.',
+                            'why_it_happened' => $exception->getMessage(),
+                            'what_to_do' => [
+                                'Refresh the page to check the latest donation status.',
+                                'Follow the required verification steps in order.',
+                            ],
+                            'error_reference' => null,
+                        ],
+                    ], 422);
+                }
+
+                Inertia::flash('toast', $feedback);
+
+                return back()->with([
+                    'error' => $feedback['message'],
+                    'toast' => $feedback,
+                ]);
+            }
+
             $status = $response->getStatusCode();
 
             if ($request->expectsJson() || $request->is('api/*', 'webhooks/*')) {
+                if ($response instanceof JsonResponse && $status >= 400 && $status !== 422) {
+                    $data = $response->getData(true);
+                    if (is_array($data)) {
+                        $response->setData(
+                            UserFriendlyErrorResolver::enrichJsonErrorPayload($status, $exception, $request, $response, $data)
+                        );
+                    }
+                }
+
                 return $response;
             }
 
@@ -61,27 +99,25 @@ return Application::configure(basePath: dirname(__DIR__))
                 return $response;
             }
 
-            if ($status === 419 && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
-                return back()->with([
-                    'error' => 'Your security session expired. Please submit your request again.',
-                ]);
+            if (in_array($status, [413, 419], true) && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+                $feedback = UserFriendlyErrorResolver::resolveRedirectBackFeedback($status, $exception, $response);
+
+                Inertia::flash('toast', $feedback);
+
+                return back()
+                    ->withInput($request->except(['password', 'password_confirmation', 'current_password']))
+                    ->with([
+                        'error' => $feedback['message'],
+                        'toast' => $feedback,
+                    ]);
             }
 
-            if (in_array($status, [400, 401, 403, 404, 419, 429, 500, 503])) {
-                $message = null;
-                if ($exception instanceof HttpExceptionInterface) {
-                    $raw = $exception->getMessage();
-                    if ($status === 404 && (empty($raw) || (str_starts_with($raw, 'The route ') && str_contains($raw, 'could not be found')))) {
-                        $message = null;
-                    } elseif ($status !== 500 && ! empty($raw)) {
-                        $message = $raw;
-                    }
-                }
+            if (in_array($status, [400, 401, 403, 404, 405, 408, 413, 419, 422, 429, 500, 503], true)) {
+                $details = UserFriendlyErrorResolver::resolveForErrorPage($status, $exception, $request, $response);
 
-                return Inertia::render('error', [
-                    'status' => $status,
-                    'message' => $message,
-                ])->toResponse($request)->setStatusCode($status);
+                return Inertia::render('error', $details)
+                    ->toResponse($request)
+                    ->setStatusCode($status);
             }
 
             return $response;

@@ -32,11 +32,15 @@ class PetController extends Controller
         ]);
 
         if (! ($settings['ai_enabled'] ?? true)) {
-            return response()->json(['message' => 'AI services are currently disabled by the system administrator.'], 403);
+            return response()->json([
+                'message' => 'AI services are currently disabled by the system administrator. Please use Manual Entry to fill in the pet details.',
+            ], 403);
         }
 
         if (! ($settings['ai_identifying_enabled'] ?? true)) {
-            return response()->json(['message' => 'AI pet identification is currently disabled.'], 403);
+            return response()->json([
+                'message' => 'AI pet identification is currently disabled. Please enter the animal details manually.',
+            ], 403);
         }
 
         $request->validate([
@@ -94,7 +98,7 @@ class PetController extends Controller
 
             return response()->json([
                 'accepted' => false,
-                'message' => 'AI service is currently unavailable or unreachable.',
+                'message' => 'AI service is currently unavailable or unreachable. Please use Manual Entry to submit your pet report.',
             ], 503);
         }
     }

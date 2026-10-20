@@ -3,7 +3,7 @@
 namespace App\Services\Donations;
 
 use App\Enums\DonationStatus;
-use InvalidArgumentException;
+use App\Exceptions\InvalidDonationTransitionException;
 
 final class DonationStatusTransition
 {
@@ -36,7 +36,7 @@ final class DonationStatusTransition
     public static function assertCanTransition(DonationStatus $from, DonationStatus $to): void
     {
         if (! self::canTransition($from, $to)) {
-            throw new InvalidArgumentException("Cannot transition donation from {$from->value} to {$to->value}.");
+            throw InvalidDonationTransitionException::fromTransition($from, $to);
         }
     }
 

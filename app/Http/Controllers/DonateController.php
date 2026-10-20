@@ -479,7 +479,7 @@ class DonateController extends Controller
         $donation = Donation::with(['payments'])->where('public_reference', $ref)->firstOrFail();
 
         if ($donation->status === DonationStatus::Completed->value) {
-            return redirect()->back()->with('error', 'This donation is already verified and completed.');
+            return redirect()->back()->with('error', 'Your payment receipt was not uploaded because this donation has already been verified and completed. No further action is needed.');
         }
 
         $validated = $request->validate([
@@ -492,7 +492,7 @@ class DonateController extends Controller
 
         $file = $request->file('proof') ?? $request->file('proof_image');
         if (! $file) {
-            return redirect()->back()->withErrors(['proof' => 'The payment receipt image is required.']);
+            return redirect()->back()->withErrors(['proof' => 'Your payment proof could not be submitted because no receipt image was attached. Please select a screenshot or photo of your payment receipt and try again.']);
         }
 
         $path = $file->store('donation_proofs', 'public');
@@ -702,7 +702,7 @@ class DonateController extends Controller
 
             AuditLog::log('donation_payment_failed', "Payment failed for donation ref {$ref}");
 
-            return redirect()->route('donate')->with('error', 'Your payment was cancelled or failed.');
+            return redirect()->route('donate')->with('error', 'Your donation payment did not go through because the transaction was cancelled or failed. You can try again or upload a manual payment receipt.');
         }
     }
 }

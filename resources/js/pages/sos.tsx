@@ -270,16 +270,25 @@ export default function SOS() {
         router.post('/pet-reports/sos', data, {
             preserveState: true,
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
+                const flash = page.props.flash as { error?: string | null } | undefined;
+                if (flash?.error) {
+                    toast.error(flash.error);
+                    return;
+                }
                 setSubmittedLocation(targetLocation);
                 setSubmitted(true);
                 toast.success('SOS report submitted successfully!');
-                setSubmitting(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
             onError: (errors) => {
                 const message = Object.values(errors).flat().join(' ');
-                toast.error(message || 'Failed to submit SOS report.');
+                toast.error(
+                    message ||
+                        'Your SOS report could not be submitted. Please check the required fields and try again.',
+                );
+            },
+            onFinish: () => {
                 setSubmitting(false);
             },
         });

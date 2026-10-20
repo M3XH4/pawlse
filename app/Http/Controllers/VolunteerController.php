@@ -146,7 +146,7 @@ class VolunteerController extends Controller
 
         if ($application === null) {
             return redirect()->back()->withErrors([
-                'error' => 'You do not have an approved volunteer application.',
+                'error' => 'You cannot switch to Volunteer Mode yet because you do not have an approved volunteer application. Please check your application status or submit a volunteer application first.',
             ]);
         }
 

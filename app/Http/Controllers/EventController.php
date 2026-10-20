@@ -129,7 +129,7 @@ class EventController extends Controller
                 $lockedEvent = Event::query()->where('id', $event->id)->lockForUpdate()->first();
 
                 if (! $lockedEvent || $lockedEvent->status !== 'open') {
-                    throw new \RuntimeException('This event is closed and cannot be joined.');
+                    throw new \RuntimeException('You could not join this event because registration is now closed. Please browse our other open community events.');
                 }
 
                 $alreadyJoined = AssignedTask::query()
@@ -140,11 +140,11 @@ class EventController extends Controller
                     ->exists();
 
                 if ($alreadyJoined) {
-                    throw new \RuntimeException('You have already joined this event.');
+                    throw new \RuntimeException('You have already joined this event. You can view or manage your registration in your Joined Events tab.');
                 }
 
                 if ($lockedEvent->spots !== null && $lockedEvent->spots <= 0) {
-                    throw new \RuntimeException('This event is fully booked.');
+                    throw new \RuntimeException('You could not join this event because all participant spots are now filled. Please check back later or join another upcoming event.');
                 }
 
                 AssignedTask::query()->create([
@@ -263,7 +263,7 @@ class EventController extends Controller
                 $lockedSchedule = FeedingSchedule::query()->where('id', $schedule->id)->lockForUpdate()->first();
 
                 if (! $lockedSchedule || $lockedSchedule->status !== 'active') {
-                    throw new \RuntimeException('This feeding route is inactive.');
+                    throw new \RuntimeException('You could not join this feeding route because it is currently inactive. Please select an active feeding route instead.');
                 }
 
                 $alreadyJoined = AssignedTask::query()
@@ -274,7 +274,7 @@ class EventController extends Controller
                     ->exists();
 
                 if ($alreadyJoined) {
-                    throw new \RuntimeException('You have already joined this feeding route.');
+                    throw new \RuntimeException('You have already joined this feeding route. You can check your schedule in your Assigned Tasks tab.');
                 }
 
                 // Check capacity limit if volunteer quota is defined
@@ -286,7 +286,7 @@ class EventController extends Controller
                         ->count();
 
                     if ($activeVolunteersCount >= $lockedSchedule->volunteers) {
-                        throw new \RuntimeException('This feeding route has reached its volunteer capacity.');
+                        throw new \RuntimeException('You could not join this feeding route because all volunteer slots for this zone are full. Please choose another feeding route or day.');
                     }
                 }
 

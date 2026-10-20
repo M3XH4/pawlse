@@ -5,9 +5,12 @@ namespace App\Http\Middleware;
 use App\Models\CareSustainability;
 use App\Models\SystemSetting;
 use App\Services\NotificationPayloadFormatter;
+use App\Support\UserFriendlyErrorResolver;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Inertia\Inertia;
 use Inertia\Middleware;
+use Inertia\Support\SessionKey;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -82,7 +85,103 @@ class HandleInertiaRequests extends Middleware
             'dashboardChrome' => $dashboardChrome,
             'adminNotifications' => $dashboardNotifications,
             'adminChrome' => $dashboardChrome,
+            'flash' => fn () => $this->resolveSessionFlash($request),
         ];
+    }
+
+    /**
+     * Bridge standard Laravel session flashes ('toast', 'error', 'warning', 'success', 'info')
+     * into Inertia v3 flash data so every redirect across the app displays a clear toast.
+     */
+    protected function reflash(Request $request): void
+    {
+        if ($request->hasSession()) {
+            $newFlashKeys = $request->session()->get('_flash.new', []);
+            $flashedInCurrentRequest = is_array($newFlashKeys)
+                && in_array(SessionKey::FLASH_DATA, $newFlashKeys, true);
+            $flashed = Inertia::getFlashed($request);
+
+            if (! $flashedInCurrentRequest || ! isset($flashed['toast'])) {
+                $toastPayload = $this->extractNormalizedToastFromSession($request, true);
+                if ($toastPayload !== null) {
+                    Inertia::flash('toast', $toastPayload);
+                }
+            }
+        }
+
+        parent::reflash($request);
+    }
+
+    /**
+     * @return array{toast: array<string, mixed>|null, error: string|null, warning: string|null, success: string|null, info: string|null}
+     */
+    private function resolveSessionFlash(Request $request): array
+    {
+        if (! $request->hasSession()) {
+            return [
+                'toast' => null,
+                'error' => null,
+                'warning' => null,
+                'success' => null,
+                'info' => null,
+            ];
+        }
+
+        return [
+            'toast' => $this->extractNormalizedToastFromSession($request),
+            'error' => is_string($request->session()->get('error')) ? $request->session()->get('error') : null,
+            'warning' => is_string($request->session()->get('warning')) ? $request->session()->get('warning') : null,
+            'success' => is_string($request->session()->get('success')) ? $request->session()->get('success') : null,
+            'info' => is_string($request->session()->get('info')) ? $request->session()->get('info') : null,
+        ];
+    }
+
+    /**
+     * @return array{type: 'success'|'error'|'warning'|'info', title: string, message: string, description?: string}|null
+     */
+    private function extractNormalizedToastFromSession(Request $request, bool $preferNewlyFlashed = false): ?array
+    {
+        if (! $request->hasSession()) {
+            return null;
+        }
+
+        $session = $request->session();
+        $newFlashKeys = $preferNewlyFlashed && is_array($session->get('_flash.new'))
+            ? $session->get('_flash.new')
+            : [];
+
+        if ($newFlashKeys !== []) {
+            if (in_array('toast', $newFlashKeys, true) && $session->has('toast')) {
+                return UserFriendlyErrorResolver::normalizeToast($session->get('toast'));
+            }
+
+            foreach (['error', 'warning', 'success', 'info'] as $type) {
+                if (in_array($type, $newFlashKeys, true) && $session->has($type)) {
+                    $val = $session->get($type);
+                    if ((is_string($val) && trim($val) !== '') || is_array($val)) {
+                        return UserFriendlyErrorResolver::normalizeToast($val, $type);
+                    }
+                }
+            }
+        }
+
+        if ($session->has('toast')) {
+            return UserFriendlyErrorResolver::normalizeToast($session->get('toast'));
+        }
+
+        foreach (['error', 'warning', 'success', 'info'] as $type) {
+            if ($session->has($type)) {
+                $val = $session->get($type);
+                if (is_string($val) && trim($val) !== '') {
+                    return UserFriendlyErrorResolver::normalizeToast($val, $type);
+                }
+                if (is_array($val)) {
+                    return UserFriendlyErrorResolver::normalizeToast($val, $type);
+                }
+            }
+        }
+
+        return null;
     }
 
     private function dashboardRole(Request $request): ?string

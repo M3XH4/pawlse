@@ -71,7 +71,7 @@ class BackupController extends Controller
 
                 return redirect()->back()->with('success', 'Database successfully restored from backup.');
             } else {
-                return redirect()->back()->with('error', 'Backup file not found on disk.');
+                return redirect()->back()->with('error', 'Database restoration could not proceed because the backup file was not found on disk. Please select an existing backup file or generate a new backup.');
             }
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Restoration failed: '.$e->getMessage());

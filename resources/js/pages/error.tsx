@@ -20,6 +20,11 @@ import {
     Mail,
     Search,
     LayoutDashboard,
+    FileWarning,
+    CheckCircle2,
+    Copy,
+    Check,
+    Info,
     type LucideIcon,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -27,6 +32,11 @@ import { motion } from 'motion/react';
 interface ErrorProps {
     status: number;
     message?: string | null;
+    whyItFailed?: string | null;
+    whyItHappened?: string | null;
+    whatToDo?: string[] | null;
+    errorReference?: string | null;
+    retryAfterSeconds?: number | null;
     appName?: string;
 }
 
@@ -34,6 +44,9 @@ interface StatusDetails {
     badge: string;
     title: string;
     description: string;
+    defaultWhyFailed: string;
+    defaultWhyHappened: string;
+    defaultWhatToDo: string[];
     icon: LucideIcon;
     glowColor: string;
     iconBg: string;
@@ -48,6 +61,12 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Invalid Request',
         title: 'Unrecognized Bark',
         description: 'The server could not understand your request. Please check the address or try again from the homepage.',
+        defaultWhyFailed: 'Your request could not be processed by the server.',
+        defaultWhyHappened: 'Some of the information or parameters in the link or form were incomplete, malformed, or out of date.',
+        defaultWhatToDo: [
+            'Go back to the previous page and double-check the information you entered.',
+            'If you clicked an external or bookmarked link, try navigating from the PAWLSE homepage instead.',
+        ],
         icon: AlertCircle,
         glowColor: 'bg-amber-400/15',
         iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
@@ -58,6 +77,12 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Sign In Required',
         title: 'Hold Your Paws!',
         description: 'You need an authorized account to enter this territory. Please sign in or register to continue.',
+        defaultWhyFailed: 'This page or action requires you to be signed in.',
+        defaultWhyHappened: 'You are currently browsing as a guest, or your login session has ended.',
+        defaultWhatToDo: [
+            'Click "Sign In Now" below to log in with your PAWLSE account.',
+            'If you do not have an account yet, you can register for free on the sign-in page.',
+        ],
         icon: LogIn,
         glowColor: 'bg-sky-400/15',
         iconBg: 'from-sky-100 to-amber-100 dark:from-sky-950/40 dark:to-amber-950/40',
@@ -69,6 +94,13 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Restricted Territory',
         title: 'Paws Off! Access Denied',
         description: "You don't have permission to explore this kennel or view these records. If you believe this is an error, please reach out to our team.",
+        defaultWhyFailed: 'You could not open this page or complete this action because access is restricted.',
+        defaultWhyHappened: 'Your current account role does not have the required permissions for this area.',
+        defaultWhatToDo: [
+            'Return to your dashboard or the homepage to use features available to your account.',
+            'If you are an approved volunteer, make sure you have switched into Volunteer Mode from your dashboard.',
+            'Need access? Reach out to our team through the Help Desk.',
+        ],
         icon: ShieldAlert,
         glowColor: 'bg-rose-400/15',
         iconBg: 'from-rose-100 to-amber-100 dark:from-rose-950/40 dark:to-amber-950/40',
@@ -80,16 +112,77 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Page Lost in the Park',
         title: 'This Page Wandered Off!',
         description: "We sniffed high and low, but couldn't find the page you're searching for. It may have trotted away, been adopted, or the URL might have a typo.",
+        defaultWhyFailed: 'We could not find the page or record you were looking for.',
+        defaultWhyHappened: 'The web address (URL) may have a typo, or the pet profile, event, or record has been moved or removed.',
+        defaultWhatToDo: [
+            'Check the web address in your browser for any spelling mistakes.',
+            'Use the "Go Back" button or the quick links below to browse available pets, rescue reports, or events.',
+        ],
         icon: Compass,
         glowColor: 'bg-amber-400/20',
         iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
         iconColor: 'text-amber-600 dark:text-amber-400',
         badgeStyle: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300',
     },
+    405: {
+        badge: 'Action Not Allowed Here',
+        title: 'Wrong Trail Direction!',
+        description: 'This address only accepts form submissions or button actions and cannot be opened directly.',
+        defaultWhyFailed: 'This action link cannot be opened directly in your browser.',
+        defaultWhyHappened: 'You visited or refreshed an address that only accepts form submissions or button clicks.',
+        defaultWhatToDo: [
+            'Click "Go Back" to return to the previous page and use the form or button provided there.',
+            'Return to the homepage if you were trying to browse the site.',
+        ],
+        icon: AlertCircle,
+        glowColor: 'bg-amber-400/15',
+        iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        badgeStyle: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300',
+    },
+    408: {
+        badge: 'Request Timed Out',
+        title: 'The Trail Took Too Long!',
+        description: 'Your request took longer than expected to reach our server.',
+        defaultWhyFailed: 'Your request timed out before finishing.',
+        defaultWhyHappened: 'A slow internet connection or large photo upload prevented the server from receiving your request in time.',
+        defaultWhatToDo: [
+            'Check your internet connection and click "Try Again".',
+            'If you were uploading photos, try selecting fewer or smaller images at once.',
+        ],
+        icon: Clock,
+        glowColor: 'bg-amber-400/15',
+        iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        badgeStyle: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300',
+        showRefresh: true,
+    },
+    413: {
+        badge: 'Files Too Large',
+        title: 'That Load Is Too Heavy!',
+        description: 'The photos or documents you attached exceed our maximum upload size limit.',
+        defaultWhyFailed: 'Your upload could not go through because the attached files are too large.',
+        defaultWhyHappened: 'One or more high-resolution photos or documents exceeded the server upload size limit.',
+        defaultWhatToDo: [
+            'Click "Go Back" to return to your form.',
+            'Select smaller image files (under 8 MB per photo) or upload fewer photos at once.',
+        ],
+        icon: FileWarning,
+        glowColor: 'bg-orange-400/15',
+        iconBg: 'from-orange-100 to-amber-100 dark:from-orange-950/40 dark:to-amber-950/40',
+        iconColor: 'text-orange-600 dark:text-orange-400',
+        badgeStyle: 'border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-900/50 dark:bg-orange-950/40 dark:text-orange-300',
+    },
     419: {
         badge: 'Session Expired',
         title: 'Cat Nap Over!',
         description: 'Your security session expired while you were resting. Please refresh the page to wake things back up and continue.',
+        defaultWhyFailed: 'Your form or action did not go through because your security session expired.',
+        defaultWhyHappened: 'The page was left open without activity for a while, or your sign-in status changed in another browser tab.',
+        defaultWhatToDo: [
+            'Click "Try Again" below to refresh your security session.',
+            'Go back, verify your form entries, and submit your request again.',
+        ],
         icon: Clock,
         glowColor: 'bg-amber-400/15',
         iconBg: 'from-amber-100 to-yellow-100 dark:from-amber-950/40 dark:to-yellow-950/40',
@@ -97,10 +190,32 @@ const statusMap: Record<number, StatusDetails> = {
         badgeStyle: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300',
         showRefresh: true,
     },
+    422: {
+        badge: 'Details Need Attention',
+        title: 'Almost Ready to Pounce!',
+        description: 'Some of the details in your submission were missing or invalid.',
+        defaultWhyFailed: 'Your submission could not be saved because some required details need attention.',
+        defaultWhyHappened: 'One or more fields were left blank or did not match the expected format.',
+        defaultWhatToDo: [
+            'Click "Go Back" to return to your form.',
+            'Check the highlighted fields and follow the instructions next to each input before submitting again.',
+        ],
+        icon: AlertCircle,
+        glowColor: 'bg-amber-400/15',
+        iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        badgeStyle: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300',
+    },
     429: {
         badge: 'Paws and Breathe',
         title: 'Slow Down, Speedy Paws!',
         description: "You're sending requests faster than a happy tail wag! Please take a quick breather before trying again.",
+        defaultWhyFailed: 'Your request was temporarily paused due to too many rapid attempts.',
+        defaultWhyHappened: 'To keep PAWLSE fast and reliable for animal emergencies, our security system limits how quickly repeated requests can be sent.',
+        defaultWhatToDo: [
+            'Wait 30 to 60 seconds before clicking "Try Again".',
+            'Avoid clicking submit or refresh buttons multiple times while a page is loading.',
+        ],
         icon: ZapOff,
         glowColor: 'bg-orange-400/15',
         iconBg: 'from-orange-100 to-amber-100 dark:from-orange-950/40 dark:to-amber-950/40',
@@ -112,6 +227,13 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Technical Hiccup',
         title: 'Leash Got Tangled!',
         description: 'Something unexpected snapped on our end. Our technical rescue crew has been dispatched to sort it out right away.',
+        defaultWhyFailed: 'Your request could not be completed due to an unexpected server error.',
+        defaultWhyHappened: 'A temporary technical or database glitch interrupted the process on our end—this was not caused by anything you did.',
+        defaultWhatToDo: [
+            'Wait a moment and click "Try Again" to reload the page.',
+            'If you were submitting a form, check your dashboard first to see if your entry already went through.',
+            'If the problem continues, contact our Help Desk or Support team and share the reference code below.',
+        ],
         icon: AlertTriangle,
         glowColor: 'bg-rose-400/20',
         iconBg: 'from-rose-100 to-orange-100 dark:from-rose-950/40 dark:to-orange-950/40',
@@ -123,6 +245,12 @@ const statusMap: Record<number, StatusDetails> = {
         badge: 'Scheduled Checkup',
         title: 'Taking a Short Paws!',
         description: "PAWLSE is temporarily unavailable for scheduled maintenance or health checkups. We'll be back on all four paws shortly!",
+        defaultWhyFailed: 'PAWLSE is temporarily offline and cannot process your request right now.',
+        defaultWhyHappened: 'Our team is performing scheduled maintenance or system updates.',
+        defaultWhatToDo: [
+            'Wait a few minutes and click "Try Again" to check if the platform is back online.',
+            'For urgent animal rescue emergencies, call our 24/7 hotline directly at 09123456789.',
+        ],
         icon: Wrench,
         glowColor: 'bg-amber-400/20',
         iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
@@ -136,6 +264,12 @@ const defaultStatusDetails: StatusDetails = {
     badge: 'Error Occurred',
     title: 'Unexpected Bump in the Road',
     description: 'An unexpected issue occurred while loading this page. Please try heading back to safety or check back later.',
+    defaultWhyFailed: 'Your request could not be completed due to an unexpected error.',
+    defaultWhyHappened: 'A temporary glitch interrupted the request while loading or saving.',
+    defaultWhatToDo: [
+        'Click "Go Back" or "Try Again" to retry your action.',
+        'Return to the homepage or contact Support if the issue persists.',
+    ],
     icon: AlertCircle,
     glowColor: 'bg-amber-400/15',
     iconBg: 'from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
@@ -147,6 +281,11 @@ const defaultStatusDetails: StatusDetails = {
 export default function ErrorPage({
     status = 404,
     message,
+    whyItFailed,
+    whyItHappened,
+    whatToDo,
+    errorReference,
+    retryAfterSeconds,
     appName = 'PAWLSE',
 }: ErrorProps) {
     const page = usePage();
@@ -154,8 +293,15 @@ export default function ErrorPage({
     const currentUser = auth?.user ?? null;
 
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [copiedRef, setCopiedRef] = useState(false);
+
     const details = statusMap[status] ?? defaultStatusDetails;
     const IconComponent = details.icon;
+
+    const resolvedWhyFailed = whyItFailed || details.defaultWhyFailed;
+    const resolvedWhyHappened = whyItHappened || message || details.defaultWhyHappened;
+    const resolvedWhatToDo =
+        whatToDo && whatToDo.length > 0 ? whatToDo : details.defaultWhatToDo;
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -173,6 +319,15 @@ export default function ErrorPage({
         } else {
             router.visit('/');
         }
+    };
+
+    const handleCopyReference = () => {
+        if (!errorReference || typeof navigator === 'undefined') {
+            return;
+        }
+        navigator.clipboard?.writeText(errorReference);
+        setCopiedRef(true);
+        setTimeout(() => setCopiedRef(false), 2000);
     };
 
     return (
@@ -232,7 +387,7 @@ export default function ErrorPage({
                 </header>
 
                 {/* Main Card */}
-                <main className="mx-auto my-auto w-full max-w-xl py-6">
+                <main className="mx-auto my-auto w-full max-w-2xl py-6">
                     <motion.div
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -244,7 +399,7 @@ export default function ErrorPage({
                         <div className="pointer-events-none absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-orange-400/15 blur-3xl" />
 
                         {/* Top badge with status code */}
-                        <div className="mb-6 flex justify-center">
+                        <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
                             <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${details.badgeStyle}`}>
                                 <span className="relative flex h-2 w-2" aria-hidden="true">
                                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
@@ -252,38 +407,111 @@ export default function ErrorPage({
                                 </span>
                                 <span>HTTP {status} &bull; {details.badge}</span>
                             </span>
+
+                            {retryAfterSeconds && retryAfterSeconds > 0 && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-800 dark:border-orange-900/50 dark:bg-orange-950/40 dark:text-orange-300">
+                                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                                    <span>Retry in ~{retryAfterSeconds}s</span>
+                                </span>
+                            )}
                         </div>
 
                         {/* Center Icon Illustration */}
-                        <div className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-tr ${details.iconBg} ${details.iconColor} shadow-inner`}>
+                        <div className={`mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr ${details.iconBg} ${details.iconColor} shadow-inner`}>
                             <div className="relative">
-                                <IconComponent className="h-12 w-12" aria-hidden="true" />
-                                <PawPrint className="absolute -bottom-2 -right-2 h-5 w-5 text-amber-500/80 dark:text-amber-400/80" aria-hidden="true" />
+                                <IconComponent className="h-10 w-10" aria-hidden="true" />
+                                <PawPrint className="absolute -bottom-2 -right-2 h-4 w-4 text-amber-500/80 dark:text-amber-400/80" aria-hidden="true" />
                             </div>
                         </div>
 
                         {/* Big Error Number & Title */}
                         <div className="text-center">
-                            <span className="font-fredoka text-5xl font-extrabold tracking-tight text-amber-500 sm:text-6xl dark:text-amber-400">
+                            <span className="font-fredoka text-4xl font-extrabold tracking-tight text-amber-500 sm:text-5xl dark:text-amber-400">
                                 {status}
                             </span>
-                            <h1 className="mt-2 font-fredoka text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+                            <h1 className="mt-1.5 font-fredoka text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
                                 {details.title}
                             </h1>
-                            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
+                            <p className="mt-2.5 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
                                 {message || details.description}
                             </p>
+                        </div>
 
-                            {/* Additional server message note if provided alongside description */}
-                            {message && message !== details.description && (
-                                <div className="mt-4 rounded-xl border border-amber-200/60 bg-amber-50/70 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-                                    <span className="font-bold">Details:</span> {message}
+                        {/* Clear 3-Step Breakdown: Why it didn't go through, Why it happened, What to do */}
+                        <div
+                            aria-label="Error explanation and next steps"
+                            className="mt-6 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/90 p-4 text-left sm:p-5 dark:border-slate-800 dark:bg-slate-800/50"
+                        >
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-xl border border-slate-200/70 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-900/70">
+                                    <div className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                        <span>Why It Didn&apos;t Go Through</span>
+                                    </div>
+                                    <p className="mt-1.5 text-xs leading-relaxed font-semibold text-slate-700 sm:text-sm dark:text-slate-200">
+                                        {resolvedWhyFailed}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl border border-slate-200/70 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-900/70">
+                                    <div className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                                        <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                        <span>Why This Happened</span>
+                                    </div>
+                                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600 sm:text-sm dark:text-slate-300">
+                                        {resolvedWhyHappened}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/60 p-3.5 dark:border-emerald-900/40 dark:bg-emerald-950/25">
+                                <div className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                    <span>What You Should Do Next</span>
+                                </div>
+                                <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-700 sm:text-sm dark:text-slate-200">
+                                    {resolvedWhatToDo.map((step, index) => (
+                                        <li key={index} className="flex items-start gap-2">
+                                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                                {index + 1}
+                                            </span>
+                                            <span>{step}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {errorReference && (
+                                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs dark:border-slate-700/60 dark:bg-slate-900/70">
+                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                        <span className="font-semibold">Support Reference Code:</span>
+                                        <code className="rounded bg-slate-100 px-2 py-0.5 font-mono font-bold text-slate-800 dark:bg-slate-800 dark:text-amber-300">
+                                            {errorReference}
+                                        </code>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleCopyReference}
+                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                    >
+                                        {copiedRef ? (
+                                            <>
+                                                <Check className="h-3 w-3 text-emerald-500" />
+                                                <span>Copied</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="h-3 w-3" />
+                                                <span>Copy Code</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             )}
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                        <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                             <button
                                 type="button"
                                 onClick={handleGoBack}
