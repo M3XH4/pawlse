@@ -8,7 +8,7 @@ import {
     ToggleLeft, ToggleRight, X, Heart, Share2, Sparkles,
     Calendar, Clock, Check, ExternalLink, Image as ImageIcon,
     FileText, HelpCircle, Megaphone, PawPrint, HeartHandshake,
-    GraduationCap, Scale, Layers, Tag, Star
+    GraduationCap, Scale, Layers, Tag, Star, MessageSquareQuote
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
@@ -22,8 +22,10 @@ interface BlogPostModel {
     featured_image: string | null;
     tags: string[] | null;
     reading_time_minutes: number;
-    status: 'published' | 'draft' | 'archived';
+    status: 'published' | 'draft' | 'archived' | 'pending' | 'rejected';
     is_featured: boolean;
+    rating?: number | null;
+    rejection_reason?: string | null;
     views_count: number;
     shares_count: number;
     reactions_count?: number;
@@ -34,6 +36,14 @@ interface BlogPostModel {
         name: string;
         role: string;
     } | null;
+    shelter_animal?: {
+        id: number;
+        name: string;
+        type: string;
+        breed: string;
+        photo_url: string;
+    } | null;
+    reviewer?: { id: number; name: string } | null;
 }
 
 interface PaginatedData<T> {
@@ -51,7 +61,9 @@ interface BlogManagementProps {
     metrics: {
         total_posts: number;
         published_posts: number;
+        pending_posts?: number;
         draft_posts: number;
+        rejected_posts?: number;
         total_views: number;
         total_reactions: number;
         total_shares: number;
@@ -71,6 +83,11 @@ const CATEGORY_STYLES: Record<string, {
     badge: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
 }> = {
+    testimonial: {
+        label: 'Testimonials',
+        badge: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
+        icon: MessageSquareQuote,
+    },
     rescue_story: {
         label: 'Rescue Stories',
         badge: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
@@ -134,9 +151,51 @@ export default function BlogManagement({
     const [featuredImage, setFeaturedImage] = useState('');
     const [tagsInput, setTagsInput] = useState('');
     const [readingTime, setReadingTime] = useState(3);
-    const [status, setStatus] = useState<'published' | 'draft' | 'archived'>('published');
+    const [status, setStatus] = useState<'published' | 'draft' | 'archived' | 'pending' | 'rejected'>('published');
     const [isFeatured, setIsFeatured] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Reject Modal state
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [postToReject, setPostToReject] = useState<BlogPostModel | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [isRejecting, setIsRejecting] = useState(false);
+
+    const handleApprove = (post: BlogPostModel) => {
+        if (!confirm(`Are you sure you want to approve "${post.title}" and publish it to the blog?`)) return;
+        router.post(`/account/admin/blog-management/${post.id}/approve`, {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success(`"${post.title}" approved and published to the blog!`),
+            onError: () => toast.error('Failed to approve story.'),
+        });
+    };
+
+    const openRejectModal = (post: BlogPostModel) => {
+        setPostToReject(post);
+        setRejectionReason('');
+        setIsRejectModalOpen(true);
+    };
+
+    const handleRejectSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!postToReject) return;
+        setIsRejecting(true);
+        router.post(`/account/admin/blog-management/${postToReject.id}/reject`, {
+            rejection_reason: rejectionReason,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsRejecting(false);
+                setIsRejectModalOpen(false);
+                setPostToReject(null);
+                toast.success('Story has been rejected and author notified.');
+            },
+            onError: () => {
+                setIsRejecting(false);
+                toast.error('Failed to reject story.');
+            },
+        });
+    };
 
     const addTagSuggestion = (tag: string) => {
         const existing = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [];
@@ -290,12 +349,22 @@ export default function BlogManagement({
                         </p>
                     </AdminCard>
 
+                    <AdminCard className={metrics.pending_posts && metrics.pending_posts > 0 ? 'border-amber-300 bg-amber-50/40 dark:border-amber-700/60 dark:bg-amber-950/20' : ''}>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pending Review</span>
+                            <Clock size={16} className={`text-amber-500 ${metrics.pending_posts && metrics.pending_posts > 0 ? 'animate-spin' : ''}`} />
+                        </div>
+                        <p className="mt-2 text-2xl font-black text-amber-600 dark:text-amber-400">
+                            {metrics.pending_posts ?? 0}
+                        </p>
+                    </AdminCard>
+
                     <AdminCard>
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-amber-500">Drafts</span>
-                            <FileText size={16} className="text-amber-500" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Drafts</span>
+                            <FileText size={16} className="text-slate-400" />
                         </div>
-                        <p className="mt-2 text-2xl font-black text-amber-500">
+                        <p className="mt-2 text-2xl font-black text-slate-600 dark:text-slate-300">
                             {metrics.draft_posts}
                         </p>
                     </AdminCard>
@@ -317,16 +386,6 @@ export default function BlogManagement({
                         </div>
                         <p className="mt-2 text-2xl font-black text-blue-500">
                             {metrics.total_views}
-                        </p>
-                    </AdminCard>
-
-                    <AdminCard>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Shares</span>
-                            <Share2 size={16} className="text-purple-500" />
-                        </div>
-                        <p className="mt-2 text-2xl font-black text-purple-500">
-                            {metrics.total_shares}
                         </p>
                     </AdminCard>
                 </div>
@@ -362,8 +421,10 @@ export default function BlogManagement({
                             className="py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200"
                         >
                             <option value="all">All Statuses</option>
+                            <option value="pending">Pending Review</option>
                             <option value="published">Published</option>
                             <option value="draft">Draft</option>
+                            <option value="rejected">Rejected</option>
                             <option value="archived">Archived</option>
                         </select>
 
@@ -429,6 +490,11 @@ export default function BlogManagement({
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        {post.shelter_animal && (
+                                                            <p className="text-[11px] font-bold text-paw-orange truncate mt-0.5">
+                                                                🐾 Adopted: {post.shelter_animal.name} ({post.shelter_animal.type})
+                                                            </p>
+                                                        )}
                                                         <p className="text-[11px] text-gray-400 truncate mt-0.5">
                                                             {post.summary || post.content.substring(0, 70)}
                                                         </p>
@@ -479,43 +545,79 @@ export default function BlogManagement({
 
                                             {/* Status Badge */}
                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                <button
-                                                    onClick={() => handleToggleStatus(post)}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition cursor-pointer border shadow-xs ${
-                                                        post.status === 'published'
-                                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                                                            : post.status === 'archived'
-                                                            ? 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                                                            : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                                                    }`}
-                                                    title="Click to toggle status"
-                                                >
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${
-                                                        post.status === 'published' ? 'bg-emerald-500' : post.status === 'archived' ? 'bg-gray-400' : 'bg-amber-500'
-                                                    }`} />
-                                                    <span className="capitalize">{post.status}</span>
-                                                </button>
+                                                {post.status === 'pending' ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                        <span>Pending Review</span>
+                                                    </span>
+                                                ) : post.status === 'rejected' ? (
+                                                    <span
+                                                        title={post.rejection_reason || 'Rejected'}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                                                    >
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                        <span>Rejected</span>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleToggleStatus(post)}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition cursor-pointer border shadow-xs ${
+                                                            post.status === 'published'
+                                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                                                                : post.status === 'archived'
+                                                                ? 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                                                : 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                                        }`}
+                                                        title="Click to toggle status"
+                                                    >
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${
+                                                            post.status === 'published' ? 'bg-emerald-500' : post.status === 'archived' ? 'bg-gray-400' : 'bg-slate-400'
+                                                        }`} />
+                                                        <span className="capitalize">{post.status}</span>
+                                                    </button>
+                                                )}
                                             </td>
 
                                             {/* Published Date */}
                                             <td className="py-4 px-4 text-gray-500">
-                                                {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Draft'}
+                                                {post.published_at ? new Date(post.published_at).toLocaleDateString() : post.status === 'pending' ? 'Pending Review' : 'Draft'}
                                             </td>
 
                                             {/* Actions */}
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    {post.status === 'published' && (
-                                                        <a
-                                                            href={`/blog/${post.slug}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="p-1.5 rounded-lg text-gray-400 hover:text-paw-orange hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                                            title="View Public Page"
-                                                        >
-                                                            <ExternalLink size={15} />
-                                                        </a>
+                                                    {post.status === 'pending' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(post)}
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer shadow-xs"
+                                                                title="Approve & Publish Story"
+                                                            >
+                                                                <Check size={12} /> Approve
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openRejectModal(post)}
+                                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[11px] transition cursor-pointer"
+                                                                title="Reject Story"
+                                                            >
+                                                                <X size={12} /> Reject
+                                                            </button>
+                                                        </>
                                                     )}
+
+                                                    <a
+                                                        href={`/blog/${post.slug}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={`p-1.5 rounded-lg transition ${
+                                                            post.status === 'published'
+                                                                ? 'text-gray-400 hover:text-paw-orange hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                                : 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                                                        }`}
+                                                        title={post.status === 'published' ? 'View Public Page' : 'Preview Article Layout'}
+                                                    >
+                                                        {post.status === 'published' ? <ExternalLink size={15} /> : <Eye size={15} />}
+                                                    </a>
 
                                                     <button
                                                         onClick={() => openEditModal(post)}
@@ -695,7 +797,9 @@ export default function BlogManagement({
                                                         className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-800 dark:text-gray-200"
                                                     >
                                                         <option value="published">Published</option>
+                                                        <option value="pending">Pending Review</option>
                                                         <option value="draft">Draft</option>
+                                                        <option value="rejected">Rejected</option>
                                                         <option value="archived">Archived</option>
                                                     </select>
                                                 </div>
@@ -834,6 +938,52 @@ export default function BlogManagement({
                                             )}
                                         </button>
                                     </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+                {/* Reject Story Modal */}
+                {isRejectModalOpen && postToReject && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-4">
+                                <h4 className="font-fredoka text-lg font-bold text-gray-900 dark:text-white">
+                                    Reject Story Submission
+                                </h4>
+                                <button
+                                    onClick={() => setIsRejectModalOpen(false)}
+                                    className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+                                Provide feedback to <strong>{postToReject.author?.name || 'the author'}</strong> on why &quot;{postToReject.title}&quot; was not approved. They will be notified and can revise and resubmit.
+                            </p>
+                            <form onSubmit={handleRejectSubmit}>
+                                <textarea
+                                    rows={4}
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    placeholder="e.g. Please upload higher resolution photos of your pet and expand on their rescue/adjustment journey..."
+                                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 mb-4"
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRejectModalOpen(false)}
+                                        className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isRejecting}
+                                        className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isRejecting ? 'Rejecting...' : 'Confirm Reject'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

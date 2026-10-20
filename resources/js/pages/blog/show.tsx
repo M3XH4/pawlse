@@ -6,7 +6,7 @@ import {
     Copy, Check, Shield, User, Tag, Sparkles, MessageSquareOff,
     CheckCircle2, ExternalLink, PawPrint, HeartHandshake,
     GraduationCap, Scale, Newspaper, Megaphone, PartyPopper,
-    FileText, Star
+    FileText, Star, MessageSquareQuote, AlertCircle
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -25,6 +25,18 @@ interface BlogPostItem {
     reading_time_minutes: number;
     status: string;
     is_featured: boolean;
+    rating?: number | null;
+    shelter_animal?: {
+        id: number;
+        name: string;
+        type: string;
+        breed?: string | null;
+        age?: string | null;
+        gender?: string | null;
+        color?: string | null;
+        photo_url?: string | null;
+        status?: string | null;
+    } | null;
     views_count: number;
     shares_count: number;
     published_at: string | null;
@@ -51,6 +63,7 @@ interface BlogShowProps {
 }
 
 const CATEGORY_META: Record<string, { label: string; badgeBg: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
+    testimonial: { label: 'Testimonial', badgeBg: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300', icon: MessageSquareQuote },
     rescue_story: { label: 'Rescue Story', badgeBg: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300', icon: PawPrint },
     adoption_success: { label: 'Adoption Success', badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300', icon: HeartHandshake },
     announcement: { label: 'Announcement', badgeBg: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300', icon: Megaphone },
@@ -143,6 +156,25 @@ export default function BlogShow({
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition" />
                         Back to All Stories
                     </Link>
+
+                    {post.status !== 'published' && (
+                        <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-900/60 p-4 text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-2.5">
+                                <Clock size={16} className="text-amber-600 shrink-0" />
+                                <div>
+                                    <span className="uppercase tracking-wider font-black text-amber-700 dark:text-amber-400 mr-1.5">
+                                        Preview Mode:
+                                    </span>
+                                    <span>
+                                        This article is currently <strong>{post.status === 'pending' ? 'Pending Admin Review' : post.status === 'rejected' ? 'Needs Revision' : post.status}</strong> and is not yet visible on the public feed.
+                                    </span>
+                                </div>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-lg bg-amber-200/70 dark:bg-amber-900/50 text-[10px] font-black uppercase tracking-wider shrink-0">
+                                Unlisted
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Article Header */}
@@ -186,7 +218,7 @@ export default function BlogShow({
                                         {post.author?.name || 'PAWLSE Editorial Team'}
                                     </p>
                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Official Organization Author
+                                        {post.shelter_animal || post.rating ? 'Adoptive Parent & Community Story' : 'Official Organization Author'}
                                     </p>
                                 </div>
                             </div>
@@ -211,6 +243,78 @@ export default function BlogShow({
                                 alt={post.title}
                                 className="w-full h-full object-cover"
                             />
+                        </div>
+                    )}
+
+                    {/* Adopted Companion Card if linked */}
+                    {post.shelter_animal && (
+                        <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-orange-200 dark:border-orange-900/40 rounded-3xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 shadow-sm">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border-2 border-paw-orange shadow-md">
+                                <ImageWithFallback
+                                    src={post.shelter_animal.photo_url || post.featured_image || ''}
+                                    alt={post.shelter_animal.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <div className="flex-1 text-center sm:text-left">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-paw-orange/15 text-paw-orange mb-1.5">
+                                    <PawPrint size={13} />
+                                    <span>Adopted Shelter Pet</span>
+                                </div>
+                                <h3 className="text-xl font-black text-paw-navy dark:text-white">
+                                    Meet {post.shelter_animal.name}
+                                </h3>
+                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mt-1">
+                                    {post.shelter_animal.type} {post.shelter_animal.breed ? `• ${post.shelter_animal.breed}` : ''} {post.shelter_animal.age ? `• ${post.shelter_animal.age}` : ''}
+                                </p>
+                                {post.rating && (
+                                    <div className="flex items-center justify-center sm:justify-start gap-1 mt-2 text-amber-500 font-bold text-xs">
+                                        {[1, 2, 3, 4, 5].map((s) => (
+                                            <Star
+                                                key={s}
+                                                size={14}
+                                                className={s <= (post.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-600'}
+                                            />
+                                        ))}
+                                        <span className="ml-1 text-gray-700 dark:text-gray-300 font-bold">
+                                            {post.rating}.0 / 5 Adoption Rating
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <Link
+                                href={`/animals/${post.shelter_animal.id}`}
+                                className="px-4 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-wider transition shadow-md shadow-paw-orange/20 shrink-0"
+                            >
+                                View Pet Profile
+                            </Link>
+                        </div>
+                    )}
+
+                    {/* Standalone Community Testimonial Highlight if rating provided without a linked pet */}
+                    {!post.shelter_animal && post.rating && (
+                        <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 dark:from-teal-950/20 dark:via-gray-900 dark:to-teal-950/20 border border-teal-200 dark:border-teal-900/40 rounded-3xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row items-center gap-4 shadow-sm">
+                            <div className="w-14 h-14 rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 flex items-center justify-center shrink-0">
+                                <MessageSquareQuote size={28} />
+                            </div>
+                            <div className="flex-1 text-center sm:text-left">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-teal-600/15 text-teal-700 dark:text-teal-300 mb-1.5">
+                                    <Star size={13} className="fill-teal-600 text-teal-600" />
+                                    <span>Community Review & Rating</span>
+                                </div>
+                                <div className="flex items-center justify-center sm:justify-start gap-1 mt-1 text-amber-500 font-bold text-sm">
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                        <Star
+                                            key={s}
+                                            size={16}
+                                            className={s <= (post.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-600'}
+                                        />
+                                    ))}
+                                    <span className="ml-1 text-gray-700 dark:text-gray-300 font-bold text-xs">
+                                        {post.rating} / 5 Experience Rating
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     )}
 

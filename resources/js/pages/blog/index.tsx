@@ -7,7 +7,8 @@ import {
     Award, AlertCircle, FileText, ChevronRight, X,
     PawPrint, HeartHandshake, GraduationCap, Scale, Newspaper,
     Layers, Tag, Compass, Flame, TrendingUp, Star,
-    Gavel, ShieldAlert, AlertTriangle, HeartCrack, ShieldCheck, BookOpen, CheckCircle2, Info
+    Gavel, ShieldAlert, AlertTriangle, HeartCrack, ShieldCheck, BookOpen, CheckCircle2, Info,
+    MessageSquareQuote
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -26,6 +27,14 @@ interface BlogPostItem {
     reading_time_minutes: number;
     status: string;
     is_featured: boolean;
+    rating?: number | null;
+    shelter_animal?: {
+        id: number;
+        name: string;
+        type: string;
+        breed: string | null;
+        photo_url: string | null;
+    } | null;
     views_count: number;
     shares_count: number;
     published_at: string | null;
@@ -88,6 +97,15 @@ const CATEGORY_CONFIG: Record<string, {
         badgeInactive: 'bg-orange-200/70 dark:bg-orange-900/50 text-orange-900 dark:text-orange-200',
         icon: Layers,
         cardBadge: 'bg-orange-100 text-orange-800 border-orange-200',
+    },
+    testimonial: {
+        label: 'Testimonials',
+        active: 'bg-teal-600 text-white shadow-lg shadow-teal-600/30 border-teal-600',
+        inactive: 'bg-teal-50 dark:bg-teal-950/30 text-teal-900 dark:text-teal-300 border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 hover:border-teal-400',
+        badgeActive: 'bg-white/25 text-white',
+        badgeInactive: 'bg-teal-200/70 dark:bg-teal-900/50 text-teal-900 dark:text-teal-200',
+        icon: MessageSquareQuote,
+        cardBadge: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300',
     },
     rescue_story: {
         label: 'Rescue Stories',
@@ -464,9 +482,9 @@ export default function BlogIndex({
                     </section>
 
                 {/* Colorful, Full-Width Category Pills (Tabs) - Positioned Below Search Section & with z-index ABOVE the Hero Section */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-9 sm:-mt-10 relative z-20">
-                    <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-2 sm:p-2.5 shadow-2xl border border-gray-100 dark:border-gray-800 w-full text-paw-navy dark:text-gray-100">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-2.5 w-full">
+                <div className="max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 -mt-9 sm:-mt-10 relative z-20">
+                    <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-1.5 sm:p-2 shadow-2xl border border-gray-100 dark:border-gray-800 w-full text-paw-navy dark:text-gray-100 overflow-hidden">
+                        <div className="flex items-center flex-nowrap gap-1 sm:gap-1.5 lg:gap-2 overflow-x-auto hide-scrollbar w-full py-0.5">
                             {/* All Posts Tab */}
                             {(() => {
                                 const allCfg = CATEGORY_CONFIG['all'];
@@ -476,13 +494,13 @@ export default function BlogIndex({
                                     <button
                                         type="button"
                                         onClick={() => handleCategoryClick('all')}
-                                        className={`w-full min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl font-black text-[11px] sm:text-xs uppercase tracking-wide transition border cursor-pointer shadow-xs ${
+                                        className={`flex-1 shrink-0 min-w-max flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 xl:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-wider transition border cursor-pointer shadow-xs whitespace-nowrap ${
                                             isActive ? allCfg.active : allCfg.inactive
                                         }`}
                                     >
-                                        <AllIcon size={15} className="shrink-0" />
+                                        <AllIcon size={13} className="shrink-0" />
                                         <span className="whitespace-nowrap">{allCfg.label}</span>
-                                        <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ml-0.5 ${
+                                        <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ml-0.5 ${
                                             isActive ? allCfg.badgeActive : allCfg.badgeInactive
                                         }`}>
                                             {categoryCounts['all'] ?? 0}
@@ -510,13 +528,13 @@ export default function BlogIndex({
                                         key={key}
                                         type="button"
                                         onClick={() => handleCategoryClick(key)}
-                                        className={`w-full min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl font-black text-[11px] sm:text-xs uppercase tracking-wide transition border cursor-pointer shadow-xs ${
+                                        className={`flex-1 shrink-0 min-w-max flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 xl:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-wider transition border cursor-pointer shadow-xs whitespace-nowrap ${
                                             isActive ? cfg.active : cfg.inactive
                                         }`}
                                     >
-                                        <IconComponent size={15} className="shrink-0" />
+                                        <IconComponent size={13} className="shrink-0" />
                                         <span className="whitespace-nowrap">{cfg.label}</span>
-                                        <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ml-0.5 ${
+                                        <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ml-0.5 ${
                                             isActive ? cfg.badgeActive : cfg.badgeInactive
                                         }`}>
                                             {categoryCounts[key] ?? 0}
@@ -712,6 +730,23 @@ export default function BlogIndex({
                                                         {post.reading_time_minutes} min read
                                                     </span>
                                                 </div>
+
+                                                {(post.shelter_animal || post.rating) && (
+                                                    <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                                                        {post.shelter_animal && (
+                                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-paw-orange border border-orange-200 dark:border-orange-900/50 text-[11px] font-bold">
+                                                                <PawPrint size={12} />
+                                                                <span>Adopted: {post.shelter_animal.name}</span>
+                                                            </div>
+                                                        )}
+                                                        {post.rating && (
+                                                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-[11px] font-bold">
+                                                                <Star size={11} className="fill-amber-400 text-amber-400" />
+                                                                <span>{post.rating}.0 Rating</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 <Link href={`/blog/${post.slug}`}>
                                                     <h3 className="text-xl font-black text-paw-navy dark:text-white line-clamp-2 group-hover:text-paw-orange transition leading-snug">

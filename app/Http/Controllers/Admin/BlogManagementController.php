@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BlogPost;
 use App\Models\BlogPostReaction;
+use App\Notifications\UserStoryApprovedNotification;
+use App\Notifications\UserStoryRejectedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +27,7 @@ class BlogManagementController extends Controller
         $status = trim((string) $request->query('status', ''));
 
         $query = BlogPost::query()
-            ->with(['author:id,name,role'])
+            ->with(['author:id,name,role', 'shelterAnimal:id,name,type,breed,photo_url', 'reviewer:id,name'])
             ->withCount('reactions');
 
         if ($search !== '') {
@@ -48,8 +50,10 @@ class BlogManagementController extends Controller
 
         $metrics = [
             'total_posts' => BlogPost::count(),
-            'published_posts' => BlogPost::where('status', 'published')->count(),
-            'draft_posts' => BlogPost::where('status', 'draft')->count(),
+            'published_posts' => BlogPost::where('status', BlogPost::STATUS_PUBLISHED)->count(),
+            'pending_posts' => BlogPost::where('status', BlogPost::STATUS_PENDING)->count(),
+            'draft_posts' => BlogPost::where('status', BlogPost::STATUS_DRAFT)->count(),
+            'rejected_posts' => BlogPost::where('status', BlogPost::STATUS_REJECTED)->count(),
             'total_views' => (int) BlogPost::sum('views_count'),
             'total_reactions' => BlogPostReaction::count(),
             'total_shares' => (int) BlogPost::sum('shares_count'),
@@ -83,8 +87,10 @@ class BlogManagementController extends Controller
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'reading_time_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
-            'status' => ['required', 'string', Rule::in(['published', 'draft', 'archived'])],
+            'status' => ['required', 'string', Rule::in(array_keys(BlogPost::STATUSES))],
             'is_featured' => ['boolean'],
+            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'shelter_animal_id' => ['nullable', 'integer', 'exists:shelter_animals,id'],
         ]);
 
         $featuredImageUrl = null;
@@ -119,6 +125,8 @@ class BlogManagementController extends Controller
             'reading_time_minutes' => $readingTime,
             'status' => $validated['status'],
             'is_featured' => $validated['is_featured'] ?? false,
+            'rating' => $validated['rating'] ?? null,
+            'shelter_animal_id' => $validated['shelter_animal_id'] ?? null,
             'published_at' => $validated['status'] === 'published' ? now() : null,
         ]);
 
@@ -139,8 +147,10 @@ class BlogManagementController extends Controller
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'reading_time_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
-            'status' => ['required', 'string', Rule::in(['published', 'draft', 'archived'])],
+            'status' => ['required', 'string', Rule::in(array_keys(BlogPost::STATUSES))],
             'is_featured' => ['boolean'],
+            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'shelter_animal_id' => ['nullable', 'integer', 'exists:shelter_animals,id'],
         ]);
 
         $featuredImageUrl = $post->featured_image;
@@ -171,10 +181,65 @@ class BlogManagementController extends Controller
             'reading_time_minutes' => $readingTime,
             'status' => $validated['status'],
             'is_featured' => $validated['is_featured'] ?? false,
+            'rating' => $validated['rating'] ?? $post->rating,
+            'shelter_animal_id' => $request->has('shelter_animal_id') ? ($validated['shelter_animal_id'] ?? null) : $post->shelter_animal_id,
             'published_at' => $publishedAt,
         ]);
 
         return back()->with('success', 'Article updated successfully!');
+    }
+
+    /**
+     * Approve a pending blog article or adoption story.
+     */
+    public function approve(Request $request, BlogPost $post): RedirectResponse
+    {
+        $publishedAt = $post->published_at ?? now();
+
+        $post->update([
+            'status' => BlogPost::STATUS_PUBLISHED,
+            'published_at' => $publishedAt,
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+            'rejection_reason' => null,
+        ]);
+
+        if ($post->author) {
+            try {
+                $post->author->notify(new UserStoryApprovedNotification($post));
+            } catch (\Throwable $e) {
+                // Ignore notification failure
+            }
+        }
+
+        return back()->with('success', 'Article / story approved and published successfully!');
+    }
+
+    /**
+     * Reject a submitted blog article or adoption story with optional feedback.
+     */
+    public function reject(Request $request, BlogPost $post): RedirectResponse
+    {
+        $validated = $request->validate([
+            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $post->update([
+            'status' => BlogPost::STATUS_REJECTED,
+            'rejection_reason' => $validated['rejection_reason'] ?? 'Content does not meet publishing guidelines.',
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+        ]);
+
+        if ($post->author) {
+            try {
+                $post->author->notify(new UserStoryRejectedNotification($post));
+            } catch (\Throwable $e) {
+                // Ignore notification failure
+            }
+        }
+
+        return back()->with('success', 'Story has been rejected and author notified.');
     }
 
     /**

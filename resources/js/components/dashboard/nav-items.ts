@@ -78,6 +78,7 @@ export function navItem(
 export const userNavItems: DashboardNavItem[] = [
     navItem('My Bookmarks', bookmark.url(), Bookmark),
     navItem('My Joined Events', '/account/user/joined-events', Calendar),
+    navItem('My Adoption Stories', '/account/user/stories', Sparkles),
     navItem('My Rescue Reports', userRescueReports.url(), FileText),
     navItem('My Adoption Applications', adoptionApplications.url(), Heart),
     navItem('My Donations', donations.url(), Gift),

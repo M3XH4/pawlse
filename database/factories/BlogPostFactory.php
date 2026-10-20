@@ -50,6 +50,32 @@ class BlogPostFactory extends Factory
         ]);
     }
 
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => BlogPost::STATUS_PENDING,
+            'published_at' => null,
+        ]);
+    }
+
+    public function rejected(?string $reason = 'Content does not meet guidelines'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => BlogPost::STATUS_REJECTED,
+            'rejection_reason' => $reason,
+            'published_at' => null,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    public function testimonial(int $rating = 5): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'category' => 'adoption_success',
+            'rating' => $rating,
+        ]);
+    }
+
     public function featured(): static
     {
         return $this->state(fn (array $attributes) => [

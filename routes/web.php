@@ -50,6 +50,7 @@ use App\Http\Controllers\SuperAdmin\SecurityController;
 use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 use App\Http\Controllers\SuperAdmin\UserManagementController;
 use App\Http\Controllers\UserNotificationController;
+use App\Http\Controllers\UserStoryController;
 use App\Http\Controllers\VetController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\VolunteerDashboardController;
@@ -143,6 +144,10 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::get('missing-found', [PetReportController::class, 'userMissingFoundReports'])->name('missing-found');
     Route::get('joined-events', [EventController::class, 'userJoinedEvents'])->name('joined-events');
+    Route::get('stories', [UserStoryController::class, 'index'])->name('stories.index');
+    Route::post('stories', [UserStoryController::class, 'store'])->name('stories.store');
+    Route::match(['put', 'post'], 'stories/{post}', [UserStoryController::class, 'update'])->name('stories.update');
+    Route::delete('stories/{post}', [UserStoryController::class, 'destroy'])->name('stories.destroy');
     Route::inertia('notifications', 'user/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('volunteer-status', [VolunteerDashboardController::class, 'userStatus'])->name('volunteer-status');
@@ -255,6 +260,8 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::put('blog-management/{post}', [BlogManagementController::class, 'update'])->name('blog-management.update');
     Route::delete('blog-management/{post}', [BlogManagementController::class, 'destroy'])->name('blog-management.destroy');
     Route::patch('blog-management/{post}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('blog-management.toggle-status');
+    Route::post('blog-management/{post}/approve', [BlogManagementController::class, 'approve'])->name('blog-management.approve');
+    Route::post('blog-management/{post}/reject', [BlogManagementController::class, 'reject'])->name('blog-management.reject');
 
     Route::get('reports-analytics', [ReportsAnalyticsController::class, 'index'])->name('reports-analytics');
     Route::get('reports-analytics/export', [ReportsAnalyticsController::class, 'export'])->name('reports-analytics.export');

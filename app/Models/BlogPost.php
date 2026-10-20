@@ -17,12 +17,31 @@ class BlogPost extends Model
     use HasFactory, SoftDeletes;
 
     public const CATEGORIES = [
-        'rescue_story' => 'Rescue Story',
+        'testimonial' => 'Testimonials',
         'adoption_success' => 'Adoption Success',
+        'rescue_story' => 'Rescue Story',
         'announcement' => 'Announcement',
         'community_awareness' => 'Community Awareness',
         'advocacy_campaign' => 'Advocacy Campaign',
         'news_update' => 'News & Updates',
+    ];
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUS_ARCHIVED = 'archived';
+
+    public const STATUSES = [
+        self::STATUS_DRAFT => 'Draft',
+        self::STATUS_PENDING => 'Pending Review',
+        self::STATUS_PUBLISHED => 'Published',
+        self::STATUS_REJECTED => 'Rejected',
+        self::STATUS_ARCHIVED => 'Archived',
     ];
 
     protected $guarded = ['id'];
@@ -32,6 +51,8 @@ class BlogPost extends Model
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
         'reading_time_minutes' => 'integer',
+        'rating' => 'integer',
+        'reviewed_at' => 'datetime',
         'views_count' => 'integer',
         'shares_count' => 'integer',
     ];
@@ -72,6 +93,30 @@ class BlogPost extends Model
     }
 
     /**
+     * @return BelongsTo<ShelterAnimal, $this>
+     */
+    public function shelterAnimal(): BelongsTo
+    {
+        return $this->belongsTo(ShelterAnimal::class, 'shelter_animal_id');
+    }
+
+    /**
+     * @return BelongsTo<AdoptionApplication, $this>
+     */
+    public function adoptionApplication(): BelongsTo
+    {
+        return $this->belongsTo(AdoptionApplication::class, 'adoption_application_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
      * @return HasMany<BlogPostReaction, $this>
      */
     public function reactions(): HasMany
@@ -84,6 +129,16 @@ class BlogPost extends Model
         return $query->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
+    }
+
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
+
+    public function scopeRejected(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_REJECTED);
     }
 
     public function scopeFeatured(Builder $query): Builder

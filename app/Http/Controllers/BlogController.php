@@ -21,7 +21,7 @@ class BlogController extends Controller
         $tag = trim((string) $request->query('tag', ''));
 
         $query = BlogPost::query()
-            ->with(['author:id,name,role'])
+            ->with(['author:id,name,role,avatar_path', 'shelterAnimal:id,name,type,breed,photo_url'])
             ->published();
 
         if ($selectedCategory && $selectedCategory !== 'all') {
@@ -51,7 +51,7 @@ class BlogController extends Controller
 
         // Featured awareness / campaign post
         $featuredPost = BlogPost::query()
-            ->with(['author:id,name,role'])
+            ->with(['author:id,name,role,avatar_path', 'shelterAnimal:id,name,type,breed,photo_url'])
             ->published()
             ->featured()
             ->latest('published_at')
@@ -116,15 +116,16 @@ class BlogController extends Controller
     public function show(Request $request, string $slug): Response
     {
         $post = BlogPost::query()
-            ->with(['author:id,name,role'])
+            ->with(['author:id,name,role,avatar_path', 'shelterAnimal:id,name,type,breed,age,gender,color,photo_url,status'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        // If post is not published, only admins can view
+        // If post is not published, only admins and the original author can view/preview
         $user = $request->user();
         $isAdmin = $user && in_array($user->role, ['admin', 'super-admin'], true);
+        $isAuthor = $user && (int) $post->author_id === (int) $user->id;
 
-        if ($post->status !== 'published' && ! $isAdmin) {
+        if ($post->status !== 'published' && ! $isAdmin && ! $isAuthor) {
             abort(404);
         }
 
