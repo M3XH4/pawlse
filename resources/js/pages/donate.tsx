@@ -94,12 +94,16 @@ export default function Donate({
 
     const [activeTab, setActiveTab] = useState<'cash' | 'inkind' | 'sponsor' | 'honor'>(defaultTab || 'cash');
 
-    // Sync tab from URL if provided (e.g. /donate?tab=honor)
+    // Sync tab and amount from URL if provided (e.g. /donate?tab=honor or /donate?amount=1000)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get('tab');
         if (tabParam === 'honor' || tabParam === 'cash' || tabParam === 'inkind' || tabParam === 'sponsor') {
             setActiveTab(tabParam as any);
+        }
+        const amountParam = params.get('amount');
+        if (amountParam && !isNaN(Number(amountParam))) {
+            cashForm.setData('amount', amountParam);
         }
     }, []);
     const [submitted, setSubmitted] = useState(false);

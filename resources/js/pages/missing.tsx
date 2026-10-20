@@ -235,6 +235,11 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     petType: 'Dog',
     breed: '',
     color: '',
+    gender: 'Male',
+    ageCategory: 'Adult',
+    size: 'Medium',
+    reward: '',
+    medicalConditions: '',
     lastSeenLocation: '',
     lastSeenDate: '',
     description: '',
@@ -341,6 +346,11 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     data.append('petType', formData.petType);
     data.append('breed', formData.breed || '');
     data.append('color', formData.color || '');
+    data.append('gender', formData.gender || '');
+    data.append('ageCategory', formData.ageCategory || '');
+    data.append('size', formData.size || '');
+    data.append('reward', formData.reward || '');
+    data.append('medicalConditions', formData.medicalConditions || '');
     data.append('lastSeenLocation', formData.lastSeenLocation);
     data.append('lastSeenDate', formData.lastSeenDate);
     data.append('description', formData.description || '');
@@ -367,6 +377,11 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     petType: 'Dog',
                     breed: '',
                     color: '',
+                    gender: 'Male',
+                    ageCategory: 'Adult',
+                    size: 'Medium',
+                    reward: '',
+                    medicalConditions: '',
                     lastSeenLocation: '',
                     lastSeenDate: '',
                     description: '',
@@ -519,18 +534,29 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                 return {
                   id: report.id,
                   name: report.name || 'Unnamed Pet',
-                  type: report.animal_type,
+                  type: report.animal_type || 'Pet',
                   breed: report.breed || 'Unknown Breed',
                   color: report.color || 'N/A',
+                  gender: report.gender || 'Unknown',
+                  age: report.age_category || 'Adult',
+                  size: report.size || 'Medium',
+                  reward: report.reward ? (String(report.reward).startsWith('₱') ? report.reward : `₱${report.reward}`) : null,
+                  medicalConditions: report.medical_conditions || 'None',
+                  distinguishingFeatures: report.distinguishing_features || (report.description?.includes('Distinguishing Features:') ? report.description.split('Distinguishing Features:')[1]?.trim() : 'None reported'),
                   status: statusText,
-                  lastSeen: report.location,
-                  date: new Date(report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
-                  desc: report.description,
+                  lastSeen: report.location || 'Iligan City',
+                  lastSeenDetails: report.description || 'Reported missing pet.',
+                  date: new Date(report.last_seen_date || report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
+                  exactDate: report.last_seen_date ? new Date(report.last_seen_date).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(report.created_at).toLocaleDateString(),
+                  desc: report.description || 'No description provided.',
+                  description: report.description || 'No description provided.',
                   img: imgUrl,
                   owner: {
                     name: report.contact_name || 'Anonymous',
+                    facebook: 'Iligan Stray Feeders Community',
                     phone: report.contact_phone || 'N/A',
-                    email: report.contact_email || 'N/A'
+                    email: report.contact_email || 'N/A',
+                    address: report.location || 'Iligan City'
                   }
                 };
               });
@@ -855,27 +881,27 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="bg-gradient-to-br from-paw-orange/10 to-paw-orange/5 rounded-2xl p-4 border border-paw-orange/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Breed</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.breed}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.breed || 'Mixed / Unknown'}</p>
                       </div>
                       <div className="bg-gradient-to-br from-paw-blue/10 to-paw-blue/5 rounded-2xl p-4 border border-paw-blue/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Age</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.age}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.age || 'Adult'}</p>
                       </div>
                       <div className="bg-gradient-to-br from-paw-green/10 to-paw-green/5 rounded-2xl p-4 border border-paw-green/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gender</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.gender}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.gender || 'Unknown'}</p>
                       </div>
                       <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-2xl p-4 border border-purple-500/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Color</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.color}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.color || 'Mixed'}</p>
                       </div>
                       <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-2xl p-4 border border-pink-500/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Size</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.size}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.size || 'Medium'}</p>
                       </div>
                       <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-2xl p-4 border border-red-500/20">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.type}</p>
+                        <p className="text-sm font-black text-paw-navy">{selectedPet.type || 'Pet'}</p>
                       </div>
                     </div>
                   </div>
@@ -1181,6 +1207,96 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                           </div>
                         </div>
 
+                        {/* Inlined Traits: Gender, Age Category, Size */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Gender
+                            </label>
+                            <select
+                              name="gender"
+                              value={formData.gender}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
+                            >
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Unknown">Unknown</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Age Category
+                            </label>
+                            <select
+                              name="ageCategory"
+                              value={formData.ageCategory}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
+                            >
+                              <option value="Puppy/Kitten">Puppy / Kitten</option>
+                              <option value="Young">Young</option>
+                              <option value="Adult">Adult</option>
+                              <option value="Senior">Senior</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Size
+                            </label>
+                            <select
+                              name="size"
+                              value={formData.size}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
+                            >
+                              <option value="Small">Small (&lt; 10 kg)</option>
+                              <option value="Medium">Medium (10 - 25 kg)</option>
+                              <option value="Large">Large (25 - 40 kg)</option>
+                              <option value="Extra Large">Extra Large (&gt; 40 kg)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Inlined Reward & Medical Needs */}
+                        <div className="grid md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Reward Offered (Optional)
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-sm">₱</span>
+                              <input
+                                type="text"
+                                name="reward"
+                                value={formData.reward}
+                                onChange={handleInputChange}
+                                className="w-full pl-9 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="e.g. 2,000"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Medical Conditions (Optional)
+                            </label>
+                            <div className="relative">
+                              <Activity size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                type="text"
+                                name="medicalConditions"
+                                value={formData.medicalConditions}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="e.g. Needs daily arthritis medication"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Distinguishing Features */}
                         <div>
                           <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
@@ -1354,25 +1470,25 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                           </div>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                            Your Full Name <span className="text-red-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                              required
-                              type="text"
-                              name="contactName"
-                              value={formData.contactName}
-                              onChange={handleInputChange}
-                              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
-                              placeholder="Full Name"
-                            />
-                          </div>
-                        </div>
-
                         <div className="grid md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                              Your Full Name <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                required
+                                type="text"
+                                name="contactName"
+                                value={formData.contactName}
+                                onChange={handleInputChange}
+                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="Full Name"
+                              />
+                            </div>
+                          </div>
+
                           <div>
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
                               Phone Number <span className="text-red-500">*</span>
@@ -1390,22 +1506,22 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                               />
                             </div>
                           </div>
+                        </div>
 
-                          <div>
-                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                              Email Address
-                            </label>
-                            <div className="relative">
-                              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                              <input
-                                type="email"
-                                name="contactEmail"
-                                value={formData.contactEmail}
-                                onChange={handleInputChange}
-                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
-                                placeholder="your@email.com"
-                              />
-                            </div>
+                        <div>
+                          <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                            Email Address (Optional)
+                          </label>
+                          <div className="relative">
+                            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="email"
+                              name="contactEmail"
+                              value={formData.contactEmail}
+                              onChange={handleInputChange}
+                              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                              placeholder="your@email.com"
+                            />
                           </div>
                         </div>
                       </div>

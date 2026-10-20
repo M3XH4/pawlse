@@ -1,10 +1,9 @@
-import { router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { PawPrint, Heart } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import React from 'react';
 
-export function Hero() {
-  const navigate = router.visit;
+export function Hero({ stats }: { stats?: { rescued: number; adopted: number; volunteers: number; feedings: number } }) {
   
   // Apple-style scroll zoom effect - more dramatic
   const { scrollYProgress } = useScroll();
@@ -81,7 +80,7 @@ export function Hero() {
           className="lg:w-1/2 text-white mb-4 lg:mb-0 relative z-[60] text-center lg:text-left order-1 max-w-[600px] lg:self-center"
           style={{ y: textY }}
         >
-          <motion.div className="mx-auto flex flex-col items-center lg:items-start pl-[0px] pr-[60px] pt-[0px] pb-[100px] ml-[50px] mr-[0px] mt-[-150px] mb-[0px] lg:mb-[-200px]"
+          <motion.div className="mx-auto flex flex-col items-center lg:items-start max-w-xl pb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -105,40 +104,42 @@ export function Hero() {
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/85 mb-6 max-w-xl font-medium">
               Iligan Stray Feeders is a non-profit organization dedicated to feeding, rescuing, and protecting stray animals in Iligan City.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <motion.button
-                onClick={() => navigate('/donate')}
-                className="bg-paw-navy text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}
-                whileTap={{ scale: 0.98 }}
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto relative z-30 pointer-events-auto">
+              <Link
+                href="/donate"
+                className="bg-paw-navy text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 hover:shadow-2xl transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
-                <Heart size={20} fill="white" />
+                <Heart size={20} fill="white" className="transition-transform group-hover:scale-110" />
                 <span className="whitespace-nowrap">DONATE</span>
-              </motion.button>
-              <motion.button
-                onClick={() => navigate('/adopt')}
-                className="bg-white text-paw-navy px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 border-2 border-transparent"
-                whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}
-                whileTap={{ scale: 0.98 }}
+              </Link>
+              <Link
+                href="/adopt"
+                className="bg-white text-paw-navy px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 hover:shadow-2xl transition-all flex items-center justify-center gap-2 border-2 border-transparent group cursor-pointer"
               >
-                <PawPrint size={20} className="text-paw-orange" />
+                <PawPrint size={20} className="text-paw-orange transition-transform group-hover:scale-110" />
                 <span className="whitespace-nowrap">ADOPT NOW</span>
-              </motion.button>
+              </Link>
             </div>
 
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 md:gap-6 text-white/80">
               <div className="flex flex-col items-center lg:items-start">
-                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">12k+</span>
+                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">
+                  {stats ? `${((stats.feedings || 320) * 15).toLocaleString()}+` : '12k+'}
+                </span>
                 <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-widest uppercase leading-none">Meals Served</span>
               </div>
               <div className="w-[1px] h-6 md:h-8 bg-white/30"></div>
               <div className="flex flex-col items-center lg:items-start">
-                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">450+</span>
+                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">
+                  {stats ? `${stats.rescued || 150}+` : '450+'}
+                </span>
                 <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-widest uppercase leading-none">Rescues Done</span>
               </div>
               <div className="w-[1px] h-6 md:h-8 bg-white/30"></div>
               <div className="flex flex-col items-center lg:items-start">
-                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">500+</span>
+                <span className="text-lg sm:text-xl md:text-2xl font-black text-white">
+                  {stats ? `${stats.volunteers || 42}+` : '500+'}
+                </span>
                 <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-widest uppercase leading-none">Volunteers</span>
               </div>
             </div>

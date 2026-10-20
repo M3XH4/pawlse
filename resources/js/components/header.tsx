@@ -40,7 +40,7 @@ const navPreviews: Record<string, { image: string; label: string }> = {
 };
 
 export function Header() {
-  const navigate = router.visit;
+  const navigate = (url: string) => router.visit(url);
   const auth = usePage().props.auth as { user?: any } | undefined;
   const user = auth?.user;          
   const logout = () => router.post('/logout');

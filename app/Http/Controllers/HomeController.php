@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
+use App\Models\AssignedTask;
 use App\Models\CareSustainability;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
 use App\Models\PetReport;
 use App\Models\ShelterAnimal;
+use App\Models\SystemSetting;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -51,14 +53,16 @@ class HomeController extends Controller
                     'color' => $pet->color ?? 'Mixed',
                     'behavior' => $pet->behavior ?? 'Friendly & Loving',
                     'story' => $pet->story ?? 'Rescued and waiting for a loving home.',
+                    'rescueStory' => $pet->rescue_story ?: ($pet->story ?: 'Rescued and waiting for a loving home.'),
+                    'rescueLocation' => $pet->rescue_location ?: 'Iligan City Shelter',
                     'img' => $pet->photo_url ?: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800',
                     'mainImg' => $pet->photo_url ?: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800',
-                    'beforeImg' => $pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
+                    'beforeImg' => $pet->before_photo_url ?: ($pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
                         ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80'
-                        : 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80'),
-                    'afterImg' => $pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
+                        : 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80')),
+                    'afterImg' => $pet->after_photo_url ?: ($pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
                         ? 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=80'
-                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=80'),
+                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=80')),
                     'vaccinated' => (bool) $pet->vaccinated,
                     'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 14,
                 ];
@@ -66,22 +70,34 @@ class HomeController extends Controller
 
         // 2. Missing Pets Reports
         $missingPets = PetReport::query()
+            ->with('photos')
             ->where('type', 'missing')
-            ->latest()
-            ->take(6)
+            ->latest('id')
+            ->take(8)
             ->get()
             ->map(function (PetReport $report) use ($getString) {
+                $photoPath = $report->photos->first()?->path;
+
                 return [
                     'id' => $report->id,
-                    'pet_name' => $report->name ?? $report->pet_name ?? 'Missing Pet',
+                    'pet_name' => $report->name ?? 'Missing Pet',
                     'species' => $getString($report->animal_type ?? $report->species, 'Dog'),
-                    'breed' => $report->breed ?? 'Unknown',
-                    'last_seen_location' => $report->location ?? $report->location_address ?? 'Iligan City',
-                    'last_seen_date' => $report->last_seen_date ? $report->last_seen_date->format('M d, Y') : ($report->created_at ? $report->created_at->format('M d, Y') : now()->format('M d, Y')),
+                    'breed' => $report->breed ?? 'Mixed Breed',
+                    'age' => $report->age_category ? ucfirst((string) $report->age_category) : 'Young Adult',
+                    'gender' => $report->gender ? ucfirst((string) $report->gender) : 'Unknown',
+                    'color' => $report->color ?? 'Mixed',
+                    'size' => $report->size ? ucfirst((string) $report->size) : 'Medium',
+                    'reward' => $report->reward,
+                    'medical_conditions' => $report->medical_conditions ?? 'None',
+                    'last_seen_location' => $report->location ?? 'Iligan City',
+                    'last_seen_date' => $report->last_seen_date ? $report->last_seen_date->diffForHumans() : ($report->created_at ? $report->created_at->diffForHumans() : 'Recently'),
+                    'exact_date' => $report->last_seen_date ? $report->last_seen_date->format('M d, Y') : ($report->created_at ? $report->created_at->format('M d, Y') : 'Recently'),
                     'description' => $report->description ?? 'No details provided.',
-                    'contact_number' => $report->contact_phone ?? $report->contact_number ?? '0912 345 6789',
-                    'photo_url' => $report->photo_url ?: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
-                    'status' => $getString($report->status, 'active'),
+                    'contact_name' => $report->contact_name ?? 'Pet Owner',
+                    'contact_number' => $report->contact_phone ?? '0912 345 6789',
+                    'contact_email' => $report->contact_email ?? 'help@iliganstrayfeeders.org',
+                    'photo_url' => $photoPath ?: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
+                    'status' => $report->status === 'resolved' ? 'resolved' : 'active',
                 ];
             });
 
@@ -104,8 +120,28 @@ class HomeController extends Controller
                     'location' => $event->location ?? 'Iligan City Shelter',
                     'status' => $getString($event->status, 'open'),
                     'participants_count' => $event->volunteers_count ?? $event->spots ?? 0,
+                    'spots' => $event->spots ?? 20,
+                    'desc' => $event->desc ?? $event->description ?? '',
                 ];
             });
+
+        // Joined events status for logged in user
+        $user = $request->user();
+        $joinedEventIds = [];
+        $joinedEventRoles = [];
+
+        if ($user !== null) {
+            $userTasks = AssignedTask::query()
+                ->where('user_id', $user->id)
+                ->whereIn('status', ['pending', 'completed'])
+                ->get();
+
+            $joinedEventIds = $userTasks->whereNotNull('event_id')->pluck('event_id')->values()->toArray();
+
+            foreach ($userTasks->whereNotNull('event_id') as $task) {
+                $joinedEventRoles[$task->event_id] = $task->role;
+            }
+        }
 
         // 4. Donation Metrics
         $totalCashRaised = (float) Donation::query()
@@ -114,7 +150,13 @@ class HomeController extends Controller
         if ($totalCashRaised <= 0) {
             $totalCashRaised = (float) Donation::query()->sum('amount');
         }
-        $cashGoal = 100000;
+        $cashGoal = (int) SystemSetting::getValue('monthly_donation_goal', 100000);
+        $budgetNeeds = SystemSetting::getValue('shelter_budget_needs', [
+            ['label' => 'Animal Food & Supplements', 'cost' => '₱45,000', 'progress' => 65, 'category' => 'Food & Nutrition'],
+            ['label' => 'Veterinary Bills & Medicine', 'cost' => '₱35,000', 'progress' => 40, 'category' => 'Medical Care'],
+            ['label' => 'Shelter Rent & Utilities', 'cost' => '₱12,000', 'progress' => 90, 'category' => 'Infrastructure'],
+            ['label' => 'Rescue Ops & Gas', 'cost' => '₱8,000', 'progress' => 30, 'category' => 'Operations'],
+        ]);
         $recentDonorsCount = Donation::query()->count();
 
         // Generate past 7 months chart data dynamically
@@ -178,11 +220,45 @@ class HomeController extends Controller
         $volunteersCount = VolunteerApplication::query()->where('status', 'approved')->count();
         $feedingCount = FeedingSchedule::query()->count();
 
+        // 6. Rescue Stories from Animal Master Records
+        $stories = ShelterAnimal::query()
+            ->whereNotNull('story')
+            ->where(function ($q) {
+                $q->whereIn('status', [ShelterAnimalStatus::Adopted, ShelterAnimalStatus::Available, ShelterAnimalStatus::Foster]);
+            })
+            ->latest('id')
+            ->take(12)
+            ->get()
+            ->map(function (ShelterAnimal $animal) use ($getString) {
+                $statusStr = $getString($animal->status, 'Available');
+                $displayStatus = match (strtolower($statusStr)) {
+                    'adopted' => 'ADOPTED',
+                    default => 'RESCUED',
+                };
+
+                return [
+                    'id' => $animal->id,
+                    'name' => $animal->name,
+                    'type' => $getString($animal->type, 'Dog'),
+                    'story' => $animal->rescue_story ?: $animal->story,
+                    'location' => $animal->rescue_location ?: 'Iligan City, 2024',
+                    'status' => $displayStatus,
+                    'image' => $animal->after_photo_url ?: ($animal->photo_url ?: ($getString($animal->type, 'Dog') === 'Cat'
+                        ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80'
+                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800')),
+                    'before_image' => $animal->before_photo_url ?: $animal->photo_url,
+                    'after_image' => $animal->after_photo_url ?: $animal->photo_url,
+                ];
+            });
+
         return Inertia::render('welcome', [
             'canRegister' => Features::enabled(Features::registration()),
             'pets' => $pets,
+            'stories' => $stories,
             'missingPets' => $missingPets,
             'events' => $events,
+            'joinedEventIds' => $joinedEventIds,
+            'joinedEventRoles' => $joinedEventRoles,
             'donationStats' => [
                 'totalRaised' => $totalCashRaised > 0 ? (int) $totalCashRaised : 10000,
                 'goal' => $cashGoal,
@@ -192,6 +268,7 @@ class HomeController extends Controller
                 'chartData' => $chartData,
                 'recentDonations' => $recentDonations,
                 'wishlist' => $wishlist,
+                'budgetNeeds' => $budgetNeeds,
             ],
             'impactStats' => [
                 'rescued' => max($rescuesCount, 150),

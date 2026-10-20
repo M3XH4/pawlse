@@ -52,9 +52,9 @@ export function ImpactStats({ stats: propsStats }: { stats?: { rescued: number; 
             });
           }
         }}
-        className="max-w-7xl mx-auto py-[50px] px-[16px] py-[30px] mx-[0px] my-[-100px]"
+        className="max-w-7xl mx-auto py-12 px-4"
       >
-        <div className="flex flex-col md:flex-row justify-between items-center gap-12 md:gap-0 p-[0px] mx-[0px] mt-[-50px] mb-[0px] mt-[-60px]">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-12 md:gap-0">
           {stats.map((stat, i) => (
             <React.Fragment key={i}>
               <motion.div
@@ -71,9 +71,7 @@ export function ImpactStats({ stats: propsStats }: { stats?: { rescued: number; 
                   className="text-6xl md:text-8xl lg:text-[96px] font-black text-white mb-2 transition-colors duration-200"
                   whileHover={{ color: "#F59E0B" }}
                 >
-                  {i === 3 ? `${counts[i]}%` : 
-                   i === 0 ? `${counts[i].toLocaleString()}+` : 
-                   counts[i].toLocaleString()}
+                  {i === 0 ? `${counts[i].toLocaleString()}+` : counts[i].toLocaleString()}
                 </motion.h3>
                 <motion.p 
                   className="text-[11px] uppercase tracking-[0.25em] text-white/45 font-bold transition-opacity duration-200 group-hover:opacity-80"

@@ -34,6 +34,7 @@ use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\RehomingRequestController;
 use App\Http\Controllers\ResourceDownloadController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\AccountSettingsController;
 use App\Http\Controllers\ShelterVisitController;
 use App\Http\Controllers\SuperAdmin\AiConfigController;
@@ -65,6 +66,7 @@ $superAdminDashboardMiddleware = ['auth', 'verified', RoleMiddleware::using(Role
 Route::get('/', HomeController::class)->name('home');
 
 Route::get('/about', [AboutController::class, 'index'])->name('about');
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/vet', [VetController::class, 'index'])->name('vet');
 Route::get('/honor', [HonorController::class, 'index'])->name('honor');
 Route::get('/resources/{resourceFile}/download', [ResourceDownloadController::class, 'download'])->name('resources.download');

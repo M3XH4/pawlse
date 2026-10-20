@@ -1,11 +1,17 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Calendar, MapPin, Clock, ArrowRight, Star, Heart, UserPlus, ShieldPlus, Plus, Mail, Phone, User, Bookmark } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, Star, Heart, UserPlus, ShieldPlus, Plus, Mail, Phone, User, Bookmark, Sparkles, X, CheckCircle2, Trash2, CalendarPlus, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { getEventDateBadge, formatEventTime } from '@/lib/event-utils';
+import { getEventDateBadge, formatEventTime, formatEventDate, shareEvent } from '@/lib/event-utils';
+
+interface EventsProps {
+    events?: any[];
+    joinedEventIds?: number[];
+    joinedEventRoles?: Record<number, string>;
+}
 
 
 const defaultEvents = [
@@ -73,7 +79,11 @@ const categoryIcons: Record<string, any> = {
     Training: <UserPlus size={20} />,
 };
 
-export function Events({ events: propsEvents }: { events?: any[] }) {
+export function Events({
+    events: propsEvents,
+    joinedEventIds: propsJoinedEventIds = [],
+    joinedEventRoles: propsJoinedEventRoles = {},
+}: EventsProps) {
     const displayEvents = (propsEvents && propsEvents.length > 0) ? propsEvents.map((ev, idx) => {
         const cat = ev.category || ev.type || 'Community';
 
@@ -86,15 +96,97 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
             type: cat,
             img: ev.img || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=600',
             icon: categoryIcons[cat] || <Heart size={20} />,
-            color: categoryColors[cat] || 'bg-paw-orange'
+            color: categoryColors[cat] || 'bg-paw-orange',
+            spots: ev.spots ?? 20,
+            desc: ev.desc || ev.description || 'Join us for this meaningful community pet initiative organized by Iligan Stray Feeders.'
         };
     }) : defaultEvents;
+
     const navigate = router.visit;
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;
     const isAuthenticated = !!user;
+    const isVolunteer = user?.role === 'volunteer';
+
+    const [joinedIds, setJoinedIds] = useState<number[]>(propsJoinedEventIds);
+    const [joinedRoles, setJoinedRoles] = useState<Record<number, string>>(propsJoinedEventRoles);
+
+    useEffect(() => {
+        setJoinedIds(propsJoinedEventIds);
+        setJoinedRoles(propsJoinedEventRoles);
+    }, [propsJoinedEventIds, propsJoinedEventRoles]);
+
     const [bookingEvent, setBookingEvent] = useState<any | null>(null);
+    const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
+
+    const handleJoinEvent = (eventId: number, joinAs: 'participant' | 'volunteer' = 'participant') => {
+        if (!isAuthenticated) {
+            toast.info('Please log in to register for events', {
+                description: 'Sign in to join community drives and track your attendance.',
+                action: { label: 'Log In', onClick: () => navigate('/login') }
+            });
+            return;
+        }
+
+        if (joinAs === 'volunteer' && !isVolunteer) {
+            router.get('/volunteer', {
+                selectedEvent: displayEvents.find((e) => e.id === eventId) as any,
+            });
+            return;
+        }
+
+        setIsSubmittingBooking(true);
+        router.post(
+            `/events/${eventId}/join`,
+            { join_as: joinAs },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setJoinedIds((prev) => [...prev, eventId]);
+                    setJoinedRoles((prev) => ({ ...prev, [eventId]: joinAs }));
+                    toast.success(`You have registered as ${joinAs} for this event!`);
+                    setBookingEvent(null);
+                    setIsSubmittingBooking(false);
+                },
+                onError: (errors) => {
+                    setIsSubmittingBooking(false);
+                    const msg = Object.values(errors)[0] as string || 'Could not register for this event.';
+                    toast.error(msg);
+                }
+            }
+        );
+    };
+
+    const handleLeaveEvent = (eventId: number) => {
+        if (!confirm('Are you sure you want to cancel your attendance for this event? Your spot will be released.')) {
+            return;
+        }
+
+        setIsSubmittingBooking(true);
+        router.post(
+            `/events/${eventId}/leave`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setJoinedIds((prev) => prev.filter((id) => id !== eventId));
+                    setJoinedRoles((prev) => {
+                        const next = { ...prev };
+                        delete next[eventId];
+                        return next;
+                    });
+                    toast.success('Your registration has been cancelled.');
+                    setBookingEvent(null);
+                    setIsSubmittingBooking(false);
+                },
+                onError: () => {
+                    setIsSubmittingBooking(false);
+                    toast.error('Failed to cancel attendance.');
+                }
+            }
+        );
+    };
 
     const handleBookmark = (e: React.MouseEvent, event: any) => {
         e.stopPropagation();
@@ -128,141 +220,269 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
         <>
             <AnimatePresence>
                 {bookingEvent && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-                        onClick={() => setBookingEvent(null)}
-                    >
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
+                        {/* Backdrop */}
                         <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[3.5rem] max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col p-2 md:p-3"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setBookingEvent(null)}
+                            className="fixed inset-0 bg-paw-navy/80 backdrop-blur-md"
+                        />
+
+                        {/* Modal Dialog Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                            transition={{
+                                duration: 0.22,
+                                ease: [0.16, 1, 0.3, 1],
+                            }}
                             onClick={(e) => e.stopPropagation()}
+                            className="relative z-10 my-auto flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border-0 bg-white font-quicksand shadow-2xl md:max-h-[86vh] md:flex-row md:rounded-[36px]"
                         >
-                            <div className="overflow-y-auto overflow-x-hidden p-6 md:p-10 scrollbar-snapped flex-1 rounded-[2.5rem]">
-                                <div className="flex justify-between items-start mb-8">
-                                    <div>
-                                        <div className="inline-flex items-center gap-2 bg-paw-yellow/10 px-4 py-2 rounded-full mb-4 border border-paw-yellow/20">
-                                            <Calendar size={18} className="text-paw-yellow" />
-                                            <span className="text-xs font-black tracking-widest uppercase text-paw-yellow">Event Registration</span>
-                                        </div>
-                                        <h3 className="text-4xl font-black italic uppercase tracking-tighter text-paw-navy mb-2">{bookingEvent.title}</h3>
-                                        <div className="flex flex-wrap gap-4 text-sm font-bold text-gray-500">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={16} className="text-paw-orange" />
-                                                {bookingEvent.date}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Clock size={16} className="text-paw-blue" />
-                                                {bookingEvent.time}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <MapPin size={16} className="text-paw-green" />
-                                                {bookingEvent.location}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => setBookingEvent(null)}
-                                        className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors shrink-0"
-                                    >
-                                        <Plus size={20} className="rotate-45" />
-                                    </button>
+                            {/* Modal Media Side */}
+                            <div className="relative h-56 shrink-0 overflow-hidden bg-paw-bg sm:h-64 md:h-auto md:w-5/12">
+                                <ImageWithFallback
+                                    src={bookingEvent.img}
+                                    alt={bookingEvent.title}
+                                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                                />
+
+                                {/* Subtle Gradient Overlays */}
+                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30" />
+
+                                {/* Category Badge */}
+                                <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/60 bg-white/95 px-3.5 py-1.5 text-xs font-black tracking-wider text-paw-orange uppercase shadow-lg backdrop-blur-md">
+                                    <Sparkles size={13} />
+                                    <span>{bookingEvent.type}</span>
                                 </div>
 
-                                <form className="space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Full Name</label>
-                                        <div className="relative">
-                                            <User size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                placeholder="Enter your full name"
-                                                className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors"
-                                            />
+                                {/* Date Stamp Badge */}
+                                <div className="absolute right-4 bottom-4 left-4 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/95 px-3.5 py-2.5 shadow-xl backdrop-blur-md">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div className="flex min-w-0 flex-col">
+                                        <span className="mb-0.5 text-[10px] leading-none font-black tracking-widest text-gray-400 uppercase">
+                                            Event Date
+                                        </span>
+                                        <span className="truncate text-xs font-black text-paw-navy">
+                                            {formatEventDate(bookingEvent.date, 'weekday')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Content Side */}
+                            <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto bg-white p-5 sm:p-7 md:w-7/12 md:p-8">
+                                <div>
+                                    {/* Header Row: Information Tag + Spots Badge + Close Button */}
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="flex items-center gap-1.5 rounded-full bg-paw-orange/10 px-2.5 py-1 text-[11px] font-black tracking-widest text-paw-orange uppercase">
+                                                <Sparkles size={12} />
+                                                Event Information
+                                            </span>
+                                            {bookingEvent.spots !== undefined && (
+                                                <span className="rounded-full border border-red-200/80 bg-red-50 px-2.5 py-0.5 text-[11px] font-black tracking-wider whitespace-nowrap text-red-600 uppercase">
+                                                    {bookingEvent.spots || 20} Spots Left
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setBookingEvent(null)}
+                                            className="shrink-0 cursor-pointer rounded-full p-2 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90"
+                                            aria-label="Close modal"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+
+                                    {/* Event Title */}
+                                    <h2 className="mb-4 text-2xl leading-tight font-black tracking-tight text-paw-navy sm:text-3xl">
+                                        {bookingEvent.title}
+                                    </h2>
+
+                                    {/* Date/Time/Location Info Cards */}
+                                    <div className="mb-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange">
+                                                <Calendar size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Date
+                                                </p>
+                                                <p className="truncate text-xs font-black text-paw-navy sm:text-sm">
+                                                    {formatEventDate(bookingEvent.date, 'full')}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-blue/15 text-paw-blue">
+                                                <Clock size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Time
+                                                </p>
+                                                <p className="truncate text-xs font-black text-paw-navy sm:text-sm">
+                                                    {formatEventTime(bookingEvent.time)}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100/90 bg-paw-bg/70 p-3.5 transition-colors hover:bg-paw-bg sm:col-span-2">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-green/15 text-paw-green">
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="mb-0.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                    Location
+                                                </p>
+                                                <p className="text-xs font-black text-paw-navy sm:text-sm">
+                                                    {bookingEvent.location}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Email Address</label>
-                                        <div className="relative">
-                                            <Mail size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="email"
-                                                placeholder="your@email.com"
-                                                className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors"
-                                            />
-                                        </div>
+                                    {/* Description */}
+                                    <div className="mb-6">
+                                        <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-black tracking-widest text-paw-navy uppercase">
+                                            About this Event
+                                        </h4>
+                                        <p className="text-xs leading-relaxed font-semibold text-gray-600 sm:text-sm">
+                                            {bookingEvent.desc || 'Join us for this meaningful community pet initiative organized by Iligan Stray Feeders.'}
+                                        </p>
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Contact Number</label>
-                                        <div className="relative">
-                                            <Phone size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="tel"
-                                                placeholder="0917-XXX-XXXX"
-                                                className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors"
-                                            />
+                                {/* Action Buttons Footer */}
+                                <div className="mt-auto space-y-2.5 pt-2">
+                                    {joinedIds.includes(bookingEvent.id) ? (
+                                        <div className="space-y-2">
+                                            <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-0 bg-emerald-50 py-3 text-xs md:text-sm font-black text-emerald-800">
+                                                <CheckCircle2 size={18} className="text-emerald-600" />
+                                                <span>
+                                                    YOU ARE REGISTERED AS {(joinedRoles[bookingEvent.id] || 'Participant').toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                disabled={isSubmittingBooking}
+                                                onClick={() => handleLeaveEvent(bookingEvent.id)}
+                                                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                                            >
+                                                <Trash2 size={14} />
+                                                <span>Cancel Attendance / Leave Event</span>
+                                            </button>
                                         </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">I want to join as:</label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {[
-                                                { value: 'volunteer', label: 'Volunteer', icon: <UserPlus size={20} />, color: 'paw-green' },
-                                                { value: 'participant', label: 'Participant', icon: <Heart size={20} />, color: 'paw-orange' },
-                                                { value: 'donor', label: 'Donor/Sponsor', icon: <Star size={20} />, color: 'paw-yellow' },
-                                                { value: 'observer', label: 'Observer', icon: <ShieldPlus size={20} />, color: 'paw-blue' }
-                                            ].map((role) => (
-                                                <label
-                                                    key={role.value}
-                                                    className="flex items-center gap-3 p-4 rounded-2xl border-2 border-gray-200 hover:border-paw-orange cursor-pointer transition-all group"
+                                    ) : bookingEvent.spots === 0 ? (
+                                        <div className="flex w-full items-center justify-center rounded-2xl bg-gray-100 py-3.5 text-xs font-black text-gray-500 uppercase">
+                                            This Event is Fully Booked
+                                        </div>
+                                    ) : !isAuthenticated ? (
+                                        <div className="space-y-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate('/login')}
+                                                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-0 border-transparent bg-paw-orange py-3.5 text-sm font-black tracking-wider text-white uppercase shadow-lg ring-0 shadow-paw-orange/20 transition-all outline-none hover:bg-orange-600 active:scale-[0.99]"
+                                            >
+                                                <User size={18} />
+                                                <span>LOG IN TO REGISTER</span>
+                                            </button>
+                                            <div className="text-center">
+                                                <Link
+                                                    href="/register"
+                                                    className="text-[11px] font-bold text-gray-400 hover:text-paw-orange transition-colors"
                                                 >
-                                                    <input
-                                                        type="radio"
-                                                        name="role"
-                                                        value={role.value}
-                                                        className="w-5 h-5 accent-paw-orange"
-                                                    />
-                                                    <div className={`p-2 rounded-xl bg-${role.color}/10 text-${role.color} group-hover:bg-paw-orange/10 group-hover:text-paw-orange transition-colors`}>
-                                                        {role.icon}
-                                                    </div>
-                                                    <span className="font-black text-sm text-paw-navy uppercase">{role.label}</span>
-                                                </label>
-                                            ))}
+                                                    Don't have an account? Sign up here →
+                                                </Link>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : isVolunteer ? (
+                                        <div className="space-y-2">
+                                            <p className="text-center text-[11px] font-bold text-gray-500">
+                                                Choose how you want to join this event:
+                                            </p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <button
+                                                    type="button"
+                                                    disabled={isSubmittingBooking}
+                                                    onClick={() => handleJoinEvent(bookingEvent.id, 'volunteer')}
+                                                    className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-0 bg-paw-orange py-3 text-xs font-black tracking-wider text-white uppercase shadow-md shadow-paw-orange/20 transition-all hover:bg-orange-600 active:scale-[0.99] disabled:opacity-50"
+                                                >
+                                                    <Plus size={16} />
+                                                    <span>Join as Volunteer</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isSubmittingBooking}
+                                                    onClick={() => handleJoinEvent(bookingEvent.id, 'participant')}
+                                                    className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-2 border-paw-navy/20 bg-white py-3 text-xs font-black tracking-wider text-paw-navy uppercase transition-all hover:border-paw-navy hover:bg-paw-navy/5 active:scale-[0.99] disabled:opacity-50"
+                                                >
+                                                    <CheckCircle2 size={16} />
+                                                    <span>Join as Participant</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <button
+                                                type="button"
+                                                disabled={isSubmittingBooking}
+                                                onClick={() => handleJoinEvent(bookingEvent.id, 'participant')}
+                                                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-0 border-transparent bg-paw-orange py-3.5 text-sm font-black tracking-wider text-white uppercase shadow-lg ring-0 shadow-paw-orange/20 transition-all outline-none hover:bg-orange-600 active:scale-[0.99] disabled:opacity-50"
+                                            >
+                                                <Plus size={18} />
+                                                <span>JOIN AS PARTICIPANT</span>
+                                            </button>
+                                            <div className="text-center">
+                                                <Link
+                                                    href="/volunteer"
+                                                    className="text-[11px] font-bold text-gray-400 hover:text-paw-orange transition-colors"
+                                                >
+                                                    Want to help as a volunteer? Apply here →
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Special Requests or Notes (Optional)</label>
-                                        <textarea
-                                            placeholder="Any dietary restrictions, accessibility needs, or questions..."
-                                            rows={4}
-                                            className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors resize-none"
-                                        ></textarea>
+                                    {/* Calendar & Share row */}
+                                    <div className="grid grid-cols-2 items-center gap-2.5 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => shareEvent({ platform: 'calendar', event: bookingEvent })}
+                                            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-paw-navy/10 px-3 py-2 text-xs font-black tracking-wider whitespace-nowrap text-paw-navy uppercase transition-all hover:border-paw-orange hover:bg-paw-orange/5 active:scale-[0.99]"
+                                        >
+                                            <CalendarPlus size={16} className="shrink-0 text-paw-orange" />
+                                            <span>Add to Calendar</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                                    await navigator.clipboard.writeText(`${window.location.origin}/events?event=${bookingEvent.id}`);
+                                                    toast.success('Event link copied to clipboard!');
+                                                }
+                                            }}
+                                            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-paw-navy/10 px-3 py-2 text-xs font-black tracking-wider whitespace-nowrap text-paw-navy uppercase transition-all hover:border-paw-orange hover:bg-paw-orange/5 active:scale-[0.99]"
+                                        >
+                                            <Share2 size={16} className="shrink-0 text-paw-blue" />
+                                            <span>Share Event</span>
+                                        </button>
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-paw-orange text-white py-5 rounded-[2rem] font-black text-lg tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setBookingEvent(null);
-                                            alert(`Thank you for registering for ${bookingEvent.title}! We'll send you a confirmation email shortly.`);
-                                        }}
-                                    >
-                                        <Calendar size={24} />
-                                        CONFIRM REGISTRATION
-                                    </button>
-                                </form>
+                                </div>
                             </div>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
@@ -332,10 +552,23 @@ export function Events({ events: propsEvents }: { events?: any[] }) {
                                         </div>
                                         <button
                                             onClick={() => setBookingEvent(event)}
-                                            className="w-full bg-gray-50 text-paw-navy py-4 rounded-2xl font-black text-xs tracking-widest uppercase hover:bg-paw-navy hover:text-white transition-all group-hover:bg-paw-navy group-hover:text-white flex items-center justify-center gap-2 mt-auto"
+                                            className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest uppercase transition-all flex items-center justify-center gap-2 mt-auto ${
+                                                joinedIds.includes(event.id)
+                                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                                                    : 'bg-gray-50 text-paw-navy hover:bg-paw-navy hover:text-white group-hover:bg-paw-navy group-hover:text-white'
+                                            }`}
                                         >
-                                            BOOK MY SPOT
-                                            <ArrowRight size={14} />
+                                            {joinedIds.includes(event.id) ? (
+                                                <>
+                                                    <CheckCircle2 size={14} className="text-emerald-600" />
+                                                    REGISTERED (VIEW DETAILS)
+                                                </>
+                                            ) : (
+                                                <>
+                                                    BOOK MY SPOT
+                                                    <ArrowRight size={14} />
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </motion.div>

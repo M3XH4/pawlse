@@ -22,217 +22,75 @@ const SEARCH_SUGGESTIONS = [
     { keyword: 'Poblacion', type: 'location', category: 'Location' }
 ];
 
-const missingPetsData = [
-    {
-        id: 1,
-        name: 'Bamba',
-        type: 'Dog',
-        breed: 'Aspin (Mixed Breed)',
-        age: '3 Years Old',
-        gender: 'Male',
-        color: 'Brown with white patches',
-        size: 'Medium',
-        status: 'STILL SEARCHING',
-        lastSeen: 'Tambo Market Area',
-        lastSeenDetails: 'Near the vegetable section, close to the main entrance. Was seen wandering around food stalls.',
-        date: '3 Days Ago',
-        exactDate: 'April 28, 2026 - 2:30 PM',
-        reward: '₱2,000',
-        description: 'Very friendly and responds to his name. Wearing a blue collar with a bell. Has a small scar above his right eye.',
-        distinguishingFeatures: 'Blue collar with bell, scar above right eye, white patch on chest',
-        medicalConditions: 'None',
-        img: 'https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8ZG9nfGVufDB8fDB8fHww',
-        statusColor: 'bg-red-500',
-        owner: {
-            name: 'Maria Santos',
-            facebook: 'Maria Santos - Iligan',
-            phone: '0917-123-4567',
-            email: 'maria.santos@email.com',
-            address: 'Tambo, Iligan City'
-        }
-    },
-    {
-        id: 2,
-        name: 'Mimi',
-        type: 'Cat',
-        breed: 'Puspin (Domestic Shorthair)',
-        age: '2 Years Old',
-        gender: 'Female',
-        color: 'Orange tabby',
-        size: 'Small',
-        status: 'FOUND',
-        lastSeen: 'Tibanga Near 7-Eleven',
-        lastSeenDetails: 'Found hiding under a parked car. Was meowing loudly.',
-        date: 'Today',
-        exactDate: 'May 1, 2026 - 8:00 AM',
-        reward: null,
-        description: 'Sweet and shy. Has a notched left ear. No collar.',
-        distinguishingFeatures: 'Notched left ear, orange and white stripes, green eyes',
-        medicalConditions: 'None',
-        img: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2F0fGVufDB8fDB8fHww',
-        statusColor: 'bg-paw-green',
-        owner: {
-            name: 'John Cruz',
-            facebook: 'John Cruz - Pet Lover',
-            phone: '0918-234-5678',
-            email: 'john.cruz@email.com',
-            address: 'Tibanga, Iligan City'
-        }
-    },
-    {
-        id: 3,
-        name: 'Sherlock',
-        type: 'Dog',
-        breed: 'Unknown Mix',
-        age: 'Young Adult',
-        gender: 'Unknown',
-        color: 'White and gray',
-        size: 'Small to Medium',
-        status: 'LAST SEEN',
-        lastSeen: 'Suarez Heights',
-        lastSeenDetails: 'Seen wandering near residential homes. Appeared lost and looking for food.',
-        date: '6 Hours Ago',
-        exactDate: 'May 1, 2026 - 12:00 PM',
-        reward: null,
-        description: 'Looks scared and timid. No collar. May be a stray or abandoned pet.',
-        distinguishingFeatures: 'Curled tail, floppy ears',
-        medicalConditions: 'Appears healthy but thin',
-        img: 'https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZG9nfGVufDB8fDB8fHww',
-        statusColor: 'bg-paw-yellow',
-        owner: {
-            name: 'Anonymous Reporter',
-            facebook: 'Iligan Stray Feeders Community',
-            phone: '0919-345-6789',
-            email: 'contact@pawlse.org',
-            address: 'Suarez, Iligan City'
-        }
-    },
-    {
-        id: 4,
-        name: 'Sparky',
-        type: 'Dog',
-        breed: 'Golden Retriever Mix',
-        age: '5 Years Old',
-        gender: 'Male',
-        color: 'Golden brown',
-        size: 'Large',
-        status: 'STILL SEARCHING',
-        lastSeen: 'Iligan City Public Plaza',
-        lastSeenDetails: 'Last seen near the fountain area. Was with family during a walk when he suddenly ran off.',
-        date: '1 Week Ago',
-        exactDate: 'April 24, 2026 - 5:00 PM',
-        reward: '₱5,000',
-        description: 'Very energetic and friendly. Loves people. Wearing a red collar with ID tag.',
-        distinguishingFeatures: 'Red collar with ID tag, long fluffy tail, friendly demeanor',
-        medicalConditions: 'Takes daily medication for arthritis',
-        img: 'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8Y2F0fGVufDB8fDB8fHww',
-        statusColor: 'bg-red-500',
-        owner: {
-            name: 'Roberto Garcia',
-            facebook: 'Roberto Garcia - Iligan',
-            phone: '0920-456-7890',
-            email: 'roberto.garcia@email.com',
-            address: 'Poblacion, Iligan City'
-        }
-    },
-    {
-        id: 5,
-        name: 'Luna',
-        type: 'Cat',
-        breed: 'Persian Mix',
-        age: '1 Year Old',
-        gender: 'Female',
-        color: 'White with gray spots',
-        size: 'Small',
-        status: 'STILL SEARCHING',
-        lastSeen: 'Mahayahay Area',
-        lastSeenDetails: 'Escaped through an open window. Very scared of loud noises.',
-        date: '2 Days Ago',
-        exactDate: 'April 29, 2026 - 10:00 AM',
-        reward: '₱1,500',
-        description: 'Indoor cat, not used to being outside. Wears a pink collar with her name on it. Very fluffy.',
-        distinguishingFeatures: 'Pink collar with name tag, fluffy long fur, blue eyes',
-        medicalConditions: 'None',
-        img: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fGNhdHxlbnwwfHwwfHx8MA%3D%3D',
-        statusColor: 'bg-red-500',
-        owner: {
-            name: 'Sarah Reyes',
-            facebook: 'Sarah Reyes - Iligan',
-            phone: '0921-567-8901',
-            email: 'sarah.reyes@email.com',
-            address: 'Mahayahay, Iligan City'
-        }
-    },
-    {
-        id: 6,
-        name: 'Whiskers',
-        type: 'Cat',
-        breed: 'Tabby Mix',
-        age: '4 Years Old',
-        gender: 'Male',
-        color: 'Gray with black stripes',
-        size: 'Medium',
-        status: 'LAST SEEN',
-        lastSeen: 'Pala-o Market',
-        lastSeenDetails: 'Spotted near fish vendors. May be looking for food.',
-        date: '12 Hours Ago',
-        exactDate: 'May 1, 2026 - 6:00 AM',
-        reward: null,
-        description: 'Calm and gentle. Has distinctive long whiskers. No collar.',
-        distinguishingFeatures: 'Very long whiskers, white paws, torn right ear',
-        medicalConditions: 'None',
-        img: 'https://images.unsplash.com/photo-1503777119540-ce54b422baff?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGNhdHxlbnwwfHwwfHx8MA%3D%3D',
-        statusColor: 'bg-paw-yellow',
-        owner: {
-            name: 'Mark Dela Cruz',
-            facebook: 'Mark Dela Cruz',
-            phone: '0922-678-9012',
-            email: 'mark.delacruz@email.com',
-            address: 'Pala-o, Iligan City'
-        }
-    }
-];
+interface MissingPetItem {
+    id: number | string;
+    name: string;
+    type: string;
+    breed: string;
+    age: string;
+    gender: string;
+    color: string;
+    size: string;
+    status: string;
+    lastSeen: string;
+    lastSeenDetails: string;
+    date: string;
+    exactDate: string;
+    reward: string | null;
+    description: string;
+    distinguishingFeatures: string;
+    medicalConditions: string;
+    img: string;
+    statusColor: string;
+    owner: {
+        name: string;
+        facebook: string;
+        phone: string;
+        email: string;
+        address: string;
+    };
+}
 
 export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
-    const petsList = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => ({
+    const petsList: MissingPetItem[] = (propsPets ?? []).map((p, idx) => ({
         id: p.id || idx,
         name: p.pet_name || 'Missing Pet',
         type: p.species || 'Dog',
         breed: p.breed || 'Mixed Breed',
-        age: 'Unknown Age',
-        gender: 'Unknown',
-        color: 'Mixed',
-        size: 'Medium',
-        status: p.status === 'resolved' ? 'FOUND' : 'STILL SEARCHING',
+        age: p.age || 'Young Adult',
+        gender: p.gender || 'Unknown',
+        color: p.color || 'Mixed',
+        size: p.size || 'Medium',
+        status: p.status === 'resolved' ? 'FOUND' : (p.status ? p.status.toUpperCase() : 'STILL SEARCHING'),
         lastSeen: p.last_seen_location || 'Iligan City',
         lastSeenDetails: p.description || 'Reported missing pet.',
         date: p.last_seen_date || 'Recently',
         exactDate: p.last_seen_date || 'Recently',
-        reward: null,
+        reward: p.reward ? `₱${p.reward}` : null,
         description: p.description || 'No description provided.',
-        distinguishingFeatures: 'N/A',
-        medicalConditions: 'None',
+        distinguishingFeatures: p.distinguishing_features || 'N/A',
+        medicalConditions: p.medical_conditions || 'None',
         img: p.photo_url || 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
         statusColor: p.status === 'resolved' ? 'bg-paw-green' : 'bg-red-500',
         owner: {
-            name: 'Pet Owner',
+            name: p.contact_name || 'Pet Owner',
             facebook: 'Iligan Stray Feeders',
             phone: p.contact_number || '0912 345 6789',
-            email: 'help@iliganstrayfeeders.org',
+            email: p.contact_email || 'help@iliganstrayfeeders.org',
             address: p.last_seen_location || 'Iligan City'
         }
-    })) : missingPetsData;
+    }));
 
     const [filter, setFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [contactPet, setContactPet] = useState<typeof missingPetsData[0] | null>(null);
+    const [contactPet, setContactPet] = useState<MissingPetItem | null>(null);
     const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;
     const isAuthenticated = !!user;
 
-    const handleBookmark = (e: React.MouseEvent, pet: typeof missingPetsData[0]) => {
+    const handleBookmark = (e: React.MouseEvent, pet: MissingPetItem) => {
         e.stopPropagation();
 
         if (!isAuthenticated) {
@@ -371,14 +229,18 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     <Link
                         href="/missing"
-                        className="bg-white rounded-[3rem] p-8 border-4 border-dashed border-gray-100 flex flex-col items-center justify-center text-center gap-6 group hover:border-paw-blue hover:scale-[1.02] hover:-translate-y-1 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+                        className="bg-gradient-to-b from-white to-orange-50/30 rounded-[3rem] p-8 border-2 border-dashed border-paw-orange/40 flex flex-col items-center justify-center text-center gap-6 group hover:border-paw-orange hover:bg-orange-50/60 hover:scale-[1.02] hover:-translate-y-1 transition-all cursor-pointer shadow-sm hover:shadow-xl relative overflow-hidden"
                     >
-                        <div className="bg-paw-blue/10 p-6 rounded-3xl text-paw-blue group-hover:scale-110 group-hover:bg-paw-blue group-hover:text-white transition-all shadow-xl">
-                            <Plus size={40} />
+                        <div className="absolute top-4 right-4 bg-red-100 text-red-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            Emergency
+                        </div>
+                        <div className="w-20 h-20 bg-paw-orange/15 rounded-3xl text-paw-orange flex items-center justify-center group-hover:scale-110 group-hover:bg-paw-orange group-hover:text-white transition-all shadow-md group-hover:shadow-lg">
+                            <Plus size={36} strokeWidth={3} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xl font-black text-paw-navy uppercase leading-none">REPORT MISSING</h3>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed italic">Lost your pet? <br /> Post a report now.</p>
+                            <h3 className="text-xl font-black text-paw-navy uppercase leading-none tracking-tight">REPORT MISSING</h3>
+                            <p className="text-xs font-bold text-gray-500 leading-relaxed">Lost or spotted a pet?<br /><span className="text-paw-orange font-black">Broadcast an alert now →</span></p>
                         </div>
                     </Link>
 
@@ -391,65 +253,98 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 transition={{ delay: i * 0.05 }}
-                                className="bg-white rounded-[3rem] overflow-hidden shadow-2xl hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] transition-all group border border-gray-100"
+                                onClick={() => setContactPet(pet)}
+                                className="bg-white rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 group border border-gray-100/80 cursor-pointer flex flex-col"
                             >
-                                <div className="relative h-64 overflow-hidden">
-                                    <ImageWithFallback src={pet.img} alt={pet.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                    <div className={`absolute top-6 left-6 ${pet.statusColor} text-white px-4 py-2 rounded-full shadow-lg`}>
-                                        <span className="text-[10px] font-black tracking-widest uppercase">{pet.status}</span>
+                                <div className="relative h-64 overflow-hidden bg-gray-100">
+                                    <ImageWithFallback
+                                        src={pet.img}
+                                        alt={pet.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    {/* Status Badge with Live Pulse Dot */}
+                                    <div className={`absolute top-4 left-4 ${pet.status === 'FOUND' ? 'bg-emerald-600' : 'bg-red-600'} text-white px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 backdrop-blur-md z-10`}>
+                                        <span className={`w-2 h-2 rounded-full ${pet.status === 'FOUND' ? 'bg-white' : 'bg-white animate-pulse'}`} />
+                                        <span className="text-[10px] font-black tracking-wider uppercase">{pet.status}</span>
                                     </div>
+
+                                    {/* Reward Badge (Positioned at top right to avoid colliding with breed/species) */}
                                     {pet.reward && (
-                                        <div className="absolute bottom-6 right-6 bg-paw-yellow text-paw-navy px-4 py-2 rounded-full shadow-lg flex items-center gap-2 border-2 border-white">
-                                            <Zap size={14} fill="currentColor" />
-                                            <span className="text-[10px] font-black tracking-widest uppercase">REWARD: {pet.reward}</span>
+                                        <div className="absolute top-4 right-4 bg-amber-400 text-paw-navy px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border-2 border-white font-black text-[10px] tracking-wide z-10">
+                                            <Zap size={12} fill="currentColor" />
+                                            <span>REWARD {pet.reward}</span>
                                         </div>
                                     )}
+
+                                    {/* Pet Type & Breed Pill */}
+                                    <div className="absolute bottom-4 left-4 max-w-[calc(100%-2rem)] bg-black/65 backdrop-blur-md text-white px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border border-white/20 shadow-md z-10">
+                                        <span className="shrink-0">{pet.type}</span>
+                                        <span className="text-white/40 shrink-0">•</span>
+                                        <span className="truncate">{pet.breed}</span>
+                                    </div>
                                 </div>
-                                <div className="p-8">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-2xl font-black text-paw-navy uppercase italic">{pet.name}</h3>
-                                        <button
-                                            onClick={(e) => handleBookmark(e, pet)}
-                                            className="bg-gray-50 p-2 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all group/bookmark"
-                                        >
-                                            <Heart
-                                                size={18}
-                                                className={`transition-all ${isBookmarked(pet.id, 'missingPet') ? 'fill-red-500 text-red-500' : 'group-hover/bookmark:scale-110'}`}
-                                            />
-                                        </button>
-                                    </div>
-                                    <div className="space-y-4 mb-8">
-                                        <div className="flex items-center gap-3 text-xs font-bold text-gray-500">
-                                            <MapPin size={18} className="text-paw-orange shrink-0" />
-                                            <span className="line-clamp-1">{pet.lastSeen}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-xs font-bold text-gray-500">
-                                            <Calendar size={18} className="text-paw-blue shrink-0" />
-                                            {pet.date}
-                                        </div>
-                                    </div>
-                                    {pet.status !== 'FOUND' ? (
-                                        <div className="flex gap-2">
+
+                                <div className="p-7 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h3 className="text-2xl font-black text-paw-navy uppercase italic tracking-tight truncate group-hover:text-paw-orange transition-colors">
+                                                {pet.name}
+                                            </h3>
                                             <button
-                                                onClick={() => setContactPet(pet)}
-                                                className="flex-1 bg-paw-navy text-white py-3.5 rounded-2xl font-black text-xs tracking-widest uppercase hover:bg-paw-orange transition-all shadow-lg flex items-center justify-center gap-2"
+                                                type="button"
+                                                onClick={(e) => handleBookmark(e, pet)}
+                                                className="bg-gray-50 p-2.5 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all group/bookmark shrink-0 ml-2"
+                                                title="Save Pet"
                                             >
-                                                <Phone size={14} />
-                                                CONTACT
-                                            </button>
-                                            <button
-                                                onClick={() => setContactPet(pet)}
-                                                className="bg-paw-blue/10 text-paw-blue p-3.5 rounded-2xl hover:bg-paw-blue hover:text-white transition-all shadow-md"
-                                            >
-                                                <MessageCircle size={20} />
+                                                <Heart
+                                                    size={18}
+                                                    className={`transition-all ${isBookmarked(pet.id, 'missingPet') ? 'fill-red-500 text-red-500' : 'group-hover/bookmark:scale-110'}`}
+                                                />
                                             </button>
                                         </div>
-                                    ) : (
-                                        <div className="flex items-center justify-center gap-2 bg-paw-green/10 text-paw-green py-3.5 rounded-2xl font-black text-xs tracking-widest uppercase">
-                                            <CheckCircle2 size={16} />
-                                            PET REUNITED
+
+                                        {/* Quick Traits Badges */}
+                                        <div className="flex flex-wrap gap-1.5 mb-4">
+                                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                {pet.gender}
+                                            </span>
+                                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                {pet.age}
+                                            </span>
+                                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold rounded-lg uppercase tracking-wide">
+                                                {pet.size}
+                                            </span>
                                         </div>
-                                    )}
+
+                                        <div className="space-y-2.5 mb-6 text-xs font-bold text-gray-500">
+                                            <div className="flex items-center gap-2.5">
+                                                <MapPin size={16} className="text-paw-orange shrink-0" />
+                                                <span className="line-clamp-1">{pet.lastSeen}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2.5">
+                                                <Calendar size={16} className="text-paw-blue shrink-0" />
+                                                <span>{pet.date}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        {pet.status !== 'FOUND' ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setContactPet(pet)}
+                                                className="w-full bg-paw-navy hover:bg-paw-orange text-white py-3.5 rounded-2xl font-black text-xs tracking-widest uppercase transition-all shadow-md flex items-center justify-center gap-2 group-hover:shadow-lg"
+                                            >
+                                                <Phone size={15} />
+                                                <span>VIEW DETAILS & CONTACT</span>
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 py-3.5 rounded-2xl font-black text-xs tracking-widest uppercase">
+                                                <CheckCircle2 size={16} />
+                                                PET REUNITED
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}

@@ -6,6 +6,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useMounted } from '@/hooks/use-mounted';
+import { toast } from 'sonner';
 
 const chartData = [
   { id: 'month-jan', name: 'Jan', amount: 35000 },
@@ -96,6 +97,13 @@ interface DonationStatsProp {
   chartData?: Array<{ id: string; name: string; amount: number }>;
   recentDonations?: Array<{ id: number; user: string; amount: string; type: string; date: string; msg: string }>;
   wishlist?: any[];
+  budgetNeeds?: Array<{
+    label: string;
+    cost: string;
+    progress: number;
+    category: string;
+    color?: string;
+  }>;
 }
 
 export function DonationDashboard({ stats: propsStats }: { stats?: DonationStatsProp }) {
@@ -107,6 +115,24 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
   const activeChartData = (propsStats?.chartData && propsStats.chartData.length > 0) ? propsStats.chartData : chartData;
   const activeHistory = (propsStats?.recentDonations && propsStats.recentDonations.length > 0) ? propsStats.recentDonations : history;
   const activeWishlist = (propsStats?.wishlist && propsStats.wishlist.length > 0) ? propsStats.wishlist : animalWishlist;
+
+  const defaultBudgetNeeds = [
+    { label: 'Animal Food & Supplements', cost: '₱45,000', icon: <Gift size={24} />, progress: 65, color: 'bg-paw-orange', category: 'Food & Nutrition' },
+    { label: 'Veterinary Bills & Medicine', cost: '₱35,000', icon: <ShieldCheck size={24} />, progress: 40, color: 'bg-red-500', category: 'Medical Care' },
+    { label: 'Shelter Rent & Utilities', cost: '₱12,000', icon: <Wallet size={24} />, progress: 90, color: 'bg-paw-blue', category: 'Infrastructure' },
+    { label: 'Rescue Ops & Gas', cost: '₱8,000', icon: <TrendingUp size={24} />, progress: 30, color: 'bg-paw-green', category: 'Operations' }
+  ];
+
+  const activeBudgetNeeds = (propsStats?.budgetNeeds && propsStats.budgetNeeds.length > 0)
+    ? propsStats.budgetNeeds.map((need, idx) => ({
+        label: need.label,
+        cost: need.cost,
+        category: need.category,
+        progress: need.progress,
+        color: need.color || ['bg-paw-orange', 'bg-red-500', 'bg-paw-blue', 'bg-paw-green'][idx % 4],
+        icon: idx === 0 ? <Gift size={24} /> : idx === 1 ? <ShieldCheck size={24} /> : idx === 2 ? <Wallet size={24} /> : <TrendingUp size={24} />
+      }))
+    : defaultBudgetNeeds;
 
   const navigate = (url: string) => router.visit(url);
   const [activeTab, setActiveTab] = useState<'TRANS' | 'NEEDS' | 'HISTORY'>('TRANS');
@@ -226,28 +252,45 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
 
               <form className="space-y-6" onSubmit={(e) => {
                 e.preventDefault();
-                const refNumber = generateReferenceNumber('SPO');
-                setReceiptData({
-                  title: 'In-Kind Sponsorship Confirmed!',
-                  subtitle: `Supporting ${sponsorItem.animalName}`,
-                  referenceNumber: refNumber,
-                  items: [
-                    { label: 'Animal', value: sponsorItem.animalName, icon: <Heart size={20} /> },
-                    { label: 'Item', value: sponsorItem.item, icon: <Gift size={20} /> },
-                    { label: 'Quantity', value: sponsorItem.quantity, icon: <Plus size={20} /> },
-                    { label: 'Priority', value: sponsorItem.priority, icon: <ShieldCheck size={20} /> },
-                    { label: 'Your Name', value: wishlistForm.name, icon: <User size={20} /> },
-                    { label: 'Contact Number', value: wishlistForm.phone, icon: <Phone size={20} /> },
-                    { label: 'Email', value: wishlistForm.email, icon: <Mail size={20} /> },
-                    { label: 'Delivery Method', value: wishlistForm.delivery, icon: <Info size={20} /> },
-                    ...(wishlistForm.message ? [{ label: 'Message', value: wishlistForm.message, icon: <Heart size={20} /> }] : [])
-                  ],
-                  type: 'success',
-                  footerMessage: 'Thank you for your generous donation! We will contact you shortly to coordinate the delivery. Your kindness makes a real difference in this animal\'s life.'
+                router.post('/donate/in-kind', {
+                  description: `Sponsorship for ${sponsorItem.animalName}: ${sponsorItem.item} (${sponsorItem.quantity})${wishlistForm.message ? ' - Message: ' + wishlistForm.message : ''}`,
+                  drop_off_date: new Date().toISOString().split('T')[0],
+                  contact_person: wishlistForm.name,
+                  quantity: sponsorItem.quantity,
+                  donor_name: wishlistForm.name,
+                  donor_email: wishlistForm.email,
+                  donor_mobile: wishlistForm.phone,
+                  anonymous: false,
+                }, {
+                  preserveScroll: true,
+                  onSuccess: () => {
+                    toast.success(`In-kind sponsorship for ${sponsorItem.animalName} recorded!`);
+                    setReceiptData({
+                      title: 'In-Kind Sponsorship Confirmed!',
+                      subtitle: `Supporting ${sponsorItem.animalName}`,
+                      referenceNumber: `DON-INKIND-${Date.now().toString().slice(-6)}`,
+                      items: [
+                        { label: 'Animal', value: sponsorItem.animalName, icon: <Heart size={20} /> },
+                        { label: 'Item', value: sponsorItem.item, icon: <Gift size={20} /> },
+                        { label: 'Quantity', value: sponsorItem.quantity, icon: <Plus size={20} /> },
+                        { label: 'Priority', value: sponsorItem.priority, icon: <ShieldCheck size={20} /> },
+                        { label: 'Your Name', value: wishlistForm.name, icon: <User size={20} /> },
+                        { label: 'Contact Number', value: wishlistForm.phone, icon: <Phone size={20} /> },
+                        { label: 'Email', value: wishlistForm.email, icon: <Mail size={20} /> },
+                        { label: 'Delivery Method', value: wishlistForm.delivery, icon: <Info size={20} /> },
+                        ...(wishlistForm.message ? [{ label: 'Message', value: wishlistForm.message, icon: <Heart size={20} /> }] : [])
+                      ],
+                      type: 'success',
+                      footerMessage: 'Thank you for your generous donation! We have recorded your in-kind sponsorship in our system and will coordinate delivery.'
+                    });
+                    setSponsorItem(null);
+                    setShowWishlist(false);
+                    setShowReceipt(true);
+                  },
+                  onError: () => {
+                    toast.error('Failed to submit sponsorship. Please check required fields.');
+                  }
                 });
-                setSponsorItem(null);
-                setShowWishlist(false);
-                setShowReceipt(true);
               }}>
                 <div>
                   <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Your Name</label>
@@ -367,27 +410,24 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
 
               <form className="space-y-6" onSubmit={(e) => {
                 e.preventDefault();
-                const refNumber = generateReferenceNumber('DON');
-                setReceiptData({
-                  title: 'Monthly Need Sponsorship Confirmed!',
-                  subtitle: `Supporting ${sponsorMonthlyNeed.label}`,
-                  referenceNumber: refNumber,
-                  items: [
-                    { label: 'Budget Category', value: sponsorMonthlyNeed.label, icon: <Wallet size={20} /> },
-                    { label: 'Category Type', value: sponsorMonthlyNeed.category, icon: <Info size={20} /> },
-                    { label: 'Suggested Amount', value: sponsorMonthlyNeed.cost, icon: <TrendingUp size={20} /> },
-                    { label: 'Your Donation', value: `₱${monthlyNeedForm.amount}`, icon: <Heart size={20} /> },
-                    { label: 'Your Name', value: monthlyNeedForm.name, icon: <User size={20} /> },
-                    { label: 'Contact Number', value: monthlyNeedForm.phone, icon: <Phone size={20} /> },
-                    { label: 'Email', value: monthlyNeedForm.email, icon: <Mail size={20} /> },
-                    { label: 'Payment Method', value: monthlyNeedForm.payment, icon: <Wallet size={20} /> },
-                    ...(monthlyNeedForm.message ? [{ label: 'Message', value: monthlyNeedForm.message, icon: <Heart size={20} /> }] : [])
-                  ],
-                  type: 'success',
-                  footerMessage: 'Thank you for your generous donation! We will contact you shortly with payment details and instructions. Your support directly helps us care for stray animals in Iligan City.'
+                router.post('/donate/cash', {
+                  amount: parseInt(monthlyNeedForm.amount, 10) || 500,
+                  donor_name: monthlyNeedForm.name,
+                  donor_email: monthlyNeedForm.email,
+                  donor_mobile: monthlyNeedForm.phone,
+                  payment_method: monthlyNeedForm.payment.toLowerCase().includes('maya') ? 'maya' :
+                                  monthlyNeedForm.payment.toLowerCase().includes('paypal') ? 'paypal' :
+                                  monthlyNeedForm.payment.toLowerCase().includes('bank') ? 'bank_transfer' : 'gcash',
+                  anonymous: false,
+                }, {
+                  onSuccess: () => {
+                    toast.success('Donation initiated! Redirecting to secure checkout...');
+                    setSponsorMonthlyNeed(null);
+                  },
+                  onError: () => {
+                    toast.error('Unable to initiate donation. Please verify your details.');
+                  }
                 });
-                setSponsorMonthlyNeed(null);
-                setShowReceipt(true);
               }}>
                 <div>
                   <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Your Name</label>
@@ -796,13 +836,13 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                   )}
                 </div>
 
-                <button
-                  onClick={() => navigate('/donate/history')}
+                <Link
+                  href="/donate"
                   className="w-full mt-10 py-5 rounded-2xl border-4 border-dashed border-gray-100 text-gray-400 font-black text-xs tracking-widest uppercase hover:bg-gray-50 hover:border-gray-200 transition-all italic flex items-center justify-center gap-2"
                 >
-                  LOAD MORE HISTORY
+                  VIEW FULL DONATION TRANSPARENCY
                   <ArrowRight size={16} />
-                </button>
+                </Link>
               </motion.div>
             )}
 
@@ -816,16 +856,11 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
               >
                 <div className="flex justify-between items-center mb-10">
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-paw-navy">Shelter Budget Needs</h3>
-                  <span className="text-[10px] font-black text-paw-blue bg-paw-blue/10 px-3 py-1.5 rounded-full uppercase tracking-widest italic">JULY 2025</span>
+                  <span className="text-[10px] font-black text-paw-blue bg-paw-blue/10 px-3 py-1.5 rounded-full uppercase tracking-widest italic">{displayMonthName.toUpperCase()} {new Date().getFullYear()}</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {[
-                    { label: 'Animal Food & Supplements', cost: '₱45,000', icon: <Gift size={24} />, progress: 65, color: 'bg-paw-orange', category: 'Food & Nutrition' },
-                    { label: 'Veterinary Bills & Medicine', cost: '₱35,000', icon: <ShieldCheck size={24} />, progress: 40, color: 'bg-red-500', category: 'Medical Care' },
-                    { label: 'Shelter Rent & Utilities', cost: '₱12,000', icon: <Wallet size={24} />, progress: 90, color: 'bg-paw-blue', category: 'Infrastructure' },
-                    { label: 'Rescue Ops & Gas', cost: '₱8,000', icon: <TrendingUp size={24} />, progress: 30, color: 'bg-paw-green', category: 'Operations' }
-                  ].map((need, i) => (
+                  {activeBudgetNeeds.map((need, i) => (
                     <div key={i} className="bg-gray-50 p-8 rounded-[2.5rem] border border-transparent hover:border-paw-navy/10 transition-all">
                       <div className="flex items-center justify-between mb-6">
                         <div className={`p-4 rounded-2xl text-white shadow-lg ${need.color}`}>
@@ -867,13 +902,13 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
               <h3 className="text-4xl font-black italic uppercase tracking-tighter mb-4 leading-none">Instant <br /> Impact.</h3>
               <p className="text-white/80 font-bold mb-10 font-quicksand leading-relaxed">Your donation goes directly to animal care. No administrative bloat.</p>
               
-              <div className="flex flex-wrap gap-2.5 mb-8">
+              <div className="grid grid-cols-4 gap-2 mb-8">
                 {['50', '100', '500', '1000'].map((amt) => (
                   <button 
                     key={amt} 
                     type="button"
                     onClick={() => setDonationAmount(amt)}
-                    className={`px-5 py-3 rounded-xl font-black text-xs tracking-widest uppercase transition-all shadow-md ${
+                    className={`py-3 px-1 text-center flex items-center justify-center rounded-xl font-black text-xs tracking-wider uppercase transition-all shadow-md ${
                       donationAmount === amt 
                         ? 'bg-white text-paw-orange scale-105 shadow-lg' 
                         : 'bg-white/15 text-white hover:bg-white/25 border border-white/10'
@@ -934,7 +969,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                 </div>
               </div>
 
-              <Link href="/donate" className="w-full bg-paw-navy text-white py-6 rounded-[2rem] font-black text-lg tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] flex items-center justify-center gap-4">
+              <Link href={`/donate?amount=${donationAmount || '100'}`} className="w-full bg-paw-navy text-white py-6 rounded-[2rem] font-black text-lg tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] flex items-center justify-center gap-4">
                 DONATE NOW
                 <ArrowRight size={24} />
               </Link>

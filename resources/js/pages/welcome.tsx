@@ -22,14 +22,17 @@ import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 interface WelcomeProps {
     pets?: any[];
+    stories?: any[];
     missingPets?: any[];
     events?: any[];
+    joinedEventIds?: number[];
+    joinedEventRoles?: Record<number, string>;
     donationStats?: any;
     impactStats?: any;
     careSustainability?: CareSustainabilityData;
 }
 
-export default function Welcome({ pets = [], missingPets = [], events = [], donationStats, impactStats, careSustainability }: WelcomeProps) {
+export default function Welcome({ pets = [], stories = [], missingPets = [], events = [], joinedEventIds = [], joinedEventRoles = {}, donationStats, impactStats, careSustainability }: WelcomeProps) {
     const { scrollYProgress } = useScroll();
     const scaleX = useSpring(scrollYProgress, {
         stiffness: 100,
@@ -48,7 +51,7 @@ export default function Welcome({ pets = [], missingPets = [], events = [], dona
             <Header />
 
             <main className="relative z-0 overflow-y-hidden overflow-x-hidden">
-                <Hero />    
+                <Hero stats={impactStats} />    
 
                 <ImpactStats stats={impactStats} />
 
@@ -58,13 +61,13 @@ export default function Welcome({ pets = [], missingPets = [], events = [], dona
                     <CategoryStrip />
                 </ScrollRevealWrapper>
 
-                <HorizontalPhotoStory />
+                <HorizontalPhotoStory stories={stories} />
 
                 <MissionQuote />
                 
-                <HorizontalAdoptionGallery pets={pets} />
-
                 <div id="adoption">
+                    <HorizontalAdoptionGallery pets={pets} />
+
                     <ScrollRevealWrapper delay={0.2}>
                         <AdoptionSection pets={pets} />
                     </ScrollRevealWrapper>
@@ -78,7 +81,7 @@ export default function Welcome({ pets = [], missingPets = [], events = [], dona
 
                 <div id="events">
                     <ScrollRevealWrapper>
-                        <Events events={events} />
+                        <Events events={events} joinedEventIds={joinedEventIds} joinedEventRoles={joinedEventRoles} />
                     </ScrollRevealWrapper>
                 </div>
                 <div id="missing">

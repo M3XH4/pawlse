@@ -87,6 +87,8 @@ interface AnimalRecord {
     current_location: string;
     raw_location: string | null;
     photo_url: string | null;
+    before_photo_url?: string | null;
+    after_photo_url?: string | null;
     vaccinated: boolean;
     has_active_condition?: boolean;
     active_condition_title?: string | null;
@@ -137,6 +139,8 @@ interface AnimalRecord {
         rescue_date_human: string | null;
         rescue_location: string | null;
         rescue_story: string | null;
+        before_photo_url?: string | null;
+        after_photo_url?: string | null;
         pet_report: {
             id: number;
             tracking_code?: string;
@@ -1623,6 +1627,46 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 {/* TAB 4: RESCUE STORIES */}
                                 {sidePanelTab === 'rescue' && (
                                     <div className="space-y-6">
+                                        {/* Before & After Transformation Journey */}
+                                        <div className="p-5 rounded-2xl border border-paw-orange/30 bg-orange-50/50 dark:bg-orange-950/20 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-paw-orange uppercase tracking-wider">
+                                                    <Sparkles className="h-4 w-4 text-paw-orange" />
+                                                    <span>Before & After Transformation</span>
+                                                </div>
+                                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-paw-orange/20 text-paw-orange dark:text-paw-yellow">
+                                                    Featured on Homepage
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                                                        When Rescued (Before)
+                                                    </span>
+                                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                                                        <ImageWithFallback
+                                                            src={formatPhotoUrl(selectedAnimal.before_photo_url || selectedAnimal.rescue.before_photo_url || selectedAnimal.photo_url, selectedAnimal.type)}
+                                                            alt="Before Transformation"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <span className="text-[11px] font-bold text-paw-orange uppercase tracking-wider block">
+                                                        Healed / Today (After)
+                                                    </span>
+                                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-orange-100/30 dark:bg-gray-800">
+                                                        <ImageWithFallback
+                                                            src={formatPhotoUrl(selectedAnimal.after_photo_url || selectedAnimal.rescue.after_photo_url || selectedAnimal.photo_url, selectedAnimal.type)}
+                                                            alt="After Transformation"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Rescue narrative */}
                                         <div className="p-5 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 space-y-3">
                                             <div className="flex items-center gap-2 text-xs font-bold text-paw-orange uppercase tracking-wider">
@@ -1861,6 +1905,8 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
         deceased_at: '',
         deceased_notes: '',
         photo: null as File | null,
+        before_photo: null as File | null,
+        after_photo: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -2040,13 +2086,40 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
                     {/* Photo upload */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Animal Photo</label>
+                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Primary Animal Photo</label>
                         <input
                             type="file"
                             accept="image/*"
                             onChange={(e) => setData('photo', e.target.files?.[0] || null)}
                             className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange hover:file:bg-paw-orange/20 cursor-pointer"
                         />
+                    </div>
+
+                    {/* Transformation Before & After Photos */}
+                    <div className="p-3 bg-paw-orange/5 dark:bg-paw-orange/10 rounded-2xl border border-paw-orange/20 space-y-2">
+                        <span className="text-xs font-bold text-paw-orange dark:text-paw-yellow block">
+                            Before & After Photos (Homepage Showcase & Transformation)
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">Before Photo (When Rescued)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setData('before_photo', e.target.files?.[0] || null)}
+                                    className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 dark:file:bg-gray-700 cursor-pointer"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">After Photo (Today / Healed)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setData('after_photo', e.target.files?.[0] || null)}
+                                    className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-paw-orange/20 file:text-paw-orange cursor-pointer"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Rescue Details */}
@@ -2156,6 +2229,8 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
         deceased_at: animal.deceased.deceased_at || '',
         deceased_notes: animal.deceased.deceased_notes || '',
         photo: null as File | null,
+        before_photo: null as File | null,
+        after_photo: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -2388,13 +2463,40 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
 
                     {/* Photo update */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Update Photo</label>
+                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Update Primary Photo</label>
                         <input
                             type="file"
                             accept="image/*"
                             onChange={(e) => setData('photo', e.target.files?.[0] || null)}
                             className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange cursor-pointer"
                         />
+                    </div>
+
+                    {/* Transformation Before & After Photos */}
+                    <div className="p-3 bg-paw-orange/5 dark:bg-paw-orange/10 rounded-2xl border border-paw-orange/20 space-y-2">
+                        <span className="text-xs font-bold text-paw-orange dark:text-paw-yellow block">
+                            Update Before & After Transformation Photos
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">Before Photo (When Rescued)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setData('before_photo', e.target.files?.[0] || null)}
+                                    className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 dark:file:bg-gray-700 cursor-pointer"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">After Photo (Today / Healed)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setData('after_photo', e.target.files?.[0] || null)}
+                                    className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-paw-orange/20 file:text-paw-orange cursor-pointer"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">

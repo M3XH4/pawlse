@@ -1,8 +1,9 @@
 
 import { Dog, Cat, Heart, ArrowRight, MapPin, Clock, CheckCircle2, X, Sparkles } from 'lucide-react';
-import { motion, useAnimationFrame } from 'motion/react';
+import { motion, useAnimationFrame, AnimatePresence } from 'motion/react';
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 
@@ -211,16 +212,16 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
     id: p.id || idx,
     name: p.name,
     type: p.type,
-    category: p.type === 'Cat' ? 'Cats' : 'Dogs',
+    category: p.type === 'Cat' ? 'Cats' : (p.ageCategory === 'Puppy' ? 'Puppies' : 'Dogs'),
     estimatedAge: p.age,
     gender: p.gender,
-    foundLocation: 'Iligan City Shelter',
-    rescueStory: p.story || 'Rescued and ready for adoption.',
+    foundLocation: p.rescueLocation || p.rescue_location || 'Iligan City Shelter',
+    rescueStory: p.rescueStory || p.rescue_story || p.story || 'Rescued and ready for adoption.',
     behavior: p.behavior || 'Friendly & Loving',
-    healthStatus: p.vaccinated ? 'Vaccinated' : 'In Care',
-    mainImg: p.mainImg || p.img,
-    beforeImg: p.mainImg || p.img,
-    afterImg: p.mainImg || p.img
+    healthStatus: p.healthStatus || (p.vaccinated ? 'Vaccinated, healthy' : 'Under medical care'),
+    mainImg: p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80',
+    beforeImg: p.beforeImg || p.before_photo_url || p.before_img || p.mainImg || p.img,
+    afterImg: p.afterImg || p.after_photo_url || p.after_img || p.mainImg || p.img
   })) : allPets;
 
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -261,11 +262,6 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
   const handleApply = (pet: any) => {
     setApplyingPet(pet);
     setFlippedCard(null);
-  };
-
-  const submitApplication = () => {
-    toast.success(`Application submitted for ${applyingPet?.name}! We'll contact you soon.`);
-    setApplyingPet(null);
   };
 
   return (
@@ -461,128 +457,15 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
         </motion.div>
       </div>
 
-      {/* Application Modal */}
-      {applyingPet && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setApplyingPet(null)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-[3rem] max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col p-2 md:p-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="overflow-y-auto overflow-x-hidden p-6 md:p-8 scrollbar-snapped flex-1 rounded-[2.5rem]">
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h3 className="text-4xl font-black text-paw-navy mb-2 italic">Adopt {applyingPet.name}</h3>
-                  <p className="text-gray-500 font-bold">Complete this form to begin the adoption process</p>
-                </div>
-                <button
-                  onClick={() => setApplyingPet(null)}
-                  className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors"
-                >
-                  <X size={24} className="text-gray-600" />
-                </button>
-              </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitApplication();
-              }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2 block">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none transition-colors"
-                    placeholder="Juan Dela Cruz"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none transition-colors"
-                    placeholder="0912-345-6789"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2 block">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none transition-colors"
-                  placeholder="juan@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2 block">Home Address</label>
-                <textarea
-                  required
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none transition-colors resize-none"
-                  placeholder="Complete address in Iligan City"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2 block">Why do you want to adopt {applyingPet.name}?</label>
-                <textarea
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none transition-colors resize-none"
-                  placeholder="Tell us about your experience with pets and why you'd be a great match..."
-                />
-              </div>
-
-              <div className="bg-paw-bg rounded-2xl p-6">
-                <h4 className="font-black text-paw-navy mb-3 uppercase text-sm">Adoption Requirements</h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-paw-green shrink-0 mt-0.5" />
-                    <span>Must be 21 years old or above</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-paw-green shrink-0 mt-0.5" />
-                    <span>Valid ID and proof of residence</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-paw-green shrink-0 mt-0.5" />
-                    <span>Home visit will be scheduled</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-paw-green shrink-0 mt-0.5" />
-                    <span>Adoption fee: ₱500 (covers vaccination & neutering)</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-paw-green text-white py-5 rounded-2xl font-black text-lg tracking-widest uppercase hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-3"
-              >
-                <Heart size={20} fill="white" />
-                SUBMIT APPLICATION
-              </button>
-            </form>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      {/* Real Modern Adoption Wizard */}
+      <AnimatePresence>
+        {applyingPet && (
+          <AdoptionWizard
+            pet={applyingPet}
+            onClose={() => setApplyingPet(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

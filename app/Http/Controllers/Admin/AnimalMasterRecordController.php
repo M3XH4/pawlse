@@ -218,6 +218,8 @@ class AnimalMasterRecordController extends Controller
                 'current_location' => $computedLocation,
                 'raw_location' => $animal->current_location,
                 'photo_url' => $animal->photo_url,
+                'before_photo_url' => $animal->before_photo_url,
+                'after_photo_url' => $animal->after_photo_url,
                 'vaccinated' => (bool) $animal->vaccinated,
                 'has_active_condition' => $activeConditions->isNotEmpty(),
                 'active_condition_title' => $activeConditions->first()['title'] ?? null,
@@ -276,6 +278,8 @@ class AnimalMasterRecordController extends Controller
                     'rescue_date_human' => $animal->rescue_date?->format('M d, Y'),
                     'rescue_location' => $animal->rescue_location,
                     'rescue_story' => $animal->rescue_story ?: $animal->story,
+                    'before_photo_url' => $animal->before_photo_url,
+                    'after_photo_url' => $animal->after_photo_url,
                     'pet_report' => $animal->petReport ? [
                         'id' => $animal->petReport->id,
                         'tracking_code' => $animal->petReport->tracking_code,
@@ -355,6 +359,10 @@ class AnimalMasterRecordController extends Controller
             'deceased_at' => ['nullable', 'date'],
             'deceased_notes' => ['nullable', 'string', 'max:2000'],
             'photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'before_photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'after_photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'before_photo_url' => ['nullable', 'string', 'max:1000'],
+            'after_photo_url' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $photoUrl = null;
@@ -363,7 +371,19 @@ class AnimalMasterRecordController extends Controller
             $photoUrl = Storage::url($path);
         }
 
-        $animal = DB::transaction(function () use ($validated, $photoUrl) {
+        $beforePhotoUrl = $validated['before_photo_url'] ?? null;
+        if ($request->hasFile('before_photo')) {
+            $path = $request->file('before_photo')->store('pet_photos', 'public');
+            $beforePhotoUrl = Storage::url($path);
+        }
+
+        $afterPhotoUrl = $validated['after_photo_url'] ?? null;
+        if ($request->hasFile('after_photo')) {
+            $path = $request->file('after_photo')->store('pet_photos', 'public');
+            $afterPhotoUrl = Storage::url($path);
+        }
+
+        $animal = DB::transaction(function () use ($validated, $photoUrl, $beforePhotoUrl, $afterPhotoUrl) {
             $status = ShelterAnimalStatus::from($validated['status']);
 
             $animal = ShelterAnimal::create([
@@ -394,6 +414,8 @@ class AnimalMasterRecordController extends Controller
                 'deceased_at' => $status === ShelterAnimalStatus::Deceased ? ($validated['deceased_at'] ?? now()->toDateString()) : ($validated['deceased_at'] ?? null),
                 'deceased_notes' => $validated['deceased_notes'] ?? null,
                 'photo_url' => $photoUrl,
+                'before_photo_url' => $beforePhotoUrl,
+                'after_photo_url' => $afterPhotoUrl,
             ]);
 
             AuditLog::log('animal_master_record_create', "Created animal master record for '{$animal->name}' (#ANM-{$animal->id})", [
@@ -446,12 +468,32 @@ class AnimalMasterRecordController extends Controller
             'deceased_at' => ['nullable', 'date'],
             'deceased_notes' => ['nullable', 'string', 'max:2000'],
             'photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'before_photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'after_photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'before_photo_url' => ['nullable', 'string', 'max:1000'],
+            'after_photo_url' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $photoUrl = $animal->photo_url;
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('pet_photos', 'public');
             $photoUrl = Storage::url($path);
+        }
+
+        $beforePhotoUrl = $animal->before_photo_url;
+        if ($request->hasFile('before_photo')) {
+            $path = $request->file('before_photo')->store('pet_photos', 'public');
+            $beforePhotoUrl = Storage::url($path);
+        } elseif ($request->filled('before_photo_url')) {
+            $beforePhotoUrl = $request->input('before_photo_url');
+        }
+
+        $afterPhotoUrl = $animal->after_photo_url;
+        if ($request->hasFile('after_photo')) {
+            $path = $request->file('after_photo')->store('pet_photos', 'public');
+            $afterPhotoUrl = Storage::url($path);
+        } elseif ($request->filled('after_photo_url')) {
+            $afterPhotoUrl = $request->input('after_photo_url');
         }
 
         $newStatus = ShelterAnimalStatus::from($validated['status']);
@@ -495,6 +537,8 @@ class AnimalMasterRecordController extends Controller
             'deceased_at' => $deceasedDate,
             'deceased_notes' => $validated['deceased_notes'] ?? $animal->deceased_notes,
             'photo_url' => $photoUrl,
+            'before_photo_url' => $beforePhotoUrl,
+            'after_photo_url' => $afterPhotoUrl,
         ]);
 
         AuditLog::log('animal_master_record_update', "Updated master record for '{$animal->name}' (#ANM-{$animal->id})", [

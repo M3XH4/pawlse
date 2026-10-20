@@ -58,14 +58,14 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
         age: p.age || '1 year',
         gender: p.gender || 'Unknown',
         behavior: p.behavior || 'Friendly & Loving',
-        story: p.story || 'Rescued and looking for a forever home.',
+        story: p.rescueStory || p.rescue_story || p.story || 'Rescued and looking for a forever home.',
         mainImg: p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80',
-        beforeImg: p.beforeImg || p.before_img || 'https://images.unsplash.com/photo-1596797882942-f441d7f56c0e?w=400&q=80',
-        afterImg: p.afterImg || p.after_img || p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80',
+        beforeImg: p.beforeImg || p.before_photo_url || p.before_img || p.mainImg || 'https://images.unsplash.com/photo-1596797882942-f441d7f56c0e?w=400&q=80',
+        afterImg: p.afterImg || p.after_photo_url || p.after_img || p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80',
     })) : defaultPets;
     const [flippedCard, setFlippedCard] = useState<number | null>(null);
     const [applyingPet, setApplyingPet] = useState<any | null>(null);
-    const navigate = router.visit;
+    const navigate = (url: string) => router.visit(url);
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;          
     const isAuthenticated = !!user;

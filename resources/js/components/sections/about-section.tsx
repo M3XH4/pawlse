@@ -248,19 +248,21 @@ export function AboutSections() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-paw-navy/70 backdrop-blur-md z-[60] flex items-center justify-center p-4 sm:p-6"
             onClick={() => setSelectedMember(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              initial={{ scale: 0.94, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 16 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="bg-white rounded-[2.5rem] max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-start mb-8">
-                <div className="flex gap-6 items-start">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-paw-green/20 shrink-0">
+              {/* Fixed Header */}
+              <div className="p-6 sm:p-8 border-b border-gray-100 bg-white flex items-start justify-between gap-4 shrink-0">
+                <div className="flex gap-5 sm:gap-6 items-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-md border-2 border-paw-green/30 shrink-0">
                     <ImageWithFallback
                       src={selectedMember.img}
                       alt={selectedMember.name}
@@ -268,56 +270,79 @@ export function AboutSections() {
                     />
                   </div>
                   <div>
-                    <div className="inline-flex items-center gap-2 bg-paw-green/10 px-3 py-1.5 rounded-full mb-2 border border-paw-green/20">
-                      <Users size={14} className="text-paw-green" />
-                      <span className="text-[10px] font-black tracking-widest uppercase text-paw-green">Team Member</span>
+                    <div className="inline-flex items-center gap-1.5 bg-paw-green/10 text-paw-green px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1.5 border border-paw-green/20">
+                      <Users size={12} />
+                      <span>{selectedMember.role}</span>
                     </div>
-                    <h3 className="text-3xl font-black italic uppercase tracking-tighter text-paw-navy mb-1">{selectedMember.name}</h3>
-                    <p className="text-sm font-black text-paw-orange uppercase tracking-widest mb-2">{selectedMember.role}</p>
-                    <div className="flex gap-4 text-xs font-bold text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <User size={14} className="text-paw-blue" />
-                        {selectedMember.yearsActive}
+                    <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tight text-paw-navy">
+                      {selectedMember.name}
+                    </h3>
+                    <div className="flex flex-wrap gap-3 mt-2 text-xs font-bold text-gray-500">
+                      <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                        <User size={13} className="text-paw-blue shrink-0" />
+                        <span>{selectedMember.yearsActive}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin size={14} className="text-paw-orange" />
-                        {selectedMember.rescues}
+                      <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                        <MapPin size={13} className="text-paw-orange shrink-0" />
+                        <span>{selectedMember.rescues}</span>
                       </div>
                     </div>
                   </div>
                 </div>
+
                 <button
+                  type="button"
                   onClick={() => setSelectedMember(null)}
-                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors shrink-0"
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+                  title="Close modal"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-paw-green/5 to-paw-blue/5 rounded-2xl p-6 border-2 border-paw-green/10">
-                  <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                    <Sparkles size={20} className="text-paw-green" />
+              {/* Scrollable Content Body with subtle customized scrollbar */}
+              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                <div className="bg-gradient-to-br from-paw-green/5 via-blue-50/20 to-white rounded-3xl p-6 sm:p-7 border border-paw-green/15 shadow-xs">
+                  <h4 className="text-base font-black text-paw-navy uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Sparkles size={18} className="text-paw-green" />
                     My Journey to Iligan Stray Feeders
                   </h4>
-                  <div className="prose prose-sm max-w-none">
+                  <div className="space-y-4 text-sm sm:text-base text-gray-700 font-medium leading-relaxed">
                     {selectedMember.story.split('\n\n').map((paragraph, i) => (
-                      <p key={i} className="text-gray-700 font-bold leading-relaxed mb-4 text-justify">
+                      <p key={i}>
                         {paragraph}
                       </p>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-paw-navy text-white rounded-2xl p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-6xl text-paw-yellow opacity-50">"</div>
-                    <div>
-                      <p className="text-lg font-bold italic mb-2">{selectedMember.quote}</p>
-                      <p className="text-sm font-black text-paw-yellow uppercase tracking-widest">— {selectedMember.name}</p>
-                    </div>
+                <div className="bg-paw-navy text-white rounded-3xl p-6 sm:p-7 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-2 right-4 text-8xl font-serif text-white/5 pointer-events-none select-none">
+                    "
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-base sm:text-lg font-bold italic leading-relaxed text-white/95 mb-3">
+                      "{selectedMember.quote}"
+                    </p>
+                    <p className="text-xs font-black text-paw-yellow uppercase tracking-widest">
+                      — {selectedMember.name}, <span className="text-white/70">{selectedMember.role}</span>
+                    </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Fixed Footer */}
+              <div className="px-6 sm:px-8 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between shrink-0">
+                <span className="text-xs font-bold text-gray-400">
+                  Iligan Stray Feeders Volunteer Network
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMember(null)}
+                  className="px-5 py-2 rounded-xl bg-paw-navy hover:bg-paw-orange text-white text-xs font-black tracking-wider uppercase transition shadow-xs cursor-pointer"
+                >
+                  Close
+                </button>
               </div>
             </motion.div>
           </motion.div>
