@@ -43,9 +43,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $dashboardRole = $this->dashboardRole($request);
-        $dashboardNotifications = $dashboardRole === null
-            ? []
-            : $this->dashboardNotifications($request);
+        $dashboardNotifications = $request->user() !== null
+            ? $this->dashboardNotifications($request)
+            : [];
+        $unreadNotificationCount = $request->user()?->unreadNotifications()->count() ?? 0;
 
         $dashboardChrome = $dashboardRole === null
             ? null
@@ -81,7 +82,7 @@ class HandleInertiaRequests extends Middleware
                     'markAllReadUrl' => route('account.notifications.read-all'),
                     'clearAllUrl' => route('account.notifications.clear-all'),
                 ],
-            'unreadNotificationCount' => $dashboardRole === null ? 0 : ($request->user()?->unreadNotifications()->count() ?? 0),
+            'unreadNotificationCount' => $unreadNotificationCount,
             'dashboardChrome' => $dashboardChrome,
             'adminNotifications' => $dashboardNotifications,
             'adminChrome' => $dashboardChrome,

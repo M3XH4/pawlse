@@ -8,6 +8,7 @@ export type User = {
     phone?: string | null;
     location?: string | null;
     email_verified_at: string | null;
+    sidebar_notification_style?: 'count' | 'dot' | 'none';
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;

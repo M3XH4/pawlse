@@ -1,8 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
 import { LogOut, Menu, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
+import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
 import { dashboardThemes } from '@/lib/dashboard-theme';
+import { getTabNotificationCount } from '@/lib/tab-notification-matcher';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 
@@ -36,6 +39,41 @@ export function DashboardSidebar({
 
     const canSwitchToVolunteer = page.props.can_switch_to_volunteer as boolean;
     const isFosterParent = Boolean(page.props.is_foster_parent);
+
+    const { notifications, isRead } = useDashboardNotifications();
+
+    const [badgeStyle, setBadgeStyle] = useState<'count' | 'dot' | 'none'>(() => {
+        try {
+            const stored = localStorage.getItem('pawlse_sidebar_notif_style');
+            if (stored === 'count' || stored === 'dot' || stored === 'none') {
+                return stored;
+            }
+        } catch {
+            // Ignore storage read error
+        }
+        return ((auth.user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style) || 'count';
+    });
+
+    useEffect(() => {
+        const serverPref = (auth.user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style;
+        if (serverPref && (serverPref === 'count' || serverPref === 'dot' || serverPref === 'none')) {
+            setBadgeStyle(serverPref);
+        }
+    }, [auth.user]);
+
+    useEffect(() => {
+        const handleStyleChange = (e: Event) => {
+            const detail = (e as CustomEvent<string>).detail;
+            if (detail === 'count' || detail === 'dot' || detail === 'none') {
+                setBadgeStyle(detail);
+            }
+        };
+
+        window.addEventListener('pawlse:sidebar-notif-style-changed', handleStyleChange);
+        return () => {
+            window.removeEventListener('pawlse:sidebar-notif-style-changed', handleStyleChange);
+        };
+    }, []);
 
     const displayedNavItems = navItems
         .map((item) => {
@@ -126,6 +164,7 @@ export function DashboardSidebar({
             >
                 {displayedNavItems.map((item) => {
                     const Icon = item.icon;
+                    const badgeCount = getTabNotificationCount(item, notifications, isRead);
 
                     return (
                         <span key={item.href} onClick={onClose}>
@@ -139,6 +178,8 @@ export function DashboardSidebar({
                                 }
                                 icon={<Icon className="h-5 w-5" strokeWidth={1.75} />}
                                 collapsed={collapsed}
+                                badgeStyle={badgeStyle}
+                                badgeCount={badgeCount}
                             >
                                 {item.title}
                             </DashboardNavLink>

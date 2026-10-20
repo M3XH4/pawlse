@@ -1,8 +1,8 @@
 import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { playNotificationChime } from '@/lib/notification-chime';
-import { handleRealtimeAppEvent } from '@/lib/realtime-page-sync';
 import { syncDocumentTitle } from '@/lib/notification-title';
+import { handleRealtimeAppEvent } from '@/lib/realtime-page-sync';
+import { notificationMatchesPath } from '@/lib/tab-notification-matcher';
 import type { DashboardNotification } from '@/types/dashboard';
 
 export interface NotificationStoreState {
@@ -308,7 +308,7 @@ class NotificationStore {
     public pushNotification(
         notification: DashboardNotification,
         newUnreadCount?: number,
-        showToastAlert = true,
+        showChime = false,
     ): void {
         if (!this.isDashboardActive) {
             return;
@@ -330,18 +330,8 @@ class NotificationStore {
         syncDocumentTitle(updatedCount);
         this.notify();
 
-        if (showToastAlert) {
+        if (showChime) {
             playNotificationChime();
-            toast(notification.title || 'New Notification', {
-                description: notification.description,
-                action: notification.url
-                    ? {
-                          label: 'View',
-                          onClick: () => router.visit(notification.url),
-                      }
-                    : undefined,
-                duration: 6000,
-            });
         }
     }
 
@@ -463,6 +453,69 @@ class NotificationStore {
 
         if (notification.url) {
             router.visit(notification.url);
+        }
+    }
+
+    /**
+     * Automatically mark all unread notifications matching a visited tab path as read.
+     */
+    public markTabRead(path: string): void {
+        if (!path || !this.isDashboardActive) {
+            return;
+        }
+
+        const cleanPath = path.split('?')[0].replace(/\/$/, '').toLowerCase();
+        const isRoot = [
+            '/account/user',
+            '/account/volunteer',
+            '/account/admin',
+            '/account/admin/dashboard',
+            '/account/super-admin',
+            '/account/super-admin/dashboard',
+        ].includes(cleanPath);
+
+        if (isRoot) {
+            return;
+        }
+
+        const toMark: string[] = [];
+        for (const notif of this.state.notifications) {
+            if (!this.isRead(notif) && notificationMatchesPath(cleanPath, notif)) {
+                toMark.push(notif.id);
+            }
+        }
+
+        if (toMark.length === 0) {
+            return;
+        }
+
+        for (const id of toMark) {
+            this.state.optimisticReadIds.add(id);
+        }
+        this.state.unreadCount = Math.max(0, this.state.unreadCount - toMark.length);
+        syncDocumentTitle(this.state.unreadCount);
+        this.notify();
+
+        try {
+            const csrfToken =
+                typeof document !== 'undefined'
+                    ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+                    : '';
+
+            fetch('/account/notifications/read-tab', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ path: cleanPath }),
+            }).catch(() => {
+                // Ignore background sync errors
+            });
+        } catch {
+            // Ignore background sync errors
         }
     }
 

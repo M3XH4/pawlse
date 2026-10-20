@@ -1,11 +1,14 @@
-import { Form, Link, useForm, usePage } from '@inertiajs/react';
+import { Form, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bell,
+    BellOff,
     Camera,
     Check,
     CheckCircle2,
+    CircleDot,
     Eye,
     EyeOff,
+    Hash,
     Lock,
     Mail,
     MapPin,
@@ -14,6 +17,7 @@ import {
     Phone,
     Shield,
     ShieldCheck,
+    Sparkles,
     Sun,
     Trash2,
     UploadCloud,
@@ -88,7 +92,37 @@ export default function SharedAccountSettings({
         prevTwoFactorEnabled.current = twoFactorEnabled;
     }, [twoFactorEnabled, clearTwoFactorAuthData]);
 
-    // Local Storage Notification Preferences State
+    // Sidebar tab notification badge style preference
+    const [sidebarNotifStyle, setSidebarNotifStyle] = useState<'count' | 'dot' | 'none'>(() => {
+        try {
+            const stored = localStorage.getItem('pawlse_sidebar_notif_style');
+            if (stored === 'count' || stored === 'dot' || stored === 'none') {
+                return stored;
+            }
+        } catch {
+            // Ignore storage read error
+        }
+        return ((user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style) || 'count';
+    });
+
+    useEffect(() => {
+        const serverPref = (user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style;
+        if (serverPref && (serverPref === 'count' || serverPref === 'dot' || serverPref === 'none')) {
+            setSidebarNotifStyle(serverPref);
+        }
+    }, [user]);
+
+    const handleStyleSelect = (style: 'count' | 'dot' | 'none') => {
+        setSidebarNotifStyle(style);
+        try {
+            localStorage.setItem('pawlse_sidebar_notif_style', style);
+        } catch {
+            // Ignore storage write error
+        }
+        window.dispatchEvent(new CustomEvent('pawlse:sidebar-notif-style-changed', { detail: style }));
+    };
+
+    // Notification Preferences State
     const [notifPrefs, setNotifPrefs] = useState({
         rescues: true,
         adoptions: true,
@@ -96,6 +130,7 @@ export default function SharedAccountSettings({
         digest: true,
         security: true,
     });
+    const [isSavingNotifs, setIsSavingNotifs] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem('pawlse-notif-prefs');
@@ -109,8 +144,30 @@ export default function SharedAccountSettings({
     }, []);
 
     const saveNotifPrefs = () => {
-        localStorage.setItem('pawlse-notif-prefs', JSON.stringify(notifPrefs));
-        toast.success('Notification preferences updated successfully!');
+        setIsSavingNotifs(true);
+        try {
+            localStorage.setItem('pawlse-notif-prefs', JSON.stringify(notifPrefs));
+            localStorage.setItem('pawlse_sidebar_notif_style', sidebarNotifStyle);
+        } catch {
+            // Ignore storage write error
+        }
+        window.dispatchEvent(new CustomEvent('pawlse:sidebar-notif-style-changed', { detail: sidebarNotifStyle }));
+
+        router.patch(
+            '/settings/notifications',
+            { sidebar_notification_style: sidebarNotifStyle },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSavingNotifs(false);
+                    toast.success('Notification preferences updated successfully!');
+                },
+                onError: () => {
+                    setIsSavingNotifs(false);
+                    toast.error('Failed to update notification preferences on the server.');
+                },
+            },
+        );
     };
 
     // Profile form state
@@ -632,96 +689,244 @@ export default function SharedAccountSettings({
                 )}
 
                 {activeTab === 'notifications' && (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
                             <h3 className="font-fredoka text-xl font-bold text-paw-navy dark:text-white">Notification Preferences</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Configure how and when you receive notifications from the platform.</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Configure how and where you receive notifications across the platform.</p>
                         </div>
                         <hr className="border-gray-100 dark:border-slate-800" />
-                        
-                        <div className="space-y-5 max-w-xl">
-                            <div className="flex items-start gap-3">
-                                <Checkbox
-                                    id="notif-rescues"
-                                    checked={notifPrefs.rescues}
-                                    onCheckedChange={(checked) =>
-                                        setNotifPrefs((prev) => ({ ...prev, rescues: !!checked }))
-                                    }
-                                    className="mt-1"
-                                />
-                                <div className="space-y-1">
-                                    <Label htmlFor="notif-rescues" className="text-sm font-semibold cursor-pointer">Rescue Reports Alerts</Label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Receive immediate notifications when new rescue cases are reported in your area.</p>
-                                </div>
+
+                        {/* Sidebar Tab Notification Style Section */}
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold text-paw-navy dark:text-white flex items-center gap-2">
+                                    <Bell className="h-4 w-4 text-paw-orange" />
+                                    Sidebar Tab Notification Badges
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Customize how notifications appear on your sidebar navigation tabs (top-right corner).
+                                </p>
                             </div>
 
-                            <div className="flex items-start gap-3">
-                                <Checkbox
-                                    id="notif-adoptions"
-                                    checked={notifPrefs.adoptions}
-                                    onCheckedChange={(checked) =>
-                                        setNotifPrefs((prev) => ({ ...prev, adoptions: !!checked }))
-                                    }
-                                    className="mt-1"
-                                />
-                                <div className="space-y-1">
-                                    <Label htmlFor="notif-adoptions" className="text-sm font-semibold cursor-pointer">Adoption Status Updates</Label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Get notified when there's an update on pet adoption applications or files.</p>
-                                </div>
+                            {/* 3 Selectable Options */}
+                            <div className="grid gap-3 sm:grid-cols-3 max-w-2xl">
+                                {[
+                                    {
+                                        id: 'count' as const,
+                                        label: 'Number of times',
+                                        badgeDescription: 'Counter badge (e.g. 3)',
+                                        desc: 'Shows how many times the tab has unread notifications.',
+                                        icon: Hash,
+                                    },
+                                    {
+                                        id: 'dot' as const,
+                                        label: 'Red only',
+                                        badgeDescription: 'Red indicator dot',
+                                        desc: 'Shows a clean red dot without counting the number.',
+                                        icon: CircleDot,
+                                    },
+                                    {
+                                        id: 'none' as const,
+                                        label: 'Off (Follow bell only)',
+                                        badgeDescription: 'No tab badges',
+                                        desc: 'Disable tab badges and only use the header notification bell.',
+                                        icon: BellOff,
+                                    },
+                                ].map((option) => {
+                                    const isSelected = sidebarNotifStyle === option.id;
+
+                                    return (
+                                        <button
+                                            key={option.id}
+                                            type="button"
+                                            onClick={() => handleStyleSelect(option.id)}
+                                            className={cn(
+                                                'relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-paw-orange',
+                                                isSelected
+                                                    ? 'border-paw-orange bg-orange-50/50 shadow-xs ring-1 ring-paw-orange dark:border-paw-orange dark:bg-orange-950/20'
+                                                    : 'border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700',
+                                            )}
+                                        >
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={cn(
+                                                        'flex h-7 w-7 items-center justify-center rounded-lg',
+                                                        isSelected
+                                                            ? 'bg-paw-orange text-white'
+                                                            : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-gray-300',
+                                                    )}>
+                                                        <option.icon className="h-4 w-4" />
+                                                    </span>
+
+                                                    {isSelected && (
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-paw-orange text-white text-xs">
+                                                            <Check className="h-3 w-3" strokeWidth={3} />
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <p className="font-semibold text-sm text-[#0B2340] dark:text-[#F8FAFC]">
+                                                    {option.label}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                                    {option.desc}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-800/80">
+                                                <span className="text-[11px] font-medium text-paw-navy/70 dark:text-gray-400">
+                                                    {option.badgeDescription}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
-                            <div className="flex items-start gap-3">
-                                <Checkbox
-                                    id="notif-volunteers"
-                                    checked={notifPrefs.volunteers}
-                                    onCheckedChange={(checked) =>
-                                        setNotifPrefs((prev) => ({ ...prev, volunteers: !!checked }))
-                                    }
-                                    className="mt-1"
-                                />
-                                <div className="space-y-1">
-                                    <Label htmlFor="notif-volunteers" className="text-sm font-semibold cursor-pointer">Volunteer Registrations</Label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Receive alerts when new volunteer applications are submitted (Admins only).</p>
+                            {/* Live Interactive Tab Preview Banner */}
+                            <div className="max-w-2xl rounded-2xl border border-dashed border-gray-200 bg-gray-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="h-4 w-4 text-paw-orange" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                            Live Sidebar Tab Preview
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                                        Updates instantly in your sidebar
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                    {/* Mock Sidebar Tab */}
+                                    <div className="relative flex min-h-[44px] w-full max-w-[260px] items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#0B2340] shadow-xs border border-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-paw-orange">
+                                            <Bell className="h-5 w-5" />
+                                        </span>
+                                        <span className="overflow-hidden whitespace-nowrap text-sm pr-6">
+                                            Rescue Reports
+                                        </span>
+
+                                        {sidebarNotifStyle === 'count' && (
+                                            <span
+                                                className="absolute top-2.5 right-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white shadow-xs ring-2 ring-white dark:ring-slate-900 animate-in fade-in zoom-in-75 duration-200"
+                                                title="3 unread notifications"
+                                            >
+                                                3
+                                            </span>
+                                        )}
+
+                                        {sidebarNotifStyle === 'dot' && (
+                                            <span
+                                                className="absolute top-3 right-3.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900 animate-pulse animate-in fade-in zoom-in-75 duration-200"
+                                                title="New notifications"
+                                            />
+                                        )}
+                                    </div>
+
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
+                                        {sidebarNotifStyle === 'count' && 'A red counter pill appears in the top-right corner with the unread count.'}
+                                        {sidebarNotifStyle === 'dot' && 'A clean red pulsing indicator dot appears in the top-right corner.'}
+                                        {sidebarNotifStyle === 'none' && 'No badges on sidebar tabs; unread notifications only show in the header bell.'}
+                                    </p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="flex items-start gap-3">
-                                <Checkbox
-                                    id="notif-digest"
-                                    checked={notifPrefs.digest}
-                                    onCheckedChange={(checked) =>
-                                        setNotifPrefs((prev) => ({ ...prev, digest: !!checked }))
-                                    }
-                                    className="mt-1"
-                                />
-                                <div className="space-y-1">
-                                    <Label htmlFor="notif-digest" className="text-sm font-semibold cursor-pointer">Weekly Summary Digest</Label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Receive a weekly overview of platform activities, events, and totals.</p>
-                                </div>
+                        <hr className="border-gray-100 dark:border-slate-800" />
+
+                        {/* Notification Subscriptions / Checkboxes */}
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold text-paw-navy dark:text-white">Email &amp; In-App Notifications</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Select which types of updates you want to receive.</p>
                             </div>
 
-                            <div className="flex items-start gap-3">
-                                <Checkbox
-                                    id="notif-security"
-                                    checked={notifPrefs.security}
-                                    onCheckedChange={(checked) =>
-                                        setNotifPrefs((prev) => ({ ...prev, security: !!checked }))
-                                    }
-                                    className="mt-1"
-                                />
-                                <div className="space-y-1">
-                                    <Label htmlFor="notif-security" className="text-sm font-semibold cursor-pointer">Security Alerts</Label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Always recommend keeping this checked to get alert on logins or password updates.</p>
+                            <div className="space-y-4 max-w-xl">
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="notif-rescues"
+                                        checked={notifPrefs.rescues}
+                                        onCheckedChange={(checked) =>
+                                            setNotifPrefs((prev) => ({ ...prev, rescues: !!checked }))
+                                        }
+                                        className="mt-1"
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="notif-rescues" className="text-sm font-semibold cursor-pointer">Rescue Reports Alerts</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive immediate notifications when new rescue cases are reported in your area.</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-end pt-4">
-                                <Button
-                                    onClick={saveNotifPrefs}
-                                    className="rounded-xl bg-paw-navy text-white hover:bg-opacity-90 dark:bg-slate-100 dark:text-slate-900"
-                                >
-                                    Save Preferences
-                                </Button>
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="notif-adoptions"
+                                        checked={notifPrefs.adoptions}
+                                        onCheckedChange={(checked) =>
+                                            setNotifPrefs((prev) => ({ ...prev, adoptions: !!checked }))
+                                        }
+                                        className="mt-1"
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="notif-adoptions" className="text-sm font-semibold cursor-pointer">Adoption Status Updates</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Get notified when there's an update on pet adoption applications or files.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="notif-volunteers"
+                                        checked={notifPrefs.volunteers}
+                                        onCheckedChange={(checked) =>
+                                            setNotifPrefs((prev) => ({ ...prev, volunteers: !!checked }))
+                                        }
+                                        className="mt-1"
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="notif-volunteers" className="text-sm font-semibold cursor-pointer">Volunteer Registrations</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive alerts when new volunteer applications are submitted (Admins only).</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="notif-digest"
+                                        checked={notifPrefs.digest}
+                                        onCheckedChange={(checked) =>
+                                            setNotifPrefs((prev) => ({ ...prev, digest: !!checked }))
+                                        }
+                                        className="mt-1"
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="notif-digest" className="text-sm font-semibold cursor-pointer">Weekly Summary Digest</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive a weekly overview of platform activities, events, and totals.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="notif-security"
+                                        checked={notifPrefs.security}
+                                        onCheckedChange={(checked) =>
+                                            setNotifPrefs((prev) => ({ ...prev, security: !!checked }))
+                                        }
+                                        className="mt-1"
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="notif-security" className="text-sm font-semibold cursor-pointer">Security Alerts</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Always recommend keeping this checked to get alerts on logins or password updates.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <Button
+                                        onClick={saveNotifPrefs}
+                                        disabled={isSavingNotifs}
+                                        className="rounded-xl bg-paw-navy text-white hover:bg-opacity-90 dark:bg-slate-100 dark:text-slate-900"
+                                    >
+                                        {isSavingNotifs ? 'Saving Preferences...' : 'Save Notification Preferences'}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

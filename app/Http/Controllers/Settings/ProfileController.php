@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -60,6 +61,24 @@ class ProfileController extends Controller
         $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated successfully!')]);
+
+        return back();
+    }
+
+    /**
+     * Update the user's notification preferences.
+     */
+    public function updateNotificationPreferences(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'sidebar_notification_style' => ['required', 'string', Rule::in(['count', 'dot', 'none'])],
+        ]);
+
+        $request->user()->update([
+            'sidebar_notification_style' => $validated['sidebar_notification_style'],
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Notification preferences updated successfully!')]);
 
         return back();
     }

@@ -9,6 +9,7 @@ import {
     notificationsHrefByTheme,
 } from '@/components/dashboard/nav-items';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
+import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
 import { dashboardThemes } from '@/lib/dashboard-theme';
 import type { DashboardTheme } from '@/types/dashboard';
 
@@ -24,7 +25,17 @@ export default function DashboardLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const config = dashboardThemes[theme];
-    const isMaintenanceMode = Boolean(usePage().props.isMaintenanceMode);
+    const page = usePage();
+    const isMaintenanceMode = Boolean(page.props.isMaintenanceMode);
+    const { markTabRead } = useDashboardNotifications();
+
+    // Automatically mark all unread notifications matching the visited tab as read
+    useEffect(() => {
+        const path = page.url.split('?')[0];
+        if (path) {
+            markTabRead(path);
+        }
+    }, [page.url, markTabRead]);
 
     useEffect(() => {
         try {

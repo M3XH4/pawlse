@@ -23,6 +23,18 @@ export function useDashboardNotifications() {
 
     const userId = auth?.user?.id;
     const isDashboard = isDashboardRoute(page.url, dashboardRole);
+    const sourceList = dashboardNotifications.length > 0 ? dashboardNotifications : adminNotifications;
+
+    // Immediately seed the store on first render so notifications and badges load directly without waiting
+    if (userId && isDashboard && notificationStore.getState().notifications.length === 0 && sourceList.length > 0) {
+        notificationStore.initFromProps(
+            userId,
+            dashboardNotifications,
+            adminNotifications,
+            unreadNotificationCount,
+            isDashboard,
+        );
+    }
 
     // Sync store with incoming Inertia page props
     useEffect(() => {
@@ -63,12 +75,16 @@ export function useDashboardNotifications() {
     const openNotification = (notification: DashboardNotification) =>
         notificationStore.openNotification(notification);
 
+    const markTabRead = (path: string) =>
+        notificationStore.markTabRead(path);
+
     return {
         notifications: activeNotifications,
         unreadCount: state.unreadCount,
         isRead,
         markRead,
         markAllRead,
+        markTabRead,
         deleteNotification,
         clearAllRead,
         openNotification,

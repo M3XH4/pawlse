@@ -27,6 +27,7 @@ const NULL_PAGES = new Set([
     'missing',
     'sos',
     'not-found',
+    'maintenance',
     'error',
     'login',
     'checkout',

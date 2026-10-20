@@ -22,6 +22,7 @@ trait ProfileValidationRules
             'location' => ['nullable', 'string', 'max:255'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
+            'sidebar_notification_style' => ['nullable', 'string', Rule::in(['count', 'dot', 'none'])],
         ];
     }
 

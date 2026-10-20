@@ -319,3 +319,48 @@ test('donor is notified when in-kind donation is verified', function () {
 
     Notification::assertSentTo($donor, DonationVerifiedNotification::class);
 });
+
+test('user can mark notifications for a visited tab as read', function () {
+    $user = User::factory()->user()->create();
+    $application = AdoptionApplication::factory()->create();
+
+    $user->notify(new AdoptionApplicationStatusUpdatedNotification($application));
+
+    expect($user->unreadNotifications()->count())->toBe(1);
+
+    $response = $this->actingAs($user)
+        ->postJson(route('account.notifications.read-tab'), [
+            'path' => '/account/user/adoption-applications',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'marked' => 1,
+            'unreadCount' => 0,
+        ]);
+
+    expect($user->fresh()->unreadNotifications()->count())->toBe(0);
+});
+
+test('marking notifications for a visited tab only marks matching notifications', function () {
+    $user = User::factory()->user()->create();
+    $application = AdoptionApplication::factory()->create();
+
+    $user->notify(new AdoptionApplicationStatusUpdatedNotification($application));
+    $user->notify(new DonationVerifiedNotification(Donation::factory()->create(['user_id' => $user->id])));
+
+    expect($user->unreadNotifications()->count())->toBe(2);
+
+    $response = $this->actingAs($user)
+        ->postJson(route('account.notifications.read-tab'), [
+            'path' => '/account/user/adoption-applications',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'marked' => 1,
+            'unreadCount' => 1,
+        ]);
+
+    expect($user->fresh()->unreadNotifications()->count())->toBe(1);
+});

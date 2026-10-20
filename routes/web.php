@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('account/notifications')->name('account.notifications.')->middleware(['auth', 'verified'])->group(function () {
     Route::get('stream', [UserNotificationController::class, 'stream'])->name('stream');
     Route::get('poll', [UserNotificationController::class, 'poll'])->name('poll');
+    Route::post('read-tab', [UserNotificationController::class, 'readTab'])->name('read-tab');
     Route::patch('read-all', [UserNotificationController::class, 'readAll'])->name('read-all');
     Route::delete('clear-all', [UserNotificationController::class, 'clearAll'])->name('clear-all');
     Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
