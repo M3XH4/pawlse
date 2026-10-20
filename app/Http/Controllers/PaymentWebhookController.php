@@ -11,6 +11,7 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\Payment;
 use App\Notifications\DonationVerifiedNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,9 +179,11 @@ class PaymentWebhookController extends Controller
                 ]);
             }
 
-            if ($donation->user) {
-                $donation->user->notify(new DonationVerifiedNotification($donation));
-            }
+            EReceiptDispatcher::sendToUserAndEmail(
+                $donation->user,
+                $donation->donor_email,
+                new DonationVerifiedNotification($donation)
+            );
         });
 
         AuditLog::log('donation_webhook_success', "Payment completed via webhook for donation #{$donation->public_reference} (Txn: {$providerTxnId})");

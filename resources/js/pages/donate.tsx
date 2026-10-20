@@ -73,6 +73,19 @@ interface DonateProps {
     careSustainability?: CareSustainabilityData;
     donationSuccess?: boolean;
     successRef?: string;
+    successDonation?: {
+        public_reference: string;
+        donor_name: string;
+        donor_email: string;
+        anonymous: boolean;
+        type: string;
+        type_label: string;
+        amount: string;
+        status: string;
+        purpose: string;
+        method: string;
+        issued_at?: string;
+    } | null;
 }
 
 export default function Donate({
@@ -88,7 +101,8 @@ export default function Donate({
     progressStats = { total: 0, goal: 50000, percentage: 0 },
     careSustainability,
     donationSuccess = false,
-    successRef = ''
+    successRef = '',
+    successDonation = null,
 }: DonateProps) {
     const { auth } = usePage<{ auth: { user: any } }>().props;
 
@@ -175,20 +189,41 @@ export default function Donate({
     // Handle donation status from backend redirection
     useEffect(() => {
         if (donationSuccess && successRef) {
+            const items = successDonation
+                ? [
+                      { label: 'Contribution Type', value: successDonation.type_label },
+                      { label: 'Amount / Supplies', value: successDonation.amount },
+                      { label: 'Donor', value: successDonation.anonymous ? `${successDonation.donor_name} (Anonymous)` : successDonation.donor_name },
+                      { label: 'Email (E-Receipt Sent)', value: successDonation.donor_email },
+                      { label: 'Payment / Channel', value: successDonation.method },
+                      { label: 'Purpose', value: successDonation.purpose },
+                      { label: 'Status', value: successDonation.status === 'completed' ? 'Completed & Verified' : 'Scheduled / Pending Verification' },
+                  ]
+                : [
+                      { label: 'Status', value: 'Completed', icon: <CheckCircle2 className="text-green-500" size={20} /> },
+                      { label: 'Date', value: new Date().toLocaleDateString(), icon: <Calendar size={20} /> },
+                  ];
+
             setReceiptData({
-                title: 'Donation Completed!',
-                subtitle: 'Thank you for your generous support',
+                title: 'Hope you know you saved a life today!',
+                subtitle: successDonation ? `${successDonation.type_label} E-Receipt` : 'Official Donation E-Receipt',
                 referenceNumber: successRef,
-                items: [
-                    { label: 'Status', value: 'Completed', icon: <CheckCircle2 className="text-green-500" size={20} /> },
-                    { label: 'Date', value: new Date().toLocaleDateString(), icon: <Calendar size={20} /> }
-                ],
+                items,
                 type: 'success',
-                footerMessage: 'Your transaction has been processed successfully. A formal receipt and summary of impact will be sent to your email.'
+                highlightLabel: successDonation?.type === 'in_kind' ? 'Pledged Supplies' : 'Total Contributed',
+                highlightValue: successDonation?.amount || 'VERIFIED',
+                donorName: successDonation?.donor_name,
+                donorEmail: successDonation?.donor_email,
+                paymentMethod: successDonation?.method,
+                purpose: successDonation?.purpose,
+                issuedAt: successDonation?.issued_at,
+                footerMessage: successDonation?.donor_email
+                    ? `An official E-Receipt has been sent to ${successDonation.donor_email} and recorded in the PAWLSE Transparency Ledger.`
+                    : 'Your transaction has been processed successfully. A formal receipt and summary of impact has been sent to your email.',
             });
             setShowReceipt(true);
         }
-    }, [donationSuccess, successRef]);
+    }, [donationSuccess, successRef, successDonation]);
 
     const handleSelectWishlistNeed = (animal: WishlistAnimal, need: WishlistNeed) => {
         inKindForm.setData(data => ({
@@ -1276,6 +1311,13 @@ export default function Donate({
                     items={receiptData.items}
                     type={receiptData.type}
                     footerMessage={receiptData.footerMessage}
+                    highlightLabel={receiptData.highlightLabel}
+                    highlightValue={receiptData.highlightValue}
+                    donorName={receiptData.donorName}
+                    donorEmail={receiptData.donorEmail}
+                    paymentMethod={receiptData.paymentMethod}
+                    purpose={receiptData.purpose}
+                    issuedAt={receiptData.issuedAt}
                 />
             )}
 

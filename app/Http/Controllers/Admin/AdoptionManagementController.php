@@ -18,6 +18,7 @@ use App\Models\ShelterVisit;
 use App\Notifications\AdoptionApplicationStatusUpdatedNotification;
 use App\Notifications\RehomingRequestStatusUpdatedNotification;
 use App\Notifications\ShelterVisitStatusUpdatedNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -351,7 +352,11 @@ class AdoptionManagementController extends Controller
         ]);
 
         if ($oldStatus !== $validated['status']) {
-            $visit->user?->notify(new ShelterVisitStatusUpdatedNotification($visit));
+            EReceiptDispatcher::sendToUserAndEmail(
+                $visit->user,
+                $visit->email,
+                new ShelterVisitStatusUpdatedNotification($visit)
+            );
         }
 
         AuditLog::log('shelter_visit_update', "Updated shelter visit ID {$visit->id} status to {$validated['status']}");
@@ -380,7 +385,11 @@ class AdoptionManagementController extends Controller
         ]);
 
         if ($oldStatus !== $validated['status']) {
-            $rehomingRequest->user?->notify(new RehomingRequestStatusUpdatedNotification($rehomingRequest));
+            EReceiptDispatcher::sendToUserAndEmail(
+                $rehomingRequest->user,
+                $rehomingRequest->email,
+                new RehomingRequestStatusUpdatedNotification($rehomingRequest)
+            );
         }
 
         AuditLog::log('rehoming_request_update', "Updated rehoming request ID {$rehomingRequest->id} status to {$validated['status']}");
@@ -443,7 +452,11 @@ class AdoptionManagementController extends Controller
                 'reviewed_by' => $request->user()?->id,
             ]);
 
-            $rehomingRequest->user?->notify(new RehomingRequestStatusUpdatedNotification($rehomingRequest));
+            EReceiptDispatcher::sendToUserAndEmail(
+                $rehomingRequest->user,
+                $rehomingRequest->email,
+                new RehomingRequestStatusUpdatedNotification($rehomingRequest)
+            );
 
             AuditLog::log('rehoming_intake_to_shelter', "Admitted rehoming request pet '{$rehomingRequest->animal_name}' into shelter as animal ID {$animal->id}");
 

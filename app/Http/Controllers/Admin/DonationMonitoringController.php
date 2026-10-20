@@ -13,7 +13,10 @@ use App\Models\Event;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
+use App\Models\User;
+use App\Notifications\DonationRejectedNotification;
 use App\Notifications\DonationVerifiedNotification;
+use App\Support\EReceiptDispatcher;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -382,9 +385,11 @@ class DonationMonitoringController extends Controller
             ]);
 
             $userToNotify = $donation->user ?? ($donation->user_id ? User::find($donation->user_id) : null);
-            if ($userToNotify) {
-                $userToNotify->notify(new DonationVerifiedNotification($donation));
-            }
+            EReceiptDispatcher::sendToUserAndEmail(
+                $userToNotify,
+                $donation->donor_email,
+                new DonationVerifiedNotification($donation)
+            );
         });
 
         return redirect()->back()->with('success', 'In-kind donation verified and items added to inventory.');
@@ -725,10 +730,12 @@ class DonationMonitoringController extends Controller
                 ]);
             }
 
-            $userToNotify = $donation->user ?? ($donation->user_id ? \App\Models\User::find($donation->user_id) : null);
-            if ($userToNotify) {
-                $userToNotify->notify(new DonationVerifiedNotification($donation));
-            }
+            $userToNotify = $donation->user ?? ($donation->user_id ? User::find($donation->user_id) : null);
+            EReceiptDispatcher::sendToUserAndEmail(
+                $userToNotify,
+                $donation->donor_email,
+                new DonationVerifiedNotification($donation)
+            );
         });
 
         return redirect()->back()->with('success', "Donation {$donation->public_reference} marked as verified and completed.");
@@ -840,6 +847,13 @@ class DonationMonitoringController extends Controller
                 'notes' => 'Donation rejected: '.$validated['reason'],
                 'created_at' => now(),
             ]);
+
+            $userToNotify = $donation->user ?? ($donation->user_id ? User::find($donation->user_id) : null);
+            EReceiptDispatcher::sendToUserAndEmail(
+                $userToNotify,
+                $donation->donor_email,
+                new DonationRejectedNotification($donation, $validated['reason'])
+            );
         });
 
         return redirect()->back()->with('success', "Donation {$donation->public_reference} marked as rejected.");

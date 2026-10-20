@@ -3,21 +3,34 @@
 namespace App\Notifications;
 
 use App\Models\FosterCareUpdate;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class FosterCareEmergencyNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public FosterCareUpdate $update) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $petName = $this->update->shelterAnimal?->name ?? 'Foster Pet';
+        $parentName = $this->update->user?->name ?? 'Foster Parent';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Foster Pet', 'value' => $petName],
+                ['label' => 'Foster Parent', 'value' => $parentName],
+                ['label' => 'Urgency', 'value' => strtoupper((string) $this->update->urgency)],
+            ],
+            actionText: 'Review Foster Alert Immediately',
+            level: 'error',
+            categoryBadge: 'URGENT FOSTER ALERT',
+        );
     }
 
     /**

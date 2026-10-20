@@ -17,6 +17,11 @@ import {
   Stethoscope,
   CheckCircle2,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Images,
+  Maximize2,
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
@@ -65,6 +70,8 @@ export interface AdoptPetDetail {
   weight?: string | null;
   microchip_id?: string | null;
   intake_type?: string | null;
+  is_rescued?: boolean;
+  rescued_tag?: string | null;
   current_location?: string | null;
   admitted_at?: string | null;
   rescue_date?: string | null;
@@ -77,6 +84,13 @@ export interface AdoptPetDetail {
   story?: string | null;
   img?: string | null;
   mainImg?: string | null;
+  photo_url?: string | null;
+  photos?: string[];
+  gallery_photos?: string[];
+  before_photo_url?: string | null;
+  after_photo_url?: string | null;
+  beforeImg?: string | null;
+  afterImg?: string | null;
   vaccinated: boolean;
   shelterDays: number;
   medical_records?: MedicalRecordItem[];
@@ -98,8 +112,27 @@ export function PetDetailModal({
   onShare,
 }: PetDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'story' | 'health'>('overview');
+  const [activePhotoIdx, setActivePhotoIdx] = useState<number>(0);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setActivePhotoIdx(0);
+    setLightboxPhoto(null);
+  }, [pet?.id]);
 
   if (!pet) return null;
+
+  const primaryPhoto = pet.img || pet.mainImg || pet.photo_url || '';
+  const rawPhotos = Array.isArray(pet.photos) && pet.photos.length > 0
+    ? pet.photos
+    : [primaryPhoto, ...(Array.isArray(pet.gallery_photos) ? pet.gallery_photos : [])];
+  const allPhotos = Array.from(new Set(rawPhotos.filter(Boolean))) as string[];
+  const safePhotoIdx = allPhotos.length > 0 ? activePhotoIdx % allPhotos.length : 0;
+  const currentMainPhoto = allPhotos[safePhotoIdx] || primaryPhoto;
+  const beforePhoto = pet.before_photo_url ?? pet.beforeImg ?? null;
+  const afterPhoto = pet.after_photo_url ?? pet.afterImg ?? null;
+  const isRescued = pet.is_rescued ?? true;
+  const rescuedTagLabel = pet.rescued_tag || 'Rescued • In Shelter Care';
 
   const vaccinationRecords = (pet.medical_records || []).filter(
     (r) => r.record_type === 'vaccination'
@@ -142,12 +175,50 @@ export function PetDetailModal({
             {/* Left Photo & Badges Column (5 cols) */}
             <div className="md:col-span-5 bg-slate-50/70 p-5 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100">
               <div>
-                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-xs mb-4 bg-slate-100 group">
+                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-xs mb-3 bg-slate-100 group">
                   <ImageWithFallback
-                    src={pet.img || pet.mainImg || ''}
+                    src={currentMainPhoto}
                     alt={pet.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
                   />
+
+                  {/* Lightbox trigger */}
+                  {currentMainPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setLightboxPhoto(currentMainPhoto)}
+                      className="absolute bottom-3 right-3 bg-slate-900/70 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                      title="Expand image"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  )}
+
+                  {/* Prev / Next buttons when multiple photos exist */}
+                  {allPhotos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setActivePhotoIdx((safePhotoIdx - 1 + allPhotos.length) % allPhotos.length)}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-slate-900/65 hover:bg-slate-900/90 text-white p-1.5 rounded-full backdrop-blur-xs transition-all z-20 cursor-pointer"
+                        aria-label="Previous photo"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivePhotoIdx((safePhotoIdx + 1) % allPhotos.length)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-slate-900/65 hover:bg-slate-900/90 text-white p-1.5 rounded-full backdrop-blur-xs transition-all z-20 cursor-pointer"
+                        aria-label="Next photo"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                      <div className="absolute bottom-3 left-3 bg-slate-900/70 text-white backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 z-20">
+                        <Images size={11} />
+                        <span>{safePhotoIdx + 1} / {allPhotos.length}</span>
+                      </div>
+                    </>
+                  )}
 
                   {/* Status Badge */}
                   {(() => {
@@ -203,7 +274,33 @@ export function PetDetailModal({
                   </div>
                 </div>
 
-                <div className="space-y-0.5">
+                {/* Thumbnail Strip if multiple photos exist */}
+                {allPhotos.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-3 no-scrollbar">
+                    {allPhotos.map((photoUrl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActivePhotoIdx(idx)}
+                        className={`relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                          idx === safePhotoIdx
+                            ? 'border-orange-500 ring-2 ring-orange-500/20 scale-105'
+                            : 'border-slate-200 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <ImageWithFallback src={photoUrl} alt={`${pet.name} photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  {isRescued && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+                      <ShieldCheck size={12} className="text-emerald-600 shrink-0" />
+                      <span>{rescuedTagLabel}</span>
+                    </div>
+                  )}
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
                     {pet.name}
                   </h3>
@@ -384,6 +481,46 @@ export function PetDetailModal({
                         )}
                       </div>
                     )}
+
+                    {/* Before & After Transformation inside Story Tab if set */}
+                    {(beforePhoto || afterPhoto) && (
+                      <div className="bg-orange-50/50 border border-orange-200/70 p-4 rounded-xl space-y-2.5">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-orange-700 flex items-center gap-1.5">
+                          <Sparkles size={13} className="text-orange-500" />
+                          Before & After Transformation
+                        </h4>
+                        <div className={`grid ${beforePhoto && afterPhoto ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                          {beforePhoto && (
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                                When Rescued (Before)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setLightboxPhoto(beforePhoto)}
+                                className="w-full aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white block cursor-pointer"
+                              >
+                                <ImageWithFallback src={beforePhoto} alt="Before rescue" className="w-full h-full object-cover" />
+                              </button>
+                            </div>
+                          )}
+                          {afterPhoto && (
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">
+                                In Shelter Care (After)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setLightboxPhoto(afterPhoto)}
+                                className="w-full aspect-square rounded-xl overflow-hidden border border-emerald-200 bg-white block cursor-pointer"
+                              >
+                                <ImageWithFallback src={afterPhoto} alt="After rescue" className="w-full h-full object-cover" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -530,6 +667,29 @@ export function PetDetailModal({
             </div>
           </div>
         </motion.div>
+
+        {/* Fullscreen Lightbox Overlay */}
+        {lightboxPhoto && (
+          <div
+            className="fixed inset-0 z-[250] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setLightboxPhoto(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxPhoto(null)}
+              className="absolute top-5 right-5 bg-white/15 hover:bg-white/30 text-white p-2.5 rounded-full transition-colors cursor-pointer"
+              aria-label="Close full image"
+            >
+              <X size={22} />
+            </button>
+            <img
+              src={lightboxPhoto}
+              alt={pet.name}
+              className="max-w-full max-h-[88vh] rounded-2xl object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </div>
     </AnimatePresence>
   );

@@ -19,6 +19,8 @@ import {
   PhoneCall,
   Home,
   ChevronRight,
+  ShieldCheck,
+  Images,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useRef } from 'react';
@@ -530,6 +532,22 @@ export default function Adopt({ pets = [] }: AdoptProps) {
                     <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[#FF9B00] font-black text-[9px] flex items-center gap-1 shadow-md">
                       <Heart size={9} fill="currentColor" />
                       Available
+                    </div>
+
+                    {/* Rescued & In Shelter Tag + Multi-Photo Counter */}
+                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
+                      {pet.is_rescued !== false && (
+                        <span className="bg-emerald-600/95 text-white backdrop-blur-xs px-2 py-0.5 rounded-full font-black text-[8px] uppercase tracking-wider flex items-center gap-1 shadow-md">
+                          <ShieldCheck size={9} />
+                          <span>Rescued • In Shelter</span>
+                        </span>
+                      )}
+                      {pet.photos && pet.photos.length > 1 && (
+                        <span className="bg-slate-900/75 text-white backdrop-blur-xs px-2 py-0.5 rounded-full font-bold text-[8px] flex items-center gap-1 shadow-md ml-auto">
+                          <Images size={9} />
+                          <span>{pet.photos.length}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
 

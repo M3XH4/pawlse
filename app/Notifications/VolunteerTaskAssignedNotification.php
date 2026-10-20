@@ -3,21 +3,33 @@
 namespace App\Notifications;
 
 use App\Models\AssignedTask;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class VolunteerTaskAssignedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public AssignedTask $task) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $targetName = $this->task->event?->title
+            ?? ($this->task->feedingSchedule ? 'Feeding Route Zone '.$this->task->feedingSchedule->zone : 'Activity');
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Activity / Route', 'value' => $targetName],
+                ['label' => 'Assigned Role', 'value' => (string) $this->task->role],
+            ],
+            actionText: 'View Assigned Tasks',
+            level: 'primary',
+            categoryBadge: 'VOLUNTEER ASSIGNMENT',
+        );
     }
 
     /**

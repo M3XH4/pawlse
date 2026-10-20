@@ -32,6 +32,7 @@ class ShelterAnimalFactory extends Factory
             'behavior' => fake()->sentence(),
             'story' => fake()->paragraph(),
             'photo_url' => fake()->imageUrl(640, 480, 'animals', true),
+            'gallery_photos' => [],
             'vaccinated' => fake()->boolean(),
             'admitted_at' => fake()->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
             'status' => fake()->randomElement([
@@ -82,6 +83,15 @@ class ShelterAnimalFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => ShelterAnimalStatus::Available,
+        ]);
+    }
+
+    public function withGallery(int $count = 3): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'gallery_photos' => collect(range(1, $count))
+                ->map(fn (int $i) => "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&sig={$i}")
+                ->all(),
         ]);
     }
 }

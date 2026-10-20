@@ -3,21 +3,32 @@
 namespace App\Notifications;
 
 use App\Models\FosterCareUpdate;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class FosterCareUpdateAcknowledgedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public FosterCareUpdate $update) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $petName = $this->update->shelterAnimal?->name ?? 'Foster Pet';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Foster Pet', 'value' => $petName],
+                ['label' => 'Report Title', 'value' => (string) $this->update->title],
+            ],
+            actionText: 'View Foster Care Portal',
+            level: 'success',
+            categoryBadge: 'CARE REPORT ACKNOWLEDGED',
+        );
     }
 
     /**

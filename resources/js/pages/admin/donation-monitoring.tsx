@@ -1548,61 +1548,110 @@ export default function DonationMonitoring({
             {selectedDonationReceipt && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div onClick={() => setSelectedDonationReceipt(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                    <div className="bg-white rounded-[32px] p-8 max-w-lg w-full relative z-10 shadow-2xl text-gray-900">
+                    <div className="bg-white rounded-[32px] overflow-hidden max-w-lg w-full relative z-10 shadow-2xl text-gray-900 border border-slate-200">
                         {/* Printable Receipt Card */}
-                        <div id="printable-receipt" className="border-2 border-dashed border-gray-300 rounded-3xl p-6 bg-amber-50/20">
-                            <div className="text-center pb-4 border-b border-gray-200">
-                                <div className="text-xl font-black text-paw-navy uppercase tracking-wider flex items-center justify-center gap-1">
-                                    🐾 PAWLSE ANIMAL SHELTER
+                        <div id="printable-receipt" className="bg-white">
+                            {/* Branded Header with Iligan Stray Feeders Logo */}
+                            <div className="bg-gradient-to-br from-emerald-600 via-green-600 to-teal-500 px-6 py-5 text-white">
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                    <span className="inline-block rounded-full bg-white/20 border border-white/35 px-3 py-0.5 text-[10px] font-black uppercase tracking-widest">
+                                        Official Shelter E-Receipt
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-right">
+                                            <div className="text-sm font-black leading-none">PAWLSE</div>
+                                            <div className="text-[8px] font-extrabold uppercase tracking-widest text-white/90">Iligan Stray Feeders</div>
+                                        </div>
+                                        <img
+                                            src="/images/logo.png"
+                                            alt="Iligan Stray Feeders Logo"
+                                            className="h-9 w-9 rounded-full border-2 border-white object-cover shadow-md"
+                                        />
+                                    </div>
                                 </div>
-                                <p className="text-[11px] text-gray-500 font-bold">Official Donation & Supply Contribution Acknowledgment</p>
-                                <div className="text-xs font-mono font-black text-paw-orange mt-1">
-                                    RECEIPT NO: {selectedDonationReceipt.public_reference}
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-xl font-black leading-tight text-white">
+                                            Hope you know you saved a life today!
+                                        </h3>
+                                        <p className="text-[11px] font-bold text-white/90 mt-1">
+                                            RECEIPT NO: {selectedDonationReceipt.public_reference}
+                                        </p>
+                                    </div>
+                                    <img
+                                        src="/images/logo.png"
+                                        alt="ISF Emblem"
+                                        className="h-14 w-14 rounded-full border-2 border-white object-cover shadow-lg shrink-0"
+                                    />
                                 </div>
                             </div>
 
-                            <div className="py-4 space-y-3 text-xs">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500 font-bold">Date Issued:</span>
-                                    <span className="font-bold text-gray-900">{new Date(selectedDonationReceipt.created_at).toLocaleDateString()}</span>
+                            {/* Total / Value Highlight Bar */}
+                            <div className="flex items-center justify-between bg-amber-50/70 border-b-4 border-emerald-500 px-6 py-3.5">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                        Value / Items Received
+                                    </p>
+                                    <p className="text-[11px] font-bold text-slate-600">
+                                        Verified &amp; Completed
+                                    </p>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="text-xl font-black text-paw-navy">
+                                    {selectedDonationReceipt.type === 'in_kind'
+                                        ? selectedDonationReceipt.in_kind_donation?.description
+                                        : `₱${Number(selectedDonationReceipt.amount || 0).toLocaleString()}`}
+                                </div>
+                            </div>
+
+                            {/* Breakdown Rows */}
+                            <div className="px-6 py-4 space-y-2.5 text-xs">
+                                <div className="flex justify-between py-1 border-b border-dashed border-gray-200">
+                                    <span className="text-gray-500 font-bold">Date Issued:</span>
+                                    <span className="font-black text-gray-900">{new Date(selectedDonationReceipt.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex justify-between py-1 border-b border-dashed border-gray-200">
                                     <span className="text-gray-500 font-bold">Received From:</span>
                                     <span className="font-black text-paw-navy">
                                         {selectedDonationReceipt.anonymous ? 'Anonymous Supporter' : selectedDonationReceipt.donor_name}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                {selectedDonationReceipt.donor_email && (
+                                    <div className="flex justify-between py-1 border-b border-dashed border-gray-200">
+                                        <span className="text-gray-500 font-bold">E-Receipt Email:</span>
+                                        <span className="font-bold text-gray-700">{selectedDonationReceipt.donor_email}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between py-1 border-b border-dashed border-gray-200">
                                     <span className="text-gray-500 font-bold">Contribution Type:</span>
-                                    <span className="font-bold text-gray-900 uppercase">{selectedDonationReceipt.type.replace('_', ' ')}</span>
+                                    <span className="font-black text-gray-900 uppercase">{selectedDonationReceipt.type.replace('_', ' ')}</span>
                                 </div>
-                                <div className="flex justify-between items-baseline border-t border-b border-gray-200 py-2.5">
-                                    <span className="text-gray-600 font-black">Value / Items Received:</span>
-                                    <span className="text-base font-black text-paw-navy">
-                                        {selectedDonationReceipt.type === 'in_kind'
-                                            ? selectedDonationReceipt.in_kind_donation?.description
-                                            : `₱${Number(selectedDonationReceipt.amount || 0).toLocaleString()}`}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between py-1 border-b border-dashed border-gray-200">
                                     <span className="text-gray-500 font-bold">Designated Purpose:</span>
-                                    <span className="font-bold text-gray-700">{selectedDonationReceipt.purpose || 'General Animal Welfare'}</span>
+                                    <span className="font-bold text-gray-700 text-right max-w-[240px]">{selectedDonationReceipt.purpose || 'General Animal Welfare'}</span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center pt-1">
                                     <span className="text-gray-500 font-bold">Status:</span>
-                                    <span className="font-black text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-[10px] uppercase">
-                                        Verified & Completed
+                                    <span className="font-black text-green-700 bg-green-100 px-2.5 py-0.5 rounded-full text-[10px] uppercase">
+                                        Verified &amp; Completed
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-gray-200 text-center">
-                                <div className="text-[10px] text-gray-400 font-bold">Thank you for extending kindness and saving lives!</div>
-                                <div className="text-[9px] text-gray-400 italic mt-0.5">Pawlse Shelter Non-Profit Foundation</div>
+                            {/* Dark Paw-Navy Footer */}
+                            <div className="bg-paw-navy px-6 py-3.5 text-white flex items-center justify-between">
+                                <div>
+                                    <div className="text-xs font-black">PAWLSE &bull; Iligan Stray Feeders</div>
+                                    <div className="text-[10px] text-slate-400 font-bold">Zone 5, Barangay Tambo, Iligan City, 9200</div>
+                                </div>
+                                <img
+                                    src="/images/logo.png"
+                                    alt="ISF Logo"
+                                    className="h-8 w-8 rounded-full border border-paw-orange object-cover"
+                                />
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-6">
+                        <div className="flex gap-3 p-6 bg-slate-50 border-t border-slate-100">
                             <button
                                 onClick={() => {
                                     window.print();
@@ -1613,7 +1662,7 @@ export default function DonationMonitoring({
                             </button>
                             <button
                                 onClick={() => setSelectedDonationReceipt(null)}
-                                className="px-6 bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                                className="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
                             >
                                 Close
                             </button>

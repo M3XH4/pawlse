@@ -4,25 +4,37 @@ namespace App\Notifications;
 
 use App\Models\HelpDeskReply;
 use App\Models\HelpDeskTicket;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
 class HelpDeskTicketRepliedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(
         public HelpDeskTicket $ticket,
         public HelpDeskReply $reply
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $author = $this->reply->user?->name ?? 'Support Staff';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Ticket Number', 'value' => '#'.$this->ticket->ticket_number],
+                ['label' => 'Subject', 'value' => (string) $this->ticket->subject],
+                ['label' => 'Replied By', 'value' => $author],
+            ],
+            actionText: 'View Reply in Help Desk',
+            level: 'primary',
+            categoryBadge: 'HELP DESK REPLY',
+        );
     }
 
     /**

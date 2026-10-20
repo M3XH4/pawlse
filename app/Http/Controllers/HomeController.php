@@ -42,6 +42,11 @@ class HomeController extends Controller
             ->latest()
             ->get()
             ->map(function (ShelterAnimal $pet) use ($getString) {
+                $defaultImg = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800';
+                $allPhotos = $pet->all_photos;
+                $primaryImg = $pet->photo_url ?: ($allPhotos[0] ?? $defaultImg);
+                $photosList = ! empty($allPhotos) ? $allPhotos : [$primaryImg];
+
                 return [
                     'id' => $pet->id,
                     'name' => $pet->name,
@@ -55,14 +60,18 @@ class HomeController extends Controller
                     'story' => $pet->story ?? 'Rescued and waiting for a loving home.',
                     'rescueStory' => $pet->rescue_story ?: ($pet->story ?: 'Rescued and waiting for a loving home.'),
                     'rescueLocation' => $pet->rescue_location ?: 'Iligan City Shelter',
-                    'img' => $pet->photo_url ?: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800',
-                    'mainImg' => $pet->photo_url ?: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800',
-                    'beforeImg' => $pet->before_photo_url ?: ($pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
-                        ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80'
-                        : 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80')),
-                    'afterImg' => $pet->after_photo_url ?: ($pet->photo_url ?: ($getString($pet->type, 'Dog') === 'Cat'
-                        ? 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=80'
-                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=80')),
+                    'rescueDate' => $pet->rescue_date?->format('M d, Y'),
+                    'intake_type' => $pet->intake_type ?? 'rescue',
+                    'is_rescued' => $pet->is_rescued,
+                    'rescued_tag' => $pet->rescued_tag,
+                    'img' => $primaryImg,
+                    'mainImg' => $primaryImg,
+                    'photos' => $photosList,
+                    'gallery_photos' => $pet->gallery_photos ?? [],
+                    'beforeImg' => $pet->before_photo_url,
+                    'afterImg' => $pet->after_photo_url,
+                    'before_photo_url' => $pet->before_photo_url,
+                    'after_photo_url' => $pet->after_photo_url,
                     'vaccinated' => (bool) $pet->vaccinated,
                     'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 14,
                 ];

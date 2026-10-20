@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { Gift, Heart, Calendar, Search, Filter, HelpCircle, EyeOff, ShieldCheck, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gift, Heart, Calendar, Search, Filter, HelpCircle, EyeOff, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 
 interface DonationRecord {
     id: number;
@@ -55,6 +56,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedType, setSelectedType] = useState(filters.type || '');
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
+    const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<DonationRecord | null>(null);
 
     // Debounce search term and submit filter queries
     useEffect(() => {
@@ -236,12 +238,13 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                 <th className="px-6 py-4">Value</th>
                                 <th className="px-6 py-4">Privacy</th>
                                 <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right">E-Receipt</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
                             {donations.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="text-center py-12 text-gray-450 font-bold">
+                                    <td colSpan={8} className="text-center py-12 text-gray-450 font-bold">
                                         No donations matched your search or filters.
                                     </td>
                                 </tr>
@@ -292,6 +295,16 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                             <span className={`inline-block text-xs font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
                                                 {donation.status.replace('_', ' ')}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedReceiptDonation(donation)}
+                                                className="inline-flex items-center gap-1.5 rounded-xl bg-paw-orange/10 px-3 py-1.5 text-xs font-black text-paw-orange transition-colors hover:bg-paw-orange hover:text-white cursor-pointer"
+                                            >
+                                                <FileText size={13} />
+                                                View Receipt
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -406,6 +419,57 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                     </div>
                 )}
             </DashboardCard>
+
+            {selectedReceiptDonation && (
+                <SubmissionReceipt
+                    isOpen={Boolean(selectedReceiptDonation)}
+                    onClose={() => setSelectedReceiptDonation(null)}
+                    title={
+                        selectedReceiptDonation.status === 'completed' || selectedReceiptDonation.status === 'verified'
+                            ? 'Hope you know you saved a life today!'
+                            : 'Official Contribution E-Receipt'
+                    }
+                    subtitle={`${formatType(selectedReceiptDonation.type)} Contribution • Iligan Stray Feeders`}
+                    referenceNumber={selectedReceiptDonation.public_reference}
+                    type={
+                        selectedReceiptDonation.status === 'completed' || selectedReceiptDonation.status === 'verified'
+                            ? 'success'
+                            : 'warning'
+                    }
+                    highlightLabel={selectedReceiptDonation.type === 'in_kind' ? 'Pledged Supplies' : 'Total Contributed'}
+                    highlightValue={
+                        selectedReceiptDonation.type === 'in_kind' && selectedReceiptDonation.in_kind_donation
+                            ? selectedReceiptDonation.in_kind_donation.quantity || '1 unit'
+                            : `₱${Number(selectedReceiptDonation.amount || 0).toLocaleString()}`
+                    }
+                    items={[
+                        { label: 'Reference Number', value: selectedReceiptDonation.public_reference },
+                        { label: 'Contribution Type', value: formatType(selectedReceiptDonation.type) },
+                        {
+                            label: selectedReceiptDonation.type === 'in_kind' ? 'Supplies / Quantity' : 'Amount Contributed',
+                            value:
+                                selectedReceiptDonation.type === 'in_kind' && selectedReceiptDonation.in_kind_donation
+                                    ? `${selectedReceiptDonation.in_kind_donation.description} (${selectedReceiptDonation.in_kind_donation.quantity || '1 unit'})`
+                                    : `₱${Number(selectedReceiptDonation.amount || 0).toLocaleString()}`,
+                        },
+                        {
+                            label: 'Designated Purpose',
+                            value:
+                                selectedReceiptDonation.type === 'in_kind' && selectedReceiptDonation.in_kind_donation
+                                    ? selectedReceiptDonation.in_kind_donation.description
+                                    : selectedReceiptDonation.purpose || 'Veterinary care, rescue operations, and stray feeding support',
+                        },
+                        { label: 'Status', value: selectedReceiptDonation.status.replace('_', ' ').toUpperCase() },
+                        { label: 'Privacy', value: selectedReceiptDonation.anonymous ? 'Anonymous Supporter' : 'Public Supporter' },
+                    ]}
+                    issuedAt={new Date(selectedReceiptDonation.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                    })}
+                    footerMessage="Thank you for supporting Iligan Stray Feeders! This official receipt is logged in the PAWLSE Transparency Ledger."
+                />
+            )}
         </DashboardSectionPage>
     );
 }

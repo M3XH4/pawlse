@@ -18,6 +18,8 @@ import {
   Cat,
   X,
   ArrowUpDown,
+  ShieldCheck,
+  Images,
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -26,6 +28,7 @@ import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
 
 interface AnimalCounts {
   all: number;
+  rescued_shelter?: number;
   available: number;
   treatment: number;
   foster: number;
@@ -45,13 +48,22 @@ interface AnimalOverviewProps {
 
 export default function AnimalOverview({
   animals = [],
-  counts = { all: 0, available: 0, treatment: 0, foster: 0, quarantine: 0, adopted: 0 },
+  counts = { all: 0, rescued_shelter: 0, available: 0, treatment: 0, foster: 0, quarantine: 0, adopted: 0 },
   filters: initialFilters,
 }: AnimalOverviewProps) {
   const [searchQuery, setSearchQuery] = useState(initialFilters?.search || '');
   const [statusFilter, setStatusFilter] = useState(initialFilters?.status || 'all');
   const [speciesFilter, setSpeciesFilter] = useState(initialFilters?.species || 'all');
   const [sortBy, setSortBy] = useState('newest');
+
+  const computedRescuedShelterCount = useMemo(() => {
+    if (typeof counts.rescued_shelter === 'number') {
+      return counts.rescued_shelter;
+    }
+    return animals.filter(
+      (a) => a.is_rescued !== false && !['adopted', 'deceased'].includes((a.status || 'available').toLowerCase())
+    ).length;
+  }, [animals, counts.rescued_shelter]);
 
   // Filter and sort animals
   const filteredAnimals = useMemo(() => {
@@ -74,7 +86,12 @@ export default function AnimalOverview({
 
       // Status filter
       const status = (animal.status || 'available').toLowerCase();
-      const matchesStatus = statusFilter === 'all' || status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all'
+          ? true
+          : statusFilter === 'rescued_shelter'
+          ? animal.is_rescued !== false && !['adopted', 'deceased'].includes(status)
+          : status === statusFilter;
 
       // Species filter
       const species = (animal.type || '').toLowerCase();
@@ -154,6 +171,16 @@ export default function AnimalOverview({
       watermarkColor: 'text-slate-400/15 group-hover:text-slate-400/25',
       bg: 'bg-white',
       activeBorder: 'border-amber-500 ring-2 ring-amber-500/20',
+    },
+    {
+      label: 'Rescued',
+      count: computedRescuedShelterCount,
+      status: 'rescued_shelter',
+      icon: ShieldCheck,
+      color: 'text-emerald-700',
+      watermarkColor: 'text-emerald-500/15 group-hover:text-emerald-500/25',
+      bg: 'bg-emerald-50/60',
+      activeBorder: 'border-emerald-600 ring-2 ring-emerald-500/25',
     },
     {
       label: 'Available',
@@ -251,7 +278,7 @@ export default function AnimalOverview({
           </div>
 
           {/* Metric Summary Status Boxes with Big Background Lucide Icons */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
             {statusBoxes.map((stat) => {
               const isSelected = statusFilter === stat.status;
               const IconComponent = stat.icon;
@@ -380,6 +407,7 @@ export default function AnimalOverview({
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                 {[
                   { key: 'all', label: 'All Statuses', icon: PawPrint, count: counts.all },
+                  { key: 'rescued_shelter', label: 'Rescued', icon: ShieldCheck, count: computedRescuedShelterCount },
                   { key: 'available', label: 'Available', icon: Heart, count: counts.available },
                   { key: 'treatment', label: 'Medical Treatment', icon: Syringe, count: counts.treatment },
                   { key: 'foster', label: 'Foster Care', icon: HeartHandshake, count: counts.foster },
@@ -495,6 +523,22 @@ export default function AnimalOverview({
                         {/* Top Right Code Badge */}
                         <div className="absolute top-3 right-3 bg-slate-900/75 backdrop-blur-xs text-white font-mono text-[10px] font-semibold px-2.5 py-0.5 rounded-full shadow-xs">
                           {animal.code || `PAW-${animal.id}`}
+                        </div>
+
+                        {/* Bottom Left Rescued Tag + Bottom Right Photo Count */}
+                        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between gap-1 pointer-events-none">
+                          {animal.is_rescued !== false && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-600/95 text-white shadow-sm">
+                              <ShieldCheck size={10} />
+                              <span>{animal.rescued_tag || 'Rescued • In Shelter'}</span>
+                            </span>
+                          )}
+                          {animal.photos && animal.photos.length > 1 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-900/75 text-white shadow-sm ml-auto">
+                              <Images size={10} />
+                              <span>{animal.photos.length}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
 

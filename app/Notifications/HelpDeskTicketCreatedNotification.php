@@ -3,21 +3,31 @@
 namespace App\Notifications;
 
 use App\Models\HelpDeskTicket;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class HelpDeskTicketCreatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public HelpDeskTicket $ticket) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Ticket Number', 'value' => '#'.$this->ticket->ticket_number],
+                ['label' => 'Subject', 'value' => (string) $this->ticket->subject],
+                ['label' => 'Submitted By', 'value' => (string) ($this->ticket->user?->name ?? 'User')],
+            ],
+            actionText: 'Open Help Desk Ticket',
+            level: 'primary',
+            categoryBadge: 'HELP DESK SUPPORT',
+        );
     }
 
     /**

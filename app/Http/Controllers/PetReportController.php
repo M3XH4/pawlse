@@ -12,6 +12,8 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\RescueReportSubmittedNotification;
 use App\Notifications\RescueStatusUpdatedNotification;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -92,6 +94,11 @@ class PetReportController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
+
+        EReceiptDispatcher::sendToEmail(
+            $report->contact_email,
+            SubmissionEReceiptNotification::forPetReport($report)
+        );
 
         PetRescueSubmittedEvent::dispatch($report);
 
@@ -182,6 +189,11 @@ class PetReportController extends Controller
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
 
+        EReceiptDispatcher::sendToEmail(
+            $report->contact_email,
+            SubmissionEReceiptNotification::forPetReport($report)
+        );
+
         AuditLog::log('missing_report_submit', "Submitted missing pet report for '{$validated['petName']}'");
 
         if ($aiResolution['auto_approved']) {
@@ -262,6 +274,11 @@ class PetReportController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
+
+        EReceiptDispatcher::sendToEmail(
+            $report->contact_email,
+            SubmissionEReceiptNotification::forPetReport($report)
+        );
 
         AuditLog::log('sos_report_submit', "Submitted SOS report at {$validated['location']}");
 
@@ -479,9 +496,11 @@ class PetReportController extends Controller
                 ->update(['status' => 'cancelled']);
         }
 
-        if ($report->user) {
-            $report->user->notify(new RescueStatusUpdatedNotification($report));
-        }
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user,
+            $report->contact_email,
+            new RescueStatusUpdatedNotification($report)
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',

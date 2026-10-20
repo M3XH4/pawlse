@@ -43,6 +43,8 @@ import {
     Home,
     AlertTriangle,
     Check,
+    Images,
+    Maximize2,
 } from 'lucide-react';
 
 interface MedicalRecordItem {
@@ -87,8 +89,12 @@ interface AnimalRecord {
     current_location: string;
     raw_location: string | null;
     photo_url: string | null;
+    gallery_photos?: string[];
+    photos?: string[];
     before_photo_url?: string | null;
     after_photo_url?: string | null;
+    is_rescued?: boolean;
+    rescued_tag?: string | null;
     vaccinated: boolean;
     has_active_condition?: boolean;
     active_condition_title?: string | null;
@@ -221,6 +227,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     // Selected Animal for Side Panel
     const [selectedAnimal, setSelectedAnimal] = useState<AnimalRecord | null>(null);
     const [sidePanelTab, setSidePanelTab] = useState<'details' | 'medical' | 'adoption' | 'rescue' | 'deceased'>('details');
+    const [activeGalleryIdx, setActiveGalleryIdx] = useState<number>(0);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     // Modals
     const [isAddAnimalOpen, setIsAddAnimalOpen] = useState(false);
@@ -313,6 +321,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     const handleOpenSidePanel = (animal: AnimalRecord, tab: 'details' | 'medical' | 'adoption' | 'rescue' | 'deceased' = 'details') => {
         setSelectedAnimal(animal);
         setSidePanelTab(tab);
+        setActiveGalleryIdx(0);
     };
 
     // Open edit animal modal
@@ -741,8 +750,22 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
                                             {/* NAME */}
                                             <td className="py-3 px-4">
-                                                <div className="font-bold text-sm text-[#0B2340] dark:text-[#F8FAFC] group-hover:text-paw-orange transition-colors">
-                                                    {animal.name}
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-bold text-sm text-[#0B2340] dark:text-[#F8FAFC] group-hover:text-paw-orange transition-colors">
+                                                        {animal.name}
+                                                    </span>
+                                                    {animal.is_rescued !== false && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                                            <ShieldCheck className="h-2.5 w-2.5" />
+                                                            <span>{animal.rescued_tag || 'Rescued • In Shelter'}</span>
+                                                        </span>
+                                                    )}
+                                                    {animal.photos && animal.photos.length > 1 && (
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                                            <Images className="h-2.5 w-2.5" />
+                                                            <span>{animal.photos.length}</span>
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
                                                     <span>{animal.age}</span>
@@ -905,6 +928,12 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                 <span className="font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-[10px]">
                                                     {animal.code}
                                                 </span>
+                                                {animal.is_rescued !== false && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                        <ShieldCheck className="h-2.5 w-2.5" />
+                                                        {animal.rescued_tag || 'Rescued • In Shelter'}
+                                                    </span>
+                                                )}
                                                 <span>•</span>
                                                 <span>{animal.species}</span>
                                                 <span>•</span>
@@ -1038,13 +1067,19 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         </div>
 
                                         <div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-paw-orange/15 text-paw-orange dark:bg-paw-orange/20">
                                                     {selectedAnimal.code}
                                                 </span>
                                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${getStatusBadge(selectedAnimal.status)}`}>
                                                     {selectedAnimal.status_label}
                                                 </span>
+                                                {selectedAnimal.is_rescued !== false && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                                        <ShieldCheck className="h-3.5 w-3.5" />
+                                                        <span>{selectedAnimal.rescued_tag || 'Rescued • In Shelter Care'}</span>
+                                                    </span>
+                                                )}
                                             </div>
 
                                             <h3 className="text-2xl font-black font-fredoka text-[#0B2340] dark:text-[#F8FAFC] mt-1">
@@ -1122,6 +1157,100 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 {/* TAB 1: DETAILS */}
                                 {sidePanelTab === 'details' && (
                                     <div className="space-y-6">
+                                        {/* Interactive Photo Gallery Showcase */}
+                                        {(() => {
+                                            const rawPhotos = Array.isArray(selectedAnimal.photos) && selectedAnimal.photos.length > 0
+                                                ? selectedAnimal.photos
+                                                : [
+                                                      selectedAnimal.photo_url,
+                                                      ...(Array.isArray(selectedAnimal.gallery_photos) ? selectedAnimal.gallery_photos : []),
+                                                  ];
+                                            const allPhotos = Array.from(new Set(rawPhotos.filter(Boolean))) as string[];
+                                            const safeIdx = allPhotos.length > 0 ? activeGalleryIdx % allPhotos.length : 0;
+                                            const currentPhoto = allPhotos[safeIdx]
+                                                ? formatPhotoUrl(allPhotos[safeIdx], selectedAnimal.type)
+                                                : formatPhotoUrl(selectedAnimal.photo_url, selectedAnimal.type);
+
+                                            return (
+                                                <div className="bg-gray-50/75 dark:bg-[#070e1c]/60 p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                                                            <Images className="h-4 w-4 text-paw-orange" />
+                                                            <span>Animal Photo Gallery ({allPhotos.length || 1})</span>
+                                                        </h4>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleStartEdit(selectedAnimal)}
+                                                            className="text-[11px] font-bold text-paw-orange hover:underline flex items-center gap-1"
+                                                        >
+                                                            <Plus className="h-3 w-3" /> Manage Photos
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 group">
+                                                        <ImageWithFallback
+                                                            src={currentPhoto}
+                                                            alt={selectedAnimal.name}
+                                                            className="w-full h-full object-cover cursor-pointer"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setLightboxUrl(currentPhoto)}
+                                                            className="absolute bottom-3 right-3 bg-black/65 hover:bg-black/85 text-white p-2 rounded-full backdrop-blur-xs transition-all"
+                                                            title="Expand photo"
+                                                        >
+                                                            <Maximize2 className="h-4 w-4" />
+                                                        </button>
+
+                                                        {allPhotos.length > 1 && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setActiveGalleryIdx((safeIdx - 1 + allPhotos.length) % allPhotos.length)}
+                                                                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white p-1.5 rounded-full backdrop-blur-xs transition-all"
+                                                                >
+                                                                    <ChevronLeft className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setActiveGalleryIdx((safeIdx + 1) % allPhotos.length)}
+                                                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white p-1.5 rounded-full backdrop-blur-xs transition-all"
+                                                                >
+                                                                    <ChevronRight className="h-4 w-4" />
+                                                                </button>
+                                                                <div className="absolute bottom-3 left-3 bg-black/65 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
+                                                                    {safeIdx + 1} / {allPhotos.length}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {allPhotos.length > 1 && (
+                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                                                            {allPhotos.map((url, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setActiveGalleryIdx(idx)}
+                                                                    className={`relative h-14 w-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
+                                                                        idx === safeIdx
+                                                                            ? 'border-paw-orange ring-2 ring-paw-orange/25 scale-105'
+                                                                            : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'
+                                                                    }`}
+                                                                >
+                                                                    <ImageWithFallback
+                                                                        src={formatPhotoUrl(url, selectedAnimal.type)}
+                                                                        alt={`${selectedAnimal.name} thumbnail ${idx + 1}`}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
                                         {/* Core Profile Card */}
                                         <div className="bg-gray-50/75 dark:bg-[#070e1c]/60 p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800">
                                             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Identification & Physical Attributes</h4>
@@ -1628,44 +1757,79 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 {sidePanelTab === 'rescue' && (
                                     <div className="space-y-6">
                                         {/* Before & After Transformation Journey */}
-                                        <div className="p-5 rounded-2xl border border-paw-orange/30 bg-orange-50/50 dark:bg-orange-950/20 space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-xs font-bold text-paw-orange uppercase tracking-wider">
-                                                    <Sparkles className="h-4 w-4 text-paw-orange" />
-                                                    <span>Before & After Transformation</span>
-                                                </div>
-                                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-paw-orange/20 text-paw-orange dark:text-paw-yellow">
-                                                    Featured on Homepage
-                                                </span>
-                                            </div>
+                                        {(() => {
+                                            const beforeUrl = selectedAnimal.before_photo_url || selectedAnimal.rescue.before_photo_url || null;
+                                            const afterUrl = selectedAnimal.after_photo_url || selectedAnimal.rescue.after_photo_url || null;
 
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="space-y-1.5">
-                                                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-                                                        When Rescued (Before)
-                                                    </span>
-                                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                                                        <ImageWithFallback
-                                                            src={formatPhotoUrl(selectedAnimal.before_photo_url || selectedAnimal.rescue.before_photo_url || selectedAnimal.photo_url, selectedAnimal.type)}
-                                                            alt="Before Transformation"
-                                                            className="w-full h-full object-cover"
-                                                        />
+                                            return (
+                                                <div className="p-5 rounded-2xl border border-paw-orange/30 bg-orange-50/50 dark:bg-orange-950/20 space-y-4">
+                                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-paw-orange uppercase tracking-wider">
+                                                            <Sparkles className="h-4 w-4 text-paw-orange" />
+                                                            <span>Before & After Transformation</span>
+                                                        </div>
+                                                        {beforeUrl || afterUrl ? (
+                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-paw-orange/20 text-paw-orange dark:text-paw-yellow">
+                                                                Featured on Homepage
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleStartEdit(selectedAnimal)}
+                                                                className="text-[11px] font-bold text-paw-orange hover:underline flex items-center gap-1"
+                                                            >
+                                                                <Plus className="h-3 w-3" /> Upload Before & After
+                                                            </button>
+                                                        )}
                                                     </div>
+
+                                                    {beforeUrl || afterUrl ? (
+                                                        <div className={`grid ${beforeUrl && afterUrl ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                                                            {beforeUrl && (
+                                                                <div className="space-y-1.5">
+                                                                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                                                                        When Rescued (Before)
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setLightboxUrl(formatPhotoUrl(beforeUrl, selectedAnimal.type))}
+                                                                        className="w-full aspect-square rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 block"
+                                                                    >
+                                                                        <ImageWithFallback
+                                                                            src={formatPhotoUrl(beforeUrl, selectedAnimal.type)}
+                                                                            alt="Before Transformation"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                            {afterUrl && (
+                                                                <div className="space-y-1.5">
+                                                                    <span className="text-[11px] font-bold text-paw-orange uppercase tracking-wider block">
+                                                                        Healed / Today (After)
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setLightboxUrl(formatPhotoUrl(afterUrl, selectedAnimal.type))}
+                                                                        className="w-full aspect-square rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-orange-100/30 dark:bg-gray-800 block"
+                                                                    >
+                                                                        <ImageWithFallback
+                                                                            src={formatPhotoUrl(afterUrl, selectedAnimal.type)}
+                                                                            alt="After Transformation"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 text-center rounded-xl border border-dashed border-paw-orange/30 bg-white/60 dark:bg-[#070e1c]/50 text-xs text-gray-500">
+                                                            No Before & After transformation photos uploaded yet. When unset, the homepage adoption gallery automatically hides the transformation block for this animal.
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="space-y-1.5">
-                                                    <span className="text-[11px] font-bold text-paw-orange uppercase tracking-wider block">
-                                                        Healed / Today (After)
-                                                    </span>
-                                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-orange-100/30 dark:bg-gray-800">
-                                                        <ImageWithFallback
-                                                            src={formatPhotoUrl(selectedAnimal.after_photo_url || selectedAnimal.rescue.after_photo_url || selectedAnimal.photo_url, selectedAnimal.type)}
-                                                            alt="After Transformation"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            );
+                                        })()}
 
                                         {/* Rescue narrative */}
                                         <div className="p-5 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 space-y-3">
@@ -1871,6 +2035,27 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     </div>
                 </div>
             )}
+            {/* FULLSCREEN LIGHTBOX MODAL */}
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+                    onClick={() => setLightboxUrl(null)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setLightboxUrl(null)}
+                        className="absolute top-6 right-6 bg-white/15 hover:bg-white/30 text-white p-3 rounded-full transition-colors"
+                    >
+                        <X className="h-6 w-6" />
+                    </button>
+                    <img
+                        src={lightboxUrl}
+                        alt="Full view"
+                        className="max-w-full max-h-[88vh] rounded-2xl object-contain shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </AdminPageShell>
     );
 }
@@ -1905,9 +2090,23 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
         deceased_at: '',
         deceased_notes: '',
         photo: null as File | null,
+        gallery_photos: [] as File[],
         before_photo: null as File | null,
         after_photo: null as File | null,
     });
+
+    const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const selectedFiles = Array.from(e.target.files);
+        setData('gallery_photos', [...data.gallery_photos, ...selectedFiles]);
+    };
+
+    const removeStagedGalleryPhoto = (indexToRemove: number) => {
+        setData(
+            'gallery_photos',
+            data.gallery_photos.filter((_, idx) => idx !== indexToRemove)
+        );
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -2085,14 +2284,50 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
                     </div>
 
                     {/* Photo upload */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Primary Animal Photo</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setData('photo', e.target.files?.[0] || null)}
-                            className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange hover:file:bg-paw-orange/20 cursor-pointer"
-                        />
+                    <div className="space-y-3 p-3.5 bg-gray-50 dark:bg-[#070e1c] rounded-2xl border border-gray-200 dark:border-gray-800">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Primary Animal Photo</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setData('photo', e.target.files?.[0] || null)}
+                                className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange hover:file:bg-paw-orange/20 cursor-pointer"
+                            />
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Images className="h-3.5 w-3.5 text-paw-orange" />
+                                <span>Additional Gallery Photos (Multiple Images)</span>
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleGallerySelect}
+                                className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 hover:file:bg-blue-500/20 cursor-pointer"
+                            />
+                            {data.gallery_photos.length > 0 && (
+                                <div className="mt-2.5 flex flex-wrap gap-2">
+                                    {data.gallery_photos.map((file, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="relative group flex items-center gap-1.5 bg-white dark:bg-[#0B1527] border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-lg text-[11px] font-medium text-gray-700 dark:text-gray-300"
+                                        >
+                                            <span className="truncate max-w-[120px]">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeStagedGalleryPhoto(idx)}
+                                                className="text-rose-500 hover:text-rose-700"
+                                                title="Remove photo"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Transformation Before & After Photos */}
@@ -2229,9 +2464,33 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
         deceased_at: animal.deceased.deceased_at || '',
         deceased_notes: animal.deceased.deceased_notes || '',
         photo: null as File | null,
+        gallery_photos: [] as File[],
+        retained_gallery_photos: (animal.gallery_photos || []) as string[],
         before_photo: null as File | null,
         after_photo: null as File | null,
+        remove_before_photo: false,
+        remove_after_photo: false,
     });
+
+    const handleEditGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const selectedFiles = Array.from(e.target.files);
+        setData('gallery_photos', [...data.gallery_photos, ...selectedFiles]);
+    };
+
+    const removeRetainedGalleryPhoto = (urlToRemove: string) => {
+        setData(
+            'retained_gallery_photos',
+            data.retained_gallery_photos.filter((u) => u !== urlToRemove)
+        );
+    };
+
+    const removeNewGalleryPhoto = (indexToRemove: number) => {
+        setData(
+            'gallery_photos',
+            data.gallery_photos.filter((_, idx) => idx !== indexToRemove)
+        );
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -2461,15 +2720,82 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                         />
                     </div>
 
-                    {/* Photo update */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Update Primary Photo</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setData('photo', e.target.files?.[0] || null)}
-                            className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange cursor-pointer"
-                        />
+                    {/* Photo & Gallery update */}
+                    <div className="space-y-3 p-3.5 bg-gray-50 dark:bg-[#070e1c] rounded-2xl border border-gray-200 dark:border-gray-800">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Update Primary Photo</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setData('photo', e.target.files?.[0] || null)}
+                                className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-paw-orange/10 file:text-paw-orange cursor-pointer"
+                            />
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-2">
+                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                                <Images className="h-3.5 w-3.5 text-paw-orange" />
+                                <span>Manage Gallery Photos (Multiple Images)</span>
+                            </label>
+
+                            {data.retained_gallery_photos.length > 0 && (
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                                        Current Gallery Photos ({data.retained_gallery_photos.length})
+                                    </span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {data.retained_gallery_photos.map((url, idx) => (
+                                            <div key={idx} className="relative h-14 w-14 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group">
+                                                <ImageWithFallback
+                                                    src={formatPhotoUrl(url, animal.type)}
+                                                    alt={`Gallery ${idx + 1}`}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeRetainedGalleryPhoto(url)}
+                                                    className="absolute top-1 right-1 bg-rose-600 text-white p-0.5 rounded-full shadow-sm hover:bg-rose-700"
+                                                    title="Remove from gallery"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Add More Gallery Images</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleEditGallerySelect}
+                                    className="w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 hover:file:bg-blue-500/20 cursor-pointer"
+                                />
+                            </div>
+
+                            {data.gallery_photos.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                    {data.gallery_photos.map((file, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-center gap-1.5 bg-white dark:bg-[#0B1527] border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-lg text-[11px] font-medium text-gray-700 dark:text-gray-300"
+                                        >
+                                            <span className="truncate max-w-[120px]">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeNewGalleryPhoto(idx)}
+                                                className="text-rose-500 hover:text-rose-700"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Transformation Before & After Photos */}
@@ -2478,8 +2804,21 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                             Update Before & After Transformation Photos
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">Before Photo (When Rescued)</label>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400">Before Photo (When Rescued)</label>
+                                    {(animal.before_photo_url || animal.rescue.before_photo_url) && (
+                                        <label className="flex items-center gap-1 text-[10px] font-bold text-rose-600 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.remove_before_photo}
+                                                onChange={(e) => setData('remove_before_photo', e.target.checked)}
+                                                className="rounded text-rose-600 h-3 w-3"
+                                            />
+                                            Clear
+                                        </label>
+                                    )}
+                                </div>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -2487,8 +2826,21 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                                     className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 dark:file:bg-gray-700 cursor-pointer"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1">After Photo (Today / Healed)</label>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-[11px] font-bold text-gray-600 dark:text-gray-400">After Photo (Today / Healed)</label>
+                                    {(animal.after_photo_url || animal.rescue.after_photo_url) && (
+                                        <label className="flex items-center gap-1 text-[10px] font-bold text-rose-600 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.remove_after_photo}
+                                                onChange={(e) => setData('remove_after_photo', e.target.checked)}
+                                                className="rounded text-rose-600 h-3 w-3"
+                                            />
+                                            Clear
+                                        </label>
+                                    )}
+                                </div>
                                 <input
                                     type="file"
                                     accept="image/*"

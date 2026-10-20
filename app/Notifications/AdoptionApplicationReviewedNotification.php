@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\AdoptionApplication;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -9,45 +11,43 @@ use Illuminate\Notifications\Notification;
 class AdoptionApplicationReviewedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(public ?AdoptionApplication $application = null) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+        $petName = $this->application?->shelterAnimal?->name ?? 'Shelter Pet';
+        $status = $this->application?->status?->value ?? 'reviewed';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Pet Applied For', 'value' => $petName],
+                ['label' => 'Review Status', 'value' => strtoupper($status)],
+            ],
+            actionText: 'View My Application Status',
+            level: $status === 'approved' ? 'success' : ($status === 'rejected' ? 'error' : 'primary'),
+            categoryBadge: 'ADOPTION REVIEW',
+        );
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
+        $petName = $this->application?->shelterAnimal?->name ?? 'selected pet';
+        $status = $this->application?->status?->value ?? 'reviewed';
+
         return [
-            //
+            'title' => 'Adoption Application Reviewed',
+            'message' => "Your adoption application for {$petName} has been {$status}.",
+            'description' => "Adoption application for {$petName} is {$status}.",
+            'url' => route('account.user.adoption-applications'),
+            'icon' => 'adoption',
+            'category' => 'adoption',
+            'application_id' => $this->application?->id,
         ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\Donation;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -9,45 +11,45 @@ use Illuminate\Notifications\Notification;
 class DonationProofSubmittedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(public ?Donation $donation = null) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+        $ref = $this->donation?->public_reference ?? 'PAWLSE-DONATION';
+        $donor = $this->donation?->anonymous ? 'Anonymous' : ($this->donation?->donor_name ?: 'Supporter');
+        $amount = $this->donation?->amount ? '₱'.number_format((float) $this->donation->amount, 2) : 'Submitted Proof';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Reference', 'value' => $ref],
+                ['label' => 'Donor', 'value' => $donor],
+                ['label' => 'Amount', 'value' => $amount],
+            ],
+            actionText: 'Verify Payment Proof',
+            level: 'primary',
+            categoryBadge: 'PAYMENT PROOF UPLOADED',
+        );
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
+        $ref = $this->donation?->public_reference ?? 'PAWLSE';
+        $donor = $this->donation?->anonymous ? 'Anonymous' : ($this->donation?->donor_name ?: 'A donor');
+
         return [
-            //
+            'title' => 'Donation Proof Uploaded',
+            'message' => "{$donor} uploaded payment proof for donation (Ref: {$ref}) awaiting verification.",
+            'description' => "Payment proof uploaded for Ref: {$ref}.",
+            'url' => route('account.admin.donation-monitoring'),
+            'icon' => 'donation',
+            'category' => 'donation',
+            'donation_id' => $this->donation?->id,
         ];
     }
 }

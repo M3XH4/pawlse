@@ -3,21 +3,31 @@
 namespace App\Notifications;
 
 use App\Models\RehomingRequest;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class RehomingRequestStatusUpdatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public RehomingRequest $rehomingRequest) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Pet Name', 'value' => (string) $this->rehomingRequest->animal_name],
+                ['label' => 'Species', 'value' => (string) $this->rehomingRequest->species],
+                ['label' => 'Status', 'value' => strtoupper(str_replace('_', ' ', (string) $this->rehomingRequest->status))],
+            ],
+            actionText: 'View Update in PAWLSE',
+            level: in_array($this->rehomingRequest->status, ['posted', 'home_found'], true) ? 'success' : ($this->rehomingRequest->status === 'declined' ? 'error' : 'primary'),
+            categoryBadge: 'REHOMING UPDATE',
+        );
     }
 
     /**

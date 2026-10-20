@@ -3,21 +3,44 @@
 namespace App\Notifications;
 
 use App\Models\AdoptionApplication;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class AdoptionApplicationStatusUpdatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public AdoptionApplication $application) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $petName = $this->application->shelterAnimal?->name ?? 'selected pet';
+        $status = $this->application->status?->value ?? 'updated';
+        $level = match ($status) {
+            'approved' => 'success',
+            'rejected' => 'error',
+            default => 'primary',
+        };
+
+        $summary = [
+            ['label' => 'Pet Applied For', 'value' => $petName],
+            ['label' => 'Application Status', 'value' => strtoupper($status)],
+        ];
+
+        if ($this->application->rejection_reason) {
+            $summary[] = ['label' => 'Coordinator Note', 'value' => $this->application->rejection_reason];
+        }
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: $summary,
+            actionText: 'View My Adoption Application',
+            level: $level,
+            categoryBadge: 'ADOPTION UPDATE',
+        );
     }
 
     /**

@@ -3,21 +3,34 @@
 namespace App\Notifications;
 
 use App\Models\PetReport;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class RescueReportSubmittedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public PetReport $report) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $isSos = ($this->report->type === 'sos');
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Report Type', 'value' => strtoupper((string) ($this->report->type ?? 'rescue'))],
+                ['label' => 'Animal', 'value' => (string) $this->report->animal_type],
+                ['label' => 'Location', 'value' => (string) $this->report->location],
+                ['label' => 'Reporter', 'value' => (string) ($this->report->contact_name ?: 'Community Reporter')],
+            ],
+            actionText: 'Open Rescue Management',
+            level: $isSos ? 'error' : 'primary',
+            categoryBadge: $isSos ? 'SOS EMERGENCY REPORT' : 'RESCUE / MISSING REPORT',
+        );
     }
 
     /**

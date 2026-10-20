@@ -3,21 +3,35 @@
 namespace App\Notifications;
 
 use App\Models\ShelterVisit;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ShelterVisitStatusUpdatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public ShelterVisit $visit) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $date = $this->visit->confirmed_date ? $this->visit->confirmed_date->format('M d, Y') : $this->visit->preferred_date->format('M d, Y');
+        $slot = $this->visit->confirmed_time_slot ?: ($this->visit->preferred_time_slot ?: 'Scheduled Slot');
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Visitor Name', 'value' => (string) $this->visit->full_name],
+                ['label' => 'Scheduled Date', 'value' => $date],
+                ['label' => 'Time Slot', 'value' => $slot],
+                ['label' => 'Status', 'value' => strtoupper((string) $this->visit->status)],
+            ],
+            actionText: 'View Visit Details',
+            level: $this->visit->status === 'confirmed' ? 'success' : ($this->visit->status === 'cancelled' ? 'error' : 'primary'),
+            categoryBadge: 'SHELTER VISIT UPDATE',
+        );
     }
 
     /**

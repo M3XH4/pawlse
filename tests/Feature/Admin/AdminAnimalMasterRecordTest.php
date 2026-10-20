@@ -7,6 +7,8 @@ use App\Models\FosterParent;
 use App\Models\FosterPlacement;
 use App\Models\ShelterAnimal;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('admins can view animal master records page with pagination and status bar', function () {
@@ -427,4 +429,81 @@ test('animal master record inertia response includes injuries and active conditi
         ->where('animals.data.0.medical_history.active_conditions_count', 1)
         ->missing('animals.data.0.microchip_id')
     );
+});
+
+test('admin can register an animal with multiple gallery photos and rescued tag is computed', function () {
+    Storage::fake('public');
+    $admin = User::factory()->admin()->create();
+
+    $primaryPhoto = UploadedFile::fake()->image('primary.jpg');
+    $galleryPhoto1 = UploadedFile::fake()->image('gallery1.jpg');
+    $galleryPhoto2 = UploadedFile::fake()->image('gallery2.jpg');
+
+    $response = $this->actingAs($admin)->post(route('account.admin.animal-records.store'), [
+        'name' => 'Milo MultiPhoto',
+        'type' => 'dog',
+        'breed' => 'Aspin',
+        'age' => '1 yr',
+        'ageCategory' => 'young',
+        'gender' => 'male',
+        'status' => 'available',
+        'admittedAt' => '2026-06-01',
+        'intake_type' => 'rescue',
+        'rescue_location' => 'Tibanga Highway',
+        'photo' => $primaryPhoto,
+        'gallery_photos' => [$galleryPhoto1, $galleryPhoto2],
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $animal = ShelterAnimal::where('name', 'Milo MultiPhoto')->firstOrFail();
+    expect($animal->photo_url)->not->toBeNull();
+    expect($animal->gallery_photos)->toBeArray()->toHaveCount(2);
+    expect($animal->all_photos)->toHaveCount(3);
+    expect($animal->is_rescued)->toBeTrue();
+    expect($animal->rescued_tag)->toBe('Rescued • In Shelter Care');
+});
+
+test('admin can update animal gallery photos by retaining some, adding new ones, and clearing before/after photos', function () {
+    Storage::fake('public');
+    $admin = User::factory()->admin()->create();
+
+    $animal = ShelterAnimal::factory()->create([
+        'status' => ShelterAnimalStatus::Available,
+        'photo_url' => '/storage/pet_photos/main.jpg',
+        'gallery_photos' => [
+            '/storage/pet_photos/old1.jpg',
+            '/storage/pet_photos/old2.jpg',
+        ],
+        'before_photo_url' => '/storage/pet_photos/before.jpg',
+        'after_photo_url' => '/storage/pet_photos/after.jpg',
+    ]);
+
+    $newGalleryFile = UploadedFile::fake()->image('new_gallery.jpg');
+
+    $response = $this->actingAs($admin)->put(route('account.admin.animal-records.update', $animal), [
+        'name' => $animal->name,
+        'type' => $animal->type->value,
+        'breed' => $animal->breed,
+        'age' => $animal->age,
+        'ageCategory' => $animal->age_category->value,
+        'gender' => $animal->gender->value,
+        'status' => 'available',
+        'admittedAt' => $animal->admitted_at->format('Y-m-d'),
+        'retained_gallery_photos' => ['/storage/pet_photos/old1.jpg'],
+        'gallery_photos' => [$newGalleryFile],
+        'remove_before_photo' => true,
+        'remove_after_photo' => true,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+
+    $animal->refresh();
+    expect($animal->gallery_photos)->toBeArray()->toHaveCount(2);
+    expect($animal->gallery_photos)->toContain('/storage/pet_photos/old1.jpg');
+    expect($animal->gallery_photos)->not->toContain('/storage/pet_photos/old2.jpg');
+    expect($animal->before_photo_url)->toBeNull();
+    expect($animal->after_photo_url)->toBeNull();
 });

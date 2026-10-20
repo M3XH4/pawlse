@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Heart, Info, ArrowRight, CheckCircle2, User, Clock, Sparkles, Dog, Cat } from 'lucide-react';
+import { Heart, Info, ArrowRight, CheckCircle2, User, Clock, Sparkles, Dog, Cat, ChevronLeft, ChevronRight, ShieldCheck, Images } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -50,21 +50,42 @@ const defaultPets = [
 ];
 
 export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
-    const displayPets = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => ({
-        id: p.id || idx,
-        name: p.name,
-        type: p.type || 'Dog',
-        breed: p.breed || 'Mixed Breed',
-        age: p.age || '1 year',
-        gender: p.gender || 'Unknown',
-        behavior: p.behavior || 'Friendly & Loving',
-        story: p.rescueStory || p.rescue_story || p.story || 'Rescued and looking for a forever home.',
-        mainImg: p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80',
-        beforeImg: p.beforeImg || p.before_photo_url || p.before_img || p.mainImg || 'https://images.unsplash.com/photo-1596797882942-f441d7f56c0e?w=400&q=80',
-        afterImg: p.afterImg || p.after_photo_url || p.after_img || p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80',
-    })) : defaultPets;
+    const displayPets = (propsPets && propsPets.length > 0) ? propsPets.map((p, idx) => {
+        const primaryImg = p.mainImg || p.img || p.photo_url || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80';
+        const rawPhotos = Array.isArray(p.photos) && p.photos.length > 0
+            ? p.photos
+            : [primaryImg, ...(Array.isArray(p.gallery_photos) ? p.gallery_photos : [])];
+        const photos = Array.from(new Set(rawPhotos.filter(Boolean)));
+        const beforeImg = p.beforeImg ?? p.before_photo_url ?? p.before_img ?? null;
+        const afterImg = p.afterImg ?? p.after_photo_url ?? p.after_img ?? null;
+
+        return {
+            id: p.id || idx,
+            name: p.name,
+            type: p.type || 'Dog',
+            breed: p.breed || 'Mixed Breed',
+            age: p.age || '1 year',
+            gender: p.gender || 'Unknown',
+            behavior: p.behavior || 'Friendly & Loving',
+            story: p.rescueStory || p.rescue_story || p.story || 'Rescued and looking for a forever home.',
+            mainImg: primaryImg,
+            photos: photos.length > 0 ? photos : [primaryImg],
+            beforeImg,
+            afterImg,
+            vaccinated: p.vaccinated ?? true,
+            isRescued: p.is_rescued ?? true,
+            rescuedTag: p.rescued_tag || 'Rescued • In Shelter Care',
+        };
+    }) : defaultPets.map(p => ({
+        ...p,
+        photos: [p.mainImg],
+        vaccinated: true,
+        isRescued: true,
+        rescuedTag: 'Rescued • In Shelter Care',
+    }));
     const [flippedCard, setFlippedCard] = useState<number | null>(null);
     const [applyingPet, setApplyingPet] = useState<any | null>(null);
+    const [activePhotoIndexByPet, setActivePhotoIndexByPet] = useState<Record<number, number>>({});
     const navigate = (url: string) => router.visit(url);
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;          
@@ -136,11 +157,82 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                             >
                                 {/* Front Side */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.4)] border-4 border-white/10">
-                                    <div className="relative h-full">
-                                        <ImageWithFallback src={pet.mainImg} alt={pet.name} className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                                    <div className="relative h-full group/img">
+                                        {(() => {
+                                            const photos: string[] = pet.photos && pet.photos.length > 0 ? pet.photos : [pet.mainImg];
+                                            const currentIdx = (activePhotoIndexByPet[pet.id] ?? 0) % photos.length;
+                                            const currentPhoto = photos[currentIdx] || pet.mainImg;
+
+                                            return (
+                                                <>
+                                                    <ImageWithFallback src={currentPhoto} alt={pet.name} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+
+                                                    {/* Multi-photo controls */}
+                                                    {photos.length > 1 && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActivePhotoIndexByPet(prev => ({
+                                                                        ...prev,
+                                                                        [pet.id]: (currentIdx - 1 + photos.length) % photos.length,
+                                                                    }));
+                                                                }}
+                                                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
+                                                                aria-label="Previous photo"
+                                                            >
+                                                                <ChevronLeft size={15} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActivePhotoIndexByPet(prev => ({
+                                                                        ...prev,
+                                                                        [pet.id]: (currentIdx + 1) % photos.length,
+                                                                    }));
+                                                                }}
+                                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
+                                                                aria-label="Next photo"
+                                                            >
+                                                                <ChevronRight size={15} />
+                                                            </button>
+                                                            <div
+                                                                className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/45 backdrop-blur-xs px-2.5 py-1 rounded-full z-20"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Images size={10} className="text-white/90 mr-0.5" />
+                                                                {photos.map((_, pIdx) => (
+                                                                    <button
+                                                                        key={pIdx}
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActivePhotoIndexByPet(prev => ({ ...prev, [pet.id]: pIdx }));
+                                                                        }}
+                                                                        className={`h-1.5 rounded-full transition-all ${
+                                                                            pIdx === currentIdx ? 'w-3.5 bg-paw-orange' : 'w-1.5 bg-white/60 hover:bg-white'
+                                                                        }`}
+                                                                        aria-label={`View photo ${pIdx + 1}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+
                                             <div className="absolute bottom-6 left-6 right-6">
-                                                <div className="flex items-center gap-2 mb-2">
+                                                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                                    {pet.isRescued !== false && (
+                                                        <span className="bg-emerald-600/95 text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 border border-emerald-400/30">
+                                                            <ShieldCheck size={10} />
+                                                            {pet.rescuedTag || 'Rescued • In Shelter'}
+                                                        </span>
+                                                    )}
                                                     <span className="bg-paw-orange text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full italic shadow-lg">{pet.type}</span>
                                                     <span className="bg-paw-blue text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full italic shadow-lg">{pet.breed}</span>
                                                 </div>
@@ -187,26 +279,61 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                                                     <span className="text-xs font-black text-paw-navy">{pet.behavior}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between border-b border-gray-100 pb-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Shelter Status</span>
+                                                    <span className="text-[10px] font-black text-emerald-700 flex items-center gap-1">
+                                                        <ShieldCheck size={12} /> {pet.rescuedTag || 'Rescued • In Shelter'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
                                                     <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Vaccinated</span>
                                                     <span className="text-xs font-black text-paw-green flex items-center gap-1">
-                                                        <CheckCircle2 size={12} /> YES
+                                                        <CheckCircle2 size={12} /> {pet.vaccinated !== false ? 'YES' : 'IN PROGRESS'}
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-3 mb-3">
-                                                <div className="space-y-1">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">When Rescued</span>
-                                                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-gray-50 bg-gray-100">
-                                                        <ImageWithFallback src={pet.beforeImg} alt="Before" className="w-full h-full object-cover grayscale opacity-60" />
+                                            {(pet.beforeImg || pet.afterImg) && (
+                                                <div className={`grid ${pet.beforeImg && pet.afterImg ? 'grid-cols-2' : 'grid-cols-1'} gap-3 mb-3`}>
+                                                    {pet.beforeImg && (
+                                                        <div className="space-y-1">
+                                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">When Rescued</span>
+                                                            <div className="aspect-square rounded-xl overflow-hidden border-2 border-gray-50 bg-gray-100">
+                                                                <ImageWithFallback src={pet.beforeImg} alt="Before" className="w-full h-full object-cover grayscale opacity-60" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {pet.afterImg && (
+                                                        <div className="space-y-1">
+                                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Healthy Now</span>
+                                                            <div className="aspect-square rounded-xl overflow-hidden border-2 border-paw-green/20 bg-gray-100">
+                                                                <ImageWithFallback src={pet.afterImg} alt="After" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {pet.photos && pet.photos.length > 1 && (
+                                                <div className="mb-3">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                                        Gallery ({pet.photos.length} Photos)
+                                                    </span>
+                                                    <div className="grid grid-cols-4 gap-1.5">
+                                                        {pet.photos.slice(0, 4).map((photoUrl: string, pIdx: number) => (
+                                                            <button
+                                                                key={pIdx}
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActivePhotoIndexByPet(prev => ({ ...prev, [pet.id]: pIdx }));
+                                                                    setFlippedCard(null);
+                                                                }}
+                                                                className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-paw-orange transition-all"
+                                                            >
+                                                                <ImageWithFallback src={photoUrl} alt={`${pet.name} ${pIdx + 1}`} className="w-full h-full object-cover" />
+                                                            </button>
+                                                        ))}
                                                     </div>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Healthy Now</span>
-                                                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-paw-green/20 bg-gray-100">
-                                                        <ImageWithFallback src={pet.afterImg} alt="After" className="w-full h-full object-cover" />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                         <button 
                                             onClick={(e) => {
@@ -226,7 +353,7 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                 </div>
                 <div className="mt-20 flex justify-center">
                     <Link 
-                        href="/adopt"
+                        href="/animals?status=rescued_shelter"
                         className="flex items-center gap-3 text-white/60 hover:text-white transition-all font-black uppercase tracking-widest text-xs group py-3 px-6 rounded-full hover:bg-white/10"
                     >
                         <Sparkles size={18} className="group-hover:rotate-12 transition-transform text-paw-yellow" />

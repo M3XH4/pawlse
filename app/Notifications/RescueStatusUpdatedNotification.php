@@ -3,21 +3,33 @@
 namespace App\Notifications;
 
 use App\Models\PetReport;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class RescueStatusUpdatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public PetReport $report) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $status = strtoupper((string) ($this->report->status ?? 'updated'));
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Animal', 'value' => (string) $this->report->animal_type],
+                ['label' => 'Location', 'value' => (string) $this->report->location],
+                ['label' => 'Updated Status', 'value' => $status],
+            ],
+            actionText: 'Track My Report',
+            level: in_array(strtolower($status), ['resolved', 'rescued', 'found'], true) ? 'success' : 'primary',
+            categoryBadge: 'RESCUE STATUS UPDATE',
+        );
     }
 
     /**

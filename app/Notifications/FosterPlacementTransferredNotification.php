@@ -3,24 +3,36 @@
 namespace App\Notifications;
 
 use App\Models\FosterPlacement;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class FosterPlacementTransferredNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(
         public FosterPlacement $placement,
         public string $type = 'incoming' // 'incoming' or 'outgoing'
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $petName = $this->placement->shelterAnimal?->name ?? 'a shelter pet';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Foster Pet', 'value' => $petName],
+                ['label' => 'Transfer Type', 'value' => strtoupper($this->type)],
+                ['label' => 'Reason', 'value' => (string) ($this->placement->transfer_reason ?: 'Coordinator transfer')],
+            ],
+            actionText: 'View Foster Care Portal',
+            level: 'primary',
+            categoryBadge: 'FOSTER TRANSFER',
+        );
     }
 
     /**

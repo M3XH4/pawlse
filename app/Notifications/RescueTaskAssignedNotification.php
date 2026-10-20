@@ -3,21 +3,31 @@
 namespace App\Notifications;
 
 use App\Models\PetReport;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class RescueTaskAssignedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public PetReport $report) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Mission Type', 'value' => strtoupper((string) ($this->report->type ?? 'rescue'))],
+                ['label' => 'Animal', 'value' => (string) $this->report->animal_type],
+                ['label' => 'Location', 'value' => (string) $this->report->location],
+            ],
+            actionText: 'Open Rescue Mission',
+            level: 'primary',
+            categoryBadge: 'RESCUE DISPATCH',
+        );
     }
 
     /**

@@ -19,40 +19,25 @@ class AnimalOverviewController extends Controller
         $speciesFilter = (string) $request->input('species', 'all');
         $search = trim((string) $request->input('search', ''));
 
-        $query = ShelterAnimal::query()
+        $animals = ShelterAnimal::query()
             ->with(['medicalRecords', 'activeFosterPlacement.fosterParent'])
-            ->latest('id');
+            ->latest('id')
+            ->get()
+            ->map(fn (ShelterAnimal $animal) => AdoptController::transformPet($animal));
 
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $rawId = preg_replace('/[^0-9]/', '', $search);
-                if (! empty($rawId)) {
-                    $q->orWhere('id', (int) $rawId);
-                }
-                $q->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('breed', 'like', "%{$search}%")
-                    ->orWhere('color', 'like', "%{$search}%")
-                    ->orWhere('current_location', 'like', "%{$search}%");
-            });
-        }
-
-        if ($speciesFilter !== 'all') {
-            $query->where('type', $speciesFilter);
-        }
-
-        if ($statusFilter !== 'all') {
-            $query->where('status', $statusFilter);
-        }
-
-        $animals = $query->get()->map(fn (ShelterAnimal $animal) => AdoptController::transformPet($animal));
+        $rescuedInShelterCount = $animals->filter(function (array $pet) {
+            return ($pet['is_rescued'] ?? true) === true
+                && ! in_array($pet['status'] ?? 'available', ['adopted', 'deceased'], true);
+        })->count();
 
         $counts = [
-            'all' => ShelterAnimal::count(),
-            'available' => ShelterAnimal::where('status', ShelterAnimalStatus::Available)->count(),
-            'treatment' => ShelterAnimal::where('status', ShelterAnimalStatus::Treatment)->count(),
-            'foster' => ShelterAnimal::where('status', ShelterAnimalStatus::Foster)->count(),
-            'quarantine' => ShelterAnimal::where('status', ShelterAnimalStatus::Quarantine)->count(),
-            'adopted' => ShelterAnimal::where('status', ShelterAnimalStatus::Adopted)->count(),
+            'all' => $animals->count(),
+            'rescued_shelter' => $rescuedInShelterCount,
+            'available' => $animals->where('status', ShelterAnimalStatus::Available->value)->count(),
+            'treatment' => $animals->where('status', ShelterAnimalStatus::Treatment->value)->count(),
+            'foster' => $animals->where('status', ShelterAnimalStatus::Foster->value)->count(),
+            'quarantine' => $animals->where('status', ShelterAnimalStatus::Quarantine->value)->count(),
+            'adopted' => $animals->where('status', ShelterAnimalStatus::Adopted->value)->count(),
         ];
 
         return Inertia::render('animals/index', [

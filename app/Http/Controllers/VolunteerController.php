@@ -7,7 +7,9 @@ use App\Events\VolunteerApplicationSubmittedEvent;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\VolunteerApplication;
+use App\Notifications\SubmissionEReceiptNotification;
 use App\Notifications\VolunteerApplicationSubmittedNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -111,6 +113,11 @@ class VolunteerController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new VolunteerApplicationSubmittedNotification($application));
         }
+
+        EReceiptDispatcher::sendToEmail(
+            $application->email,
+            SubmissionEReceiptNotification::forVolunteerApplication($application)
+        );
 
         VolunteerApplicationSubmittedEvent::dispatch($application);
 

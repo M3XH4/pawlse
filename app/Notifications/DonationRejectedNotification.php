@@ -3,21 +3,36 @@
 namespace App\Notifications;
 
 use App\Models\Donation;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class DonationRejectedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public Donation $donation, public ?string $reason = null) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $summary = [
+            ['label' => 'Reference Number', 'value' => (string) $this->donation->public_reference],
+            ['label' => 'Status', 'value' => 'Verification Unsuccessful'],
+        ];
+
+        if ($this->reason) {
+            $summary[] = ['label' => 'Reviewer Note', 'value' => $this->reason];
+        }
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: $summary,
+            actionText: 'Review My Donations',
+            level: 'error',
+            categoryBadge: 'DONATION UPDATE',
+        );
     }
 
     /**

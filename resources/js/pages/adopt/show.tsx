@@ -23,6 +23,11 @@ import {
   Home,
   HeartHandshake,
   UserCheck,
+  ChevronLeft,
+  ShieldCheck,
+  Images,
+  Maximize2,
+  X,
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -51,6 +56,20 @@ export default function PetShow({ pet }: PetShowProps) {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isVisitOpen, setIsVisitOpen] = useState(false);
+  const [activePhotoIdx, setActivePhotoIdx] = useState<number>(0);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+  const primaryPhoto = pet.img || pet.mainImg || pet.photo_url || '';
+  const rawPhotos = Array.isArray(pet.photos) && pet.photos.length > 0
+    ? pet.photos
+    : [primaryPhoto, ...(Array.isArray(pet.gallery_photos) ? pet.gallery_photos : [])];
+  const allPhotos = Array.from(new Set(rawPhotos.filter(Boolean))) as string[];
+  const safePhotoIdx = allPhotos.length > 0 ? activePhotoIdx % allPhotos.length : 0;
+  const currentMainPhoto = allPhotos[safePhotoIdx] || primaryPhoto;
+  const beforePhoto = pet.before_photo_url ?? pet.beforeImg ?? null;
+  const afterPhoto = pet.after_photo_url ?? pet.afterImg ?? null;
+  const isRescued = pet.is_rescued ?? true;
+  const rescuedTagLabel = pet.rescued_tag || 'Rescued • In Shelter Care';
 
   // Determine if pet is currently available for adoption
   const isAvailable = (pet.status || 'available').toLowerCase() === 'available';
@@ -175,13 +194,81 @@ export default function PetShow({ pet }: PetShowProps) {
           {/* Top Hero Card */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 md:p-10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 mb-8 overflow-hidden">
             <div className="flex flex-col md:flex-row gap-8 lg:gap-10 items-stretch">
-              {/* Photo Container */}
-              <div className="w-full md:w-[350px] lg:w-[380px] shrink-0 relative aspect-square sm:aspect-[4/3] md:aspect-square rounded-[2rem] overflow-hidden bg-slate-100 shadow-xs">
-                <ImageWithFallback
-                  src={pet.img || pet.mainImg || ''}
-                  alt={pet.name}
-                  className="w-full h-full object-cover"
-                />
+              {/* Photo & Gallery Container */}
+              <div className="w-full md:w-[350px] lg:w-[380px] shrink-0 flex flex-col gap-3">
+                <div className="relative aspect-square sm:aspect-[4/3] md:aspect-square rounded-[2rem] overflow-hidden bg-slate-100 shadow-xs group">
+                  <ImageWithFallback
+                    src={currentMainPhoto}
+                    alt={pet.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+                  />
+
+                  {/* Rescued & Sheltered Pill Overlay */}
+                  {isRescued && (
+                    <div className="absolute top-3.5 left-3.5 bg-emerald-600/95 text-white backdrop-blur-xs px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 shadow-md border border-emerald-400/40 z-10">
+                      <ShieldCheck size={13} className="shrink-0" />
+                      <span>{rescuedTagLabel}</span>
+                    </div>
+                  )}
+
+                  {/* Fullscreen Lightbox Trigger */}
+                  {currentMainPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setLightboxPhoto(currentMainPhoto)}
+                      className="absolute bottom-3.5 right-3.5 bg-slate-900/70 hover:bg-slate-900 text-white p-2.5 rounded-full backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                      title="View full image"
+                    >
+                      <Maximize2 size={15} />
+                    </button>
+                  )}
+
+                  {/* Multi-image Prev / Next navigation */}
+                  {allPhotos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setActivePhotoIdx((safePhotoIdx - 1 + allPhotos.length) % allPhotos.length)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/65 hover:bg-slate-900/90 text-white p-2 rounded-full backdrop-blur-xs transition-all z-20 cursor-pointer"
+                        aria-label="Previous photo"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivePhotoIdx((safePhotoIdx + 1) % allPhotos.length)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/65 hover:bg-slate-900/90 text-white p-2 rounded-full backdrop-blur-xs transition-all z-20 cursor-pointer"
+                        aria-label="Next photo"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                      <div className="absolute bottom-3.5 left-3.5 bg-slate-900/75 text-white backdrop-blur-xs px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 z-20">
+                        <Images size={12} />
+                        <span>{safePhotoIdx + 1} / {allPhotos.length}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Clickable Thumbnail Strip when multiple photos exist */}
+                {allPhotos.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {allPhotos.map((photoUrl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActivePhotoIdx(idx)}
+                        className={`relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                          idx === safePhotoIdx
+                            ? 'border-amber-500 ring-2 ring-amber-500/25 scale-105'
+                            : 'border-slate-200 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <ImageWithFallback src={photoUrl} alt={`${pet.name} photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right Content */}
@@ -195,6 +282,12 @@ export default function PetShow({ pet }: PetShowProps) {
                       >
                         {statusBadge.label}
                       </span>
+                      {isRescued && (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-bold text-[11px] uppercase px-3 py-1 rounded-full tracking-wide">
+                          <ShieldCheck size={12} />
+                          {rescuedTagLabel}
+                        </span>
+                      )}
                       <span className="bg-slate-100 text-slate-500 font-mono text-[11px] font-semibold px-3 py-1 rounded-full">
                         {animalCode}
                       </span>
@@ -510,9 +603,91 @@ export default function PetShow({ pet }: PetShowProps) {
                 </div>
               </div>
 
-              <div className="bg-[#f8fafc] border border-slate-100/90 rounded-2xl p-5 text-sm font-medium text-slate-600 leading-relaxed">
+              <div className="bg-[#f8fafc] border border-slate-100/90 rounded-2xl p-5 text-sm font-medium text-slate-600 leading-relaxed mb-6">
                 {pet.rescue_story || pet.story || 'Information to be updated by ISF.'}
               </div>
+
+              {/* Conditional Before & After Transformation Section */}
+              {(beforePhoto || afterPhoto) && (
+                <div className="bg-amber-50/40 border border-amber-200/70 rounded-3xl p-6 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 text-amber-700 font-black text-sm uppercase tracking-wider">
+                      <Sparkles size={16} className="text-amber-500" />
+                      <span>Before & After Shelter Transformation</span>
+                    </div>
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Rescued & Rehabilitated by ISF
+                    </span>
+                  </div>
+
+                  <div className={`grid grid-cols-1 ${beforePhoto && afterPhoto ? 'sm:grid-cols-2' : ''} gap-5`}>
+                    {beforePhoto && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+                          When Rescued (Before)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setLightboxPhoto(beforePhoto)}
+                          className="w-full aspect-[4/3] rounded-2xl overflow-hidden border-2 border-slate-200 bg-white block shadow-xs cursor-pointer group"
+                        >
+                          <ImageWithFallback
+                            src={beforePhoto}
+                            alt={`${pet.name} before rescue`}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </button>
+                      </div>
+                    )}
+                    {afterPhoto && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block">
+                          In Shelter Care (After)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setLightboxPhoto(afterPhoto)}
+                          className="w-full aspect-[4/3] rounded-2xl overflow-hidden border-2 border-emerald-300 bg-white block shadow-xs cursor-pointer group"
+                        >
+                          <ImageWithFallback
+                            src={afterPhoto}
+                            alt={`${pet.name} after rescue`}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Full Photo Gallery Section inside Rescue Story if multiple photos exist */}
+              {allPhotos.length > 1 && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Images size={17} className="text-amber-500" />
+                    <h3 className="text-base font-black text-slate-900">
+                      {pet.name}'s Photo Gallery ({allPhotos.length} Photos)
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    {allPhotos.map((photoUrl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setLightboxPhoto(photoUrl)}
+                        className="aspect-square rounded-2xl overflow-hidden border border-slate-200 hover:border-amber-500 transition-all group cursor-pointer bg-slate-100"
+                      >
+                        <ImageWithFallback
+                          src={photoUrl}
+                          alt={`${pet.name} gallery ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -893,6 +1068,29 @@ export default function PetShow({ pet }: PetShowProps) {
         pets={[{ id: pet.id, name: pet.name }]}
         preselectedPetId={pet.id}
       />
+
+      {/* Fullscreen Lightbox Modal */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[250] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute top-6 right-6 bg-white/15 hover:bg-white/30 text-white p-3 rounded-full transition-colors cursor-pointer"
+            aria-label="Close lightbox"
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={lightboxPhoto}
+            alt={pet.name}
+            className="max-w-full max-h-[88vh] rounded-2xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <Footer />
     </div>

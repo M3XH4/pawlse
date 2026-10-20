@@ -33,6 +33,8 @@ class AdoptablePetController extends Controller
             'vaccinated' => ['required', 'boolean'],
             'admittedAt' => ['required', 'date'],
             'photo' => ['nullable', 'file', 'image', 'max:8192'],
+            'gallery_photos' => ['nullable', 'array', 'max:15'],
+            'gallery_photos.*' => ['file', 'image', 'max:8192'],
             'initial_needs' => ['nullable', 'array'],
             'initial_needs.*.item' => ['required_with:initial_needs', 'string', 'max:255'],
             'initial_needs.*.quantity' => ['required_with:initial_needs', 'string', 'max:255'],
@@ -45,7 +47,20 @@ class AdoptablePetController extends Controller
             $photoUrl = Storage::url($path);
         }
 
-        DB::transaction(function () use ($validated, $photoUrl) {
+        $galleryPhotos = [];
+        if ($request->hasFile('gallery_photos')) {
+            foreach ($request->file('gallery_photos') as $file) {
+                $path = $file->store('pet_photos', 'public');
+                $galleryPhotos[] = Storage::url($path);
+            }
+        }
+        $galleryPhotos = array_values(array_unique($galleryPhotos));
+
+        if ($photoUrl === null && ! empty($galleryPhotos)) {
+            $photoUrl = $galleryPhotos[0];
+        }
+
+        DB::transaction(function () use ($validated, $photoUrl, $galleryPhotos) {
             $pet = ShelterAnimal::create([
                 'name' => $validated['name'],
                 'type' => AnimalType::from($validated['type']),
@@ -59,6 +74,7 @@ class AdoptablePetController extends Controller
                 'vaccinated' => $validated['vaccinated'],
                 'admitted_at' => $validated['admittedAt'],
                 'photo_url' => $photoUrl,
+                'gallery_photos' => $galleryPhotos,
                 'status' => ShelterAnimalStatus::Available,
             ]);
 

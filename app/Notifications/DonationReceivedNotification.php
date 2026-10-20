@@ -3,21 +3,38 @@
 namespace App\Notifications;
 
 use App\Models\Donation;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class DonationReceivedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public Donation $donation) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $donor = $this->donation->anonymous ? 'Anonymous' : ($this->donation->donor_name ?: 'Donor');
+        $type = ucfirst($this->donation->type instanceof \BackedEnum ? $this->donation->type->value : ($this->donation->type ?? 'donation'));
+        $details = $this->donation->amount
+            ? '₱'.number_format((float) $this->donation->amount, 2)
+            : 'In-kind supplies';
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Reference', 'value' => (string) $this->donation->public_reference],
+                ['label' => 'Donor', 'value' => $donor],
+                ['label' => 'Contribution', 'value' => $details],
+                ['label' => 'Type', 'value' => str_replace('_', ' ', $type)],
+            ],
+            actionText: 'Review in Donation Monitoring',
+            level: 'primary',
+            categoryBadge: 'NEW DONATION',
+        );
     }
 
     /**
@@ -26,10 +43,10 @@ class DonationReceivedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         $donor = $this->donation->anonymous ? 'Anonymous' : ($this->donation->donor_name ?: 'Donor');
-        $type = ucfirst($this->donation->type ?? 'donation');
+        $type = ucfirst($this->donation->type instanceof \BackedEnum ? $this->donation->type->value : ($this->donation->type ?? 'donation'));
 
         $details = $this->donation->amount
-            ? '₱'.number_format($this->donation->amount)
+            ? '₱'.number_format((float) $this->donation->amount)
             : 'In-kind supplies';
 
         return [

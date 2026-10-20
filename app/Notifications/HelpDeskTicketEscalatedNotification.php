@@ -4,12 +4,15 @@ namespace App\Notifications;
 
 use App\Models\HelpDeskTicket;
 use App\Models\User;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class HelpDeskTicketEscalatedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(
         public HelpDeskTicket $ticket,
@@ -17,12 +20,19 @@ class HelpDeskTicketEscalatedNotification extends Notification
         public ?string $escalationReason = null
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Ticket Number', 'value' => '#'.$this->ticket->ticket_number],
+                ['label' => 'Subject', 'value' => (string) $this->ticket->subject],
+                ['label' => 'Escalated By', 'value' => (string) $this->adminUser->name],
+            ],
+            actionText: 'Review Escalated Ticket',
+            level: 'error',
+            categoryBadge: 'ESCALATED TICKET',
+        );
     }
 
     /**

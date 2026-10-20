@@ -34,6 +34,7 @@ class VerifyEmailOtpNotification extends Notification
         $timezone = config('app.timezone', 'UTC');
         $formattedExpiry = $this->expiresAt->timezone($timezone)->format('g:i A (T)');
         $recipientName = $notifiable->name ?? 'Valued Member';
+        $recipientEmail = $notifiable->email ?? null;
 
         return (new MailMessage)
             ->subject('Your Pawlse Verification Code: '.$this->otp)
@@ -45,7 +46,13 @@ class VerifyEmailOtpNotification extends Notification
             ->line("• **Validity:** This code will expire at **{$formattedExpiry}** (10-minute window).")
             ->line('• **Security Alert:** For your protection, never share this code with anyone. Pawlse staff will never ask for your one-time code.')
             ->line('• **Assistance:** If you did not create an account on Pawlse, no further action is required and you can safely ignore this message.')
-            ->salutation("Warm regards,\nThe Pawlse Community & Security Team");
+            ->salutation("Warm regards,\nThe Pawlse Community & Security Team")
+            ->view('emails.verify-otp', [
+                'otp' => $this->otp,
+                'formattedExpiry' => $formattedExpiry,
+                'recipientName' => $recipientName,
+                'recipientEmail' => $recipientEmail,
+            ]);
     }
 
     /**

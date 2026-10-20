@@ -27,6 +27,7 @@ class ShelterAnimal extends Model
         'gender' => AnimalGender::class,
         'status' => ShelterAnimalStatus::class,
         'vaccinated' => 'boolean',
+        'gallery_photos' => 'array',
         'admitted_at' => 'date',
         'rescue_date' => 'date',
         'adoption_date' => 'date',
@@ -145,5 +146,63 @@ class ShelterAnimal extends Model
         }
 
         return 'Main Shelter - Kennel Area';
+    }
+
+    /**
+     * Get deduplicated array of all photos (primary photo_url + gallery_photos).
+     *
+     * @return array<int, string>
+     */
+    public function getAllPhotosAttribute(): array
+    {
+        $photos = [];
+
+        if (! empty($this->photo_url)) {
+            $photos[] = $this->photo_url;
+        }
+
+        if (is_array($this->gallery_photos)) {
+            foreach ($this->gallery_photos as $photo) {
+                if (is_string($photo) && trim($photo) !== '' && ! in_array($photo, $photos, true)) {
+                    $photos[] = $photo;
+                }
+            }
+        }
+
+        return array_values($photos);
+    }
+
+    /**
+     * Determine whether this animal was rescued and brought into shelter care.
+     */
+    public function getIsRescuedAttribute(): bool
+    {
+        $intake = strtolower((string) ($this->intake_type ?? 'rescue'));
+
+        return in_array($intake, ['rescue', 'stray', 'street rescue', 'shelter intake'], true)
+            || ! empty($this->rescue_date)
+            || ! empty($this->rescue_location)
+            || ! empty($this->rescue_story)
+            || ! empty($this->pet_report_id);
+    }
+
+    /**
+     * Human-readable rescue & shelter tag label.
+     */
+    public function getRescuedTagAttribute(): string
+    {
+        $statusVal = $this->status instanceof ShelterAnimalStatus
+            ? $this->status->value
+            : (string) $this->status;
+
+        if ($statusVal === ShelterAnimalStatus::Adopted->value) {
+            return 'Rescued • Adopted from Shelter';
+        }
+
+        if ($statusVal === ShelterAnimalStatus::Foster->value) {
+            return 'Rescued • In Foster Care';
+        }
+
+        return 'Rescued • In Shelter Care';
     }
 }

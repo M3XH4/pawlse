@@ -3,21 +3,22 @@
 namespace App\Notifications;
 
 use App\Models\Donation;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class DonationVerifiedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public Donation $donation) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return SubmissionEReceiptNotification::forDonation($this->donation, 'verified')
+            ->toMail($notifiable);
     }
 
     /**
@@ -25,9 +26,9 @@ class DonationVerifiedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $type = ucfirst($this->donation->type ?? 'donation');
+        $type = ucfirst($this->donation->type instanceof \BackedEnum ? $this->donation->type->value : ($this->donation->type ?? 'donation'));
         $details = $this->donation->amount
-            ? '₱'.number_format($this->donation->amount)
+            ? '₱'.number_format((float) $this->donation->amount)
             : 'in-kind supplies';
 
         return [

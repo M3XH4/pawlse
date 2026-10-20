@@ -3,21 +3,30 @@
 namespace App\Notifications;
 
 use App\Models\Certificate;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class VolunteerCertificateIssuedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public Certificate $certificate) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Certificate Title', 'value' => (string) $this->certificate->title],
+                ['label' => 'Certificate Number', 'value' => (string) $this->certificate->certificate_number],
+            ],
+            actionText: 'View & Download Certificate',
+            level: 'success',
+            categoryBadge: 'VOLUNTEER RECOGNITION',
+        );
     }
 
     /**

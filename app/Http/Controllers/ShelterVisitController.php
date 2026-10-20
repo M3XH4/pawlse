@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\ShelterVisit;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +52,11 @@ class ShelterVisitController extends Controller
                 'status' => 'pending',
             ]);
         });
+
+        EReceiptDispatcher::sendToEmail(
+            $visit->email,
+            SubmissionEReceiptNotification::forShelterVisit($visit)
+        );
 
         AuditLog::log('shelter_visit_request', "Shelter visit requested by {$visit->full_name} for {$visit->preferred_date->format('Y-m-d')}");
 

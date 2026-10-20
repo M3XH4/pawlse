@@ -22,8 +22,11 @@ use App\Models\ResourceFile;
 use App\Models\ShelterAnimal;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Notifications\DonationProofSubmittedNotification;
 use App\Notifications\DonationReceivedNotification;
 use App\Notifications\DonationVerifiedNotification;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -208,6 +211,39 @@ class DonateController extends Controller
             'active_zones_display' => '15',
         ]);
 
+        $successRef = session('success_ref');
+        $successDonation = null;
+        if ($successRef) {
+            $foundDonation = Donation::with(['payments', 'inKindDonation', 'feedingSponsorship'])
+                ->where('public_reference', $successRef)
+                ->first();
+
+            if ($foundDonation) {
+                $typeVal = $foundDonation->type instanceof DonationType ? $foundDonation->type->value : (string) $foundDonation->type;
+                $statusVal = $foundDonation->status instanceof DonationStatus ? $foundDonation->status->value : (string) $foundDonation->status;
+                $successDonation = [
+                    'public_reference' => $foundDonation->public_reference,
+                    'donor_name' => $foundDonation->donor_name,
+                    'donor_email' => $foundDonation->donor_email,
+                    'anonymous' => (bool) $foundDonation->anonymous,
+                    'type' => $typeVal,
+                    'type_label' => match ($typeVal) {
+                        DonationType::Cash->value => 'Cash Donation',
+                        DonationType::InKind->value => 'In-Kind Contribution',
+                        DonationType::FeedingSponsorship->value => 'Feeding Sponsorship',
+                        default => ucfirst($typeVal),
+                    },
+                    'amount' => $foundDonation->amount ? '₱ '.number_format((float) $foundDonation->amount, 2) : ($foundDonation->inKindDonation?->quantity ?: 'In-Kind Supplies'),
+                    'status' => $statusVal,
+                    'purpose' => $foundDonation->purpose ?: 'Veterinary care, rescue operations, and stray feeding support',
+                    'method' => $foundDonation->payments->first()?->method
+                        ? strtoupper(str_replace('_', ' ', $foundDonation->payments->first()->method))
+                        : ($typeVal === DonationType::InKind->value ? 'Shelter Drop-Off' : 'PAWLSE Portal'),
+                    'issued_at' => $foundDonation->created_at?->format('d M Y, g:i A'),
+                ];
+            }
+        }
+
         return Inertia::render('donate', [
             'wishlist' => $wishlist,
             'recentDonations' => $recentDonations,
@@ -225,7 +261,8 @@ class DonateController extends Controller
             ],
             'careSustainability' => CareSustainability::current()->toPublicArray(),
             'donationSuccess' => session('donation_success'),
-            'successRef' => session('success_ref'),
+            'successRef' => $successRef,
+            'successDonation' => $successDonation,
         ]);
     }
 
@@ -269,6 +306,11 @@ class DonateController extends Controller
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new DonationReceivedNotification($donation));
         }
+
+        EReceiptDispatcher::sendToEmail(
+            $donation->donor_email,
+            SubmissionEReceiptNotification::forDonation($donation, 'submitted')
+        );
 
         DonationReceivedEvent::dispatch($donation);
 
@@ -342,12 +384,21 @@ class DonateController extends Controller
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
 
+            EReceiptDispatcher::sendToEmail(
+                $donation->donor_email,
+                SubmissionEReceiptNotification::forDonation($donation, 'submitted')
+            );
+
             DonationReceivedEvent::dispatch($donation);
         });
 
         AuditLog::log('donation_inkind_create', "Scheduled in-kind donation with ref {$ref}");
 
-        return redirect()->back()->with('success', 'Thank you! Your drop-off has been scheduled. Reference: '.$ref);
+        return redirect()->back()->with([
+            'success' => 'Thank you! Your drop-off has been scheduled. Reference: '.$ref,
+            'donation_success' => true,
+            'success_ref' => $ref,
+        ]);
     }
 
     public function storeSponsor(Request $request)
@@ -408,6 +459,11 @@ class DonateController extends Controller
             if ($admins->isNotEmpty()) {
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
+
+            EReceiptDispatcher::sendToEmail(
+                $donation->donor_email,
+                SubmissionEReceiptNotification::forDonation($donation, 'submitted')
+            );
 
             DonationReceivedEvent::dispatch($donation);
         });
@@ -552,6 +608,16 @@ class DonateController extends Controller
                 'reason' => 'Payment receipt uploaded by donor.',
                 'created_at' => now(),
             ]);
+
+            $admins = User::whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])->get();
+            if ($admins->isNotEmpty()) {
+                Notification::send($admins, new DonationProofSubmittedNotification($donation));
+            }
+
+            EReceiptDispatcher::sendToEmail(
+                $donation->donor_email,
+                SubmissionEReceiptNotification::forDonation($donation->fresh(['payments', 'inKindDonation', 'feedingSponsorship']), 'proof_submitted')
+            );
         });
 
         AuditLog::log('donation_proof_uploaded', "Uploaded proof of payment for donation #{$donation->public_reference} (Ref: {$validated['payment_reference']})");
@@ -651,9 +717,11 @@ class DonateController extends Controller
                     ]);
                 }
 
-                if ($donation->user) {
-                    $donation->user->notify(new DonationVerifiedNotification($donation));
-                }
+                EReceiptDispatcher::sendToUserAndEmail(
+                    $donation->user,
+                    $donation->donor_email,
+                    new DonationVerifiedNotification($donation)
+                );
             });
 
             AuditLog::log('donation_payment_success', "Payment successful for donation ref {$ref}");

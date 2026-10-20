@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\RehomingRequest;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -44,6 +46,11 @@ class RehomingRequestController extends Controller
             'user_id' => $request->user()?->id,
             'status' => 'pending',
         ]);
+
+        EReceiptDispatcher::sendToEmail(
+            $rehoming->email,
+            SubmissionEReceiptNotification::forRehomingRequest($rehoming)
+        );
 
         AuditLog::log('rehoming_request', "Rehoming assistance requested for {$rehoming->animal_name} by {$rehoming->full_name}");
 

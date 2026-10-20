@@ -3,21 +3,36 @@
 namespace App\Notifications;
 
 use App\Models\BlogPost;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class UserStoryRejectedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public BlogPost $post) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        $summary = [
+            ['label' => 'Story Title', 'value' => (string) $this->post->title],
+            ['label' => 'Status', 'value' => 'REVISION REQUESTED'],
+        ];
+
+        if ($this->post->rejection_reason) {
+            $summary[] = ['label' => 'Editor Feedback', 'value' => $this->post->rejection_reason];
+        }
+
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: $summary,
+            actionText: 'Edit & Resubmit Story',
+            level: 'primary',
+            categoryBadge: 'STORY REVIEW UPDATE',
+        );
     }
 
     /**

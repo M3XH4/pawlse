@@ -3,21 +3,30 @@
 namespace App\Notifications;
 
 use App\Models\BlogPost;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class UserStoryApprovedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public BlogPost $post) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Story Title', 'value' => (string) $this->post->title],
+                ['label' => 'Status', 'value' => 'PUBLISHED LIVE'],
+            ],
+            actionText: 'Read Published Story',
+            level: 'success',
+            categoryBadge: 'COMMUNITY STORY PUBLISHED',
+        );
     }
 
     /**

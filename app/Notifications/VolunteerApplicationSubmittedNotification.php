@@ -3,21 +3,31 @@
 namespace App\Notifications;
 
 use App\Models\VolunteerApplication;
+use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class VolunteerApplicationSubmittedNotification extends Notification
 {
     use Queueable;
+    use RendersBrandedMail;
 
     public function __construct(public VolunteerApplication $application) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        return ['database'];
+        return $this->buildBrandedMail(
+            notifiable: $notifiable,
+            summaryItems: [
+                ['label' => 'Reference', 'value' => (string) ($this->application->reference_number ?: 'VOL-'.$this->application->id)],
+                ['label' => 'Applicant', 'value' => (string) $this->application->full_name],
+                ['label' => 'Role', 'value' => (string) $this->application->role],
+            ],
+            actionText: 'Review Volunteer Application',
+            level: 'primary',
+            categoryBadge: 'NEW VOLUNTEER APPLICANT',
+        );
     }
 
     /**

@@ -46,6 +46,9 @@ class AdoptController extends Controller
         };
         $code = $codePrefix.str_pad((string) $pet->id, 4, '0', STR_PAD_LEFT);
 
+        $allPhotos = $pet->all_photos;
+        $primaryImg = $pet->photo_url ?: ($allPhotos[0] ?? null);
+
         return [
             'id' => $pet->id,
             'code' => $code,
@@ -69,7 +72,9 @@ class AdoptController extends Controller
             'color' => $pet->color,
             'weight' => $pet->weight,
             'microchip_id' => $pet->microchip_id,
-            'intake_type' => $pet->intake_type,
+            'intake_type' => $pet->intake_type ?? 'rescue',
+            'is_rescued' => $pet->is_rescued,
+            'rescued_tag' => $pet->rescued_tag,
             'current_location' => $pet->computed_location,
             'admitted_at' => $pet->admitted_at?->format('Y-m-d'),
             'rescue_date' => $pet->rescue_date?->format('Y-m-d'),
@@ -80,8 +85,15 @@ class AdoptController extends Controller
             'special_needs' => $pet->special_needs,
             'behavior' => $pet->behavior,
             'story' => $pet->story,
-            'img' => $pet->photo_url,
-            'mainImg' => $pet->photo_url,
+            'img' => $primaryImg,
+            'mainImg' => $primaryImg,
+            'photo_url' => $primaryImg,
+            'photos' => $allPhotos,
+            'gallery_photos' => $pet->gallery_photos ?? [],
+            'before_photo_url' => $pet->before_photo_url,
+            'after_photo_url' => $pet->after_photo_url,
+            'beforeImg' => $pet->before_photo_url,
+            'afterImg' => $pet->after_photo_url,
             'vaccinated' => (bool) $pet->vaccinated,
             'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 0,
             'medical_records' => $pet->relationLoaded('medicalRecords')

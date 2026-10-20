@@ -13,6 +13,8 @@ use App\Models\AdoptionApplicationFile;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Notifications\AdoptionApplicationSubmittedNotification;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -186,6 +188,11 @@ class AdoptionApplicationController extends Controller
         }
 
         if ($latestApp) {
+            EReceiptDispatcher::sendToEmail(
+                $latestApp->email,
+                SubmissionEReceiptNotification::forAdoptionApplication($latestApp)
+            );
+
             AdoptionApplicationSubmittedEvent::dispatch($latestApp);
         }
 
