@@ -28,7 +28,7 @@ test('adopt index page renders with available pets and master records', function
         ->has('pets')
         ->where('pets.0.id', $pet->id)
         ->where('pets.0.weight', '14 kg')
-        ->where('pets.0.microchip_id', 'MC-987654321')
+        ->missing('pets.0.microchip_id')
         ->has('pets.0.medical_records', 1)
     );
 });

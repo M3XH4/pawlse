@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use App\Notifications\VerifyEmailOtpNotification;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
@@ -20,12 +21,24 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style'])]
+#[Fillable(['name', 'first_name', 'middle_initial', 'last_name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style'])]
 #[Hidden(['password', 'email_verification_otp_hash', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, MustVerifyEmail, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->first_name && $user->last_name) {
+                if (empty($user->name) || $user->isDirty(['first_name', 'middle_initial', 'last_name'])) {
+                    $middle = $user->middle_initial ? trim(rtrim($user->middle_initial, '.')).'. ' : '';
+                    $user->name = trim("{$user->first_name} {$middle}{$user->last_name}");
+                }
+            }
+        });
+    }
 
     /**
      * The model's default values for attributes.
@@ -205,5 +218,15 @@ class User extends Authenticatable implements MustVerifyEmailContract
         }
 
         return $this->fosterParentProfile()->where('status', 'approved')->exists();
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === Role::SuperAdmin->value || $this->hasRole(Role::SuperAdmin->value);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin->value || $this->hasRole(Role::Admin->value);
     }
 }

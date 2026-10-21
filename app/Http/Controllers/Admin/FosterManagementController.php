@@ -55,53 +55,70 @@ class FosterManagementController extends Controller
                 });
             });
 
+        $transformPlacement = function (FosterPlacement $p): array {
+            return [
+                'id' => $p->id,
+                'shelter_animal_id' => $p->shelter_animal_id,
+                'status' => $p->status,
+                'start_date' => $p->start_date ? $p->start_date->toDateString() : null,
+                'expected_review_date' => $p->expected_review_date ? $p->expected_review_date->toDateString() : null,
+                'end_date' => $p->end_date ? $p->end_date->toDateString() : null,
+                'care_instructions' => $p->care_instructions,
+                'medical_notes' => $p->medical_notes,
+                'dietary_requirements' => $p->dietary_requirements,
+                'special_needs' => $p->special_needs,
+                'placement_notes' => $p->placement_notes,
+                'transfer_reason' => $p->transfer_reason,
+                'end_reason' => $p->end_reason,
+                'days_in_care' => $p->start_date ? max(0, (int) abs($p->start_date->diffInDays(now()))) : 0,
+                'is_review_overdue' => $p->status === 'active' && $p->expected_review_date && $p->expected_review_date->isPast(),
+                'updates_count' => $p->careUpdates->count(),
+                'unacknowledged_updates_count' => $p->careUpdates->whereNull('acknowledged_at')->count(),
+                'pet' => $p->shelterAnimal ? [
+                    'id' => $p->shelterAnimal->id,
+                    'name' => $p->shelterAnimal->name,
+                    'type' => $p->shelterAnimal->type ? $p->shelterAnimal->type->value : null,
+                    'breed' => $p->shelterAnimal->breed,
+                    'age' => $p->shelterAnimal->age,
+                    'photo_url' => $p->shelterAnimal->photo_url,
+                    'status' => $p->shelterAnimal->status->value,
+                ] : null,
+                'foster_parent' => $p->fosterParentUser ? [
+                    'id' => $p->fosterParentUser->id,
+                    'name' => $p->fosterParentUser->name,
+                    'email' => $p->fosterParentUser->email,
+                    'phone' => $p->fosterParentUser->phone,
+                    'avatar' => $p->fosterParentUser->avatar,
+                    'role' => $p->fosterParentUser->role,
+                ] : null,
+                'assigned_by' => $p->assignedBy ? [
+                    'id' => $p->assignedBy->id,
+                    'name' => $p->assignedBy->name,
+                ] : null,
+                'transferred_by' => $p->transferredBy ? [
+                    'id' => $p->transferredBy->id,
+                    'name' => $p->transferredBy->name,
+                ] : null,
+            ];
+        };
+
         $placements = $placementsQuery->latest()->paginate(10, ['*'], 'placements_page')->withQueryString()
-            ->through(function (FosterPlacement $p) {
-                return [
-                    'id' => $p->id,
-                    'shelter_animal_id' => $p->shelter_animal_id,
-                    'status' => $p->status,
-                    'start_date' => $p->start_date ? $p->start_date->toDateString() : null,
-                    'expected_review_date' => $p->expected_review_date ? $p->expected_review_date->toDateString() : null,
-                    'end_date' => $p->end_date ? $p->end_date->toDateString() : null,
-                    'care_instructions' => $p->care_instructions,
-                    'medical_notes' => $p->medical_notes,
-                    'dietary_requirements' => $p->dietary_requirements,
-                    'special_needs' => $p->special_needs,
-                    'placement_notes' => $p->placement_notes,
-                    'transfer_reason' => $p->transfer_reason,
-                    'end_reason' => $p->end_reason,
-                    'days_in_care' => $p->start_date ? max(0, (int) abs($p->start_date->diffInDays(now()))) : 0,
-                    'is_review_overdue' => $p->status === 'active' && $p->expected_review_date && $p->expected_review_date->isPast(),
-                    'updates_count' => $p->careUpdates->count(),
-                    'unacknowledged_updates_count' => $p->careUpdates->whereNull('acknowledged_at')->count(),
-                    'pet' => $p->shelterAnimal ? [
-                        'id' => $p->shelterAnimal->id,
-                        'name' => $p->shelterAnimal->name,
-                        'type' => $p->shelterAnimal->type ? $p->shelterAnimal->type->value : null,
-                        'breed' => $p->shelterAnimal->breed,
-                        'age' => $p->shelterAnimal->age,
-                        'photo_url' => $p->shelterAnimal->photo_url,
-                        'status' => $p->shelterAnimal->status->value,
-                    ] : null,
-                    'foster_parent' => $p->fosterParentUser ? [
-                        'id' => $p->fosterParentUser->id,
-                        'name' => $p->fosterParentUser->name,
-                        'email' => $p->fosterParentUser->email,
-                        'phone' => $p->fosterParentUser->phone,
-                        'avatar' => $p->fosterParentUser->avatar,
-                        'role' => $p->fosterParentUser->role,
-                    ] : null,
-                    'assigned_by' => $p->assignedBy ? [
-                        'id' => $p->assignedBy->id,
-                        'name' => $p->assignedBy->name,
-                    ] : null,
-                    'transferred_by' => $p->transferredBy ? [
-                        'id' => $p->transferredBy->id,
-                        'name' => $p->transferredBy->name,
-                    ] : null,
-                ];
-            });
+            ->through($transformPlacement);
+
+        $historyPlacements = FosterPlacement::with([
+            'shelterAnimal',
+            'fosterParent.user',
+            'fosterParentUser',
+            'assignedBy',
+            'transferredBy',
+            'careUpdates',
+        ])
+            ->where('status', '!=', 'active')
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map($transformPlacement)
+            ->values();
 
         // 2. Foster Parents List (all registered foster homes with capacity statistics)
         $fosterParents = FosterParent::with(['user', 'approver', 'activePlacements.shelterAnimal'])
@@ -234,6 +251,7 @@ class FosterManagementController extends Controller
                 'needs_attention_count' => $overdueOrUrgentCount,
             ],
             'placements' => $placements,
+            'historyPlacements' => $historyPlacements,
             'fosterParents' => $fosterParents,
             'availablePets' => $availablePets,
             'eligibleUsers' => $eligibleUsers,

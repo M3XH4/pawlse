@@ -15,6 +15,7 @@ use App\Models\PostAdoptionFollowUp;
 use App\Models\RehomingRequest;
 use App\Models\ShelterAnimal;
 use App\Models\ShelterVisit;
+use App\Models\SystemSetting;
 use App\Notifications\AdoptionApplicationStatusUpdatedNotification;
 use App\Notifications\RehomingRequestStatusUpdatedNotification;
 use App\Notifications\ShelterVisitStatusUpdatedNotification;
@@ -82,6 +83,7 @@ class AdoptionManagementController extends Controller
                         'breed' => $app->shelterAnimal->breed,
                         'age' => $app->shelterAnimal->age,
                         'photo_url' => $app->shelterAnimal->photo_url,
+                        'status' => $app->shelterAnimal->status->value,
                     ] : null,
                     'user' => $app->user ? [
                         'id' => $app->user->id,
@@ -234,6 +236,14 @@ class AdoptionManagementController extends Controller
                 ];
             });
 
+        $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
+            'max_visitors_per_slot' => 10,
+            'max_visitors_per_booking' => 10,
+            'closed_days' => ['Sunday'],
+            'blackout_dates' => [],
+            'is_accepting_visits' => true,
+        ]);
+
         return Inertia::render('admin/adoption-management', [
             'applications' => $applications,
             'pets' => $pets,
@@ -241,6 +251,7 @@ class AdoptionManagementController extends Controller
             'adoptedPets' => $adoptedPets,
             'shelterVisits' => $shelterVisits,
             'rehomingRequests' => $rehomingRequests,
+            'shelterVisitSettings' => $shelterVisitSettings,
         ]);
     }
 
@@ -287,7 +298,11 @@ class AdoptionManagementController extends Controller
                         'rejection_reason' => 'Another applicant was approved and matched for this pet.',
                     ]);
 
-                    $competing->user?->notify(new AdoptionApplicationStatusUpdatedNotification($competing));
+                    EReceiptDispatcher::sendToUserAndEmail(
+                        $competing->user,
+                        $competing->email,
+                        new AdoptionApplicationStatusUpdatedNotification($competing)
+                    );
                     AdoptionApplicationStatusUpdatedEvent::dispatch($competing);
                 }
             } elseif ($newStatus === AdoptionApplicationStatus::Scheduled) {
@@ -318,7 +333,11 @@ class AdoptionManagementController extends Controller
                 }
             }
 
-            $application->user?->notify(new AdoptionApplicationStatusUpdatedNotification($application));
+            EReceiptDispatcher::sendToUserAndEmail(
+                $application->user,
+                $application->email,
+                new AdoptionApplicationStatusUpdatedNotification($application)
+            );
             AdoptionApplicationStatusUpdatedEvent::dispatch($application);
 
             AuditLog::log('adoption_application_update', "Updated status of adoption application ID {$application->id} to {$validated['status']}");
@@ -342,16 +361,31 @@ class AdoptionManagementController extends Controller
         ]);
 
         $oldStatus = $visit->status;
+        $oldConfirmedDate = $visit->confirmed_date?->format('Y-m-d');
+        $oldConfirmedSlot = $visit->confirmed_time_slot;
+
+        $confirmedDate = $validated['confirmed_date'] ?? $visit->confirmed_date;
+        $confirmedTimeSlot = $validated['confirmed_time_slot'] ?? $visit->confirmed_time_slot;
+
+        if ($validated['status'] === 'confirmed') {
+            $confirmedDate = $confirmedDate ?? $visit->preferred_date;
+            $confirmedTimeSlot = $confirmedTimeSlot ?: $visit->preferred_time_slot;
+        }
 
         $visit->update([
             'status' => $validated['status'],
-            'confirmed_date' => $validated['confirmed_date'] ?? $visit->confirmed_date,
-            'confirmed_time_slot' => $validated['confirmed_time_slot'] ?? $visit->confirmed_time_slot,
+            'confirmed_date' => $confirmedDate,
+            'confirmed_time_slot' => $confirmedTimeSlot,
             'admin_notes' => $validated['admin_notes'] ?? $visit->admin_notes,
             'confirmed_by' => $request->user()?->id,
         ]);
 
-        if ($oldStatus !== $validated['status']) {
+        $scheduleChanged = $validated['status'] === 'confirmed' && (
+            $visit->confirmed_date?->format('Y-m-d') !== $oldConfirmedDate
+            || $visit->confirmed_time_slot !== $oldConfirmedSlot
+        );
+
+        if ($oldStatus !== $validated['status'] || $scheduleChanged) {
             EReceiptDispatcher::sendToUserAndEmail(
                 $visit->user,
                 $visit->email,
@@ -372,11 +406,19 @@ class AdoptionManagementController extends Controller
     public function updateRehomingStatus(Request $request, RehomingRequest $rehomingRequest): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:pending,reviewed,posted,home_found,declined'],
+            'status' => ['required', 'string', 'in:pending,reviewed,posted,shelter_intake,home_found,declined'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $oldStatus = $rehomingRequest->status;
+
+        if ($validated['status'] === 'shelter_intake' && $oldStatus !== 'shelter_intake') {
+            $request->merge([
+                'intake_notes' => $validated['admin_notes'] ?? null,
+            ]);
+
+            return $this->intakeRehomingRequest($request, $rehomingRequest);
+        }
 
         $rehomingRequest->update([
             'status' => $validated['status'],
@@ -409,6 +451,22 @@ class AdoptionManagementController extends Controller
             'admitted_at' => ['nullable', 'date'],
         ]);
 
+        if ($rehomingRequest->status === 'shelter_intake') {
+            if (! empty($validated['intake_notes'])) {
+                $rehomingRequest->update([
+                    'admin_notes' => $validated['intake_notes'],
+                    'reviewed_by' => $request->user()?->id,
+                ]);
+            }
+
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => "Pet '{$rehomingRequest->animal_name}' has already been admitted to the shelter.",
+            ]);
+
+            return redirect()->route('account.admin.adoption-management');
+        }
+
         return DB::transaction(function () use ($request, $rehomingRequest, $validated) {
             $type = match (strtolower($rehomingRequest->species)) {
                 'cat' => AnimalType::Cat,
@@ -420,6 +478,29 @@ class AdoptionManagementController extends Controller
                 'female' => AnimalGender::Female,
                 default => AnimalGender::Male,
             };
+
+            $ageStr = strtolower((string) $rehomingRequest->age);
+            $ageCategory = match (true) {
+                str_contains($ageStr, 'month') || str_contains($ageStr, 'week') || str_contains($ageStr, 'puppy') || str_contains($ageStr, 'kitten') => $type === AnimalType::Cat ? AnimalAgeCategory::Kitten : ($type === AnimalType::Dog ? AnimalAgeCategory::Puppy : AnimalAgeCategory::Young),
+                str_contains($ageStr, 'senior') || str_contains($ageStr, 'old') => AnimalAgeCategory::Senior,
+                default => AnimalAgeCategory::Adult,
+            };
+
+            $healthNotesLower = strtolower(trim((string) $rehomingRequest->health_notes));
+            $hasNegativeVaccine = str_contains($healthNotesLower, 'not vaccin')
+                || str_contains($healthNotesLower, 'unvaccin')
+                || str_contains($healthNotesLower, 'no vaccin')
+                || str_contains($healthNotesLower, 'never vaccin')
+                || in_array($healthNotesLower, ['none', 'n/a', 'no'], true);
+            $isVaccinated = ! $hasNegativeVaccine && (
+                str_contains($healthNotesLower, 'vaccin')
+                || str_contains($healthNotesLower, 'rabies')
+                || str_contains($healthNotesLower, '5-in-1')
+                || str_contains($healthNotesLower, '4-in-1')
+                || str_contains($healthNotesLower, 'complete')
+                || str_contains($healthNotesLower, 'immuniz')
+                || str_contains($healthNotesLower, 'shot')
+            );
 
             $photoUrl = null;
             if ($rehomingRequest->photo_path) {
@@ -435,20 +516,30 @@ class AdoptionManagementController extends Controller
                 'type' => $type,
                 'breed' => $rehomingRequest->breed ?? 'Mixed Breed',
                 'age' => $rehomingRequest->age ?? 'Adult',
-                'age_category' => AnimalAgeCategory::Adult,
+                'age_category' => $ageCategory,
                 'gender' => $gender,
                 'color' => 'Mixed',
                 'behavior' => 'Intake from rehoming surrender: '.$rehomingRequest->reason,
                 'story' => $story,
-                'vaccinated' => ! empty($rehomingRequest->health_notes),
+                'vaccinated' => $isVaccinated,
+                'intake_type' => 'shelter intake',
+                'rescue_location' => $rehomingRequest->current_location,
                 'status' => ShelterAnimalStatus::Available,
                 'photo_url' => $photoUrl,
                 'admitted_at' => $validated['admitted_at'] ?? now(),
             ]);
 
+            $existingNotes = trim((string) $rehomingRequest->admin_notes);
+            $intakeNote = trim((string) ($validated['intake_notes'] ?? ''));
+            $combinedNotes = $existingNotes;
+            if ($intakeNote !== '' && $intakeNote !== $existingNotes) {
+                $combinedNotes = $combinedNotes !== '' ? $combinedNotes."\n".$intakeNote : $intakeNote;
+            }
+            $combinedNotes = trim(($combinedNotes !== '' ? $combinedNotes."\n" : '')."Pet successfully admitted to shelter sanctuary as '{$animal->name}' (ID #{$animal->id}).");
+
             $rehomingRequest->update([
-                'status' => 'home_found',
-                'admin_notes' => trim(($rehomingRequest->admin_notes ? $rehomingRequest->admin_notes."\n" : '')."Pet successfully admitted to shelter master records as '{$animal->name}' (ID #{$animal->id}). ".($validated['intake_notes'] ?? '')),
+                'status' => 'shelter_intake',
+                'admin_notes' => $combinedNotes,
                 'reviewed_by' => $request->user()?->id,
             ]);
 
@@ -467,6 +558,30 @@ class AdoptionManagementController extends Controller
 
             return redirect()->route('account.admin.adoption-management');
         });
+    }
+
+    public function updateVisitSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'max_visitors_per_slot' => ['required', 'integer', 'min:1', 'max:50'],
+            'max_visitors_per_booking' => ['required', 'integer', 'min:1', 'max:30'],
+            'closed_days' => ['nullable', 'array'],
+            'closed_days.*' => ['string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
+            'blackout_dates' => ['nullable', 'array'],
+            'blackout_dates.*' => ['date'],
+            'is_accepting_visits' => ['required', 'boolean'],
+        ]);
+
+        SystemSetting::setValue('shelter_visit_settings', $validated);
+
+        AuditLog::log('shelter_visit_settings_update', 'Updated shelter visit capacity and operational schedule settings');
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Shelter visit configuration updated successfully.',
+        ]);
+
+        return redirect()->route('account.admin.adoption-management');
     }
 
     public function storeFollowUp(Request $request): RedirectResponse

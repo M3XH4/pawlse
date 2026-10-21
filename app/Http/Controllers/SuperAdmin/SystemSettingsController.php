@@ -25,6 +25,7 @@ class SystemSettingsController extends Controller
             'maintenance_mode' => false,
             'maintenance_message' => 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!',
             'payment_simulation_enabled' => (bool) config('services.payment.simulation_enabled', false),
+            'ai_breed_guide_enabled' => true,
         ]);
 
         if (! isset($settings['maintenance_message'])) {
@@ -33,6 +34,10 @@ class SystemSettingsController extends Controller
 
         if (! isset($settings['payment_simulation_enabled'])) {
             $settings['payment_simulation_enabled'] = (bool) config('services.payment.simulation_enabled', false);
+        }
+
+        if (! isset($settings['ai_breed_guide_enabled'])) {
+            $settings['ai_breed_guide_enabled'] = true;
         }
 
         return Inertia::render('super-admin/system-settings', [
@@ -53,6 +58,7 @@ class SystemSettingsController extends Controller
             'maintenance_mode' => ['required', 'boolean'],
             'maintenance_message' => ['nullable', 'string', 'max:500'],
             'payment_simulation_enabled' => ['nullable', 'boolean'],
+            'ai_breed_guide_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = $request->only([
@@ -65,6 +71,7 @@ class SystemSettingsController extends Controller
         ]);
 
         $settings['payment_simulation_enabled'] = (bool) $request->input('payment_simulation_enabled', false);
+        $settings['ai_breed_guide_enabled'] = (bool) $request->input('ai_breed_guide_enabled', false);
 
         if (empty($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';

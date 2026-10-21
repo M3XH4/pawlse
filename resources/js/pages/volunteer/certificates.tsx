@@ -13,6 +13,8 @@ interface CertificateModel {
     description: string | null;
     issue_date: string;
     certificate_number: string;
+    role?: string | null;
+    guest_name?: string | null;
     user?: {
         name: string;
     } | null;
@@ -94,7 +96,7 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'alphabetic';
                 ctx.fillStyle = '#0B2340';
-                const recipientName = (viewingCert.user?.name || user?.name || 'Volunteer').toUpperCase();
+                const recipientName = (viewingCert.user?.name || viewingCert.guest_name || user?.name || 'Volunteer').toUpperCase();
                 let nameFontSize = 36;
                 ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
                 while (ctx.measureText(recipientName).width > 720 && nameFontSize > 18) {
@@ -106,7 +108,7 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
                 // 2. Role Slot
                 ctx.fillStyle = '#FF750F';
                 ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-                ctx.fillText((defaultRole || 'Volunteer').toUpperCase(), 1492 * 0.38, 1054 * 0.63);
+                ctx.fillText((viewingCert.role || defaultRole || 'Volunteer').toUpperCase(), 1492 * 0.38, 1054 * 0.63);
 
                 // 3. Event / Activity Title (auto-scale font for long titles)
                 const eventTitle = viewingCert.event?.title || viewingCert.title || 'Community Stray Feeding Outreach';
@@ -343,7 +345,7 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
                                     }}
                                 >
                                     <span className="font-serif font-black tracking-wide text-[#0B2340] text-[clamp(12px,2vw,28px)] uppercase leading-none drop-shadow-sm truncate max-w-full px-2">
-                                        {viewingCert.user?.name || user?.name || 'Volunteer Name'}
+                                        {viewingCert.user?.name || viewingCert.guest_name || user?.name || 'Volunteer Name'}
                                     </span>
                                 </div>
 
@@ -358,7 +360,7 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
                                     }}
                                 >
                                     <span className="font-sans font-black text-paw-orange text-[clamp(8px,1.05vw,14px)] uppercase tracking-tight truncate">
-                                        {defaultRole || 'Volunteer'}
+                                        {viewingCert.role || defaultRole || 'Volunteer'}
                                     </span>
                                 </div>
 

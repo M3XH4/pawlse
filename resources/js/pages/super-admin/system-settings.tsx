@@ -13,7 +13,8 @@ import {
     Info, 
     MessageSquare,
     ShieldCheck,
-    CreditCard
+    CreditCard,
+    BookOpen
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
@@ -35,6 +36,7 @@ interface SystemSettingsProps {
         maintenance_mode: boolean;
         maintenance_message?: string;
         payment_simulation_enabled?: boolean;
+        ai_breed_guide_enabled?: boolean;
     };
 }
 
@@ -49,6 +51,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         maintenance_mode: settings.maintenance_mode,
         maintenance_message: settings.maintenance_message || defaultMaintenanceMessage,
         payment_simulation_enabled: settings.payment_simulation_enabled ?? false,
+        ai_breed_guide_enabled: settings.ai_breed_guide_enabled ?? true,
     });
 
     // Quick toggle modal state
@@ -277,6 +280,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         When enabled, the checkout page allows one-click sandbox payments for demos. When disabled, donors must provide a reference number and upload proof of payment for admin verification.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-orange-100 bg-orange-50/10 dark:border-orange-950/20 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="ai_breed_guide_enabled"
+                                    className="rounded border-gray-300 text-paw-orange focus:ring-paw-orange mt-1"
+                                    checked={data.ai_breed_guide_enabled}
+                                    onChange={(e) => setData('ai_breed_guide_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="ai_breed_guide_enabled"
+                                        className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"
+                                    >
+                                        <BookOpen className="h-4 w-4 text-paw-orange" />
+                                        Enable AI Breed Reference Guide (Handbook)
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, an interactive dog & cat breed handbook (book icon) is available in the admin AI Validation panel to assist admins with species and breed verification.
                                     </p>
                                 </div>
                             </div>

@@ -45,6 +45,8 @@ interface TaskModel {
     role: string;
     status: string;
     hours_logged: string;
+    guest_name?: string | null;
+    guest_email?: string | null;
     user?: {
         name: string;
     } | null;
@@ -56,7 +58,8 @@ interface TaskModel {
     } | null;
     pet_report?: {
         id: number;
-        pet_name?: string | null;
+        name?: string | null;
+        animal_type?: string | null;
         species?: string | null;
     } | null;
 }
@@ -77,6 +80,8 @@ interface VolunteerManagementProps {
     tasks: PaginatedData<TaskModel>;
     events: EventDropdownModel[];
     feedingSchedules: ScheduleDropdownModel[];
+    allVolunteers?: { id: number; name: string; email: string }[];
+    allRecipients?: { id: number; name: string; email: string; role?: string }[];
     filters: {
         search: string;
         status: string;
@@ -89,11 +94,16 @@ export default function VolunteerManagement({
     tasks,
     events,
     feedingSchedules,
+    allVolunteers = [],
+    allRecipients = [],
     filters
 }: VolunteerManagementProps) {
     const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks'>('applications');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
+
+    const volunteerList = allVolunteers.length > 0 ? allVolunteers : volunteers.data;
+    const recipientList = allRecipients.length > 0 ? allRecipients : volunteerList;
 
     // Reject application modal state
     const [rejectingApp, setRejectingApp] = useState<VolunteerApplicationModel | null>(null);
@@ -101,10 +111,10 @@ export default function VolunteerManagement({
 
     // Assign Task modal state
     const [isAssignOpen, setIsAssignOpen] = useState(false);
-    const [assignTargetUserId, setAssignTargetUserId] = useState('');
+    const [assignTargetUserId, setAssignTargetUserId] = useState(volunteerList[0]?.id?.toString() || '');
     const [assignActivityType, setAssignActivityType] = useState<'event' | 'feeding'>('event');
-    const [assignEventId, setAssignEventId] = useState('');
-    const [assignScheduleId, setAssignScheduleId] = useState('');
+    const [assignEventId, setAssignEventId] = useState(events[0]?.id?.toString() || '');
+    const [assignScheduleId, setAssignScheduleId] = useState(feedingSchedules[0]?.id?.toString() || '');
     const [assignRole, setAssignRole] = useState('Feeding');
 
     // Complete Task modal state
@@ -113,7 +123,7 @@ export default function VolunteerManagement({
 
     // Issue Certificate modal state
     const [isCertOpen, setIsCertOpen] = useState(false);
-    const [certTargetUserId, setCertTargetUserId] = useState('');
+    const [certTargetUserId, setCertTargetUserId] = useState(recipientList[0]?.id?.toString() || '');
     const [certTargetEventId, setCertTargetEventId] = useState('');
     const [certTitle, setCertTitle] = useState('Certificate of Appreciation');
     const [certDesc, setCertDesc] = useState('');
@@ -327,24 +337,24 @@ export default function VolunteerManagement({
                                 <table className="w-full text-left text-sm font-semibold border-collapse">
                                     <thead>
                                         <tr className="border-b dark:border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-                                            <th className="pb-3">Reference ID</th>
-                                            <th className="pb-3">Name</th>
-                                            <th className="pb-3">Role</th>
-                                            <th className="pb-3">Contact</th>
-                                            <th className="pb-3">Motivation</th>
-                                            <th className="pb-3">Status</th>
-                                            <th className="pb-3 text-right">Actions</th>
+                                            <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">Reference ID</th>
+                                            <th className="py-3.5 px-4 min-w-[160px]">Name</th>
+                                            <th className="py-3.5 px-4 min-w-[150px]">Role</th>
+                                            <th className="py-3.5 px-4 min-w-[140px]">Contact</th>
+                                            <th className="py-3.5 px-4 min-w-[200px]">Motivation</th>
+                                            <th className="py-3.5 px-4 min-w-[100px] whitespace-nowrap">Status</th>
+                                            <th className="py-3.5 px-4 text-right min-w-[100px] whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y dark:divide-gray-850">
                                         {applications.data.map((app) => (
-                                            <tr key={app.id} className="text-gray-700 dark:text-gray-300">
-                                                <td className="py-4 font-bold">{app.reference_number}</td>
-                                                <td className="py-4">
+                                            <tr key={app.id} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                                                <td className="py-4 px-4 font-bold whitespace-nowrap">{app.reference_number}</td>
+                                                <td className="py-4 px-4">
                                                     <p className="font-bold text-[#0B2340] dark:text-white">{app.full_name}</p>
                                                     <p className="text-xs text-gray-400">{app.email}</p>
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="py-4 px-4">
                                                     <p className="font-bold">{app.role}</p>
                                                     {app.role === 'Foster Volunteer' && (
                                                         <div className="mt-1 flex flex-wrap gap-1">
@@ -373,12 +383,12 @@ export default function VolunteerManagement({
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="py-4 px-4">
                                                     <p>{app.mobile}</p>
                                                     <p className="text-xs text-gray-400 font-bold">{app.address}</p>
                                                 </td>
-                                                <td className="py-4 max-w-xs truncate" title={app.why}>{app.why}</td>
-                                                <td className="py-4">
+                                                <td className="py-4 px-4 max-w-xs truncate" title={app.why}>{app.why}</td>
+                                                <td className="py-4 px-4 whitespace-nowrap">
                                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                                                         app.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                         app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
@@ -386,7 +396,7 @@ export default function VolunteerManagement({
                                                         {app.status}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 text-right">
+                                                <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     {app.status === 'pending' && (
                                                         <div className="flex justify-end gap-2">
                                                             <button
@@ -453,19 +463,19 @@ export default function VolunteerManagement({
                                 <table className="w-full text-left text-sm font-semibold border-collapse">
                                     <thead>
                                         <tr className="border-b dark:border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-                                            <th className="pb-3">Volunteer ID</th>
-                                            <th className="pb-3">Name</th>
-                                            <th className="pb-3">Email</th>
-                                            <th className="pb-3 text-right">Actions</th>
+                                            <th className="py-3.5 px-4 min-w-[120px] whitespace-nowrap">Volunteer ID</th>
+                                            <th className="py-3.5 px-4 min-w-[180px]">Name</th>
+                                            <th className="py-3.5 px-4 min-w-[200px]">Email</th>
+                                            <th className="py-3.5 px-4 text-right min-w-[140px] whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y dark:divide-gray-850">
                                         {volunteers.data.map((vol) => (
-                                            <tr key={vol.id} className="text-gray-700 dark:text-gray-300">
-                                                <td className="py-4 font-bold">#VOL-{vol.id}</td>
-                                                <td className="py-4 font-bold text-[#0B2340] dark:text-white">{vol.name}</td>
-                                                <td className="py-4">{vol.email}</td>
-                                                <td className="py-4 text-right">
+                                            <tr key={vol.id} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                                                <td className="py-4 px-4 font-bold whitespace-nowrap">#VOL-{vol.id}</td>
+                                                <td className="py-4 px-4 font-bold text-[#0B2340] dark:text-white">{vol.name}</td>
+                                                <td className="py-4 px-4">{vol.email}</td>
+                                                <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     <button
                                                         onClick={() => {
                                                             setAssignTargetUserId(String(vol.id));
@@ -496,26 +506,28 @@ export default function VolunteerManagement({
                                 <table className="w-full text-left text-sm font-semibold border-collapse">
                                     <thead>
                                         <tr className="border-b dark:border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-                                            <th className="pb-3">Volunteer</th>
-                                            <th className="pb-3">Assigned Activity</th>
-                                            <th className="pb-3">Role</th>
-                                            <th className="pb-3">Hours</th>
-                                            <th className="pb-3">Status</th>
-                                            <th className="pb-3 text-right">Actions</th>
+                                            <th className="py-3.5 px-4 min-w-[160px]">Volunteer</th>
+                                            <th className="py-3.5 px-4 min-w-[200px]">Assigned Activity</th>
+                                            <th className="py-3.5 px-4 min-w-[130px]">Role</th>
+                                            <th className="py-3.5 px-4 min-w-[100px] whitespace-nowrap">Hours</th>
+                                            <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">Status</th>
+                                            <th className="py-3.5 px-4 text-right min-w-[130px] whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y dark:divide-gray-850">
                                         {tasks.data.map((task) => (
-                                            <tr key={task.id} className="text-gray-700 dark:text-gray-300">
-                                                <td className="py-4 font-bold text-[#0B2340] dark:text-white">{task.user?.name}</td>
-                                                <td className="py-4">
+                                            <tr key={task.id} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                                                <td className="py-4 px-4 font-bold text-[#0B2340] dark:text-white">
+                                                    {task.user?.name || (task.guest_name ? `${task.guest_name} (Guest)` : 'Unknown Attendee')}
+                                                </td>
+                                                <td className="py-4 px-4">
                                                     <p className="font-bold">
                                                         {task.event
                                                             ? task.event.title
                                                             : task.feeding_schedule
                                                                 ? task.feeding_schedule.zone
                                                                 : task.pet_report
-                                                                    ? `Rescue: ${task.pet_report.pet_name || `Report #${task.pet_report.id}`}`
+                                                                    ? `Rescue: ${task.pet_report.name || task.pet_report.animal_type || `Report #${task.pet_report.id}`}`
                                                                     : 'General Assignment'}
                                                     </p>
                                                     <p className="text-xs text-gray-400 font-bold">
@@ -528,9 +540,9 @@ export default function VolunteerManagement({
                                                                     : 'Task'}
                                                     </p>
                                                 </td>
-                                                <td className="py-4">{task.role}</td>
-                                                <td className="py-4 font-bold">{parseFloat(task.hours_logged)} hrs</td>
-                                                <td className="py-4">
+                                                <td className="py-4 px-4">{task.role}</td>
+                                                <td className="py-4 px-4 font-bold whitespace-nowrap">{parseFloat(task.hours_logged)} hrs</td>
+                                                <td className="py-4 px-4 whitespace-nowrap">
                                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                                                         task.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                         task.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
@@ -538,7 +550,7 @@ export default function VolunteerManagement({
                                                         {task.status}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 text-right">
+                                                <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     {task.status === 'pending' && (
                                                         <div className="flex justify-end gap-2">
                                                             <button
@@ -624,7 +636,7 @@ export default function VolunteerManagement({
                                     onChange={(e) => setAssignTargetUserId(e.target.value)}
                                     className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
                                 >
-                                    {volunteers.data.map(v => <option key={v.id} value={v.id}>{v.name} (#{v.id})</option>)}
+                                    {volunteerList.map(v => <option key={v.id} value={v.id}>{v.name} ({v.email})</option>)}
                                 </select>
                             </div>
 
@@ -752,14 +764,18 @@ export default function VolunteerManagement({
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-4">Generates an official certificate using the ISF Certificate of Participation template with a unique ID and verification code.</p>
                         <form onSubmit={handleCertSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Recipient Volunteer *</label>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Recipient (Volunteer or User) *</label>
                                 <select
                                     required
                                     value={certTargetUserId}
                                     onChange={(e) => setCertTargetUserId(e.target.value)}
                                     className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
                                 >
-                                    {volunteers.data.map(v => <option key={v.id} value={v.id}>{v.name} (#{v.id})</option>)}
+                                    {recipientList.map(v => (
+                                        <option key={v.id} value={v.id}>
+                                            {v.name} ({v.email}){'role' in v && v.role ? ` - ${String(v.role).toUpperCase()}` : ''}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 

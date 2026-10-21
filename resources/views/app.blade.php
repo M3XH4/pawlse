@@ -1,20 +1,46 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'light') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Inline script to apply theme immediately and prevent flashing (defaulting to light mode) --}}
         <script>
             (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
+                try {
+                    const migrated = localStorage.getItem('appearance_initialized_v2');
+                    let stored = localStorage.getItem('appearance');
 
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
+                    if (!migrated) {
+                        if (!stored || stored === 'system') {
+                            stored = 'light';
+                            localStorage.setItem('appearance', 'light');
+                            document.cookie = 'appearance=light;path=/;max-age=' + (365 * 24 * 60 * 60) + ';SameSite=Lax';
+                        }
+                        localStorage.setItem('appearance_initialized_v2', 'true');
                     }
+
+                    const appearance = stored || '{{ $appearance ?? "light" }}';
+
+                    if (appearance === 'dark') {
+                        document.documentElement.classList.add('dark');
+                        document.documentElement.style.colorScheme = 'dark';
+                    } else if (appearance === 'system') {
+                        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                        if (prefersDark) {
+                            document.documentElement.classList.add('dark');
+                            document.documentElement.style.colorScheme = 'dark';
+                        } else {
+                            document.documentElement.classList.remove('dark');
+                            document.documentElement.style.colorScheme = 'light';
+                        }
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.style.colorScheme = 'light';
+                    }
+                } catch (e) {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
                 }
             })();
         </script>

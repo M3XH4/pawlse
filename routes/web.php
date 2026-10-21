@@ -32,6 +32,7 @@ use App\Http\Controllers\HonorController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
+use App\Http\Controllers\PublicTrackingController;
 use App\Http\Controllers\RehomingRequestController;
 use App\Http\Controllers\ResourceDownloadController;
 use App\Http\Controllers\SearchController;
@@ -73,19 +74,22 @@ Route::get('/resources/{resourceFile}/download', [ResourceDownloadController::cl
 Route::get('/animals', [AnimalOverviewController::class, 'index'])->name('animals.index');
 Route::get('/animals/{pet}', [AdoptController::class, 'show'])->name('animals.show');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
+Route::get('/track', [PublicTrackingController::class, 'index'])->name('track');
+Route::get('/adopt/track', [AdoptionApplicationController::class, 'track'])->name('adopt.track');
 Route::get('/adopt/{pet}', [AdoptController::class, 'show'])->name('adopt.show');
-Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply')->middleware('auth');
+Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply');
+Route::post('/adopt/applications/{application}/resubmit', [AdoptionApplicationController::class, 'resubmit'])->name('adopt.resubmit');
 Route::post('/shelter-visits', [ShelterVisitController::class, 'store'])->name('shelter-visits.store');
 Route::post('/rehoming-requests', [RehomingRequestController::class, 'store'])->name('rehoming-requests.store');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:5,1');
 
 Route::get('/donate', [DonateController::class, 'index'])->name('donate');
-Route::post('/donate/cash', [DonateController::class, 'storeCash'])->name('donate.store-cash');
-Route::post('/donate/in-kind', [DonateController::class, 'storeInKind'])->name('donate.store-inkind');
-Route::post('/donate/sponsor', [DonateController::class, 'storeSponsor'])->name('donate.store-sponsor');
+Route::post('/donate/cash', [DonateController::class, 'storeCash'])->name('donate.store-cash')->middleware('throttle:15,1');
+Route::post('/donate/in-kind', [DonateController::class, 'storeInKind'])->name('donate.store-inkind')->middleware('throttle:15,1');
+Route::post('/donate/sponsor', [DonateController::class, 'storeSponsor'])->name('donate.store-sponsor')->middleware('throttle:15,1');
 Route::get('/checkout/{ref}', [DonateController::class, 'checkout'])->name('donate.checkout');
 Route::post('/checkout/{ref}/pay', [DonateController::class, 'pay'])->name('donate.pay');
-Route::post('/checkout/{ref}/proof', [DonateController::class, 'submitProof'])->name('donate.checkout.proof');
+Route::post('/checkout/{ref}/proof', [DonateController::class, 'submitProof'])->name('donate.checkout.proof')->middleware('throttle:15,1');
 Route::post('/webhooks/payment', [PaymentWebhookController::class, 'handle'])->name('webhooks.payment');
 
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
@@ -97,8 +101,9 @@ Route::get('/rescue', [PetController::class, 'index'])->name('rescue');
 Route::post('/pet-reports/rescue', [PetReportController::class, 'storeRescue'])->name('pet-reports.store-rescue');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
-Route::post('/events/{event}/join', [EventController::class, 'joinEvent'])->name('events.join')->middleware('auth');
+Route::post('/events/{event}/join', [EventController::class, 'joinEvent'])->name('events.join')->middleware('throttle:15,1');
 Route::post('/events/{event}/leave', [EventController::class, 'leaveEvent'])->name('events.leave')->middleware('auth');
+Route::get('/certificates/{certificate}/view', [EventController::class, 'showPublicCertificate'])->name('certificates.public.show')->middleware('signed');
 Route::post('/feeding-schedules/{schedule}/join', [EventController::class, 'joinFeedingRoute'])->name('feeding-schedules.join')->middleware('auth');
 Route::post('/feeding-schedules/{schedule}/leave', [EventController::class, 'leaveFeedingRoute'])->name('feeding-schedules.leave')->middleware('auth');
 
@@ -108,6 +113,8 @@ Route::post('/blog/{post}/react', [BlogController::class, 'react'])->name('blog.
 Route::post('/blog/{post}/share', [BlogController::class, 'share'])->name('blog.share');
 
 Route::get('/missing', [PetReportController::class, 'missingIndex'])->name('missing');
+Route::get('/missing/track', [PublicTrackingController::class, 'missingTrack'])->name('missing.track');
+Route::post('/missing/reports/{report}/reunited', [PetReportController::class, 'markReunited'])->name('missing.reunited');
 Route::post('/pet-reports/missing', [PetReportController::class, 'storeMissing'])->name('pet-reports.store-missing');
 
 Route::inertia('/sos', 'sos')->name('sos');
@@ -144,9 +151,14 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::get('rescue-reports', [PetReportController::class, 'userReports'])->name('rescue-reports');
     Route::get('adoption-applications', [AdoptionApplicationController::class, 'index'])->name('adoption-applications');
+    Route::get('shelter-visits', [ShelterVisitController::class, 'index'])->name('shelter-visits');
+    Route::post('shelter-visits/{visit}/cancel', [ShelterVisitController::class, 'cancel'])->name('shelter-visits.cancel');
+    Route::get('rehoming-requests', [RehomingRequestController::class, 'index'])->name('rehoming-requests');
+    Route::post('rehoming-requests/{rehomingRequest}/cancel', [RehomingRequestController::class, 'cancel'])->name('rehoming-requests.cancel');
     Route::get('donations', [DonationController::class, 'index'])->name('donations');
     Route::get('missing-found', [PetReportController::class, 'userMissingFoundReports'])->name('missing-found');
     Route::get('joined-events', [EventController::class, 'userJoinedEvents'])->name('joined-events');
+    Route::get('certificates', [VolunteerDashboardController::class, 'userCertificates'])->name('certificates');
     Route::get('stories', [UserStoryController::class, 'index'])->name('stories.index');
     Route::post('stories', [UserStoryController::class, 'store'])->name('stories.store');
     Route::match(['put', 'post'], 'stories/{post}', [UserStoryController::class, 'update'])->name('stories.update');
@@ -215,6 +227,7 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
 
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
+    Route::post('adoption-management/shelter-visits/settings', [AdoptionManagementController::class, 'updateVisitSettings'])->name('adoption-management.shelter-visits.settings');
     Route::post('adoption-management/shelter-visits/{visit}/status', [AdoptionManagementController::class, 'updateVisitStatus'])->name('adoption-management.shelter-visits.update-status');
     Route::post('adoption-management/rehoming-requests/{rehomingRequest}/status', [AdoptionManagementController::class, 'updateRehomingStatus'])->name('adoption-management.rehoming-requests.update-status');
     Route::post('adoption-management/rehoming-requests/{rehomingRequest}/intake', [AdoptionManagementController::class, 'intakeRehomingRequest'])->name('adoption-management.rehoming-requests.intake');
@@ -251,6 +264,10 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('events', [EventManagementController::class, 'storeEvent'])->name('events.store');
     Route::put('events/{event}', [EventManagementController::class, 'updateEvent'])->name('events.update');
     Route::post('events/{event}/toggle', [EventManagementController::class, 'toggleEventStatus'])->name('events.toggle');
+    Route::post('events/{event}/approve', [EventManagementController::class, 'approveEvent'])->name('events.approve');
+    Route::post('events/{event}/reject', [EventManagementController::class, 'rejectEvent'])->name('events.reject');
+    Route::post('events/attendees/{task}/complete', [EventManagementController::class, 'completeAttendee'])->name('events.attendees.complete');
+    Route::post('events/{event}/issue-certificates', [EventManagementController::class, 'issueEventCertificates'])->name('events.issue-certificates');
     Route::delete('events/{event}', [EventManagementController::class, 'destroyEvent'])->name('events.destroy');
 
     Route::post('feeding-schedules', [EventManagementController::class, 'storeFeedingSchedule'])->name('feeding-schedules.store');
@@ -347,6 +364,21 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::post('help-desk/frequent-problems', [SuperAdminHelpDeskController::class, 'storeFrequentProblem'])->name('help-desk.frequent-problems.store');
     Route::put('help-desk/frequent-problems/{frequentProblem}', [SuperAdminHelpDeskController::class, 'updateFrequentProblem'])->name('help-desk.frequent-problems.update');
     Route::delete('help-desk/frequent-problems/{frequentProblem}', [SuperAdminHelpDeskController::class, 'destroyFrequentProblem'])->name('help-desk.frequent-problems.destroy');
+
+    // Event Management Dashboard (Super Admin)
+    Route::get('events', [EventManagementController::class, 'index'])->name('events');
+    Route::post('events', [EventManagementController::class, 'storeEvent'])->name('events.store');
+    Route::put('events/{event}', [EventManagementController::class, 'updateEvent'])->name('events.update');
+    Route::post('events/{event}/toggle', [EventManagementController::class, 'toggleEventStatus'])->name('events.toggle');
+    Route::post('events/{event}/approve', [EventManagementController::class, 'approveEvent'])->name('events.approve');
+    Route::post('events/{event}/reject', [EventManagementController::class, 'rejectEvent'])->name('events.reject');
+    Route::post('events/attendees/{task}/complete', [EventManagementController::class, 'completeAttendee'])->name('events.attendees.complete');
+    Route::post('events/{event}/issue-certificates', [EventManagementController::class, 'issueEventCertificates'])->name('events.issue-certificates');
+    Route::delete('events/{event}', [EventManagementController::class, 'destroyEvent'])->name('events.destroy');
+
+    Route::post('feeding-schedules', [EventManagementController::class, 'storeFeedingSchedule'])->name('feeding-schedules.store');
+    Route::put('feeding-schedules/{schedule}', [EventManagementController::class, 'updateFeedingSchedule'])->name('feeding-schedules.update');
+    Route::delete('feeding-schedules/{schedule}', [EventManagementController::class, 'destroyFeedingSchedule'])->name('feeding-schedules.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

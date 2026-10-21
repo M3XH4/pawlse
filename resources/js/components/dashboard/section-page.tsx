@@ -43,7 +43,7 @@ export function DashboardSectionPage({
 
             <div className="mx-auto flex w-full max-w-[96rem] flex-col gap-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <h2 className="font-fredoka text-3xl font-bold tracking-tight text-[#0B2340] dark:text-[#F8FAFC]">
                             {title}
                         </h2>
@@ -51,7 +51,7 @@ export function DashboardSectionPage({
                             {description}
                         </p>
                     </div>
-                    {badge}
+                    {badge && <div className="shrink-0">{badge}</div>}
                 </div>
 
                 {children ?? (

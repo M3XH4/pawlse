@@ -68,6 +68,28 @@ class VolunteerController extends Controller
             return redirect()->route('login');
         }
 
+        $existingApproved = VolunteerApplication::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->first();
+
+        if ($existingApproved !== null) {
+            return redirect()->back()->withErrors([
+                'error' => 'You already have an approved volunteer application.',
+            ]);
+        }
+
+        $existingPending = VolunteerApplication::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingPending !== null) {
+            return redirect()->back()->withErrors([
+                'error' => 'You already have a pending volunteer application currently under review.',
+            ]);
+        }
+
         $validated = $request->validate([
             'fullName' => ['required', 'string', 'max:255'],
             'mobile' => ['required', 'string', 'max:255'],
@@ -122,6 +144,8 @@ class VolunteerController extends Controller
         VolunteerApplicationSubmittedEvent::dispatch($application);
 
         AuditLog::log('volunteer_apply', "Submitted volunteer application (ref: {$referenceNumber})");
+
+        session()->flash('submitted_reference_number', $referenceNumber);
 
         return redirect()->back();
     }

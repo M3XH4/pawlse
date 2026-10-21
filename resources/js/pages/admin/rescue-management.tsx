@@ -47,6 +47,9 @@ interface PetReport {
   gender: string | null;
   name: string | null;
   color: string | null;
+  size?: string | null;
+  reward?: string | null;
+  medical_conditions?: string | null;
   last_seen_date: string | null;
   urgency: string | null;
   situation_type: string | null;
@@ -57,6 +60,13 @@ interface PetReport {
   contact_email: string | null;
   assigned_volunteer_id: number | null;
   assigned_volunteer?: UserModel | null;
+  ai_prediction_log_id?: number | null;
+  ai_validation_status?: 'pending' | 'approved' | 'rejected' | null;
+  ai_prediction_log?: {
+    id: number;
+    confidence: number | null;
+    output_data?: any;
+  } | null;
   created_at: string;
   photos?: PetReportPhoto[];
 }
@@ -535,110 +545,79 @@ export default function RescueManagement({
       {/* Details & Actions Overlay Modal */}
       <AnimatePresence>
         {selectedReport && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5">
             {/* Backdrop */}
             <div 
               onClick={() => setSelectedReport(null)}
-              className="absolute inset-0 bg-[#0B2340]/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#0B2340]/65 backdrop-blur-sm"
             />
 
-            {/* Modal Body */}
-            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] z-10 relative shadow-2xl border border-gray-100 dark:border-slate-800">
-              <button 
-                onClick={() => setSelectedReport(null)}
-                className="absolute top-6 right-6 p-2 bg-gray-100 dark:bg-slate-800 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="p-8 md:p-10">
-                {/* Header */}
-                <div className="flex flex-wrap items-center gap-3 mb-6">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border tracking-wider ${getStatusStyle(selectedReport.status)}`}>
-                    {selectedReport.status}
-                  </span>
-                  {getTypeBadge(selectedReport.type)}
-                  <span className="text-gray-400 font-bold text-xs">Report Reference ID: #{selectedReport.id}</span>
+            {/* Modal Container */}
+            <div className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[92vh] flex flex-col rounded-3xl z-10 relative shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden">
+              {/* Sticky Top Header */}
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/50 flex items-start justify-between gap-4 shrink-0">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border tracking-wider ${getStatusStyle(selectedReport.status)}`}>
+                      {selectedReport.status}
+                    </span>
+                    {getTypeBadge(selectedReport.type)}
+                    <span className="px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 font-black text-[10px] uppercase tracking-wider">
+                      Ref #{selectedReport.id}
+                    </span>
+                    {selectedReport.ai_prediction_log_id && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-[10px] font-black uppercase tracking-wider">
+                        <Sparkles size={11} />
+                        AI Assisted
+                        {selectedReport.ai_prediction_log?.confidence
+                          ? ` (${Math.round(selectedReport.ai_prediction_log.confidence * 100)}%)`
+                          : ''}
+                      </span>
+                    )}
+                    {selectedReport.is_duplicate && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-wider">
+                        <ShieldAlert size={11} /> Duplicate Flagged
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-fredoka text-xl sm:text-2xl font-bold text-[#0B2340] dark:text-white truncate">
+                    {selectedReport.type === 'sos'
+                      ? `SOS Emergency Report #${selectedReport.id}${selectedReport.situation_type ? ` — ${selectedReport.situation_type}` : ''}`
+                      : selectedReport.type === 'missing'
+                        ? `Missing Pet: ${selectedReport.name || `Report #${selectedReport.id}`}`
+                        : selectedReport.name
+                          ? `Animal: ${selectedReport.name}`
+                          : `Stray Report #${selectedReport.id}`}
+                  </h3>
                 </div>
 
-                <h3 className="font-fredoka text-3xl font-bold text-[#0B2340] dark:text-white mb-6">
-                  {selectedReport.name ? `Animal: ${selectedReport.name}` : `Stray Report #${selectedReport.id}`}
-                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setSelectedReport(null)}
+                  className="p-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
 
-                <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  {/* Left Column: Details */}
-                  <div className="space-y-6">
-                    <div className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Report Details</h4>
-                      <div className="grid grid-cols-2 gap-4 text-xs font-bold text-paw-navy dark:text-gray-300">
-                        <div>
-                          <p className="text-gray-400 font-semibold mb-0.5">Animal Type</p>
-                          <p className="text-sm font-black">{selectedReport.animal_type}</p>
+              {/* Scrollable 2-Column Body */}
+              <div className="p-5 sm:p-6 overflow-y-auto flex-1">
+                <div className="grid lg:grid-cols-12 gap-5 items-start">
+                  {/* Left Column (7 cols): Evidence Photos + Animal & Location Details */}
+                  <div className="lg:col-span-7 space-y-4">
+                    {/* Prominent Evidence Photos Section */}
+                    {selectedReport.photos && selectedReport.photos.length > 0 ? (
+                      <div className="bg-gray-50 dark:bg-slate-800/40 p-3.5 rounded-2xl border border-gray-100 dark:border-slate-800/80">
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span className="font-black text-[10px] text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Camera size={13} className="text-paw-orange" />
+                            Submitted Evidence Photos ({selectedReport.photos.length})
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-400">Click image to enlarge</span>
                         </div>
-                        <div>
-                          <p className="text-gray-400 font-semibold mb-0.5">Breed</p>
-                          <p className="text-sm font-black">{selectedReport.breed || 'Unknown'}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 font-semibold mb-0.5">Age Category</p>
-                          <p className="text-sm font-black">{selectedReport.age_category || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 font-semibold mb-0.5">Gender</p>
-                          <p className="text-sm font-black">{selectedReport.gender || 'N/A'}</p>
-                        </div>
-                        {selectedReport.color && (
-                          <div>
-                            <p className="text-gray-400 font-semibold mb-0.5">Color / Markings</p>
-                            <p className="text-sm font-black">{selectedReport.color}</p>
-                          </div>
-                        )}
-                        {selectedReport.urgency && (
-                          <div>
-                            <p className="text-gray-400 font-semibold mb-0.5">Urgency Level</p>
-                            <p className={`text-sm font-black uppercase ${
-                              selectedReport.urgency === 'high' ? 'text-red-500' :
-                              selectedReport.urgency === 'medium' ? 'text-amber-500' : 'text-green-500'
-                            }`}>{selectedReport.urgency}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <hr className="border-gray-100 dark:border-slate-800" />
-
-                      <div className="space-y-2 text-xs font-bold text-paw-navy dark:text-gray-300">
-                        <div className="flex gap-2 items-start">
-                          <MapPin size={16} className="text-paw-orange shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-gray-400 font-semibold leading-none mb-1">Incident Location</p>
-                            <p className="text-sm font-black leading-tight">{selectedReport.location}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 items-start">
-                          <Calendar size={16} className="text-paw-orange shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-gray-400 font-semibold leading-none mb-1">Date Submitted</p>
-                            <p className="text-sm font-black leading-tight">
-                              {new Date(selectedReport.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-3">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Description / Notes</h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 font-bold leading-relaxed whitespace-pre-wrap">
-                        {selectedReport.description || 'No additional details provided.'}
-                      </p>
-                    </div>
-
-                    {/* Photos list */}
-                    {selectedReport.photos && selectedReport.photos.length > 0 && (
-                      <div>
-                        <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest mb-3 block">Attached Photos ({selectedReport.photos.length})</h4>
-                        <div className="grid grid-cols-3 gap-2">
-                          {selectedReport.photos.map((photo) => {
+                        <div className={`grid gap-2.5 ${selectedReport.photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                          {selectedReport.photos.map((photo, idx) => {
                             const photoUrl = formatPhotoUrl(photo.path, selectedReport.animal_type);
                             return (
                               <a
@@ -646,48 +625,197 @@ export default function RescueManagement({
                                 href={photoUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group relative aspect-video rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/40 flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer"
-                                title="Click to view full size"
+                                className={`group relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:opacity-95 transition-all cursor-pointer ${
+                                  selectedReport.photos?.length === 1 ? 'h-52' : idx === 0 ? 'h-36 sm:col-span-2' : 'h-36'
+                                }`}
+                                title="Click to view full size in new tab"
                               >
-                                <ImageWithFallback src={photoUrl} alt="Incident attachment" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                <span className="absolute bottom-2 right-2 bg-black/60 p-1.5 rounded-lg text-white text-[9px]"><Eye size={10} /></span>
+                                <ImageWithFallback
+                                  src={photoUrl}
+                                  alt="Incident attachment"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                                <span className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-white text-[10px] font-bold flex items-center gap-1">
+                                  <Eye size={11} /> View
+                                </span>
                               </a>
                             );
                           })}
                         </div>
                       </div>
+                    ) : (
+                      <div className="bg-gray-50 dark:bg-slate-800/30 p-4 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 flex items-center gap-3 text-gray-400">
+                        <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                          <Camera size={18} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-paw-navy dark:text-gray-300">No Evidence Photos Attached</p>
+                          <p className="text-[11px] font-medium text-gray-400">Reporter submitted this case without photo attachments.</p>
+                        </div>
+                      </div>
                     )}
-                  </div>
 
-                  {/* Right Column: Actions / Updates */}
-                  <div className="space-y-6">
-                    {/* Reporter Info Panel */}
-                    <div className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Reporter Contact Information</h4>
-                      <div className="space-y-3 text-xs font-bold text-paw-navy dark:text-gray-300">
-                        <p>Name: <strong className="text-paw-orange">{selectedReport.contact_name || 'Anonymous'}</strong></p>
-                        <p className="flex items-center gap-1.5">
-                          <Phone size={14} className="text-gray-400" />
-                          <span>{selectedReport.contact_phone || 'N/A'}</span>
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <Mail size={14} className="text-gray-400" />
-                          <span>{selectedReport.contact_email || 'N/A'}</span>
-                        </p>
-                        <p className="text-[10px] text-gray-400 mt-2 font-semibold">
-                          Reporter Account status: {selectedReport.user_id ? 'Authenticated Account Holder' : 'Unauthenticated Guest'}
-                        </p>
+                    {/* Animal & Incident Attributes Card */}
+                    <div className="bg-gray-50 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-4">
+                      <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                        Animal & Incident Information
+                      </h4>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Species</p>
+                          <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">{selectedReport.animal_type}</p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Breed</p>
+                          <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5 truncate" title={selectedReport.breed || 'Unknown'}>
+                            {selectedReport.breed || 'Unknown'}
+                          </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Age / Stage</p>
+                          <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">{selectedReport.age_category || 'N/A'}</p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
+                          <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">{selectedReport.gender || 'N/A'}</p>
+                        </div>
+                        {selectedReport.color && (
+                          <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Color / Markings</p>
+                            <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5 truncate" title={selectedReport.color}>{selectedReport.color}</p>
+                          </div>
+                        )}
+                        {selectedReport.size && (
+                          <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Size</p>
+                            <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">{selectedReport.size}</p>
+                          </div>
+                        )}
+                        {selectedReport.situation_type && (
+                          <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Situation</p>
+                            <p className="text-xs font-black text-red-600 dark:text-red-400 mt-0.5">{selectedReport.situation_type}</p>
+                          </div>
+                        )}
+                        {selectedReport.urgency && (
+                          <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Urgency</p>
+                            <p className={`text-xs font-black uppercase mt-0.5 ${
+                              selectedReport.urgency === 'high' ? 'text-red-500' :
+                              selectedReport.urgency === 'medium' ? 'text-amber-500' : 'text-green-500'
+                            }`}>{selectedReport.urgency}</p>
+                          </div>
+                        )}
+                        {selectedReport.reward && (
+                          <div className="bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Reward</p>
+                            <p className="text-xs font-black text-emerald-600 mt-0.5">
+                              {String(selectedReport.reward).startsWith('₱') ? selectedReport.reward : `₱${selectedReport.reward}`}
+                            </p>
+                          </div>
+                        )}
+                        {selectedReport.medical_conditions && (
+                          <div className="col-span-2 sm:col-span-3 bg-rose-50/60 dark:bg-rose-950/20 p-2.5 rounded-xl border border-rose-100 dark:border-rose-900/50">
+                            <p className="text-[10px] text-rose-500 font-bold uppercase">Medical / Health Conditions</p>
+                            <p className="text-xs font-black text-rose-700 dark:text-rose-300 mt-0.5">{selectedReport.medical_conditions}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Location & Timestamps */}
+                      <div className="pt-3 border-t border-gray-200/70 dark:border-slate-800 grid sm:grid-cols-2 gap-3 text-xs">
+                        <div className="flex gap-2.5 items-start sm:col-span-2 bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <MapPin size={16} className="text-paw-orange shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-1">
+                              {selectedReport.type === 'missing' ? 'Last Seen Location' : 'Incident Location'}
+                            </p>
+                            <p className="text-xs sm:text-sm font-black text-paw-navy dark:text-white leading-snug break-words">
+                              {selectedReport.location}
+                            </p>
+                          </div>
+                        </div>
+
+                        {selectedReport.last_seen_date && (
+                          <div className="flex gap-2 items-center bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <Clock size={14} className="text-paw-orange shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase leading-none">Last Seen</p>
+                              <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">
+                                {new Date(selectedReport.last_seen_date).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 items-center bg-white dark:bg-slate-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <Calendar size={14} className="text-paw-orange shrink-0" />
+                          <div>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase leading-none">Date Submitted</p>
+                            <p className="text-xs font-black text-paw-navy dark:text-white mt-0.5">
+                              {new Date(selectedReport.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Status Update Form */}
-                    <form onSubmit={handleStatusSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Update Status</h4>
+                    {/* Description / Notes Card */}
+                    <div className="bg-gray-50 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2">
+                      <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                        Description & Field Notes
+                      </h4>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 font-semibold leading-relaxed whitespace-pre-wrap">
+                        {selectedReport.description || 'No additional details provided.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Column (5 cols): Reporter Info + Operational Actions */}
+                  <div className="lg:col-span-5 space-y-3.5">
+                    {/* 1. Reporter Contact Information */}
+                    <div className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                          Reporter Contact
+                        </h4>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                          selectedReport.user_id
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                            : 'bg-gray-200/70 text-gray-600 dark:bg-slate-700 dark:text-gray-300'
+                        }`}>
+                          {selectedReport.user_id ? 'Registered User' : 'Guest Reporter'}
+                        </span>
+                      </div>
+
+                      <div className="text-xs font-bold text-paw-navy dark:text-gray-200 space-y-1.5">
+                        <p className="text-sm font-black text-paw-orange">
+                          {selectedReport.contact_name || 'Anonymous Reporter'}
+                        </p>
+                        <div className="flex flex-wrap gap-2 pt-0.5">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 text-xs font-bold">
+                            <Phone size={12} className="text-paw-orange" />
+                            {selectedReport.contact_phone || 'No Phone'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 text-xs font-bold truncate max-w-full">
+                            <Mail size={12} className="text-paw-orange shrink-0" />
+                            <span className="truncate">{selectedReport.contact_email || 'No Email'}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Update Status Form */}
+                    <form onSubmit={handleStatusSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
+                      <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                        1. Update Report Status
+                      </h4>
                       <div className="flex items-stretch gap-2 w-full">
                         <select
                           value={updateStatusVal}
                           onChange={(e) => setUpdateStatusVal(e.target.value)}
-                          className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white"
+                          className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white focus:border-paw-orange"
                         >
                           <option value="pending">Pending Review</option>
                           <option value="assigned">Assigned</option>
@@ -697,22 +825,29 @@ export default function RescueManagement({
                         </select>
                         <button
                           type="submit"
-                          className="shrink-0 bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5"
+                          className="shrink-0 bg-paw-navy text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Check size={14} /> UPDATE
                         </button>
                       </div>
                     </form>
 
-                    {/* Volunteer Assignment Form */}
-                    <form onSubmit={handleAssignSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Assign Responder Volunteer</h4>
+                    {/* 3. Volunteer Assignment Form */}
+                    <form onSubmit={handleAssignSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
+                      <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                        2. Dispatch Responder Volunteer
+                      </h4>
                       {selectedReport.assigned_volunteer ? (
-                        <div className="bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900 text-xs font-bold text-blue-700 dark:text-blue-300">
-                          <p>Currently assigned: <strong>{selectedReport.assigned_volunteer.name}</strong> ({selectedReport.assigned_volunteer.email})</p>
+                        <div className="bg-blue-50/70 dark:bg-blue-950/30 px-3 py-2 rounded-xl border border-blue-100 dark:border-blue-900 text-xs font-bold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                          <CheckCircle2 size={14} className="shrink-0" />
+                          <span className="truncate">
+                            Assigned: <strong>{selectedReport.assigned_volunteer.name}</strong> ({selectedReport.assigned_volunteer.email})
+                          </span>
                         </div>
                       ) : (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 font-bold italic">No volunteer responder assigned yet.</p>
+                        <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">
+                          No volunteer responder assigned yet.
+                        </p>
                       )}
                       
                       <div className="flex items-stretch gap-2 w-full">
@@ -720,7 +855,7 @@ export default function RescueManagement({
                           required
                           value={assignVolunteerId}
                           onChange={(e) => setAssignVolunteerId(e.target.value)}
-                          className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate"
+                          className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate focus:border-paw-orange"
                         >
                           <option value="">Select volunteer...</option>
                           {volunteers.map((vol) => (
@@ -729,44 +864,49 @@ export default function RescueManagement({
                         </select>
                         <button
                           type="submit"
-                          className="shrink-0 bg-paw-orange text-white px-4 rounded-xl font-bold text-xs hover:bg-orange-600 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-paw-orange/20"
+                          className="shrink-0 bg-paw-orange text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-orange-600 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-paw-orange/20 cursor-pointer"
                         >
                           <User size={14} /> ASSIGN
                         </button>
                       </div>
                     </form>
 
-                    {/* Duplicates Linking Panel */}
-                    <div className="bg-gray-50 dark:bg-slate-800/40 p-6 rounded-2xl space-y-4">
-                      <h4 className="font-black text-xs text-gray-400 uppercase tracking-widest leading-none mb-1">Duplicate Management</h4>
+                    {/* 4. Duplicate Resolution Panel */}
+                    <div className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
+                      <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+                        3. Duplicate Management
+                      </h4>
                       {selectedReport.is_duplicate ? (
-                        <div className="space-y-3">
-                          <div className="bg-red-50/60 dark:bg-red-950/20 p-3 rounded-xl border border-red-100 dark:border-red-900 text-xs font-bold text-red-700 dark:text-red-300">
-                            <p className="flex items-center gap-1.5"><ShieldAlert size={14} /> Potential Duplicate Report</p>
+                        <div className="space-y-2.5">
+                          <div className="bg-red-50/70 dark:bg-red-950/30 px-3 py-2 rounded-xl border border-red-100 dark:border-red-900 text-xs font-bold text-red-700 dark:text-red-300">
+                            <p className="flex items-center gap-1.5"><ShieldAlert size={14} /> Flagged as Potential Duplicate</p>
                             {selectedReport.duplicate_of_id && (
-                              <p className="mt-1 text-[10px] text-red-500 font-black">
-                                Duplicate of Report ID: #{selectedReport.duplicate_of_id}
+                              <p className="mt-0.5 text-[10px] text-red-500 font-black">
+                                Linked to Primary Report ID: #{selectedReport.duplicate_of_id}
                               </p>
                             )}
                           </div>
                           <button
+                            type="button"
                             onClick={handleMarkNotDuplicate}
-                            className="w-full bg-white dark:bg-slate-800 hover:bg-gray-100 border border-gray-200 dark:border-slate-700 text-paw-navy dark:text-gray-300 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                            className="w-full bg-white dark:bg-slate-800 hover:bg-gray-100 border border-gray-200 dark:border-slate-700 text-paw-navy dark:text-gray-300 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <X size={14} className="text-red-500" /> Remove Duplicate Flag
                           </button>
                         </div>
                       ) : (
-                        <form onSubmit={handleDuplicateLink} className="space-y-3">
-                          <p className="text-xs text-gray-400 font-bold">Link this report manually to another active report if it is a duplicate:</p>
+                        <form onSubmit={handleDuplicateLink} className="space-y-2">
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold">
+                            Link to an existing primary report if this is a duplicate sighting:
+                          </p>
                           <div className="flex items-stretch gap-2 w-full">
                             <select
                               required
                               value={linkDuplicateOfId}
                               onChange={(e) => setLinkDuplicateOfId(e.target.value)}
-                              className="min-w-0 flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate"
+                              className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate focus:border-paw-orange"
                             >
-                              <option value="">Select original report...</option>
+                              <option value="">Select primary report...</option>
                               {duplicateCandidates
                                 .filter(candidate => candidate.id !== selectedReport.id)
                                 .map((candidate) => (
@@ -777,7 +917,7 @@ export default function RescueManagement({
                             </select>
                             <button
                               type="submit"
-                              className="shrink-0 bg-paw-navy text-white px-4 rounded-xl font-bold text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5"
+                              className="shrink-0 bg-paw-navy text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <LinkIcon size={14} /> LINK
                             </button>

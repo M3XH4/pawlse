@@ -1,4 +1,4 @@
-import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin, Star } from 'lucide-react';
+import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin, Star, Maximize2, Trash2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage, Head } from '@inertiajs/react';
@@ -8,12 +8,14 @@ import { Header } from '@/components/header';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { TransparencyAuditModal, type AuditRecord } from '@/components/donation/transparency-audit-modal';
-import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
 import { HonorWallTab, type CommunityHonoree, type PartnerShowcaseItem, type RecognitionMetricsData } from '@/components/donation/honor-wall-tab';
 import { ModernDatePicker } from '@/components/donation/modern-date-picker';
 import { InKindWishlistModal, type WishlistAnimal, type WishlistNeed } from '@/components/donation/in-kind-wishlist-modal';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 export interface AuditPartner {
     id: number;
@@ -158,8 +160,103 @@ export default function Donate({
         occasion: '',
         message: '',
         anonymous: false,
-        payment_method: 'gcash'
+        payment_method: 'gcash',
+        poster: null as File | null,
     });
+
+    const isFormDirty = Boolean(
+        // Cash tab dirty checks (ignore prefilled auth user data)
+        (cashForm.data.amount !== '500') ||
+        (cashForm.data.donor_name.trim() !== (auth?.user?.name || '') && cashForm.data.donor_name.trim() !== '') ||
+        (cashForm.data.donor_email.trim() !== (auth?.user?.email || '') && cashForm.data.donor_email.trim() !== '') ||
+        (cashForm.data.donor_mobile.trim() !== (auth?.user?.mobile || '') && cashForm.data.donor_mobile.trim() !== '') ||
+        cashForm.data.anonymous ||
+        // In-kind tab dirty checks
+        inKindForm.data.description.trim() !== '' ||
+        inKindForm.data.drop_off_date !== '' ||
+        Boolean(inKindForm.data.animal_donation_need_id) ||
+        (inKindForm.data.contact_person.trim() !== (auth?.user?.name || '') && inKindForm.data.contact_person.trim() !== '') ||
+        (inKindForm.data.donor_name.trim() !== (auth?.user?.name || '') && inKindForm.data.donor_name.trim() !== '') ||
+        inKindForm.data.anonymous ||
+        // Sponsor tab dirty checks
+        sponsorForm.data.date !== '' ||
+        sponsorForm.data.occasion.trim() !== '' ||
+        sponsorForm.data.message.trim() !== '' ||
+        Boolean(sponsorForm.data.poster) ||
+        (sponsorForm.data.fullName.trim() !== (auth?.user?.name || '') && sponsorForm.data.fullName.trim() !== '') ||
+        sponsorForm.data.anonymous
+    );
+
+    const {
+        showDialog: showLeaveModal,
+        handleContinueEditing,
+        handleLeaveAnyway,
+    } = useUnsavedChanges({
+        isDirty: isFormDirty && !showReceipt,
+        disabled: showReceipt || cashForm.processing || inKindForm.processing || sponsorForm.processing,
+    });
+
+    const [posterPreview, setPosterPreview] = useState<string | null>(null);
+    const [showPosterZoom, setShowPosterZoom] = useState(false);
+    const [isDraggingPoster, setIsDraggingPoster] = useState(false);
+    const posterInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please upload an image file (PNG, JPG, or WEBP).');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Poster image must be smaller than 5MB.');
+            return;
+        }
+
+        if (posterPreview) {
+            URL.revokeObjectURL(posterPreview);
+        }
+        const previewUrl = URL.createObjectURL(file);
+        setPosterPreview(previewUrl);
+        sponsorForm.setData('poster', file);
+        toast.success('Custom event poster selected! You can preview it below.');
+    };
+
+    const handlePosterDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDraggingPoster(false);
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please upload an image file (PNG, JPG, or WEBP).');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Poster image must be smaller than 5MB.');
+            return;
+        }
+
+        if (posterPreview) {
+            URL.revokeObjectURL(posterPreview);
+        }
+        const previewUrl = URL.createObjectURL(file);
+        setPosterPreview(previewUrl);
+        sponsorForm.setData('poster', file);
+        toast.success('Custom event poster selected! You can preview it below.');
+    };
+
+    const handleRemovePoster = () => {
+        if (posterPreview) {
+            URL.revokeObjectURL(posterPreview);
+        }
+        setPosterPreview(null);
+        sponsorForm.setData('poster', null);
+        if (posterInputRef.current) {
+            posterInputRef.current.value = '';
+        }
+    };
 
     // Prefill Authenticated User Information
     useEffect(() => {
@@ -254,6 +351,23 @@ export default function Donate({
 
     const submitCash = (e: React.FormEvent) => {
         e.preventDefault();
+        const amt = Number(cashForm.data.amount);
+        if (!cashForm.data.amount || isNaN(amt) || amt < 1 || !Number.isInteger(amt)) {
+            toast.error('Please enter a valid whole amount of at least ₱1.');
+            return;
+        }
+        if (amt > 10000000) {
+            toast.error('Maximum donation amount per transaction is ₱10,000,000.');
+            return;
+        }
+        if (!cashForm.data.donor_email.trim()) {
+            toast.error('Please provide a valid email address for your receipt.');
+            return;
+        }
+        if (cashForm.data.donor_mobile && !isValidPhoneNumber(cashForm.data.donor_mobile)) {
+            toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+            return;
+        }
         cashForm.post('/donate/cash', {
             onError: (errors) => {
                 Object.values(errors).forEach(err => toast.error(err));
@@ -267,10 +381,26 @@ export default function Donate({
             toast.error('Please select a drop-off date.');
             return;
         }
+        if (!isValidPhoneNumber(inKindForm.data.donor_mobile)) {
+            toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+            return;
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         inKindForm.post('/donate/in-kind', {
             onSuccess: () => {
-                setSubmitted(true);
-                inKindForm.reset();
+                inKindForm.setData(data => ({
+                    ...data,
+                    description: '',
+                    drop_off_date: '',
+                    quantity: '',
+                    animal_donation_need_id: '',
+                    anonymous: false,
+                    donor_name: auth?.user?.name || '',
+                    donor_email: auth?.user?.email || '',
+                    donor_mobile: auth?.user?.mobile || '',
+                    contact_person: auth?.user?.name || ''
+                }));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
             onError: (errors) => {
                 Object.values(errors).forEach(err => toast.error(err));
@@ -304,9 +434,18 @@ export default function Donate({
             toast.error('Please select a preferred feeding date.');
             return;
         }
+        if (!isValidPhoneNumber(sponsorForm.data.mobile)) {
+            toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+            return;
+        }
         sponsorForm.post('/donate/sponsor', {
+            forceFormData: true,
             onSuccess: () => {
                 setShowSponsorForm(false);
+                if (posterPreview) {
+                    URL.revokeObjectURL(posterPreview);
+                }
+                setPosterPreview(null);
             },
             onError: (errors) => {
                 Object.values(errors).forEach(err => toast.error(err));
@@ -413,6 +552,9 @@ export default function Donate({
                                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-xl">₱</span>
                                                             <input
                                                                 type="number"
+                                                                min="1"
+                                                                max="10000000"
+                                                                step="1"
                                                                 placeholder="Custom Amount"
                                                                 value={cashForm.data.amount}
                                                                 onChange={(e) => cashForm.setData('amount', e.target.value)}
@@ -447,6 +589,20 @@ export default function Donate({
                                                         </div>
                                                     </div>
 
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <label className="block text-sm font-bold text-gray-700">MOBILE NUMBER</label>
+                                                            <span className="text-xs text-gray-400 font-bold">Optional (for GCash / SMS updates)</span>
+                                                        </div>
+                                                        <input
+                                                            type="tel"
+                                                            value={cashForm.data.donor_mobile}
+                                                            onChange={(e) => cashForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
+                                                            className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
+                                                            placeholder="+63 912 124 1241"
+                                                        />
+                                                    </div>
+
                                                     <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"
@@ -460,10 +616,10 @@ export default function Donate({
 
                                                     <button
                                                         type="submit"
-                                                        disabled={cashForm.processing}
-                                                        className="w-full bg-paw-orange text-white py-5 rounded-[24px] font-black text-xl hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shadow-xl shadow-paw-orange/20 cursor-pointer"
+                                                        disabled={cashForm.processing || !cashForm.data.amount || Number(cashForm.data.amount) < 1}
+                                                        className="w-full bg-paw-orange text-white py-5 rounded-[24px] font-black text-xl hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shadow-xl shadow-paw-orange/20 cursor-pointer disabled:opacity-50"
                                                     >
-                                                        PROCEED TO DONATE ₱{cashForm.data.amount}
+                                                        PROCEED TO DONATE {cashForm.data.amount && Number(cashForm.data.amount) > 0 ? `₱${Number(cashForm.data.amount).toLocaleString()}` : ''}
                                                     </button>
 
                                                     <div className="flex items-center justify-center gap-4 text-gray-400 text-sm font-bold uppercase tracking-widest pt-4">
@@ -643,7 +799,7 @@ export default function Donate({
                                                                 value={inKindForm.data.donor_mobile}
                                                                 onChange={(e) => inKindForm.setData('donor_mobile', formatPhoneNumber(e.target.value))}
                                                                 className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-paw-orange transition-colors font-bold"
-                                                                placeholder="+63 9XX XXX XXXX"
+                                                                placeholder="+63 912 124 1241"
                                                             />
                                                         </div>
                                                     </div>
@@ -1044,39 +1200,6 @@ export default function Donate({
                 </div>
             </main>
 
-            {/* In-Kind Success Modal */}
-            <AnimatePresence>
-                {submitted && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-paw-navy/80 backdrop-blur-xl"
-                        />
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            className="bg-white w-full max-w-md rounded-[40px] p-10 text-center relative z-10 shadow-2xl"
-                        >
-                            <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                                <Check size={48} strokeWidth={3} />
-                            </div>
-                            <h2 className="text-4xl font-black text-paw-navy mb-4">Drop-off Scheduled!</h2>
-                            <p className="text-gray-600 text-lg leading-relaxed mb-10 font-bold">
-                                Thank you for your generosity! Your scheduled in-kind drop-off has been registered. An administrator will verify the items once they are dropped off.
-                            </p>
-                            <button
-                                onClick={() => setSubmitted(false)}
-                                className="w-full bg-paw-orange text-white py-5 rounded-[24px] font-black text-xl shadow-xl shadow-paw-orange/20 cursor-pointer"
-                            >
-                                CLOSE & CONTINUE
-                            </button>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
             {/* Transparency Audit History Modal */}
             <TransparencyAuditModal
                 isOpen={showAuditModal}
@@ -1213,7 +1336,7 @@ export default function Donate({
                                             value={sponsorForm.data.mobile}
                                             onChange={(e) => sponsorForm.setData('mobile', formatPhoneNumber(e.target.value))}
                                             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-paw-orange focus:bg-white transition-all font-bold text-sm"
-                                            placeholder="+63 9XX XXX XXXX"
+                                            placeholder="+63 912 124 1241"
                                         />
                                     </div>
                                     <div>
@@ -1255,6 +1378,112 @@ export default function Donate({
                                     />
                                 </div>
 
+                                {/* Custom Event Poster Upload with Live Image Preview */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-wider">
+                                            CUSTOM EVENT POSTER / PHOTO <span className="text-gray-400 font-normal">(Optional)</span>
+                                        </label>
+                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                            Featured on Event
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-medium">
+                                        Upload your own event poster or pet picture to be featured on the public volunteer feeding schedule.
+                                    </p>
+
+                                    <input
+                                        ref={posterInputRef}
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                                        className="hidden"
+                                        onChange={handlePosterChange}
+                                    />
+
+                                    {posterPreview ? (
+                                        <div className="relative rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-4">
+                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                {/* Poster Thumbnail */}
+                                                <div 
+                                                    className="relative group cursor-pointer shrink-0 rounded-xl overflow-hidden border border-amber-200 shadow-sm w-full sm:w-28 h-28 bg-gray-100"
+                                                    onClick={() => setShowPosterZoom(true)}
+                                                    title="Click to enlarge poster"
+                                                >
+                                                    <img 
+                                                        src={posterPreview} 
+                                                        alt="Custom Event Poster Preview" 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                                    />
+                                                    <div className="absolute inset-0 bg-paw-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1 backdrop-blur-[1px]">
+                                                        <Maximize2 size={16} /> Enlarge
+                                                    </div>
+                                                </div>
+
+                                                {/* File Details & Actions */}
+                                                <div className="space-y-2 flex-1 min-w-0 text-center sm:text-left">
+                                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-200/70 text-amber-900 text-[11px] font-black">
+                                                        <CheckCircle2 size={12} className="text-amber-700" />
+                                                        Custom Poster Attached
+                                                    </div>
+                                                    <p className="text-sm font-black text-paw-navy truncate">
+                                                        {sponsorForm.data.poster?.name || 'custom-event-poster.png'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 font-bold">
+                                                        {sponsorForm.data.poster ? `${(sponsorForm.data.poster.size / 1024 / 1024).toFixed(2)} MB` : ''} • Ready for public scheduling
+                                                    </p>
+
+                                                    <div className="flex items-center justify-center sm:justify-start gap-2 pt-1 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPosterZoom(true)}
+                                                            className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:border-paw-navy text-paw-navy font-black text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                                        >
+                                                            <Maximize2 size={13} /> Preview Poster
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => posterInputRef.current?.click()}
+                                                            className="px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-black text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <Upload size={13} /> Change Image
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleRemovePoster}
+                                                            className="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-black text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                                                            title="Remove poster"
+                                                        >
+                                                            <Trash2 size={13} /> Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => posterInputRef.current?.click()}
+                                            onDragOver={(e) => { e.preventDefault(); setIsDraggingPoster(true); }}
+                                            onDragLeave={(e) => { e.preventDefault(); setIsDraggingPoster(false); }}
+                                            onDrop={handlePosterDrop}
+                                            className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all duration-200 ${
+                                                isDraggingPoster 
+                                                    ? 'border-paw-orange bg-paw-orange/5' 
+                                                    : 'border-gray-250 hover:border-paw-orange hover:bg-amber-50/40 bg-gray-50/70'
+                                            }`}
+                                        >
+                                            <div className="w-10 h-10 mx-auto mb-2 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center">
+                                                <Upload size={20} />
+                                            </div>
+                                            <p className="text-xs font-black text-paw-navy">
+                                                Click to upload your event poster <span className="text-paw-orange">or drag and drop</span>
+                                            </p>
+                                            <p className="text-[11px] text-gray-400 font-bold mt-1">
+                                                PNG, JPG, or WEBP (Max 5MB) • Landscape or square recommended
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Anonymous Checkbox */}
                                 <div className="flex items-center gap-2.5 bg-gray-50/80 p-3 rounded-xl">
                                     <input
@@ -1291,6 +1520,57 @@ export default function Donate({
                         </motion.div>
                     </div>
                 )}
+
+                {/* Poster Full Size Lightbox Modal */}
+                {showPosterZoom && posterPreview && (
+                    <div
+                        className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setShowPosterZoom(false)}
+                    >
+                        <div
+                            className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-4 sm:p-6"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-paw-navy text-sm sm:text-base">Custom Event Poster Preview</h4>
+                                        <p className="text-[11px] text-gray-500 font-bold">This is how your banner will appear on the feeding event</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPosterZoom(false)}
+                                    className="p-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors cursor-pointer"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div className="max-h-[65vh] flex items-center justify-center overflow-hidden rounded-2xl bg-gray-900 p-2">
+                                <img
+                                    src={posterPreview}
+                                    alt="Poster Preview"
+                                    className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg"
+                                />
+                            </div>
+                            <div className="pt-4 flex items-center justify-between">
+                                <p className="text-xs text-gray-500 font-bold truncate max-w-xs">
+                                    {sponsorForm.data.poster?.name}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPosterZoom(false)}
+                                    className="px-5 py-2 bg-paw-navy text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-paw-orange transition-colors cursor-pointer"
+                                >
+                                    Close Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </AnimatePresence>
 
             {receiptData && (
@@ -1316,6 +1596,12 @@ export default function Donate({
                     issuedAt={receiptData.issuedAt}
                 />
             )}
+
+            <UnsavedChangesDialog
+                isOpen={showLeaveModal}
+                onContinueEditing={handleContinueEditing}
+                onLeaveAnyway={handleLeaveAnyway}
+            />
 
             <Footer />
         </div>

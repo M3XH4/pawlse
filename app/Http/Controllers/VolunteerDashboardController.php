@@ -22,7 +22,10 @@ class VolunteerDashboardController extends Controller
         $user = $request->user();
 
         $application = VolunteerApplication::query()
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
             ->latest()
             ->first();
 
@@ -157,7 +160,7 @@ class VolunteerDashboardController extends Controller
     }
 
     /**
-     * Show certificates.
+     * Show certificates for volunteer dashboard.
      */
     public function certificates(Request $request): Response
     {
@@ -167,13 +170,37 @@ class VolunteerDashboardController extends Controller
         $volunteerRole = $latestApplication?->role ?? 'Volunteer';
 
         $certificates = Certificate::with(['event', 'user'])
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(guest_email) = ?', [strtolower((string) $user->email)]);
+            })
             ->latest()
             ->paginate(5);
 
         return Inertia::render('volunteer/certificates', [
             'certificates' => $certificates,
             'defaultRole' => $volunteerRole,
+        ]);
+    }
+
+    /**
+     * Show certificates inside user dashboard.
+     */
+    public function userCertificates(Request $request): Response
+    {
+        $user = $request->user();
+
+        $certificates = Certificate::with(['event', 'user'])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(guest_email) = ?', [strtolower((string) $user->email)]);
+            })
+            ->latest()
+            ->paginate(5);
+
+        return Inertia::render('user/certificates', [
+            'certificates' => $certificates,
+            'defaultRole' => 'Participant',
         ]);
     }
 
@@ -185,7 +212,10 @@ class VolunteerDashboardController extends Controller
         $user = $request->user();
 
         $application = VolunteerApplication::query()
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
             ->latest()
             ->first();
 
@@ -208,7 +238,10 @@ class VolunteerDashboardController extends Controller
         $user = $request->user();
 
         $application = VolunteerApplication::query()
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
             ->latest()
             ->first();
 
@@ -221,6 +254,12 @@ class VolunteerDashboardController extends Controller
                 'role' => $application->role,
                 'why' => $application->why,
                 'experience' => $application->experience,
+                'foster_capacity' => $application->foster_capacity,
+                'foster_preference' => $application->foster_preference,
+                'foster_needs' => $application->foster_needs,
+                'medic_experience' => $application->medic_experience,
+                'medic_certifications' => $application->medic_certifications,
+                'transport_has_license' => (bool) $application->transport_has_license,
                 'created_at' => $application->created_at->toDateString(),
             ] : null,
         ]);
@@ -241,7 +280,10 @@ class VolunteerDashboardController extends Controller
         ]);
 
         $application = VolunteerApplication::query()
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
             ->latest()
             ->first();
 

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface CommunityHonorRecord {
     id: number;
@@ -73,6 +74,12 @@ export default function CommunityHonorManagement({
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingHonor, setEditingHonor] = useState<CommunityHonorRecord | null>(null);
     const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
+
+    // Permission enforcement
+    const { can } = usePermissions();
+    const canCreateHonor = can('community_honor.create');
+    const canEditHonor = can('community_honor.edit');
+    const canDeleteHonor = can('community_honor.delete');
 
     // Honoree Form
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
@@ -298,13 +305,15 @@ export default function CommunityHonorManagement({
                                 <span>Edit Metrics</span>
                             </button>
 
-                            <button
-                                onClick={openCreateModal}
-                                className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
-                            >
-                                <Plus size={16} />
-                                <span>Add Honoree</span>
-                            </button>
+                            {canCreateHonor && (
+                                <button
+                                    onClick={openCreateModal}
+                                    className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
+                                >
+                                    <Plus size={16} />
+                                    <span>Add Honoree</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </DashboardCard>
@@ -345,8 +354,8 @@ export default function CommunityHonorManagement({
                                                 </div>
                                             </td>
 
-                                            <td className="py-3 px-4">
-                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
+                                            <td className="py-3 px-4 whitespace-nowrap min-w-[130px]">
+                                                <span className="inline-flex items-center justify-center shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
                                                     {item.category.replace('_', ' ')}
                                                 </span>
                                             </td>
@@ -357,11 +366,11 @@ export default function CommunityHonorManagement({
                                                 </p>
                                             </td>
 
-                                            <td className="py-3 px-4">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                            <td className="py-3 px-4 min-w-[170px]">
+                                                <div className="flex flex-wrap gap-1.5 max-w-[240px]">
                                                     {item.badges && item.badges.length > 0 ? (
                                                         item.badges.map((b, i) => (
-                                                            <span key={i} className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[9px] font-bold">
+                                                            <span key={i} className="inline-flex items-center shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[9px] font-bold border border-blue-200/50 dark:border-blue-900/30">
                                                                 {b}
                                                             </span>
                                                         ))
@@ -371,9 +380,9 @@ export default function CommunityHonorManagement({
                                                 </div>
                                             </td>
 
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-4 whitespace-nowrap min-w-[120px]">
                                                 {item.tier ? (
-                                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                                                    <span className="inline-flex items-center justify-center shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
                                                         {item.tier}
                                                     </span>
                                                 ) : (
@@ -381,22 +390,29 @@ export default function CommunityHonorManagement({
                                                 )}
                                             </td>
 
-                                            <td className="py-3 px-4 text-right">
+                                            <td className="py-3 px-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
-                                                        title="Edit Supporter"
-                                                    >
-                                                        <Edit2 size={15} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(item)}
-                                                        className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
-                                                        title="Remove from Recognition"
-                                                    >
-                                                        <Trash2 size={15} />
-                                                    </button>
+                                                    {canEditHonor && (
+                                                        <button
+                                                            onClick={() => openEditModal(item)}
+                                                            className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
+                                                            title="Edit Supporter"
+                                                        >
+                                                            <Edit2 size={15} />
+                                                        </button>
+                                                    )}
+                                                    {canDeleteHonor && (
+                                                        <button
+                                                            onClick={() => handleDelete(item)}
+                                                            className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                                                            title="Remove from Recognition"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    )}
+                                                    {!canEditHonor && !canDeleteHonor && (
+                                                        <span className="text-gray-400 italic text-[11px]">Read-only</span>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

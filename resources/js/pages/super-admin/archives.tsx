@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 interface TrashedRecord {
     id: number;
-    type: 'user' | 'pet' | 'event' | 'rescue' | 'adoption' | 'volunteer';
+    type: 'user' | 'pet' | 'event' | 'rescue' | 'adoption' | 'volunteer' | 'partner' | 'resource' | 'honor';
     title: string;
     subtitle: string | null;
     deleted_at: string;
@@ -39,6 +39,9 @@ interface ArchiveProps {
         rescues: number;
         adoptions: number;
         volunteers: number;
+        partners?: number;
+        resources?: number;
+        honors?: number;
     };
 }
 
@@ -150,7 +153,7 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                         {/* Record Type Filter */}
                         <div className="relative">
                             <select
-                                className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white w-full"
+                                className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white w-full cursor-pointer"
                                 value={selectedType}
                                 onChange={handleTypeChange}
                             >
@@ -161,6 +164,9 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                                 <option value="rescue">Rescue Reports</option>
                                 <option value="adoption">Adoption Applications</option>
                                 <option value="volunteer">Volunteer Applications</option>
+                                <option value="partner">Partners & Clinics</option>
+                                <option value="resource">File & Resources</option>
+                                <option value="honor">Community Honors</option>
                             </select>
                         </div>
                     </div>
@@ -201,12 +207,15 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                                 ) : (
                                     items.data.map((item, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ring-1 ring-inset ${
                                                     item.type === 'user' ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/10' :
                                                     item.type === 'pet' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
                                                     item.type === 'event' ? 'bg-violet-50 text-violet-700 ring-violet-600/10' :
                                                     item.type === 'rescue' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/10' :
+                                                    item.type === 'partner' ? 'bg-blue-50 text-blue-700 ring-blue-600/10' :
+                                                    item.type === 'resource' ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/10' :
+                                                    item.type === 'honor' ? 'bg-amber-50 text-amber-700 ring-amber-600/10' :
                                                     'bg-amber-50 text-amber-700 ring-amber-600/10'
                                                 }`}>
                                                     {item.type}

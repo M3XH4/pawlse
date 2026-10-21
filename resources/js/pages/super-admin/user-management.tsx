@@ -5,11 +5,12 @@ import {
     Users, Plus, Search, Filter, Edit2, Trash2, X, Check, Clock, ShieldAlert,
     AlertCircle, RotateCcw, ShieldCheck, Shield, Key, Lock, CheckCircle2,
     ChevronDown, ChevronRight, Sparkles, UserCheck, Layers, HelpCircle,
-    Sliders, CheckSquare, Square, RefreshCw, AlertTriangle
+    Sliders, CheckSquare, Square, RefreshCw, AlertTriangle, User as UserIcon
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface UserRecord {
     id: number;
@@ -110,6 +111,13 @@ export default function UserManagement({
     const [newRoleName, setNewRoleName] = useState('');
     const [newRolePermissions, setNewRolePermissions] = useState<string[]>([]);
     const [isCreatingRole, setIsCreatingRole] = useState(false);
+
+    // Permission enforcement
+    const { can } = usePermissions();
+    const canCreateUser = can('users.create');
+    const canEditUser = can('users.edit');
+    const canDeleteUser = can('users.delete');
+    const canManageRoles = can('roles.manage');
 
     // User Form
     const { data, setData, post, put, reset, errors, processing } = useForm<{
@@ -364,16 +372,36 @@ export default function UserManagement({
         }
     };
 
-    const getRoleBadgeClasses = (roleName: string) => {
+    const renderRoleBadge = (roleName: string) => {
         switch (roleName) {
             case 'super-admin':
-                return 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-950/30 dark:text-rose-400';
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700 shadow-2xs ring-1 ring-inset ring-rose-500/25 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-500/30">
+                        <ShieldAlert className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                        <span>super-admin</span>
+                    </span>
+                );
             case 'admin':
-                return 'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-950/30 dark:text-violet-400';
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 shadow-2xs ring-1 ring-inset ring-violet-500/25 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-500/30">
+                        <Shield className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                        <span>admin</span>
+                    </span>
+                );
             case 'volunteer':
-                return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/30 dark:text-emerald-400';
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs ring-1 ring-inset ring-emerald-500/25 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30">
+                        <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>volunteer</span>
+                    </span>
+                );
             default:
-                return 'bg-slate-100 text-slate-700 ring-slate-600/20 dark:bg-slate-800 dark:text-slate-300';
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs ring-1 ring-inset ring-slate-400/25 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                        <UserIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                        <span>{roleName}</span>
+                    </span>
+                );
         }
     };
 
@@ -387,7 +415,7 @@ export default function UserManagement({
                 <div className="flex border-b border-gray-200 dark:border-slate-800">
                     <button
                         onClick={() => handleTabChange('users')}
-                        className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors ${
+                        className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors cursor-pointer ${
                             activeTab === 'users'
                                 ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
@@ -400,20 +428,22 @@ export default function UserManagement({
                         </span>
                     </button>
 
-                    <button
-                        onClick={() => handleTabChange('roles-permissions')}
-                        className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors ${
-                            activeTab === 'roles-permissions'
-                                ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                        }`}
-                    >
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Roles & Permissions</span>
-                        <span className="ml-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-                            {stats.total_roles} Roles
-                        </span>
-                    </button>
+                    {canManageRoles && (
+                        <button
+                            onClick={() => handleTabChange('roles-permissions')}
+                            className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors cursor-pointer ${
+                                activeTab === 'roles-permissions'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            }`}
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            <span>Roles & Permissions</span>
+                            <span className="ml-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                                {stats.total_roles} Roles
+                            </span>
+                        </button>
+                    )}
                 </div>
 
                 {/* ===================== TAB 1: USERS LIST ===================== */}
@@ -498,13 +528,15 @@ export default function UserManagement({
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={openCreateDrawer}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-indigo-500 transition"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    <span>Add User</span>
-                                </button>
+                                {canCreateUser && (
+                                    <button
+                                        onClick={openCreateDrawer}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-indigo-500 transition cursor-pointer"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        <span>Add User</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -545,51 +577,59 @@ export default function UserManagement({
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${getRoleBadgeClasses(user.role)}`}>
-                                                            {user.role}
-                                                        </span>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {renderRoleBadge(user.role)}
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
                                                         {user.direct_permissions && user.direct_permissions.length > 0 ? (
-                                                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/30 dark:text-emerald-300">
-                                                                <Key className="h-3 w-3" />
-                                                                {user.direct_permissions.length} Custom Grants
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/25 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                                <Key className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                                                <span>+{user.direct_permissions.length} Custom Grants</span>
                                                             </span>
                                                         ) : (
-                                                            <span className="text-xs text-gray-400 italic">Role Default ({user.all_permissions?.length || 0})</span>
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:ring-slate-700/60">
+                                                                <Lock className="h-3 w-3 opacity-50" />
+                                                                <span>Role Default ({user.all_permissions?.length || 0})</span>
+                                                            </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
                                                         {user.email_verified_at ? (
-                                                            <span className="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                                                                <Check className="h-4 w-4" />
-                                                                Verified
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                                <span>Verified</span>
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-bold">
-                                                                <Clock className="h-4 w-4" />
-                                                                Unverified
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950/30 dark:text-amber-400">
+                                                                <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                                                                <span>Unverified</span>
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400">{user.created_at}</td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            <button
-                                                                onClick={() => openEditDrawer(user)}
-                                                                className="rounded-lg p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 dark:text-indigo-400 transition"
-                                                                title="Edit user & permissions"
-                                                            >
-                                                                <Edit2 className="h-4 w-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDeleteUser(user)}
-                                                                className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-400 transition"
-                                                                title="Archive user"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
+                                                    <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{user.created_at}</td>
+                                                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                        <div className="flex justify-end items-center gap-1.5">
+                                                            {canEditUser && (
+                                                                <button
+                                                                    onClick={() => openEditDrawer(user)}
+                                                                    className="rounded-xl p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 dark:text-indigo-400 transition cursor-pointer"
+                                                                    title="Edit user & permissions"
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            {canDeleteUser && (
+                                                                <button
+                                                                    onClick={() => handleDeleteUser(user)}
+                                                                    className="rounded-xl p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-400 transition cursor-pointer"
+                                                                    title="Archive user"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            {!canEditUser && !canDeleteUser && (
+                                                                <span className="text-xs text-gray-400 italic">Read-only</span>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -620,9 +660,9 @@ export default function UserManagement({
                                                     </div>
                                                 </div>
 
-                                                <span className={`inline-flex shrink-0 items-center rounded-lg px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${getRoleBadgeClasses(user.role)}`}>
-                                                    {user.role}
-                                                </span>
+                                                <div className="shrink-0">
+                                                    {renderRoleBadge(user.role)}
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center justify-between text-xs bg-gray-50 dark:bg-slate-800/40 p-2.5 rounded-xl">
@@ -630,7 +670,7 @@ export default function UserManagement({
                                                     <span className="text-[10px] uppercase font-bold text-gray-400 block">Permissions</span>
                                                     {user.direct_permissions && user.direct_permissions.length > 0 ? (
                                                         <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center gap-1">
-                                                            <Key className="h-3 w-3" /> {user.direct_permissions.length} Grants
+                                                            <Key className="h-3 w-3" /> +{user.direct_permissions.length} Grants
                                                         </span>
                                                     ) : (
                                                         <span className="text-gray-400 italic">Default ({user.all_permissions?.length || 0})</span>
@@ -641,7 +681,7 @@ export default function UserManagement({
                                                     <span className="text-[10px] uppercase font-bold text-gray-400 block text-right">Email Status</span>
                                                     {user.email_verified_at ? (
                                                         <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-bold">
-                                                            <Check className="h-3.5 w-3.5" /> Verified
+                                                            <CheckCircle2 className="h-3.5 w-3.5" /> Verified
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1 text-amber-500 text-xs font-bold">
@@ -655,19 +695,23 @@ export default function UserManagement({
                                                 <span className="text-[11px] text-gray-400 font-medium">Joined {user.created_at}</span>
 
                                                 <div className="flex items-center gap-1.5">
-                                                    <button
-                                                        onClick={() => openEditDrawer(user)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 dark:text-indigo-300 transition flex items-center gap-1"
-                                                    >
-                                                        <Edit2 className="h-3.5 w-3.5" /> Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteUser(user)}
-                                                        className="p-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 transition"
-                                                        title="Archive user"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </button>
+                                                    {canEditUser && (
+                                                        <button
+                                                            onClick={() => openEditDrawer(user)}
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 dark:text-indigo-300 transition flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Edit2 className="h-3.5 w-3.5" /> Edit
+                                                        </button>
+                                                    )}
+                                                    {canDeleteUser && (
+                                                        <button
+                                                            onClick={() => handleDeleteUser(user)}
+                                                            className="p-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 transition cursor-pointer"
+                                                            title="Archive user"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -1111,9 +1155,9 @@ export default function UserManagement({
                                                             className="mt-1 text-indigo-600 focus:ring-indigo-500"
                                                         />
                                                         <div>
-                                                            <span className={`inline-block rounded-md px-2 py-0.5 text-xs font-bold ${getRoleBadgeClasses(roleOption)}`}>
-                                                                {roleOption}
-                                                            </span>
+                                                            <div>
+                                                                {renderRoleBadge(roleOption)}
+                                                            </div>
                                                             <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                                                 {roleOption === 'super-admin'
                                                                     ? 'Full root system privileges'

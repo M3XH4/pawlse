@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Calendar, CheckCircle2, Clock, XCircle, AlertCircle, Plus, ChevronRight, FileText } from 'lucide-react';
+import { Search, MapPin, Calendar, CheckCircle2, Clock, XCircle, AlertCircle, Plus, ChevronRight, FileText, Share2, Eye, HeartHandshake } from 'lucide-react';
 import { router, Link } from '@inertiajs/react';
 import {
     DashboardCard,
@@ -8,6 +8,11 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+import {
+    MissingPetDetailModal,
+    MissingPetShareModal,
+    MissingPetItem,
+} from '@/components/missing';
 
 interface PetReport {
     id: number;
@@ -19,6 +24,10 @@ interface PetReport {
     gender: string | null;
     name: string | null;
     color: string | null;
+    size?: string | null;
+    reward?: string | null;
+    medical_conditions?: string | null;
+    distinguishing_features?: string | null;
     last_seen_date: string | null;
     urgency: string | null;
     situation_type: string | null;
@@ -48,6 +57,8 @@ interface UserMissingFoundReportsProps {
 
 export default function UserMissingFoundReports({ reports, filters }: UserMissingFoundReportsProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [selectedPet, setSelectedPet] = useState<MissingPetItem | null>(null);
+    const [sharingPet, setSharingPet] = useState<MissingPetItem | null>(null);
 
     const handleSearch = () => {
         router.get(
@@ -55,6 +66,64 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
             { search: searchQuery },
             { preserveState: true }
         );
+    };
+
+    const toMissingPetItem = (report: PetReport): MissingPetItem => {
+        let statusText = 'STILL SEARCHING';
+        if (report.status === 'resolved') {
+            statusText = 'FOUND';
+        } else if (report.status === 'assigned') {
+            statusText = 'SEARCHING';
+        } else if (report.status === 'pending') {
+            statusText = 'PENDING REVIEW';
+        }
+
+        const photo = report.photos?.[0];
+        const imgUrl = photo ? formatPhotoUrl(photo.path) : 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800';
+
+        const rawDesc = String(report.description || '');
+        const [baseDesc, splitFeatures] = rawDesc.includes('Distinguishing Features:')
+            ? rawDesc.split('Distinguishing Features:')
+            : [rawDesc, ''];
+        const cleanDescription = baseDesc?.trim() || 'No description provided.';
+        const cleanFeatures = report.distinguishing_features || splitFeatures?.trim() || 'None reported';
+
+        return {
+            id: report.id,
+            name: report.name || 'Unnamed Pet',
+            type: report.animal_type || 'Dog',
+            breed: report.breed || 'Mixed Breed',
+            color: report.color || 'Mixed',
+            gender: report.gender ? (report.gender.charAt(0).toUpperCase() + report.gender.slice(1)) : 'Unknown',
+            age: report.age_category ? (report.age_category.charAt(0).toUpperCase() + report.age_category.slice(1)) : 'Young Adult',
+            size: report.size ? (report.size.charAt(0).toUpperCase() + report.size.slice(1)) : 'Medium',
+            reward: report.reward ? (String(report.reward).startsWith('₱') ? report.reward : `₱${report.reward}`) : null,
+            medicalConditions: report.medical_conditions || 'None',
+            distinguishingFeatures: cleanFeatures,
+            status: statusText,
+            rawStatus: report.status || 'pending',
+            lastSeen: report.location || 'Iligan City',
+            lastSeenDetails: cleanDescription,
+            date: report.last_seen_date ? new Date(report.last_seen_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : new Date(report.created_at).toLocaleDateString(),
+            exactDate: report.last_seen_date ? new Date(report.last_seen_date).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(report.created_at).toLocaleDateString(),
+            description: cleanDescription,
+            img: imgUrl,
+            owner: {
+                name: report.contact_name || 'Pet Guardian',
+                facebook: '',
+                phone: report.contact_phone || 'Not provided',
+                email: report.contact_email || '',
+                address: report.location || 'Iligan City',
+            },
+        };
+    };
+
+    const handleMarkReunited = (reportId: number) => {
+        if (confirm('Did you find your missing pet and want to mark this report as safely reunited?')) {
+            router.post(`/missing/reports/${reportId}/reunited`, {}, {
+                preserveScroll: true,
+            });
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -150,59 +219,96 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                 </DashboardCard>
             ) : (
                 <div className="space-y-4">
-                    {reports.data.map((report) => (
-                        <DashboardCard key={report.id}>
-                            <div className="flex flex-col md:flex-row gap-6">
-                                {/* Thumbnails */}
-                                {report.photos && report.photos.length > 0 ? (
-                                    <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
-                                        {report.photos.map((photo) => (
-                                            <ImageWithFallback
-                                                key={photo.id}
-                                                src={formatPhotoUrl(photo.path)}
-                                                alt="Pet report attachment"
-                                                className="w-20 h-20 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
-                                            />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="w-20 h-20 rounded-xl bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
-                                        <Search size={28} />
-                                    </div>
-                                )}
+                    {reports.data.map((report) => {
+                        const item = toMissingPetItem(report);
+                        return (
+                            <DashboardCard key={report.id}>
+                                <div className="flex flex-col md:flex-row gap-6">
+                                    {/* Thumbnails */}
+                                    {report.photos && report.photos.length > 0 ? (
+                                        <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
+                                            {report.photos.map((photo) => (
+                                                <ImageWithFallback
+                                                    key={photo.id}
+                                                    src={formatPhotoUrl(photo.path)}
+                                                    alt="Pet report attachment"
+                                                    className="w-20 h-20 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="w-20 h-20 rounded-xl bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
+                                            <Search size={28} />
+                                        </div>
+                                    )}
 
-                                {/* Report Details */}
-                                <div className="flex-1 space-y-3">
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
-                                            Missing Pet Alert: {report.name || 'Unnamed Pet'} ({report.animal_type})
-                                        </h3>
-                                        <div className="flex gap-2">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                                {report.breed || 'Unknown Breed'}
+                                    {/* Report Details */}
+                                    <div className="flex-1 space-y-3">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                                                    Missing Pet Alert: {report.name || 'Unnamed Pet'} ({report.animal_type})
+                                                </h3>
+                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
+                                                    {`MIS-${String(report.id).padStart(5, '0')}`}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                                    {report.breed || 'Unknown Breed'}
+                                                </span>
+                                                {getStatusBadge(report.status)}
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed line-clamp-2">
+                                            {report.description || 'No description provided.'}
+                                        </p>
+
+                                        <div className="flex flex-wrap gap-4 text-xs text-gray-400 font-bold">
+                                            <span className="flex items-center gap-1.5">
+                                                <MapPin size={14} className="text-paw-orange shrink-0" />
+                                                Last seen: {report.location}
                                             </span>
-                                            {getStatusBadge(report.status)}
+                                            <span className="flex items-center gap-1.5">
+                                                <Calendar size={14} className="text-paw-orange shrink-0" />
+                                                Reported on: {new Date(report.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedPet(item)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-paw-navy dark:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                                            >
+                                                <Eye size={13} /> View Details
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setSharingPet(item)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-paw-orange rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                                            >
+                                                <Share2 size={13} /> Share Alert
+                                            </button>
+
+                                            {report.status !== 'resolved' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleMarkReunited(report.id)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all ml-auto"
+                                                >
+                                                    <HeartHandshake size={14} /> My Pet is Reunited!
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed line-clamp-2">
-                                        {report.description || 'No description provided.'}
-                                    </p>
-
-                                    <div className="flex flex-wrap gap-4 text-xs text-gray-400 font-bold">
-                                        <span className="flex items-center gap-1.5">
-                                            <MapPin size={14} className="text-paw-orange shrink-0" />
-                                            Last seen: {report.location}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Calendar size={14} className="text-paw-orange shrink-0" />
-                                            Reported on: {new Date(report.created_at).toLocaleDateString()}
-                                        </span>
-                                    </div>
                                 </div>
-                            </div>
-                        </DashboardCard>
-                    ))}
+                            </DashboardCard>
+                        );
+                    })}
 
                     {/* Pagination */}
                     {reports.last_page > 1 && (
@@ -234,6 +340,21 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                     )}
                 </div>
             )}
+
+            {/* Pet Detail Modal */}
+            <MissingPetDetailModal
+                isOpen={!!selectedPet}
+                onClose={() => setSelectedPet(null)}
+                pet={selectedPet}
+                onShare={(pet) => setSharingPet(pet)}
+            />
+
+            {/* Pet Share Modal */}
+            <MissingPetShareModal
+                isOpen={!!sharingPet}
+                onClose={() => setSharingPet(null)}
+                pet={sharingPet}
+            />
         </DashboardSectionPage>
     );
 }

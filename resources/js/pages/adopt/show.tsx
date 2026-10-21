@@ -34,11 +34,12 @@ import { Footer } from '@/components/footer';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ShareModal } from '@/components/adoption/share-modal';
-import { ShelterVisitModal } from '@/components/adoption/shelter-visit-modal';
+import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
 import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
 
 interface PetShowProps {
   pet: AdoptPetDetail;
+  shelterVisitSettings?: ShelterVisitSettings;
 }
 
 const TABS = [
@@ -51,7 +52,7 @@ const TABS = [
 
 type TabType = typeof TABS[number];
 
-export default function PetShow({ pet }: PetShowProps) {
+export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
   const [activeTab, setActiveTab] = useState<TabType>('Overview');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -1067,6 +1068,7 @@ export default function PetShow({ pet }: PetShowProps) {
         onClose={() => setIsVisitOpen(false)}
         pets={[{ id: pet.id, name: pet.name }]}
         preselectedPetId={pet.id}
+        settings={shelterVisitSettings}
       />
 
       {/* Fullscreen Lightbox Modal */}

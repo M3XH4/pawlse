@@ -118,8 +118,23 @@ class HelpDeskController extends Controller
             'General Inquiry',
         ];
 
+        $escalatedTickets = HelpDeskTicket::query()
+            ->with([
+                'user:id,name,email,role,avatar_path',
+                'assignedTo:id,name',
+                'resolvedBy:id,name',
+                'replies' => fn ($q) => $q->with('user:id,name,role,avatar_path')->orderBy('created_at', 'asc'),
+            ])
+            ->where(function ($q) {
+                $q->where('is_escalated', true)
+                    ->orWhere('target_role', 'super-admin');
+            })
+            ->latest()
+            ->get();
+
         return Inertia::render('admin/help-desk', [
             'tickets' => $tickets,
+            'escalatedTickets' => $escalatedTickets,
             'frequentProblems' => $frequentProblems,
             'categories' => $categories,
             'stats' => $stats,

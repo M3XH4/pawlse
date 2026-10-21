@@ -19,12 +19,23 @@ import {
   AlertTriangle,
   Heart,
   ChevronRight,
+  Settings2,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+
+export interface ShelterVisitSettings {
+  max_visitors_per_slot: number;
+  max_visitors_per_booking: number;
+  closed_days: string[];
+  blackout_dates: string[];
+  is_accepting_visits: boolean;
+}
 
 export interface ShelterVisitData {
   id: number;
@@ -51,12 +62,41 @@ export interface ShelterVisitData {
 
 interface ShelterVisitsTabProps {
   visits?: ShelterVisitData[];
+  settings?: ShelterVisitSettings;
 }
 
-export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
+export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedVisit, setSelectedVisit] = useState<ShelterVisitData | null>(null);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [newBlackoutDate, setNewBlackoutDate] = useState('');
+
+  const {
+    data: configData,
+    setData: setConfigData,
+    post: postConfig,
+    processing: configProcessing,
+  } = useForm({
+    max_visitors_per_slot: settings?.max_visitors_per_slot ?? 10,
+    max_visitors_per_booking: settings?.max_visitors_per_booking ?? 10,
+    closed_days: settings?.closed_days ?? ['Sunday'],
+    blackout_dates: settings?.blackout_dates ?? [],
+    is_accepting_visits: settings?.is_accepting_visits ?? true,
+  });
+
+  const handleConfigSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    postConfig('/account/admin/adoption-management/shelter-visits/settings', {
+      preserveScroll: true,
+      onSuccess: () => {
+        setIsConfigOpen(false);
+      },
+      onError: (errs) => {
+        toast.error(Object.values(errs)[0] || 'Failed to update visit configuration.');
+      },
+    });
+  };
 
   const { data, setData, post, processing, reset } = useForm({
     status: 'confirmed' as 'pending' | 'confirmed' | 'completed' | 'cancelled',
@@ -82,12 +122,11 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
     post(`/account/admin/adoption-management/shelter-visits/${selectedVisit.id}/status`, {
       preserveScroll: true,
       onSuccess: () => {
-        toast.success(`Shelter visit #${selectedVisit.id} updated to ${data.status}.`);
         setSelectedVisit(null);
         reset();
       },
-      onError: () => {
-        toast.error('Failed to update visit status.');
+      onError: (errs) => {
+        toast.error(Object.values(errs)[0] || 'Failed to update visit status.');
       },
     });
   };
@@ -202,6 +241,24 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
               Review visitor appointment requests and confirm shelter scheduling.
             </p>
           </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-600 dark:text-gray-300">
+              <span className={`w-2 h-2 rounded-full ${configData.is_accepting_visits ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              <span>{configData.is_accepting_visits ? 'Accepting Visits' : 'Visits Paused'}</span>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <span>Cap: {configData.max_visitors_per_slot}/slot</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsConfigOpen(true)}
+              className="px-4 py-2.5 rounded-2xl bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-sm hover:shadow cursor-pointer active:scale-95"
+            >
+              <Settings2 size={15} />
+              <span>Configure Capacity & Days</span>
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -278,10 +335,15 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
                     <td className="py-4 px-4 text-xs font-bold text-gray-600 dark:text-gray-300">
                       <div className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-paw-orange" />
-                        <span>{visit.preferred_date}</span>
+                        <span>{visit.confirmed_date || visit.preferred_date}</span>
+                        {visit.confirmed_date && visit.confirmed_date !== visit.preferred_date && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-black">
+                            Rescheduled
+                          </span>
+                        )}
                       </div>
                       <p className="text-[10px] text-gray-400 font-medium mt-0.5">
-                        {visit.preferred_time_slot || 'Any slot'}
+                        {visit.confirmed_time_slot || visit.preferred_time_slot || 'Any slot'}
                       </p>
                     </td>
 
@@ -389,14 +451,11 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
                 {/* Confirmed Date & Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
-                      Confirmed Date
-                    </label>
-                    <input
-                      type="date"
+                    <ModernDatePicker
+                      label="Confirmed Date"
                       value={data.confirmed_date}
-                      onChange={(e) => setData('confirmed_date', e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
+                      onChange={(date) => setData('confirmed_date', date)}
+                      placeholder="Select confirmed date..."
                     />
                   </div>
 
@@ -450,6 +509,218 @@ export function ShelterVisitsTab({ visits = [] }: ShelterVisitsTabProps) {
                     ) : (
                       'Save Schedule Update'
                     )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Configuration Modal */}
+      <AnimatePresence>
+        {isConfigOpen && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsConfigOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full z-10 shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-hidden"
+            >
+              <div className="flex justify-between items-center pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-paw-orange flex items-center justify-center">
+                    <Settings2 size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-fredoka text-lg font-bold text-paw-navy dark:text-white">
+                      Shelter Visit Configuration
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Manage visitor capacity limits and operational schedules.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsConfigOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfigSubmit} className="space-y-5">
+                {/* Accepting Visits Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div>
+                    <span className="block text-xs font-bold text-paw-navy dark:text-white">
+                      Accepting Public Visits
+                    </span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Turn off temporarily during veterinary emergencies or construction.
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={configData.is_accepting_visits}
+                      onChange={(e) => setConfigData('is_accepting_visits', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
+                </div>
+
+                {/* Capacity Limits */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
+                      Max Visitors Per Slot
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      required
+                      value={configData.max_visitors_per_slot}
+                      onChange={(e) => setConfigData('max_visitors_per_slot', parseInt(e.target.value) || 10)}
+                      className="w-full px-4 py-2.5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
+                    />
+                    <span className="text-[10px] text-gray-400 mt-1 block">Sum of all bookings per slot</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
+                      Max Group Per Booking
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={30}
+                      required
+                      value={configData.max_visitors_per_booking}
+                      onChange={(e) => setConfigData('max_visitors_per_booking', parseInt(e.target.value) || 10)}
+                      className="w-full px-4 py-2.5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
+                    />
+                    <span className="text-[10px] text-gray-400 mt-1 block">Limit for a single submission</span>
+                  </div>
+                </div>
+
+                {/* Closed Days */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-2">
+                    Closed Days to Public
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                      const isClosed = (configData.closed_days || []).includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            const current = configData.closed_days || [];
+                            if (isClosed) {
+                              setConfigData('closed_days', current.filter((d) => d !== day));
+                            } else {
+                              setConfigData('closed_days', [...current, day]);
+                            }
+                          }}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                            isClosed
+                              ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+                              : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          {day} {isClosed ? '(Closed)' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-[10px] text-gray-400 mt-1.5 block">
+                    Days highlighted in red are marked closed for public visits.
+                  </span>
+                </div>
+
+                {/* Blackout / Holiday Dates */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-2">
+                    Holiday / Event Blackout Dates
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={newBlackoutDate}
+                      onChange={(e) => setNewBlackoutDate(e.target.value)}
+                      className="flex-1 px-3.5 py-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-paw-navy dark:text-white font-bold text-xs outline-none focus:border-paw-orange"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newBlackoutDate) return;
+                        const current = configData.blackout_dates || [];
+                        if (!current.includes(newBlackoutDate)) {
+                          setConfigData('blackout_dates', [...current, newBlackoutDate].sort());
+                        }
+                        setNewBlackoutDate('');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black text-xs transition-colors cursor-pointer"
+                    >
+                      Add Date
+                    </button>
+                  </div>
+                  {(configData.blackout_dates || []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {(configData.blackout_dates || []).map((dateStr) => (
+                        <span
+                          key={dateStr}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[11px] font-bold"
+                        >
+                          {dateStr}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfigData(
+                                'blackout_dates',
+                                (configData.blackout_dates || []).filter((d) => d !== dateStr)
+                              )
+                            }
+                            className="hover:text-rose-900 cursor-pointer"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsConfigOpen(false)}
+                    className="px-5 py-2.5 rounded-2xl text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={configProcessing}
+                    className="px-6 py-2.5 bg-paw-navy hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {configProcessing ? <Spinner showProgress label="Saving..." /> : 'Save Settings'}
                   </button>
                 </div>
               </form>

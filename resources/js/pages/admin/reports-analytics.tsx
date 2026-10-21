@@ -39,7 +39,7 @@ type Dataset = {
 type Summary = {
     rescues: { total: number; resolved: number; pending: number; duplicate: number };
     adoptions: { total: number; approved: number; rejected: number; pending: number };
-    donations: { total_cash: number; total_cash_count: number; total_inkind_count: number };
+    donations: { total_cash: number; current_month_cash?: number; total_cash_count: number; total_inkind_count: number };
     volunteers: { total: number; pending_apps: number };
 };
 
@@ -99,7 +99,7 @@ export default function ReportsAnalytics({
 
     // Map parallel arrays into unified objects for Recharts
     const chartData = activeLabels.map((label, index) => ({
-        name: filter === 'weekly' ? label : label.substring(0, 3),
+        name: filter === 'yearly' ? label : (filter === 'weekly' ? label : label.substring(0, 3)),
         Rescues: activeData.rescues[index] ?? 0,
         Adoptions: activeData.adoptions[index] ?? 0,
         Donations: activeData.donations[index] ?? 0,
@@ -134,8 +134,9 @@ export default function ReportsAnalytics({
 
     // Goal calculation (Target is PHP 50,000 monthly)
     const donationGoal = 50000;
+    const currentMonthDonation = summary.donations.current_month_cash ?? summary.donations.total_cash;
     const currentDonationProgress = Math.min(
-        Math.round((summary.donations.total_cash / donationGoal) * 100),
+        Math.round((currentMonthDonation / donationGoal) * 100),
         100
     );
 
@@ -359,7 +360,7 @@ export default function ReportsAnalytics({
                             
                             <div className="mt-6 flex items-baseline gap-2">
                                 <span className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
-                                    ₱{summary.donations.total_cash.toLocaleString()}
+                                    ₱{currentMonthDonation.toLocaleString()}
                                 </span>
                                 <span className="text-xs text-gray-400 font-semibold">/ ₱{donationGoal.toLocaleString()}</span>
                             </div>
@@ -382,7 +383,7 @@ export default function ReportsAnalytics({
                         <div className="mt-6 border-t border-gray-50 dark:border-slate-850 pt-4 text-xs text-gray-500 dark:text-gray-400">
                             {currentDonationProgress >= 100 
                                 ? '🎉 Target reached! Platform operations funded for the month.'
-                                : `₱${(donationGoal - summary.donations.total_cash).toLocaleString()} remaining to fund platform operations.`}
+                                : `₱${Math.max(0, donationGoal - currentMonthDonation).toLocaleString()} remaining to fund platform operations.`}
                         </div>
                     </div>
 

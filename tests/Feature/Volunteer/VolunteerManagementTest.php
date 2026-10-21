@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Models\AssignedTask;
 use App\Models\Event;
+use App\Models\FosterParent;
 use App\Models\PetReport;
 use App\Models\User;
 use App\Models\VolunteerApplication;
@@ -549,4 +550,124 @@ test('volunteer cannot update status of another volunteer assigned rescue report
 
     $report->refresh();
     expect($report->status)->toBe('pending');
+});
+
+test('user with pending application cannot submit duplicate volunteer application', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    VolunteerApplication::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Another Name',
+            'mobile' => '09123456789',
+            'email' => 'user@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Feeding',
+            'why' => 'I want to reapply.',
+        ]);
+
+    $response->assertSessionHasErrors(['error']);
+    expect(VolunteerApplication::where('user_id', $user->id)->count())->toBe(1);
+});
+
+test('user with approved application cannot submit new volunteer application', function () {
+    $user = User::factory()->create(['role' => Role::Volunteer->value]);
+
+    VolunteerApplication::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Approved User',
+            'mobile' => '09123456789',
+            'email' => 'approved@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Rescue',
+            'why' => 'I want to reapply.',
+        ]);
+
+    $response->assertSessionHasErrors(['error']);
+    expect(VolunteerApplication::where('user_id', $user->id)->count())->toBe(1);
+});
+
+test('user with rejected application can re-apply', function () {
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    VolunteerApplication::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'rejected',
+        'rejection_reason' => 'Missing ID verification',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post(route('volunteer.apply'), [
+            'fullName' => 'Reapplying User',
+            'mobile' => '09123456789',
+            'email' => 'reapply@example.com',
+            'address' => 'Iligan City',
+            'role' => 'Feeding',
+            'why' => 'I have updated my info.',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect();
+    expect(VolunteerApplication::where('user_id', $user->id)->where('status', 'pending')->count())->toBe(1);
+});
+
+test('approving foster volunteer sets location and pet preference on foster parent record', function () {
+    $admin = User::factory()->admin()->create();
+    $user = User::factory()->create(['role' => Role::User->value]);
+
+    $application = VolunteerApplication::factory()->create([
+        'user_id' => $user->id,
+        'role' => 'Foster Volunteer',
+        'address' => 'Barangay Pala-o, Iligan City',
+        'foster_capacity' => 4,
+        'foster_preference' => 'cats',
+        'foster_needs' => 'Need 2 crates',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.approve', $application));
+
+    $response->assertRedirect();
+
+    $fosterParent = FosterParent::where('user_id', $user->id)->first();
+    expect($fosterParent)->not->toBeNull();
+    expect($fosterParent->status)->toBe('approved');
+    expect($fosterParent->capacity)->toBe(4);
+    expect($fosterParent->location)->toBe('Barangay Pala-o, Iligan City');
+    expect($fosterParent->pet_preference)->toBe('cats');
+});
+
+test('volunteer profile information endpoint returns role-specific credentials', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $application = VolunteerApplication::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'approved',
+        'role' => 'Foster Volunteer',
+        'foster_capacity' => 3,
+        'foster_preference' => 'dogs',
+        'foster_needs' => 'Fenced yard',
+    ]);
+
+    $response = $this->actingAs($volunteer)
+        ->get(route('account.volunteer.profile'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('volunteer/profile-information')
+        ->where('profile.role', 'Foster Volunteer')
+        ->where('profile.foster_capacity', 3)
+        ->where('profile.foster_preference', 'dogs')
+        ->where('profile.foster_needs', 'Fenced yard')
+    );
 });

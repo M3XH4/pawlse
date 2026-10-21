@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShelterAnimalStatus;
 use App\Models\ShelterAnimal;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,8 +20,17 @@ class AdoptController extends Controller
             ->get()
             ->map(fn (ShelterAnimal $pet) => static::transformPet($pet));
 
+        $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
+            'max_visitors_per_slot' => 10,
+            'max_visitors_per_booking' => 10,
+            'closed_days' => ['Sunday'],
+            'blackout_dates' => [],
+            'is_accepting_visits' => true,
+        ]);
+
         return Inertia::render('adopt', [
             'pets' => $pets,
+            'shelterVisitSettings' => $shelterVisitSettings,
         ]);
     }
 
@@ -28,8 +38,17 @@ class AdoptController extends Controller
     {
         $pet->loadMissing(['medicalRecords', 'fosterPlacements.fosterParent.user', 'postAdoptionFollowUps']);
 
+        $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
+            'max_visitors_per_slot' => 10,
+            'max_visitors_per_booking' => 10,
+            'closed_days' => ['Sunday'],
+            'blackout_dates' => [],
+            'is_accepting_visits' => true,
+        ]);
+
         return Inertia::render('adopt/show', [
             'pet' => static::transformPet($pet),
+            'shelterVisitSettings' => $shelterVisitSettings,
         ]);
     }
 
@@ -71,7 +90,6 @@ class AdoptController extends Controller
             'gender' => $pet->gender ? ucfirst($pet->gender->value) : null,
             'color' => $pet->color,
             'weight' => $pet->weight,
-            'microchip_id' => $pet->microchip_id,
             'intake_type' => $pet->intake_type ?? 'rescue',
             'is_rescued' => $pet->is_rescued,
             'rescued_tag' => $pet->rescued_tag,

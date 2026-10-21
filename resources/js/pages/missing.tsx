@@ -1,185 +1,23 @@
 
-import { Search, MapPin, Calendar, Camera, Info, X, Phone, Share2, AlertTriangle, CheckCircle2, Upload, User, Mail, MessageCircle, Facebook, PawPrint, Activity, FileText, Zap, Twitter, Copy, Clock, Sparkles, Trash2, Plus } from 'lucide-react';
+import { Search, MapPin, Camera, Info, X, Phone, AlertTriangle, CheckCircle2, Upload, User, Mail, PawPrint, Activity, Plus, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState, useEffect } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
-
-const MISSING_PETS = [
-  {
-    id: 1,
-    name: 'Bantay',
-    type: 'Dog',
-    breed: 'Aspin (Mixed Breed)',
-    age: '3 Years Old',
-    gender: 'Male',
-    color: 'Brown with white patches',
-    size: 'Medium',
-    status: 'Missing',
-    lastSeen: 'Pala-o Market',
-    lastSeenDetails: 'Near the vegetable section, close to the main entrance. Was seen wandering around food stalls.',
-    date: 'Feb 15, 2026',
-    exactDate: 'February 15, 2026 - 2:30 PM',
-    reward: '₱2,000',
-    desc: 'Very friendly and responds to his name. Wearing a blue collar with a bell.',
-    description: 'Very friendly and responds to his name. Wearing a blue collar with a bell. Has a small scar above his right eye.',
-    distinguishingFeatures: 'Blue collar with bell, scar above right eye, white patch on chest',
-    medicalConditions: 'None',
-    img: 'https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8ZG9nfGVufDB8fDB8fHww',
-    owner: {
-      name: 'Maria Santos',
-      facebook: 'Maria Santos - Iligan',
-      phone: '+63 912 345 6789',
-      address: 'Pala-o, Iligan City',
-      email: 'maria.santos@email.com'
-    }
-  },
-  {
-    id: 2,
-    name: 'Lucky',
-    type: 'Dog',
-    breed: 'Poodle Mix',
-    age: '2 Years Old',
-    gender: 'Male',
-    color: 'White',
-    size: 'Small',
-    status: 'Found',
-    lastSeen: 'Tibanga Highway',
-    lastSeenDetails: 'Found shivering near a gas station. Was looking scared and cold.',
-    date: 'Feb 18, 2026',
-    exactDate: 'February 18, 2026 - 6:00 PM',
-    reward: null,
-    desc: 'White poodle mix, found shivering near a gas station.',
-    description: 'White poodle mix, found shivering near a gas station. Very friendly once warmed up. No collar.',
-    distinguishingFeatures: 'Curly white fur, black nose, no collar',
-    medicalConditions: 'None',
-    img: 'https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZG9nfGVufDB8fDB8fHww',
-    owner: {
-      name: 'John Cruz',
-      facebook: 'John Cruz',
-      phone: '+63 917 123 4567',
-      address: 'Tibanga, Iligan City',
-      email: 'john.cruz@email.com'
-    }
-  },
-  {
-    id: 3,
-    name: 'Siomai',
-    type: 'Cat',
-    breed: 'Tabby Mix',
-    age: '1 Year Old',
-    gender: 'Female',
-    color: 'Ginger/Orange',
-    size: 'Small',
-    status: 'Missing',
-    lastSeen: 'Villa Verde',
-    lastSeenDetails: 'Last seen near residential area. May be hiding in bushes or under cars.',
-    date: 'Feb 10, 2026',
-    exactDate: 'February 10, 2026 - 8:00 AM',
-    reward: '₱1,000',
-    desc: 'Ginger tabby cat, small size. Has a notched ear.',
-    description: 'Ginger tabby cat, small size. Has a notched ear. Very shy but responds to treats.',
-    distinguishingFeatures: 'Notched left ear, ginger stripes, green eyes',
-    medicalConditions: 'None',
-    img: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2F0fGVufDB8fDB8fHww',
-    owner: {
-      name: 'Sarah Lopez',
-      facebook: 'Sarah Lopez - Iligan City',
-      phone: '+63 920 456 7890',
-      address: 'Villa Verde, Iligan City',
-      email: 'sarah.lopez@email.com'
-    }
-  },
-  {
-    id: 4,
-    name: 'Brownie',
-    type: 'Dog',
-    breed: 'Golden Retriever Mix',
-    age: '8 Years Old (Senior)',
-    gender: 'Male',
-    color: 'Golden brown',
-    size: 'Large',
-    status: 'Missing',
-    lastSeen: 'Saray Proper',
-    lastSeenDetails: 'Last seen walking slowly near residential homes. May be disoriented.',
-    date: 'Feb 20, 2026',
-    exactDate: 'February 20, 2026 - 4:00 PM',
-    reward: '₱3,000',
-    desc: 'Golden retriever mix, senior dog. Needs medication.',
-    description: 'Golden retriever mix, senior dog. Needs daily medication for arthritis. Very gentle and calm.',
-    distinguishingFeatures: 'Gray muzzle, gentle eyes, wears red collar with medical tag',
-    medicalConditions: 'Takes daily medication for arthritis - URGENT',
-    img: 'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8Y2F0fGVufDB8fDB8fHww',
-    owner: {
-      name: 'Robert Tan',
-      facebook: 'Robert Tan',
-      phone: '+63 918 765 4321',
-      address: 'Saray Proper, Iligan City',
-      email: 'robert.tan@email.com'
-    }
-  },
-  {
-    id: 5,
-    name: 'Ricardo',
-    type: 'Cat',
-    breed: 'Tuxedo Cat',
-    age: '3 Years Old',
-    gender: 'Male',
-    color: 'Black and white',
-    size: 'Medium',
-    status: 'Searching',
-    lastSeen: 'MSU-IIT Area',
-    lastSeenDetails: 'Spotted near campus buildings. Very vocal and may meow loudly.',
-    date: 'Feb 19, 2026',
-    exactDate: 'February 19, 2026 - 11:00 AM',
-    reward: '₱1,500',
-    desc: 'Black and white tuxedo cat, very vocal.',
-    description: 'Black and white tuxedo cat, very vocal. Likes to meow loudly. Friendly with people.',
-    distinguishingFeatures: 'Black and white pattern, loud meow, white paws',
-    medicalConditions: 'None',
-    img: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fGNhdHxlbnwwfHwwfHx8MA%3D%3D',
-    owner: {
-      name: 'Anna Reyes',
-      facebook: 'Anna Reyes - ISF Volunteer',
-      phone: '+63 915 234 5678',
-      address: 'Poblacion, Iligan City',
-      email: 'anna.reyes@email.com'
-    }
-  },
-  {
-    id: 6,
-    name: 'Whiskers',
-    type: 'Cat',
-    breed: 'Tabby Mix',
-    age: '4 Years Old',
-    gender: 'Male',
-    color: 'Gray with white markings',
-    size: 'Medium',
-    status: 'Found',
-    lastSeen: 'Tambo Market',
-    lastSeenDetails: 'Found near fish vendors. Was looking for food.',
-    date: 'Feb 21, 2026',
-    exactDate: 'February 21, 2026 - 7:00 AM',
-    reward: null,
-    desc: 'Gray tabby cat with white paws. Very friendly.',
-    description: 'Gray tabby cat with white paws. Very friendly and calm. No collar.',
-    distinguishingFeatures: 'Gray fur with white paws, long whiskers, green eyes',
-    medicalConditions: 'None',
-    img: 'https://images.unsplash.com/photo-1503777119540-ce54b422baff?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGNhdHxlbnwwfHwwfHx8MA%3D%3D',
-    owner: {
-      name: 'Mark Dela Cruz',
-      facebook: 'Mark Dela Cruz',
-      phone: '+63 922 678 9012',
-      address: 'Tambo, Iligan City',
-      email: 'mark.delacruz@email.com'
-    }
-  },
-];
+import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import {
+  MissingPetCard,
+  MissingPetDetailModal,
+  MissingPetShareModal,
+  MissingPetItem,
+} from '@/components/missing';
 
 interface PetReport {
     id: number;
@@ -220,16 +58,42 @@ interface MissingPetsPageProps {
 }
 
 export default function MissingPetsPage({ reports, filters }: MissingPetsPageProps) {
+  const { auth, flash } = usePage<{
+    auth?: {
+      user?: {
+        name?: string;
+        email?: string;
+        phone?: string;
+      } | null;
+    };
+    flash?: {
+      error?: string | null;
+      submitted_report?: {
+        reference: string;
+        email?: string | null;
+        type?: string;
+        is_duplicate?: boolean;
+      } | null;
+    };
+  }>().props;
+  const authUser = auth?.user;
+
   const [searchQuery, setSearchQuery] = useState(filters?.search || '');
   const [statusFilter, setStatusFilter] = useState(filters?.status || 'All');
-  const [selectedPet, setSelectedPet] = useState<any>(null);
-  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedPet, setSelectedPet] = useState<MissingPetItem | null>(null);
+  const [sharingPet, setSharingPet] = useState<MissingPetItem | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [submittedPetName, setSubmittedPetName] = useState('');
+  const [submittedReportInfo, setSubmittedReportInfo] = useState<{
+    reference: string;
+    email?: string | null;
+    is_duplicate?: boolean;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
-  const [showShareMenu, setShowShareMenu] = useState(false);
   const [formData, setFormData] = useState({
     petName: '',
     petType: 'Dog',
@@ -243,15 +107,112 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     lastSeenLocation: '',
     lastSeenDate: '',
     description: '',
-    contactName: '',
-    contactPhone: '',
-    contactEmail: '',
+    contactName: authUser?.name || '',
+    contactPhone: authUser?.phone ? formatPhoneNumber(authUser.phone) : '',
+    contactEmail: authUser?.email || '',
     distinguishingFeatures: ''
   });
 
+  const isFormDirty = Boolean(
+    reportModalOpen &&
+    !reportSubmitted &&
+    (formData.petName.trim() ||
+      formData.breed.trim() ||
+      formData.color.trim() ||
+      formData.lastSeenLocation.trim() ||
+      formData.description.trim() ||
+      formData.contactName.trim() !== (authUser?.name || '') ||
+      formData.contactPhone.trim() !== (authUser?.phone ? formatPhoneNumber(authUser.phone) : '') ||
+      formData.contactEmail.trim() !== (authUser?.email || '') ||
+      uploadedFiles.length > 0)
+  );
+
+  const {
+    showDialog: showLeaveModal,
+    handleContinueEditing,
+    handleLeaveAnyway,
+    confirmAction,
+  } = useUnsavedChanges({
+    isDirty: isFormDirty,
+    disabled: reportSubmitted || submitting,
+  });
+
+  const mappedReports: MissingPetItem[] = useMemo(() => {
+    const rawData = reports?.data && reports.data.length > 0 ? reports.data : [];
+
+    return rawData
+      .filter((report: any) => report.status !== 'duplicate' && report.status !== 'cancelled')
+      .map((report: any) => {
+        let statusText = 'STILL SEARCHING';
+        if (report.status === 'resolved') {
+          statusText = 'FOUND';
+        } else if (report.status === 'assigned') {
+          statusText = 'SEARCHING';
+        } else if (report.status === 'pending') {
+          statusText = 'PENDING REVIEW';
+        }
+
+        const photosArray = report.photos || [];
+        const imgUrl = photosArray.length > 0
+          ? formatPhotoUrl(photosArray[0].path)
+          : 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800';
+
+        const rawDesc = String(report.description || '');
+        const hasFeaturesSplit = rawDesc.includes('Distinguishing Features:');
+        const [baseDesc, splitFeatures] = hasFeaturesSplit
+          ? rawDesc.split('Distinguishing Features:')
+          : [rawDesc, ''];
+        const cleanDescription = baseDesc?.trim() || 'No additional description provided.';
+        const cleanFeatures = report.distinguishing_features || splitFeatures?.trim() || 'None reported';
+
+        return {
+          id: report.id,
+          name: report.name || 'Unnamed Pet',
+          type: report.animal_type || 'Dog',
+          breed: report.breed || 'Mixed Breed',
+          color: report.color || 'Mixed',
+          gender: report.gender ? (report.gender.charAt(0).toUpperCase() + report.gender.slice(1)) : 'Unknown',
+          age: report.age_category ? (report.age_category.charAt(0).toUpperCase() + report.age_category.slice(1)) : 'Young Adult',
+          size: report.size ? (report.size.charAt(0).toUpperCase() + report.size.slice(1)) : 'Medium',
+          reward: report.reward ? (String(report.reward).startsWith('₱') ? report.reward : `₱${report.reward}`) : null,
+          medicalConditions: report.medical_conditions || 'None',
+          distinguishingFeatures: cleanFeatures,
+          status: statusText,
+          rawStatus: report.status || 'pending',
+          lastSeen: report.location || 'Iligan City',
+          lastSeenDetails: cleanDescription,
+          date: report.last_seen_date ? new Date(report.last_seen_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (report.created_at ? new Date(report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently'),
+          exactDate: report.last_seen_date ? new Date(report.last_seen_date).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : (report.created_at ? new Date(report.created_at).toLocaleDateString() : 'Recently'),
+          description: cleanDescription,
+          img: imgUrl,
+          owner: {
+            name: report.contact_name || 'Community Member',
+            facebook: '',
+            phone: report.contact_phone || 'Not provided',
+            email: report.contact_email || '',
+            address: report.location || 'Iligan City',
+          },
+        };
+      });
+  }, [reports]);
+
+  // Deep-link to pet if `?pet=id` exists in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const petIdParam = urlParams.get('pet');
+      if (petIdParam) {
+        const found = mappedReports.find(p => String(p.id) === String(petIdParam));
+        if (found) {
+          setSelectedPet(found);
+        }
+      }
+    }
+  }, [mappedReports]);
+
   // Lock background scroll when any modal is open
   useEffect(() => {
-    const isModalOpen = reportModalOpen || selectedPet !== null || showContactModal;
+    const isModalOpen = reportModalOpen || selectedPet !== null || sharingPet !== null;
     if (isModalOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -259,56 +220,129 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [reportModalOpen, selectedPet, showContactModal]);
+  }, [reportModalOpen, selectedPet, sharingPet]);
 
   // Keyboard navigation (Escape to close modals)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showContactModal) {
-          setShowContactModal(false);
+        if (sharingPet) {
+          setSharingPet(null);
         } else if (reportModalOpen) {
           setReportModalOpen(false);
         } else if (selectedPet !== null) {
           setSelectedPet(null);
-          setShowShareMenu(false);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [reportModalOpen, selectedPet, showContactModal]);
+  }, [reportModalOpen, selectedPet, sharingPet]);
 
   const handleRemoveFile = (indexToRemove: number) => {
+    const previewToRevoke = filePreviews[indexToRemove];
+    if (previewToRevoke && previewToRevoke.startsWith('blob:')) {
+      URL.revokeObjectURL(previewToRevoke);
+    }
     setUploadedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
     setFilePreviews(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name === 'contactPhone') {
+      setFormData({ ...formData, [name]: formatPhoneNumber(value) });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processFiles = (filesToAdd: File[]) => {
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    for (const file of filesToAdd) {
+      const isImage =
+        file.type.startsWith('image/') ||
+        /\.(jpe?g|png|webp|gif|bmp|heic|heif|svg)$/i.test(file.name);
+
+      if (!isImage) {
+        toast.error(`"${file.name}" is not a supported image file.`);
+        continue;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds the 10MB file size limit.`);
+        continue;
+      }
+
+      validFiles.push(file);
+      validPreviews.push(URL.createObjectURL(file));
+    }
+
+    if (validFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...validFiles]);
+      setFilePreviews(prev => [...prev, ...validPreviews]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
-
-    setUploadedFiles(files);
-
-    const newPreviews: string[] = [];
-    for (const file of files) {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            const preview = await new Promise<string>((resolve) => {
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
-            });
-            newPreviews.push(preview);
-        } else if (file.type.startsWith('video/')) {
-            newPreviews.push(URL.createObjectURL(file));
-        }
+    processFiles(files);
+    if (e.target) {
+      e.target.value = '';
     }
-    setFilePreviews(newPreviews);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  };
+
+  const resetReportForm = () => {
+    filePreviews.forEach((preview) => {
+      if (preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+    setUploadedFiles([]);
+    setFilePreviews([]);
+    setFormData({
+      petName: '',
+      petType: 'Dog',
+      breed: '',
+      color: '',
+      gender: 'Male',
+      ageCategory: 'Adult',
+      size: 'Medium',
+      reward: '',
+      medicalConditions: '',
+      lastSeenLocation: '',
+      lastSeenDate: '',
+      description: '',
+      contactName: authUser?.name || '',
+      contactPhone: authUser?.phone ? formatPhoneNumber(authUser.phone) : '',
+      contactEmail: authUser?.email || '',
+      distinguishingFeatures: ''
+    });
   };
 
   const handleFilterChange = (newStatus: string) => {
@@ -363,37 +397,39 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
         data.append('images[]', file);
     });
 
+    const targetPetName = formData.petName;
+    const targetEmail = formData.contactEmail || authUser?.email || '';
+
     router.post('/pet-reports/missing', data, {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: () => {
-            setReportSubmitted(true);
-            toast.success('Missing pet report submitted successfully!');
-            setTimeout(() => {
-                setReportModalOpen(false);
-                setReportSubmitted(false);
-                setFormData({
-                    petName: '',
-                    petType: 'Dog',
-                    breed: '',
-                    color: '',
-                    gender: 'Male',
-                    ageCategory: 'Adult',
-                    size: 'Medium',
-                    reward: '',
-                    medicalConditions: '',
-                    lastSeenLocation: '',
-                    lastSeenDate: '',
-                    description: '',
-                    contactName: '',
-                    contactPhone: '',
-                    contactEmail: '',
-                    distinguishingFeatures: ''
-                });
-                setUploadedFiles([]);
-                setFilePreviews([]);
+        onSuccess: (page) => {
+            const pageFlash = page.props.flash as {
+                error?: string | null;
+                submitted_report?: {
+                    reference: string;
+                    email?: string | null;
+                    is_duplicate?: boolean;
+                } | null;
+            } | undefined;
+            if (pageFlash?.error) {
+                toast.error(pageFlash.error);
                 setSubmitting(false);
-            }, 2000);
+                return;
+            }
+            if (pageFlash?.submitted_report) {
+                setSubmittedReportInfo(pageFlash.submitted_report);
+            } else {
+                setSubmittedReportInfo({
+                    reference: '',
+                    email: targetEmail || null,
+                    is_duplicate: false,
+                });
+            }
+            setSubmittedPetName(targetPetName);
+            setReportSubmitted(true);
+            setSubmitting(false);
+            resetReportForm();
         },
         onError: (errors) => {
             const message = Object.values(errors).flat().join(' ');
@@ -401,49 +437,6 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
             setSubmitting(false);
         }
     });
-  };
-
-  const handleShare = async (pet: any) => {
-    const shareData = {
-      title: `Help Find ${pet.name} - ${pet.status}`,
-      text: `${pet.status === 'Missing' ? 'MISSING PET ALERT' : pet.status === 'Found' ? 'FOUND PET' : 'SEARCHING FOR OWNER'}: ${pet.name}, a ${pet.breed} (${pet.type}). Last seen at ${pet.lastSeen} on ${pet.date}. ${pet.reward ? `Reward: ${pet.reward}` : ''} Contact: ${pet.owner.phone}`,
-      url: window.location.href
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        toast.success('Shared successfully!');
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          toast.error('Failed to share');
-        }
-      }
-    } else {
-      setShowShareMenu(true);
-    }
-  };
-
-  const shareToFacebook = (pet: any) => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(`Help Find ${pet.name} - ${pet.status}: ${pet.description}`);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank');
-    toast.success('Opening Facebook...');
-    setShowShareMenu(false);
-  };
-
-  const shareToTwitter = (pet: any) => {
-    const text = encodeURIComponent(`🚨 ${pet.status === 'Missing' ? 'MISSING PET' : pet.status === 'Found' ? 'FOUND PET' : 'SEARCHING'}: ${pet.name} (${pet.breed})\nLast seen: ${pet.lastSeen}\n${pet.reward ? `Reward: ${pet.reward}\n` : ''}Help reunite! #MissingPet #IliganCity`);
-    const url = encodeURIComponent(window.location.href);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
-    toast.success('Opening Twitter...');
-    setShowShareMenu(false);
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success('Link copied to clipboard!');
-    setShowShareMenu(false);
   };
 
   return (
@@ -517,95 +510,23 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
           {/* Grid of pets */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {(() => {
-              const mappedReports = (reports?.data || []).map((report: any) => {
-                let statusText = 'Missing';
-                if (report.status === 'resolved') {
-                  statusText = 'Found';
-                } else if (report.status === 'assigned') {
-                  statusText = 'Searching';
-                }
-
-                const photosArray = report.photos || [];
-                const imgUrl = photosArray.length > 0
-                  ? formatPhotoUrl(photosArray[0].path)
-                  : 'https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?w=500&auto=format&fit=crop&q=60';
-
-                return {
-                  id: report.id,
-                  name: report.name || 'Unnamed Pet',
-                  type: report.animal_type || 'Pet',
-                  breed: report.breed || 'Unknown Breed',
-                  color: report.color || 'N/A',
-                  gender: report.gender || 'Unknown',
-                  age: report.age_category || 'Adult',
-                  size: report.size || 'Medium',
-                  reward: report.reward ? (String(report.reward).startsWith('₱') ? report.reward : `₱${report.reward}`) : null,
-                  medicalConditions: report.medical_conditions || 'None',
-                  distinguishingFeatures: report.distinguishing_features || (report.description?.includes('Distinguishing Features:') ? report.description.split('Distinguishing Features:')[1]?.trim() : 'None reported'),
-                  status: statusText,
-                  lastSeen: report.location || 'Iligan City',
-                  lastSeenDetails: report.description || 'Reported missing pet.',
-                  date: new Date(report.last_seen_date || report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
-                  exactDate: report.last_seen_date ? new Date(report.last_seen_date).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(report.created_at).toLocaleDateString(),
-                  desc: report.description || 'No description provided.',
-                  description: report.description || 'No description provided.',
-                  img: imgUrl,
-                  owner: {
-                    name: report.contact_name || 'Anonymous',
-                    facebook: 'Iligan Stray Feeders Community',
-                    phone: report.contact_phone || 'N/A',
-                    email: report.contact_email || 'N/A',
-                    address: report.location || 'Iligan City'
-                  }
-                };
-              });
-
-              if (mappedReports.length === 0) {
-                return (
-                  <div className="col-span-full bg-white rounded-[40px] p-16 text-center border-2 border-gray-100 shadow-xl">
-                    <PawPrint className="mx-auto text-gray-300 mb-4 animate-bounce" size={48} />
-                    <h3 className="text-2xl font-black text-paw-navy mb-2">No Reports Found</h3>
-                    <p className="text-gray-500 font-bold">Try adjusting your filters or search keywords.</p>
-                  </div>
-                );
-              }
-
-              return mappedReports.map((pet) => (
-                <motion.div 
+            {mappedReports.length === 0 ? (
+              <div className="col-span-full bg-white rounded-[40px] p-16 text-center border-2 border-gray-100 shadow-xl">
+                <PawPrint className="mx-auto text-gray-300 mb-4 animate-bounce" size={48} />
+                <h3 className="text-2xl font-black text-paw-navy mb-2">No Reports Found</h3>
+                <p className="text-gray-500 font-bold">Try adjusting your filters or search keywords.</p>
+              </div>
+            ) : (
+              mappedReports.map((pet, idx) => (
+                <MissingPetCard
                   key={pet.id}
-                  layoutId={`missing-${pet.id}`}
-                  whileHover={{ y: -10 }}
-                  onClick={() => setSelectedPet(pet)}
-                  className="bg-white rounded-[40px] overflow-hidden shadow-2xl shadow-paw-navy/5 border-2 border-transparent hover:border-paw-orange/20 transition-all cursor-pointer group"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <ImageWithFallback src={pet.img} alt={pet.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className={`absolute top-6 left-6 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl ${
-                      pet.status === 'Missing' ? 'bg-red-600 text-white' :
-                      pet.status === 'Found' ? 'bg-green-500 text-white' :
-                      'bg-yellow-500 text-white'
-                    }`}>
-                      {pet.status}
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-black text-paw-navy mb-4">{pet.name}</h3>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                        <MapPin size={16} className="text-paw-orange" /> {pet.lastSeen}
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                        <Calendar size={16} className="text-paw-orange" /> {pet.date}
-                      </div>
-                    </div>
-                    <button className="w-full bg-paw-bg text-paw-navy py-4 rounded-2xl font-black hover:bg-paw-navy hover:text-white transition-all">
-                      VIEW DETAILS
-                    </button>
-                  </div>
-                </motion.div>
-              ));
-            })()}
+                  pet={pet}
+                  index={idx}
+                  onViewDetails={setSelectedPet}
+                  onShare={setSharingPet}
+                />
+              ))
+            )}
           </div>
 
           {/* Pagination */}
@@ -639,429 +560,23 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
         </div>
       </main>
 
-      {/* Pet Detail Overlay */}
-      <AnimatePresence>
-        {selectedPet && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setSelectedPet(null);
-                setShowShareMenu(false);
-              }}
-              className="absolute inset-0 bg-paw-navy/80 backdrop-blur-md"
-            />
-            <motion.div 
-              layoutId={`missing-${selectedPet.id}`}
-              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto modal-scroll-area rounded-[28px] sm:rounded-[36px] z-10 relative shadow-2xl"
-            >
-              <button 
-                onClick={() => setSelectedPet(null)}
-                className="absolute top-6 right-6 p-2.5 bg-gray-100/90 hover:bg-paw-orange hover:text-white rounded-full transition-all z-20 cursor-pointer shadow-sm hover:scale-105"
-                title="Close (Esc)"
-              >
-                <X size={20} />
-              </button>
-              
-              <div className="grid md:grid-cols-2">
-                <div className="h-96 md:h-full">
-                  <ImageWithFallback src={selectedPet.img} alt={selectedPet.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-8 md:p-12">
-                   <div className="flex items-center gap-3 mb-6">
-                      <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest text-white ${
-                        selectedPet.status === 'Missing' ? 'bg-red-600' :
-                        selectedPet.status === 'Found' ? 'bg-green-500' :
-                        'bg-yellow-500'
-                      }`}>
-                        {selectedPet.status}
-                      </span>
-                      <span className="text-gray-400 font-bold text-sm">ID: #M-022{selectedPet.id}</span>
-                   </div>
+      {/* Pet Detail Modal */}
+      <MissingPetDetailModal
+        isOpen={!!selectedPet}
+        onClose={() => setSelectedPet(null)}
+        pet={selectedPet}
+        onShare={(pet) => setSharingPet(pet)}
+      />
 
-                   <h2 className="text-5xl font-black text-paw-navy mb-8 leading-none">{selectedPet.name}</h2>
+      {/* Pet Share Modal */}
+      <MissingPetShareModal
+        isOpen={!!sharingPet}
+        onClose={() => setSharingPet(null)}
+        pet={sharingPet}
+      />
 
-                   <div className="space-y-6 mb-10">
-                      <div className="flex gap-4">
-                         <div className="w-12 h-12 bg-paw-orange/10 rounded-2xl flex items-center justify-center text-paw-orange shrink-0"><MapPin size={24} /></div>
-                         <div>
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Last Seen At</p>
-                            <p className="font-black text-paw-navy text-lg leading-tight">{selectedPet.lastSeen}</p>
-                         </div>
-                      </div>
-                      <div className="flex gap-4">
-                         <div className="w-12 h-12 bg-paw-orange/10 rounded-2xl flex items-center justify-center text-paw-orange shrink-0"><Calendar size={24} /></div>
-                         <div>
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Date Reported</p>
-                            <p className="font-black text-paw-navy text-lg leading-tight">{selectedPet.date}</p>
-                         </div>
-                      </div>
-                      <div className="flex gap-4">
-                         <div className="w-12 h-12 bg-paw-orange/10 rounded-2xl flex items-center justify-center text-paw-orange shrink-0"><Info size={24} /></div>
-                         <div>
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Description</p>
-                            <p className="font-bold text-gray-600 leading-relaxed">{selectedPet.desc}</p>
-                         </div>
-                      </div>
-                   </div>
 
-                   {/* Only show contact buttons if pet is still missing or searching */}
-                   {selectedPet.status !== 'Found' && (
-                     <div className="flex gap-4">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowContactModal(true);
-                          }}
-                          className="flex-1 bg-paw-navy text-white py-5 rounded-[24px] font-black text-xl hover:bg-paw-orange transition-all shadow-xl shadow-paw-navy/20 flex items-center justify-center gap-3"
-                        >
-                           <Phone size={24} /> CONTACT OWNER
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowContactModal(true);
-                          }}
-                          className="p-5 bg-paw-orange text-white rounded-[24px] hover:bg-paw-orange/80 transition-all shadow-xl shadow-paw-orange/20"
-                        >
-                           <MessageCircle size={24} />
-                        </button>
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShare(selectedPet);
-                            }}
-                            className="p-5 bg-paw-bg text-paw-navy rounded-[24px] hover:bg-gray-200 transition-all"
-                          >
-                             <Share2 size={24} />
-                          </button>
 
-                          {/* Share Menu Dropdown */}
-                          <AnimatePresence>
-                            {showShareMenu && (
-                              <motion.div
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute bottom-full mb-2 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 min-w-[200px]"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <button
-                                  onClick={() => shareToFacebook(selectedPet)}
-                                  className="w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left"
-                                >
-                                  <Facebook size={18} className="text-blue-600" />
-                                  <span className="font-bold text-paw-navy text-sm">Facebook</span>
-                                </button>
-                                <button
-                                  onClick={() => shareToTwitter(selectedPet)}
-                                  className="w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left border-t border-gray-100"
-                                >
-                                  <Twitter size={18} className="text-sky-500" />
-                                  <span className="font-bold text-paw-navy text-sm">Twitter</span>
-                                </button>
-                                <button
-                                  onClick={copyLink}
-                                  className="w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left border-t border-gray-100"
-                                >
-                                  <Copy size={18} className="text-gray-600" />
-                                  <span className="font-bold text-paw-navy text-sm">Copy Link</span>
-                                </button>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                     </div>
-                   )}
-
-                   {/* Show "Found" status message instead */}
-                   {selectedPet.status === 'Found' && (
-                     <div className="p-6 bg-green-50 rounded-2xl border-2 border-green-200">
-                        <div className="flex items-center gap-3 mb-2">
-                           <CheckCircle2 size={24} className="text-green-600" />
-                           <h3 className="text-xl font-black text-green-700 uppercase tracking-widest">Pet Found!</h3>
-                        </div>
-                        <p className="text-sm font-bold text-green-600">
-                           Great news! {selectedPet.name} has been found and reunited with their owner.
-                        </p>
-                     </div>
-                   )}
-
-                   {selectedPet.status !== 'Found' && (
-                     <div className="mt-8 p-4 bg-paw-bg rounded-2xl flex items-center gap-3 border-2 border-dashed border-gray-200">
-                        <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Help us find {selectedPet.name}. Share this post!</p>
-                     </div>
-                   )}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Contact Details Modal */}
-      <AnimatePresence>
-        {showContactModal && selectedPet && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowContactModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white w-full max-w-4xl rounded-[3rem] relative z-10 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="p-8 md:p-10 border-b border-gray-100 shrink-0">
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-6 items-center">
-                    <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-paw-orange/20 shrink-0">
-                      <ImageWithFallback
-                        src={selectedPet.img}
-                        alt={selectedPet.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-2 border ${
-                        selectedPet.status === 'Missing' ? 'bg-red-100 text-red-600 border-red-200' :
-                        selectedPet.status === 'Found' ? 'bg-green-100 text-green-600 border-green-200' :
-                        'bg-yellow-100 text-yellow-600 border-yellow-200'
-                      }`}>
-                        <Search size={14} />
-                        <span className="text-[10px] font-black tracking-widest uppercase">{selectedPet.status}</span>
-                      </div>
-                      <h3 className="text-4xl font-black uppercase tracking-tighter text-paw-navy">{selectedPet.name}</h3>
-                      <p className="text-sm font-bold text-gray-500 mt-2">{selectedPet.type} • {selectedPet.breed}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowContactModal(false)}
-                    className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors shrink-0"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Content */}
-              <div className="p-8 md:p-10 overflow-y-auto contact-modal-scroll flex-1 relative">
-                <div className="space-y-8">
-                  {/* Reward Banner */}
-                  {selectedPet.reward && (
-                    <div className="bg-gradient-to-r from-paw-yellow via-orange-400 to-paw-orange rounded-2xl p-6 shadow-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                          <Zap size={24} className="text-white" fill="currentColor" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-black text-white/80 uppercase tracking-widest">Reward Offered</p>
-                          <p className="text-3xl font-black text-white">{selectedPet.reward}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pet Details */}
-                  <div>
-                    <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                      <PawPrint size={20} className="text-paw-orange" />
-                      Pet Details
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-br from-paw-orange/10 to-paw-orange/5 rounded-2xl p-4 border border-paw-orange/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Breed</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.breed || 'Mixed / Unknown'}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-paw-blue/10 to-paw-blue/5 rounded-2xl p-4 border border-paw-blue/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Age</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.age || 'Adult'}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-paw-green/10 to-paw-green/5 rounded-2xl p-4 border border-paw-green/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gender</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.gender || 'Unknown'}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-2xl p-4 border border-purple-500/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Color</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.color || 'Mixed'}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-2xl p-4 border border-pink-500/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Size</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.size || 'Medium'}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-2xl p-4 border border-red-500/20">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
-                        <p className="text-sm font-black text-paw-navy">{selectedPet.type || 'Pet'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Last Seen Information */}
-                  <div>
-                    <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                      <MapPin size={20} className="text-paw-orange" />
-                      Last Seen Information
-                    </h4>
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border-2 border-gray-100 space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
-                          <MapPin size={24} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Location</p>
-                          <p className="text-lg font-black text-paw-navy mb-1">{selectedPet.lastSeen}</p>
-                          <p className="text-sm font-bold text-gray-500 leading-relaxed">{selectedPet.lastSeenDetails}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-paw-blue/10 text-paw-blue flex items-center justify-center shrink-0">
-                          <Calendar size={24} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Date & Time</p>
-                          <p className="text-lg font-black text-paw-navy">{selectedPet.exactDate}</p>
-                          <p className="text-sm font-bold text-gray-500">({selectedPet.date})</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description & Features */}
-                  <div>
-                    <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                      <FileText size={20} className="text-paw-orange" />
-                      Description & Features
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border-2 border-gray-100">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">General Description</p>
-                        <p className="text-sm font-bold text-paw-navy leading-relaxed">{selectedPet.description}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-paw-yellow/10 to-paw-yellow/5 rounded-2xl p-6 border-2 border-paw-yellow/20">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Distinguishing Features</p>
-                        <p className="text-sm font-bold text-paw-navy leading-relaxed">{selectedPet.distinguishingFeatures}</p>
-                      </div>
-                      {selectedPet.medicalConditions && (
-                        <div className="bg-gradient-to-br from-red-50 to-white rounded-2xl p-6 border-2 border-red-100">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Activity size={16} className="text-red-500" />
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Medical Conditions</p>
-                          </div>
-                          <p className="text-sm font-bold text-paw-navy leading-relaxed">{selectedPet.medicalConditions}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Owner Contact Information */}
-                  <div>
-                    <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                      <User size={20} className="text-paw-orange" />
-                      Owner Contact Information
-                    </h4>
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border-2 border-gray-100">
-                      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
-                        <div className="w-14 h-14 rounded-xl bg-paw-navy text-white flex items-center justify-center shrink-0">
-                          <User size={28} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Owner Name</p>
-                          <p className="text-xl font-black text-paw-navy">{selectedPet.owner.name}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                            <Facebook size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Facebook</p>
-                            <p className="text-sm font-bold text-paw-navy truncate">{selectedPet.owner.facebook}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-lg bg-paw-green/10 text-paw-green flex items-center justify-center shrink-0">
-                            <Phone size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Phone Number</p>
-                            <p className="text-sm font-bold text-paw-navy">{selectedPet.owner.phone}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-lg bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
-                            <Mail size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Email</p>
-                            <p className="text-sm font-bold text-paw-navy truncate">{selectedPet.owner.email}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-lg bg-paw-blue/10 text-paw-blue flex items-center justify-center shrink-0">
-                            <MapPin size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Address</p>
-                            <p className="text-sm font-bold text-paw-navy">{selectedPet.owner.address}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Safety Warning */}
-                  <div className="bg-amber-50 rounded-2xl p-6 border-2 border-amber-200">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-black text-amber-800 uppercase tracking-widest mb-2">Safety Reminder</p>
-                        <p className="text-xs font-bold text-amber-700 leading-relaxed">
-                          Please verify the pet's details before claiming. For safety, meet in public locations if arranging a handover. Contact local authorities if you suspect any fraudulent activity.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="p-8 md:p-10 border-t border-gray-100 bg-gray-50 shrink-0">
-                <div className="flex gap-3">
-                  <a
-                    href={`tel:${selectedPet.owner.phone}`}
-                    className="flex-1 bg-paw-green text-white py-5 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2"
-                  >
-                    <Phone size={20} />
-                    CALL NOW
-                  </a>
-                  <a
-                    href={`mailto:${selectedPet.owner.email}`}
-                    className="flex-1 bg-paw-orange text-white py-5 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2"
-                  >
-                    <Mail size={20} />
-                    SEND EMAIL
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Report Missing Pet Modal */}
       <AnimatePresence>
@@ -1072,7 +587,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[100] bg-paw-navy/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 md:p-8 overflow-hidden"
-            onClick={() => setReportModalOpen(false)}
+            onClick={() => confirmAction(() => setReportModalOpen(false))}
           >
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 20 }}
@@ -1103,7 +618,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     </div>
 
                     <button
-                      onClick={() => setReportModalOpen(false)}
+                      onClick={() => confirmAction(() => setReportModalOpen(false))}
                       className="w-10 h-10 bg-gray-100 dark:bg-gray-800 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 shrink-0"
                       title="Close modal (Esc)"
                       aria-label="Close modal"
@@ -1178,10 +693,9 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                         <div className="grid md:grid-cols-2 gap-5">
                           <div>
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                              Breed <span className="text-red-500">*</span>
+                              Breed (Optional)
                             </label>
                             <input
-                              required
                               type="text"
                               name="breed"
                               value={formData.breed}
@@ -1193,10 +707,9 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
                           <div>
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                              Color / Markings <span className="text-red-500">*</span>
+                              Color / Markings (Optional)
                             </label>
                             <input
-                              required
                               type="text"
                               name="color"
                               value={formData.color}
@@ -1316,7 +829,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              Upload Photos / Media
+                              Upload Photos
                             </label>
                             {uploadedFiles.length > 0 && (
                               <span className="text-xs font-bold text-red-600 dark:text-red-400">
@@ -1328,7 +841,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                           <input
                             type="file"
                             id="missing-pet-upload"
-                            accept="image/*,video/*"
+                            accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                             multiple
                             onChange={handleFileChange}
                             className="hidden"
@@ -1337,7 +850,14 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                           {uploadedFiles.length === 0 ? (
                             <label
                               htmlFor="missing-pet-upload"
-                              className="border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500 rounded-2xl p-7 text-center transition-all cursor-pointer block bg-white dark:bg-gray-800 group"
+                              onDragOver={handleDragOver}
+                              onDragLeave={handleDragLeave}
+                              onDrop={handleDrop}
+                              className={`border-2 border-dashed rounded-2xl p-7 text-center transition-all cursor-pointer block bg-white dark:bg-gray-800 group ${
+                                isDragging
+                                  ? 'border-red-500 bg-red-50/40 dark:bg-red-950/30 scale-[1.01]'
+                                  : 'border-gray-300 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500'
+                              }`}
                             >
                               <div className="w-12 h-12 mx-auto rounded-full bg-red-50 dark:bg-red-950/60 text-red-600 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform">
                                 <Upload size={22} />
@@ -1346,22 +866,23 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                                 Click to upload photos or drag and drop
                               </p>
                               <p className="text-xs text-gray-400 font-bold">
-                                PNG, JPG, MP4 up to 10MB (Multiple allowed)
+                                PNG, JPG, WEBP up to 10MB (Multiple allowed)
                               </p>
                             </label>
                           ) : (
-                            <div className="space-y-3">
+                            <div
+                              onDragOver={handleDragOver}
+                              onDragLeave={handleDragLeave}
+                              onDrop={handleDrop}
+                              className="space-y-3"
+                            >
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 {filePreviews.map((preview, idx) => (
                                   <div
                                     key={idx}
                                     className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 group shadow-2xs"
                                   >
-                                    {uploadedFiles[idx]?.type.startsWith('image/') ? (
-                                      <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
-                                    ) : (
-                                      <video src={preview} className="w-full h-full object-cover" />
-                                    )}
+                                    <img src={preview} alt="Upload preview" className="w-full h-full object-cover" />
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveFile(idx)}
@@ -1422,29 +943,21 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                           </div>
 
                           <div>
-                            <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                              Date & Time Lost <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                              <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                              <input
-                                required
-                                type="datetime-local"
-                                name="lastSeenDate"
-                                value={formData.lastSeenDate}
-                                onChange={handleInputChange}
-                                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100"
-                              />
-                            </div>
+                            <ModernDateTimePicker
+                              label="Date & Time Lost"
+                              required
+                              value={formData.lastSeenDate}
+                              onChange={(val) => setFormData({ ...formData, lastSeenDate: val })}
+                              placeholder="Select date and time lost..."
+                            />
                           </div>
                         </div>
 
                         <div>
                           <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                            Additional Notes & Context <span className="text-red-500">*</span>
+                            Additional Notes & Context (Optional)
                           </label>
                           <textarea
-                            required
                             name="description"
                             value={formData.description}
                             onChange={handleInputChange}
@@ -1502,7 +1015,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                                 value={formData.contactPhone}
                                 onChange={handleInputChange}
                                 className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400"
-                                placeholder="09XX XXX XXXX"
+                                placeholder="+63 912 124 1241"
                               />
                             </div>
                           </div>
@@ -1510,7 +1023,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
                         <div>
                           <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-                            Email Address (Optional)
+                            Email Address (Recommended for Tracking & Alerts)
                           </label>
                           <div className="relative">
                             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -1546,7 +1059,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     <div className="flex items-center gap-2.5 w-full sm:w-auto">
                       <button
                         type="button"
-                        onClick={() => setReportModalOpen(false)}
+                        onClick={() => confirmAction(() => setReportModalOpen(false))}
                         className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-bold text-xs transition cursor-pointer"
                       >
                         Cancel
@@ -1587,23 +1100,64 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     Report Broadcasted!
                   </h2>
                   <p className="text-gray-600 dark:text-gray-300 font-medium text-base sm:text-lg leading-relaxed max-w-md mx-auto mb-6">
-                    Your missing pet report for <strong className="text-red-600">{formData.petName}</strong> has been posted. Our community network and volunteers will be on alert.
+                    Your missing pet report for <strong className="text-red-600">{submittedPetName || 'your pet'}</strong> has been posted. Our community network and volunteers will be on alert.
                   </p>
-                  <button
-                    onClick={() => {
-                      setReportModalOpen(false);
-                      setReportSubmitted(false);
-                    }}
-                    className="px-8 py-3 rounded-2xl bg-paw-navy hover:bg-paw-orange text-white font-black text-sm shadow-md transition cursor-pointer"
-                  >
-                    Done & Close
-                  </button>
+
+                  {(submittedReportInfo?.reference || flash?.submitted_report?.reference) && (
+                    <div className="max-w-sm mx-auto mb-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">
+                        Reference Number
+                      </p>
+                      <p className="text-2xl font-black text-paw-navy dark:text-white tracking-wider mt-0.5">
+                        {submittedReportInfo?.reference || flash?.submitted_report?.reference}
+                      </p>
+                      {(submittedReportInfo?.email || flash?.submitted_report?.email) && (
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1">
+                          E-Receipt sent to {submittedReportInfo?.email || flash?.submitted_report?.email}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {(submittedReportInfo?.reference || flash?.submitted_report?.reference) &&
+                      (submittedReportInfo?.email || flash?.submitted_report?.email) && (
+                        <Link
+                          href={`/track?reference=${encodeURIComponent(
+                            submittedReportInfo?.reference || flash?.submitted_report?.reference || ''
+                          )}&email=${encodeURIComponent(
+                            submittedReportInfo?.email || flash?.submitted_report?.email || ''
+                          )}`}
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-sm shadow-md transition"
+                        >
+                          <span>Track Missing Pet Alert</span>
+                          <ExternalLink size={16} />
+                        </Link>
+                      )}
+                    <button
+                      onClick={() => {
+                        setReportModalOpen(false);
+                        setReportSubmitted(false);
+                        setSubmittedReportInfo(null);
+                      }}
+                      className="px-8 py-3 rounded-2xl bg-paw-navy hover:bg-paw-orange text-white font-black text-sm shadow-md transition cursor-pointer"
+                    >
+                      Done & Close
+                    </button>
+                  </div>
                 </div>
               )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <UnsavedChangesDialog
+        isOpen={showLeaveModal}
+        onContinueEditing={handleContinueEditing}
+        onLeaveAnyway={handleLeaveAnyway}
+        zIndex={350}
+      />
 
       <Footer />
     </div>

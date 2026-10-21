@@ -4,6 +4,7 @@ import {
     Award,
     BarChart3,
     Bookmark,
+    Building2,
     Calendar,
     ClipboardList,
     Clock,
@@ -17,7 +18,10 @@ import {
     HeartHandshake,
     LayoutGrid,
     LifeBuoy,
+    MessageSquareQuote,
+    RefreshCw,
     Search,
+    ServerCog,
     Settings,
     ShieldCheck,
     Sparkles,
@@ -48,7 +52,9 @@ import {
     bookmark,
     donations,
     missingFound,
+    rehomingRequests,
     rescueReports as userRescueReports,
+    shelterVisits,
 } from '@/routes/account/user';
 import {
     accountSettings as volunteerAccountSettings,
@@ -77,12 +83,15 @@ export function navItem(
 
 export const userNavItems: DashboardNavItem[] = [
     navItem('My Bookmarks', bookmark.url(), Bookmark),
-    navItem('My Joined Events', '/account/user/joined-events', Calendar),
-    navItem('My Adoption Stories', '/account/user/stories', Sparkles),
-    navItem('My Rescue Reports', userRescueReports.url(), FileText),
     navItem('My Adoption Applications', adoptionApplications.url(), Heart),
-    navItem('My Donations', donations.url(), Gift),
+    navItem('My Shelter Visits', shelterVisits.url(), Building2),
+    navItem('My Rehoming Requests', rehomingRequests.url(), RefreshCw),
+    navItem('My Rescue Reports', userRescueReports.url(), FileText),
     navItem('Missing/Found Reports', missingFound.url(), Search),
+    navItem('My Donations', donations.url(), Gift),
+    navItem('My Joined Events', '/account/user/joined-events', Calendar),
+    navItem('My Certificates', '/account/user/certificates', Award),
+    navItem('My Testimonials', '/account/user/stories', MessageSquareQuote),
     navItem('Volunteer Status', '/account/user/volunteer-status', Zap),
     navItem('Help Desk & Support', '/account/user/help-desk', LifeBuoy),
     navItem('Account Settings', userAccountSettings.url(), Settings),
@@ -98,12 +107,12 @@ export const volunteerNavItems: DashboardNavItem[] = [
     navItem('My Rescue Reports', volunteerRescueReports.url(), FileText),
     navItem('Help Desk & Support', '/account/volunteer/help-desk', LifeBuoy),
     navItem('Account Settings', volunteerAccountSettings.url(), Settings),
-    navItem('Switch to User Dashboard', '/volunteer/switch-user', User, '/volunteer/switch-user', 'post', 'button'),
 ];
 
 export const superAdminNavItems: DashboardNavItem[] = [
     navItem('System Overview', superAdminDashboard.url(), LayoutGrid),
     navItem('User Management', userManagement.url(), Users),
+    navItem('Event Management', '/account/super-admin/events', Calendar),
     navItem('Partner Management', partners.url(), Handshake),
     navItem('File & Resources', resources.url(), FolderDown),
     navItem('Community Recognition', communityHonors.url(), Award),
@@ -114,7 +123,7 @@ export const superAdminNavItems: DashboardNavItem[] = [
     navItem('Backup & Restore', backupRestore.url(), DatabaseBackup),
     navItem('AI Configuration', aiConfiguration.url(), Sparkles),
     navItem('Help Desk & Inquiries', '/account/super-admin/help-desk', LifeBuoy),
-    navItem('System Settings', systemSettings.url(), Settings),
+    navItem('System Settings', systemSettings.url(), ServerCog),
     navItem('Account Settings', superAdminAccountSettings.url(), Settings),
 ];
 

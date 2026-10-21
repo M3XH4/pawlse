@@ -86,6 +86,11 @@ class ReportsAnalyticsController extends Controller
             ],
             'donations' => [
                 'total_cash' => (float) Donation::where('type', DonationType::Cash->value)->whereIn('status', $validDonationStatuses)->sum('amount'),
+                'current_month_cash' => (float) Donation::where('type', DonationType::Cash->value)
+                    ->whereIn('status', $validDonationStatuses)
+                    ->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', now()->month)
+                    ->sum('amount'),
                 'total_cash_count' => Donation::where('type', DonationType::Cash->value)->whereIn('status', $validDonationStatuses)->count(),
                 'total_inkind_count' => Donation::whereIn('type', [DonationType::InKind->value, 'in-kind'])->whereIn('status', $validDonationStatuses)->count(),
             ],
@@ -231,14 +236,34 @@ class ReportsAnalyticsController extends Controller
                 fputcsv($file, ['Donation ID', 'Donor Name', 'Donor Email', 'Type', 'Amount (PHP)', 'Status', 'Date Submitted']);
                 $donations = Donation::latest()->get();
                 foreach ($donations as $donation) {
+                    $typeVal = $donation->type instanceof \BackedEnum ? $donation->type->value : (string) $donation->type;
+                    $statusVal = $donation->status instanceof \BackedEnum ? $donation->status->value : (string) $donation->status;
                     fputcsv($file, [
                         $donation->id,
                         $donation->donor_name,
                         $donation->donor_email,
-                        $donation->type,
+                        $typeVal,
                         $donation->amount ?? 0,
-                        $donation->status,
+                        $statusVal,
                         $donation->created_at->format('Y-m-d H:i:s'),
+                    ]);
+                }
+            } elseif ($type === 'volunteers') {
+                fputcsv($file, ['PAWLSE VOLUNTEER APPLICATIONS REPORT']);
+                fputcsv($file, ['Exported Date', date('Y-m-d H:i:s')]);
+                fputcsv($file, []);
+
+                fputcsv($file, ['Reference', 'Full Name', 'Email', 'Mobile', 'Preferred Role', 'Status', 'Date Applied']);
+                $apps = VolunteerApplication::latest()->get();
+                foreach ($apps as $app) {
+                    fputcsv($file, [
+                        $app->reference_number,
+                        $app->full_name,
+                        $app->email,
+                        $app->mobile,
+                        $app->role,
+                        $app->status,
+                        $app->created_at->format('Y-m-d H:i:s'),
                     ]);
                 }
             }

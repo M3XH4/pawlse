@@ -122,11 +122,18 @@ class PetReport extends Model
             return;
         }
 
-        // Search active reports within the last 24 hours of the same animal type
+        $this->is_duplicate = false;
+
+        // Search active reports within the last 24 hours of the same report type and animal type
         $query = self::query()
+            ->where('type', $this->type ?: 'rescue')
             ->where('animal_type', $this->animal_type)
             ->whereIn('status', ['pending', 'assigned'])
             ->where('created_at', '>=', now()->subHours(24));
+
+        if ($this->type === 'missing' && filled($this->name)) {
+            $query->whereRaw('LOWER(name) = ?', [strtolower(trim((string) $this->name))]);
+        }
 
         if ($this->exists) {
             $query->where('id', '!=', $this->id);

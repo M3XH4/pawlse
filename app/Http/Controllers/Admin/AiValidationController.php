@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\PetReport;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\RescueTaskAssignedNotification;
 use Illuminate\Http\RedirectResponse;
@@ -22,8 +23,32 @@ class AiValidationController extends Controller
      */
     public function index(Request $request): Response
     {
+        // Calculate statistics for AI Validation Panel first so default filter adapts intelligently
+        $totalAiReports = PetReport::whereNotNull('ai_prediction_log_id')->count();
+
+        $pendingValidation = PetReport::whereNotNull('ai_prediction_log_id')
+            ->where('ai_validation_status', 'pending')
+            ->count();
+
+        $approvedCount = PetReport::whereNotNull('ai_prediction_log_id')
+            ->where('ai_validation_status', 'approved')
+            ->count();
+
+        $rejectedCount = PetReport::whereNotNull('ai_prediction_log_id')
+            ->where('ai_validation_status', 'rejected')
+            ->count();
+
+        $validatedCount = $approvedCount + $rejectedCount;
+        $accuracyRate = $validatedCount > 0 ? ($approvedCount / $validatedCount) * 100 : 0;
+
+        $avgConfidence = DB::table('pet_reports')
+            ->join('ai_prediction_logs', 'pet_reports.ai_prediction_log_id', '=', 'ai_prediction_logs.id')
+            ->whereNotNull('ai_prediction_logs.confidence')
+            ->avg('ai_prediction_logs.confidence') ?? 0;
+
         $search = $request->input('search', '');
-        $statusFilter = $request->input('status', 'pending'); // pending, approved, rejected, All
+        $defaultStatus = $pendingValidation > 0 ? 'pending' : 'All';
+        $statusFilter = $request->input('status', $defaultStatus); // pending, approved, rejected, All
         $animalTypeFilter = $request->input('animal_type', 'All'); // Cat, Dog, Other, All
         $confidenceFilter = $request->input('confidence_level', 'All'); // High, Medium, Low, All
         $typeFilter = $request->input('type', 'All'); // rescue, missing, sos, All
@@ -63,36 +88,18 @@ class AiValidationController extends Controller
 
         $reports = $reportsQuery->latest()->paginate(10)->withQueryString();
 
-        // Calculate statistics for AI Validation Panel
-        $totalAiReports = PetReport::whereNotNull('ai_prediction_log_id')->count();
-
-        $pendingValidation = PetReport::whereNotNull('ai_prediction_log_id')
-            ->where('ai_validation_status', 'pending')
-            ->count();
-
-        $approvedCount = PetReport::whereNotNull('ai_prediction_log_id')
-            ->where('ai_validation_status', 'approved')
-            ->count();
-
-        $rejectedCount = PetReport::whereNotNull('ai_prediction_log_id')
-            ->where('ai_validation_status', 'rejected')
-            ->count();
-
-        $validatedCount = $approvedCount + $rejectedCount;
-        $accuracyRate = $validatedCount > 0 ? ($approvedCount / $validatedCount) * 100 : 100;
-
-        $avgConfidence = DB::table('pet_reports')
-            ->join('ai_prediction_logs', 'pet_reports.ai_prediction_log_id', '=', 'ai_prediction_logs.id')
-            ->whereNotNull('ai_prediction_logs.confidence')
-            ->avg('ai_prediction_logs.confidence') ?? 0;
-
         $volunteers = User::query()
             ->where('role', Role::Volunteer->value)
+            ->orderBy('name')
             ->get();
+
+        $systemSettings = SystemSetting::getValue('system_settings', []);
+        $breedGuideEnabled = (bool) ($systemSettings['ai_breed_guide_enabled'] ?? true);
 
         return Inertia::render('admin/ai-validation', [
             'reports' => $reports,
             'volunteers' => $volunteers,
+            'breed_guide_enabled' => $breedGuideEnabled,
             'stats' => [
                 'total_ai_reports' => $totalAiReports,
                 'pending_validation' => $pendingValidation,
@@ -144,13 +151,17 @@ class AiValidationController extends Controller
                 default => 'Rescue Responder (Rescue)',
             };
 
-            AssignedTask::create([
-                'user_id' => $volunteer->id,
-                'pet_report_id' => $report->id,
-                'role' => $taskType,
-                'status' => 'pending',
-                'hours_logged' => 0.00,
-            ]);
+            AssignedTask::firstOrCreate(
+                [
+                    'user_id' => $volunteer->id,
+                    'pet_report_id' => $report->id,
+                    'status' => 'pending',
+                ],
+                [
+                    'role' => $taskType,
+                    'hours_logged' => 0.00,
+                ]
+            );
 
             $volunteer->notify(new RescueTaskAssignedNotification($report));
         }

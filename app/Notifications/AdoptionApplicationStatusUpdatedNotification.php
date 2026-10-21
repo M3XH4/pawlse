@@ -19,6 +19,7 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification
     {
         $petName = $this->application->shelterAnimal?->name ?? 'selected pet';
         $status = $this->application->status?->value ?? 'updated';
+        $ref = 'ADP-'.str_pad((string) $this->application->id, 5, '0', STR_PAD_LEFT);
         $level = match ($status) {
             'approved' => 'success',
             'rejected' => 'error',
@@ -26,6 +27,7 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification
         };
 
         $summary = [
+            ['label' => 'Reference Number', 'value' => $ref],
             ['label' => 'Pet Applied For', 'value' => $petName],
             ['label' => 'Application Status', 'value' => strtoupper($status)],
         ];
@@ -37,9 +39,13 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification
         return $this->buildBrandedMail(
             notifiable: $notifiable,
             summaryItems: $summary,
-            actionText: 'View My Adoption Application',
+            actionText: 'Track Application Status',
             level: $level,
-            categoryBadge: 'ADOPTION UPDATE',
+            categoryBadge: "ADOPTION UPDATE ({$ref})",
+            actionUrl: route('track', [
+                'reference' => $ref,
+                'email' => $this->application->email,
+            ]),
         );
     }
 
@@ -50,26 +56,34 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification
     {
         $petName = $this->application->shelterAnimal?->name ?? 'selected pet';
         $status = $this->application->status?->value ?? 'updated';
+        $ref = 'ADP-'.str_pad((string) $this->application->id, 5, '0', STR_PAD_LEFT);
 
         $title = match ($status) {
-            'approved' => 'Adoption Application Approved',
-            'rejected' => 'Adoption Application Rejected',
-            'scheduled' => 'Adoption Interview Scheduled',
-            default => 'Adoption Application Status Updated',
+            'approved' => "Adoption Application Approved ({$ref})",
+            'rejected' => "Adoption Application Rejected ({$ref})",
+            'scheduled' => "Adoption Interview Scheduled ({$ref})",
+            default => "Adoption Application Update ({$ref})",
         };
 
         $message = match ($status) {
-            'approved' => "Your adoption application for {$petName} has been approved.",
-            'rejected' => "Your adoption application for {$petName} was not approved.".($this->application->rejection_reason ? " Reason: {$this->application->rejection_reason}" : ''),
-            'scheduled' => "Your adoption interview for {$petName} has been scheduled.",
-            default => "The status of your adoption application for {$petName} is {$status}.",
+            'approved' => "Your adoption application for {$petName} (Ref: {$ref}) has been approved.",
+            'rejected' => "Your adoption application for {$petName} (Ref: {$ref}) was not approved.".($this->application->rejection_reason ? " Reason: {$this->application->rejection_reason}" : ''),
+            'scheduled' => "Your adoption interview for {$petName} (Ref: {$ref}) has been scheduled.",
+            default => "The status of your adoption application for {$petName} (Ref: {$ref}) is {$status}.",
         };
+
+        $url = $this->application->user_id
+            ? route('account.user.adoption-applications')
+            : route('track', [
+                'reference' => $ref,
+                'email' => $this->application->email,
+            ]);
 
         return [
             'title' => $title,
             'message' => $message,
             'description' => $message,
-            'url' => route('account.user.adoption-applications'),
+            'url' => $url,
             'icon' => 'adoption',
             'category' => 'adoption',
             'application_id' => $this->application->id,

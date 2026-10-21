@@ -711,23 +711,38 @@ class DonationMonitoringController extends Controller
                 ]);
 
                 $donorDisplay = $donation->anonymous ? 'Anonymous' : $donation->donor_name;
+                $posterUrl = $donation->feedingSponsorship->poster_url ?: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=600';
 
-                Event::firstOrCreate([
+                $event = Event::firstOrCreate([
                     'title' => 'Sponsored Feeding Day by '.$donorDisplay,
                     'date' => $donation->feedingSponsorship->preferred_date,
                 ], [
                     'category' => 'Feeding',
                     'time' => '09:00 AM',
                     'location' => 'Iligan City Stray Shelter / Feeding Route',
+                    'img' => $posterUrl,
                     'spots' => 10,
                     'desc' => "This feeding day is fully sponsored by a generous donor!\n".
                               "Sponsor: {$donorDisplay}\n".
                               ($donation->feedingSponsorship->occasion ? "Occasion: {$donation->feedingSponsorship->occasion}\n" : '').
                               ($donation->feedingSponsorship->message ? "Message: \"{$donation->feedingSponsorship->message}\"\n" : '').
                               'Volunteers are invited to join us in preparing and distributing food for our stray friends in Iligan.',
-                    'keywords' => json_encode(['feeding', 'sponsored', 'strays']),
+                    'keywords' => ['feeding', 'sponsored', 'strays'],
                     'status' => 'open',
+                    'approval_status' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                    'created_by' => auth()->id(),
                 ]);
+
+                if ($event->approval_status !== 'approved') {
+                    $event->update([
+                        'approval_status' => 'approved',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                        'status' => 'open',
+                    ]);
+                }
             }
 
             $userToNotify = $donation->user ?? ($donation->user_id ? User::find($donation->user_id) : null);

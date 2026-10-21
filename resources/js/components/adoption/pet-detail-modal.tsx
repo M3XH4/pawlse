@@ -68,7 +68,6 @@ export interface AdoptPetDetail {
   gender: string;
   color?: string | null;
   weight?: string | null;
-  microchip_id?: string | null;
   intake_type?: string | null;
   is_rescued?: boolean;
   rescued_tag?: string | null;
@@ -403,13 +402,6 @@ export function PetDetailModal({
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Weight</p>
                         <p className="font-semibold text-slate-800 text-sm mt-0.5">{pet.weight || 'Recorded on site'}</p>
-                      </div>
-
-                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Microchip ID</p>
-                        <p className="font-semibold text-slate-800 text-sm font-mono mt-0.5 truncate">
-                          {pet.microchip_id || 'Not Microchipped'}
-                        </p>
                       </div>
 
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">

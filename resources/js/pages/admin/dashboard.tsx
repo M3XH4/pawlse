@@ -281,7 +281,10 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                                 <div className="text-sm font-bold text-paw-navy dark:text-white flex items-center gap-1.5">
                                                     {action.title}
                                                     {action.pending && action.pending > 0 ? (
-                                                        <span className="flex h-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white">
+                                                        <span
+                                                            title={`${action.pending} pending items awaiting review`}
+                                                            className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white"
+                                                        >
                                                             {action.pending}
                                                         </span>
                                                     ) : null}

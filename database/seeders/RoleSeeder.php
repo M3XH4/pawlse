@@ -50,11 +50,46 @@ class RoleSeeder extends Seeder
             'donations.export' => 'Export financial and donation reports',
             'events.view' => 'Browse shelter community events',
             'events.manage' => 'Create and manage outreach events',
+            'events.approve' => 'Review, approve, or reject proposed outreach events',
         ],
         'Foster Care & Placements' => [
             'foster.view' => 'View foster management dashboard and roster',
             'foster.manage' => 'Assign, transfer, and manage foster home placements',
             'foster.care' => 'Provide foster care and submit care logs',
+        ],
+        'Partners & Collaborations' => [
+            'partners.view' => 'Browse and inspect partner directories',
+            'partners.create' => 'Register new clinical and supply partners',
+            'partners.edit' => 'Update partner details, contracts, and services',
+            'partners.delete' => 'Archive or remove partner records',
+        ],
+        'File & Resource Management' => [
+            'resources.view' => 'Access pet care guides and protocol documents',
+            'resources.create' => 'Upload new educational and protocol files',
+            'resources.edit' => 'Modify resource details and metadata',
+            'resources.delete' => 'Archive or remove resource documents',
+        ],
+        'Community Recognition' => [
+            'community_honor.view' => 'View recognized supporters and public honors',
+            'community_honor.create' => 'Add new community honors and achievements',
+            'community_honor.edit' => 'Update recognition details and badges',
+            'community_honor.delete' => 'Archive or remove recognized records',
+        ],
+        'Help Desk & Inquiries' => [
+            'help_desk.view' => 'Browse support tickets and staff inquiries',
+            'help_desk.manage' => 'Manage ticket status, priorities, and assignments',
+            'help_desk.reply' => 'Post official replies and internal staff notes',
+            'help_desk.delete' => 'Archive or purge support tickets',
+        ],
+        'Advanced Analytics & Reporting' => [
+            'analytics.view' => 'Inspect platform metrics and performance charts',
+            'analytics.export' => 'Download analytical reports and audit data',
+        ],
+        'Blog & Content Management' => [
+            'blogs.view' => 'View published and draft blog stories',
+            'blogs.create' => 'Publish new shelter and adoption articles',
+            'blogs.edit' => 'Edit blog posts and editorial content',
+            'blogs.delete' => 'Archive or delete blog stories',
         ],
         'System & Security' => [
             'audit_logs.view' => 'Access system audit trails',
@@ -99,6 +134,12 @@ class RoleSeeder extends Seeder
             'donations.view', 'donations.manage', 'donations.export',
             'events.view', 'events.manage',
             'foster.view', 'foster.manage',
+            'partners.view', 'partners.create', 'partners.edit', 'partners.delete',
+            'resources.view', 'resources.create', 'resources.edit', 'resources.delete',
+            'community_honor.view', 'community_honor.create', 'community_honor.edit', 'community_honor.delete',
+            'help_desk.view', 'help_desk.manage', 'help_desk.reply',
+            'analytics.view', 'analytics.export',
+            'blogs.view', 'blogs.create', 'blogs.edit', 'blogs.delete',
             'audit_logs.view',
         ];
         $adminRole->syncPermissions($adminPermissions);

@@ -9,8 +9,10 @@ import { toast } from 'sonner';
 import { 
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
   MapPin, Calendar, Camera, Info, Sparkles, Eye, Check, X,
-  ArrowRight, ShieldAlert, Cpu
+  ArrowRight, ShieldAlert, Cpu, BookOpen
 } from 'lucide-react';
+import { BreedGuideModal } from '@/components/admin/breed-guide-modal';
+import { PetBreed } from '@/data/pet-breeds';
 
 interface PaginatedData<T> {
   data: T[];
@@ -74,6 +76,8 @@ interface PetReport {
 
 interface AiValidationProps {
   reports: PaginatedData<PetReport>;
+  volunteers?: UserModel[];
+  breed_guide_enabled?: boolean;
   stats: {
     total_ai_reports: number;
     pending_validation: number;
@@ -91,11 +95,13 @@ interface AiValidationProps {
 
 export default function AiValidation({
   reports,
+  volunteers = [],
+  breed_guide_enabled = true,
   stats,
   filters
 }: AiValidationProps) {
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
-  const [statusFilter, setStatusFilter] = useState(filters.status || 'pending');
+  const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
   const [animalTypeFilter, setAnimalTypeFilter] = useState(filters.animal_type || 'All');
   const [confidenceFilter, setConfidenceFilter] = useState(filters.confidence_level || 'All');
   const [typeFilter, setTypeFilter] = useState(filters.type || 'All');
@@ -103,6 +109,7 @@ export default function AiValidation({
   // Detail Modal State
   const [selectedReport, setSelectedReport] = useState<PetReport | null>(null);
   const [activeAiAnimalIdx, setActiveAiAnimalIdx] = useState(0);
+  const [dispatchVolunteerId, setDispatchVolunteerId] = useState('');
   
   // Correction Form States
   const [isCorrecting, setIsCorrecting] = useState(false);
@@ -111,6 +118,56 @@ export default function AiValidation({
   const [correctAgeCategory, setCorrectAgeCategory] = useState('');
   const [correctGender, setCorrectGender] = useState('');
   const [correctName, setCorrectName] = useState('');
+
+  // Breed Guide Modal States
+  const [isBreedGuideOpen, setIsBreedGuideOpen] = useState(false);
+  const [breedGuideContextReport, setBreedGuideContextReport] = useState<{
+    id: number;
+    name?: string | null;
+    animal_type?: string;
+    breed?: string | null;
+    photo_url?: string | null;
+    ai_predicted_breed?: string | null;
+    ai_predicted_species?: string | null;
+    ai_confidence?: number | null;
+  } | null>(null);
+
+  const openGeneralBreedGuide = () => {
+    setBreedGuideContextReport(null);
+    setIsBreedGuideOpen(true);
+  };
+
+  const openReportBreedGuide = (report: PetReport) => {
+    const aiAnimals = report.ai_prediction_log?.output_data?.animals || [];
+    const activeAiAnimal = aiAnimals[0];
+    const predictedSpecies = activeAiAnimal?.species 
+      ? (activeAiAnimal.species === 'dog' ? 'Dog' : 'Cat')
+      : (report.ai_prediction_log?.output_data?.species === 'dog' ? 'Dog' : (report.ai_prediction_log?.output_data?.species === 'cat' ? 'Cat' : report.animal_type));
+    const predictedBreed = activeAiAnimal?.breed || report.ai_prediction_log?.output_data?.breed || report.breed;
+    const confidence = report.ai_prediction_log?.confidence;
+    const photoUrl = report.photos && report.photos.length > 0
+      ? formatPhotoUrl(report.photos[0].path, report.animal_type)
+      : null;
+
+    setBreedGuideContextReport({
+      id: report.id,
+      name: report.name,
+      animal_type: report.animal_type,
+      breed: report.breed,
+      photo_url: photoUrl,
+      ai_predicted_breed: predictedBreed,
+      ai_predicted_species: predictedSpecies,
+      ai_confidence: confidence,
+    });
+    setIsBreedGuideOpen(true);
+  };
+
+  const handleSelectBreedForCorrection = (breed: PetBreed) => {
+    setCorrectBreed(breed.name);
+    setCorrectAnimalType(breed.species);
+    setIsCorrecting(true);
+    toast.success(`Selected "${breed.name}" (${breed.species}) for correction.`);
+  };
 
   const handleFilterSearch = () => {
     router.get('/account/admin/ai-validation', {
@@ -124,16 +181,17 @@ export default function AiValidation({
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setStatusFilter('pending');
+    setStatusFilter('All');
     setAnimalTypeFilter('All');
     setConfidenceFilter('All');
     setTypeFilter('All');
-    router.get('/account/admin/ai-validation', { status: 'pending' }, { preserveState: true });
+    router.get('/account/admin/ai-validation', { status: 'All' }, { preserveState: true });
   };
 
   const openValidationModal = (report: PetReport) => {
     setSelectedReport(report);
     setActiveAiAnimalIdx(0);
+    setDispatchVolunteerId('');
     setIsCorrecting(false);
     
     // Prefill correction form with current report details
@@ -147,9 +205,13 @@ export default function AiValidation({
   const handleApprove = () => {
     if (!selectedReport) return;
 
-    router.post(`/account/admin/ai-validation/${selectedReport.id}/approve`, {}, {
+    const payload: Record<string, any> = {};
+    if (dispatchVolunteerId) {
+      payload.volunteer_id = dispatchVolunteerId;
+    }
+
+    router.post(`/account/admin/ai-validation/${selectedReport.id}/approve`, payload, {
       onSuccess: () => {
-        toast.success('AI prediction approved and validated!');
         setSelectedReport(null);
       },
       onError: () => {
@@ -247,122 +309,233 @@ export default function AiValidation({
     <AdminPageShell 
       title="AI Validation Panel"
       description="Review and validate AI-assisted stray animal reports, verify pet detail accuracy, and calibrate machine learning logs."
+      headerActions={
+        breed_guide_enabled ? (
+          <button
+            type="button"
+            onClick={openGeneralBreedGuide}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-paw-orange/20 active:scale-95 cursor-pointer"
+            title="Open Dog & Cat Breed Reference Handbook"
+          >
+            <BookOpen className="h-4 w-4" />
+            <span>Breed Reference Handbook</span>
+          </button>
+        ) : undefined
+      }
     >
       <Head title="AI Validation Panel" />
       
       {/* Aggregate Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total AI Reports', val: stats.total_ai_reports, icon: <Cpu size={20} />, bg: 'bg-[#0B2340] text-white shadow-lg' },
-          { label: 'Awaiting Validation', val: stats.pending_validation, icon: <Clock size={20} />, bg: 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' },
-          { label: 'Accuracy Rating', val: `${stats.accuracy_rate}%`, icon: <CheckCircle2 size={20} />, bg: 'bg-green-500 text-white shadow-lg shadow-green-500/20' },
-          { label: 'Avg Confidence', val: `${stats.average_confidence}%`, icon: <Sparkles size={20} />, bg: 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' },
+          { 
+            label: 'Total AI Reports', 
+            val: stats.total_ai_reports, 
+            desc: 'Animal reports with AI prediction logs',
+            icon: <Cpu size={20} className="text-[#0B2340] dark:text-blue-400" />, 
+            iconBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+            accent: 'border-l-4 border-l-[#0B2340] dark:border-l-blue-500'
+          },
+          { 
+            label: 'Awaiting Validation', 
+            val: stats.pending_validation, 
+            desc: 'Pending admin review & verification',
+            icon: <Clock size={20} className="text-amber-600 dark:text-amber-400" />, 
+            iconBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/40',
+            accent: 'border-l-4 border-l-amber-500'
+          },
+          { 
+            label: 'Accuracy Rating', 
+            val: `${stats.accuracy_rate}%`, 
+            desc: 'Approved vs rejected calibration ratio',
+            icon: <CheckCircle2 size={20} className="text-emerald-600 dark:text-emerald-400" />, 
+            iconBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/40',
+            accent: 'border-l-4 border-l-emerald-500'
+          },
+          { 
+            label: 'Avg AI Confidence', 
+            val: `${stats.average_confidence}%`, 
+            desc: 'Mean machine learning confidence score',
+            icon: <Sparkles size={20} className="text-blue-600 dark:text-blue-400" />, 
+            iconBg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/40',
+            accent: 'border-l-4 border-l-blue-500'
+          },
         ].map((c, idx) => (
-          <div key={idx} className={`${c.bg} rounded-[24px] p-5 flex flex-col justify-between h-28`}>
-            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black uppercase tracking-wider opacity-90">{c.label}</span>
-              <span className="opacity-85">{c.icon}</span>
+          <div 
+            key={idx} 
+            className={`bg-white dark:bg-[#0B1527] border border-gray-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${c.accent}`}
+          >
+            <div className="flex justify-between items-start mb-3">
+              <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{c.label}</span>
+              <span className={`p-2 rounded-xl border ${c.iconBg}`}>{c.icon}</span>
             </div>
-            <span className="text-3xl font-fredoka font-bold leading-none">{c.val}</span>
+            <div>
+              <span className="text-3xl font-fredoka font-bold text-[#0B2340] dark:text-white leading-none block">{c.val}</span>
+              <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium mt-1 block truncate">{c.desc}</span>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Filter and Search Card */}
-      <AdminCard className="p-6 mb-6">
-        <div className="grid md:grid-cols-5 gap-4 items-end">
-          <div className="md:col-span-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Search Keyword</label>
+      <AdminCard className="p-5 mb-6 shadow-xs border border-gray-200/80 dark:border-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+          {/* Search Input - 4 cols on large */}
+          <div className="lg:col-span-4">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
+              Search Keyword
+            </label>
             <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFilterSearch()}
-                placeholder="Search location, name, breed..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-sm text-[#0B2340] dark:text-white"
+                placeholder="Search location, name, breed, reporter..."
+                className="w-full pl-9 pr-8 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange focus:ring-2 focus:ring-paw-orange/20 font-bold text-xs text-[#0B2340] dark:text-white placeholder:text-gray-400 placeholder:font-normal transition-all"
               />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
           </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Validation Status</label>
+
+          {/* Validation Status - 2 cols */}
+          <div className="lg:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
+              Validation Status
+            </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-sm text-[#0B2340] dark:text-white"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
             >
               <option value="All">All Statuses</option>
-              <option value="pending">Pending Validation</option>
+              <option value="pending">Pending Review</option>
               <option value="approved">Approved / Verified</option>
               <option value="rejected">Rejected / Incorrect</option>
             </select>
           </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Confidence Level</label>
+
+          {/* Animal Species - 2 cols */}
+          <div className="lg:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
+              Animal Species
+            </label>
+            <select
+              value={animalTypeFilter}
+              onChange={(e) => setAnimalTypeFilter(e.target.value)}
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
+            >
+              <option value="All">All Species</option>
+              <option value="Dog">🐶 Dog</option>
+              <option value="Cat">🐱 Cat</option>
+              <option value="Other">🐾 Other</option>
+            </select>
+          </div>
+
+          {/* Confidence Level - 2 cols */}
+          <div className="lg:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
+              Confidence Level
+            </label>
             <select
               value={confidenceFilter}
               onChange={(e) => setConfidenceFilter(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-sm text-[#0B2340] dark:text-white"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
             >
               <option value="All">All Confidences</option>
-              <option value="High">High (&ge;80%)</option>
+              <option value="High">High (≥80%)</option>
               <option value="Medium">Medium (50%-79%)</option>
               <option value="Low">Low (&lt;50%)</option>
             </select>
           </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Report Type</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-sm text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Types</option>
-              <option value="rescue">Rescue</option>
-              <option value="missing">Missing</option>
-              <option value="sos">SOS</option>
-            </select>
-          </div>
-          <div className="flex gap-2">
+
+          {/* Action Buttons - 2 cols */}
+          <div className="lg:col-span-2 flex items-center gap-1.5">
             <button
+              type="button"
               onClick={handleFilterSearch}
-              className="flex-1 bg-[#0B2340] hover:bg-[#0f325c] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-sm py-3 px-4 rounded-xl transition-colors cursor-pointer"
+              className="flex-1 bg-[#0B2340] hover:bg-[#123661] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-95"
             >
-              Apply Filters
+              <Filter size={13} />
+              <span>Filter</span>
             </button>
             <button
+              type="button"
               onClick={handleResetFilters}
-              className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold text-sm p-3 rounded-xl transition-colors cursor-pointer"
+              className="p-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 shrink-0"
               title="Reset Filters"
             >
-              <X size={18} />
+              <X size={15} />
             </button>
           </div>
         </div>
       </AdminCard>
 
       {/* Reports Queue Table */}
-      <AdminCard className="p-0 overflow-hidden">
+      <AdminCard className="p-0 overflow-hidden shadow-xs border border-gray-200/80 dark:border-slate-800">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">ID</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Pet Report</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Type</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">AI Confidence</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Location</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Validation</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Submitted At</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-wider text-gray-400 text-right">Actions</th>
+              <tr className="border-b border-gray-150 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">ID</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Pet Report</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Type</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">AI Confidence</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Validation</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Submitted At</th>
+                <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {reports.data.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-400 dark:text-gray-500 font-bold">
-                    No reports match the current filters.
+                  <td colSpan={8} className="py-16 px-6 text-center">
+                    <div className="max-w-md mx-auto flex flex-col items-center">
+                      <div className="w-16 h-16 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-paw-orange flex items-center justify-center mb-4 border border-amber-500/20 shadow-xs">
+                        <Cpu size={30} />
+                      </div>
+                      <h3 className="text-base font-fredoka font-bold text-[#0B2340] dark:text-white mb-1.5">
+                        {stats.total_ai_reports === 0
+                          ? 'No AI-Assisted Reports Submitted Yet'
+                          : 'No Reports Match Current Filters'}
+                      </h3>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                        {stats.total_ai_reports === 0
+                          ? 'When community members submit animal photos using the AI Scanner on the Rescue, Missing Pet, or SOS forms, predictions and confidence scores will stream here for review.'
+                          : 'Try broadening your search keyword or switching validation filters back to "All".'}
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        {(searchQuery || statusFilter !== 'All' || animalTypeFilter !== 'All' || confidenceFilter !== 'All' || typeFilter !== 'All') && (
+                          <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0B2340] dark:bg-blue-600 text-white hover:bg-[#123661] transition-all cursor-pointer shadow-xs"
+                          >
+                            Reset Filters
+                          </button>
+                        )}
+                        {breed_guide_enabled && (
+                          <button
+                            type="button"
+                            onClick={openGeneralBreedGuide}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                          >
+                            <BookOpen size={13} />
+                            <span>Explore Breed Handbook</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -403,12 +576,25 @@ export default function AiValidation({
                       {new Date(report.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-right">
-                      <button
-                        onClick={() => openValidationModal(report)}
-                        className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#0B2340] dark:text-white font-bold text-xs py-1.5 px-3 rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Eye size={12} /> Review
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        {breed_guide_enabled && (
+                          <button
+                            type="button"
+                            onClick={() => openReportBreedGuide(report)}
+                            className="inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold text-xs py-1.5 px-2.5 rounded-lg border border-amber-200/60 dark:border-amber-800/40 transition-colors cursor-pointer"
+                            title="Cross-reference breed in handbook"
+                          >
+                            <BookOpen size={12} />
+                            <span className="hidden sm:inline">Guide</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openValidationModal(report)}
+                          className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#0B2340] dark:text-white font-bold text-xs py-1.5 px-3 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Eye size={12} /> Review
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -602,11 +788,24 @@ export default function AiValidation({
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Details Comparison</h4>
-                            {hasMultipleAiAnimals && (
-                              <span className="text-[10px] font-bold text-paw-orange">
-                                Comparing AI Animal #{activeAiAnimalIdx + 1}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {hasMultipleAiAnimals && (
+                                <span className="text-[10px] font-bold text-paw-orange">
+                                  Comparing AI Animal #{activeAiAnimalIdx + 1}
+                                </span>
+                              )}
+                              {breed_guide_enabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => openReportBreedGuide(selectedReport)}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-800/40 transition-colors cursor-pointer"
+                                  title="Open Breed Handbook to cross-examine and compare closest breeds"
+                                >
+                                  <BookOpen size={11} />
+                                  <span>Breed Guide & Matches</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <div className="border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden text-xs">
                             <div className="grid grid-cols-4 bg-gray-50 dark:bg-slate-900/60 p-2.5 font-black text-gray-400 border-b border-gray-100 dark:border-slate-800">
@@ -666,20 +865,40 @@ export default function AiValidation({
                       
                       {/* Approve Details Action */}
                       {!isCorrecting && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleApprove}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-500/10 transition-colors cursor-pointer"
-                          >
-                            <CheckCircle2 size={16} /> Approve AI Details
-                          </button>
-                          
-                          <button
-                            onClick={() => setIsCorrecting(true)}
-                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-colors cursor-pointer"
-                          >
-                            <ShieldAlert size={16} /> Flag / Correct Details
-                          </button>
+                        <div className="space-y-3">
+                          {volunteers.length > 0 && (
+                            <div className="bg-gray-50 dark:bg-slate-800/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">
+                                Optional: Dispatch Responder Volunteer on Approval
+                              </label>
+                              <select
+                                value={dispatchVolunteerId}
+                                onChange={(e) => setDispatchVolunteerId(e.target.value)}
+                                className="w-full p-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg outline-none font-bold text-xs text-[#0B2340] dark:text-white"
+                              >
+                                <option value="">Approve only (assign volunteer later)</option>
+                                {volunteers.map((v) => (
+                                  <option key={v.id} value={v.id}>{v.name} ({v.email})</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleApprove}
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-500/10 transition-colors cursor-pointer"
+                            >
+                              <CheckCircle2 size={16} />
+                              {dispatchVolunteerId ? 'Approve & Dispatch Volunteer' : 'Approve AI Details'}
+                            </button>
+                            
+                            <button
+                              onClick={() => setIsCorrecting(true)}
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-colors cursor-pointer"
+                            >
+                              <ShieldAlert size={16} /> Flag / Correct Details
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -717,7 +936,18 @@ export default function AiValidation({
                               </div>
 
                               <div className="col-span-2">
-                                <label className="font-bold text-gray-400 mb-1 block">Breed</label>
+                                <div className="flex items-center justify-between mb-1">
+                                  <label className="font-bold text-gray-400 block">Breed</label>
+                                  {breed_guide_enabled && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openReportBreedGuide(selectedReport)}
+                                      className="text-[10px] font-bold text-paw-orange hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <BookOpen size={11} /> Browse & Pick from Handbook
+                                    </button>
+                                  )}
+                                </div>
                                 <input
                                   type="text"
                                   value={correctBreed}
@@ -791,6 +1021,16 @@ export default function AiValidation({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Breed Reference Handbook Modal */}
+      {breed_guide_enabled && (
+        <BreedGuideModal
+          isOpen={isBreedGuideOpen}
+          onClose={() => setIsBreedGuideOpen(false)}
+          contextReport={breedGuideContextReport}
+          onSelectBreedForCorrection={handleSelectBreedForCorrection}
+        />
+      )}
     </AdminPageShell>
   );
 }

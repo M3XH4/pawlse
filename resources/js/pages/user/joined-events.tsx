@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, ExternalLink, Trash2, Heart, Users, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Calendar, MapPin, Clock, ExternalLink, Trash2, Heart, Users, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -32,26 +33,48 @@ interface UserJoinedEventsProps {
         links: any[];
         total: number;
     };
+    certificatesByEvent?: Record<number, number>;
 }
 
-export default function UserJoinedEvents({ tasks }: UserJoinedEventsProps) {
+export default function UserJoinedEvents({ tasks, certificatesByEvent = {} }: UserJoinedEventsProps) {
     const joinedTasks = tasks?.data || [];
     const [cancellingId, setCancellingId] = useState<number | null>(null);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: React.ReactNode;
+        confirmText?: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        description: '',
+        onConfirm: () => {},
+    });
 
-    const handleLeaveEvent = (eventId: number) => {
-        if (!confirm('Are you sure you want to cancel your attendance for this event? Your reserved spot will be released.')) {
-            return;
-        }
-
-        setCancellingId(eventId);
-        router.post(
-            `/events/${eventId}/leave`,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setCancellingId(null),
-            }
-        );
+    const handleLeaveEvent = (eventId: number, eventTitle?: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Cancel Attendance',
+            description: (
+                <span>
+                    Are you sure you want to cancel your attendance for {eventTitle ? <strong className="text-gray-900 dark:text-white">"{eventTitle}"</strong> : 'this event'}? Your reserved spot will be released.
+                </span>
+            ),
+            confirmText: 'Leave Event',
+            onConfirm: () => {
+                setCancellingId(eventId);
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                router.post(
+                    `/events/${eventId}/leave`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onFinish: () => setCancellingId(null),
+                    }
+                );
+            },
+        });
     };
 
     return (
@@ -156,21 +179,41 @@ export default function UserJoinedEvents({ tasks }: UserJoinedEventsProps) {
                                         Event Details <ExternalLink size={12} />
                                     </Link>
 
-                                    <button
-                                        type="button"
-                                        disabled={cancellingId === event.id}
-                                        onClick={() => handleLeaveEvent(event.id)}
-                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
-                                    >
-                                        <Trash2 size={13} />
-                                        {cancellingId === event.id ? 'Cancelling...' : 'Cancel Attendance'}
-                                    </button>
+                                    {task.status === 'completed' || certificatesByEvent[event.id] ? (
+                                        <Link
+                                            href="/account/user/certificates"
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-paw-orange transition-all hover:bg-orange-100 dark:border-orange-900/40 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-950/60"
+                                        >
+                                            <Award size={13} /> View Certificate
+                                        </Link>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            disabled={cancellingId === event.id}
+                                            onClick={() => handleLeaveEvent(event.id, event.title)}
+                                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                        >
+                                            <Trash2 size={13} />
+                                            {cancellingId === event.id ? 'Cancelling...' : 'Cancel Attendance'}
+                                        </button>
+                                    )}
                                 </div>
                             </DashboardCard>
                         );
                     })}
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                description={confirmModal.description}
+                confirmText={confirmModal.confirmText || 'Confirm'}
+                variant="danger"
+            />
 
             {/* Pagination */}
             {tasks.links && tasks.links.length > 3 && (

@@ -18,8 +18,13 @@ class DonationController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        $userMatchScope = function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+                ->orWhereRaw('LOWER(donor_email) = ?', [strtolower((string) $user->email)]);
+        };
+
         $query = Donation::query()
-            ->where('user_id', $user->id)
+            ->where($userMatchScope)
             ->with(['payments', 'inKindDonation', 'feedingSponsorship']);
 
         // Search
@@ -47,12 +52,12 @@ class DonationController extends Controller
             ->withQueryString();
 
         $totalDonated = Donation::query()
-            ->where('user_id', $user->id)
+            ->where($userMatchScope)
             ->whereIn('status', ['completed', 'verified'])
             ->sum('amount');
 
         $inKindCount = Donation::query()
-            ->where('user_id', $user->id)
+            ->where($userMatchScope)
             ->where('type', 'in_kind')
             ->count();
 
@@ -62,7 +67,7 @@ class DonationController extends Controller
             'stats' => [
                 'totalCash' => (int) $totalDonated,
                 'inKindCount' => $inKindCount,
-                'totalCount' => Donation::query()->where('user_id', $user->id)->count(),
+                'totalCount' => Donation::query()->where($userMatchScope)->count(),
             ],
         ]);
     }

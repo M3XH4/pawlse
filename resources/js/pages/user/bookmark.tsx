@@ -168,9 +168,9 @@ export default function UserBookmarks() {
                                     <Link
                                         href={
                                             item.type === 'pet'
-                                                ? '/adopt'
+                                                ? `/adopt/${item.id}`
                                                 : item.type === 'event'
-                                                  ? '/events'
+                                                  ? `/events?event=${item.id}`
                                                   : '/missing'
                                         }
                                         className="flex-1 py-2 rounded-xl border border-gray-250 dark:border-gray-800 text-[#0B2340] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors"

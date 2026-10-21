@@ -1,7 +1,10 @@
 import { router } from '@inertiajs/react';
+import { toast } from 'sonner';
+import { getEcho } from '@/echo';
 import { playNotificationChime } from '@/lib/notification-chime';
 import { syncDocumentTitle } from '@/lib/notification-title';
 import { handleRealtimeAppEvent } from '@/lib/realtime-page-sync';
+import type { RealtimeAppEvent } from '@/lib/realtime-page-sync';
 import { notificationMatchesPath } from '@/lib/tab-notification-matcher';
 import type { DashboardNotification } from '@/types/dashboard';
 
@@ -23,7 +26,9 @@ export function isDashboardRoute(url?: string, role?: string | null): boolean {
     if (role && ['user', 'volunteer', 'admin', 'super-admin'].includes(role)) {
         return true;
     }
+
     const path = url || (typeof window !== 'undefined' ? window.location.pathname : '');
+
     return /^\/account\/(user|volunteer|admin|super-admin)/.test(path);
 }
 
@@ -54,6 +59,7 @@ class NotificationStore {
 
     public subscribe(listener: Listener): () => void {
         this.listeners.add(listener);
+
         return () => {
             this.listeners.delete(listener);
         };
@@ -83,6 +89,7 @@ class NotificationStore {
             };
             syncDocumentTitle(0);
             this.notify();
+
             return;
         }
 
@@ -103,18 +110,32 @@ class NotificationStore {
             this.setupRealtime(userId);
             this.setupTitleObserver();
             this.notify();
+
             return;
         }
 
         // Merge incoming props without overwriting real-time additions
         if (sourceList.length > 0) {
-            const existingIds = new Set(this.state.notifications.map((n) => n.id));
-            const merged = [...this.state.notifications];
+            const currentMap = new Map(this.state.notifications.map((n) => [n.id, n]));
+            const merged: DashboardNotification[] = [];
 
             for (const item of sourceList) {
-                if (!existingIds.has(item.id)) {
+                if (currentMap.has(item.id)) {
+                    const existing = currentMap.get(item.id)!;
+                    merged.push({
+                        ...existing,
+                        ...item,
+                        read: this.state.optimisticReadIds.has(item.id) ? true : item.read,
+                    });
+                    currentMap.delete(item.id);
+                } else {
                     merged.push(item);
                 }
+            }
+
+            // Retain any real-time notifications received that are not in server props yet
+            for (const remaining of currentMap.values()) {
+                merged.unshift(remaining);
             }
 
             this.state.notifications = merged;
@@ -144,32 +165,98 @@ class NotificationStore {
             this.pollTimer = null;
         }
 
-        // Support WebSocket listener if Laravel Echo is configured
+        let isEchoListening = false;
+
+        // Primary transport: Laravel Echo WebSocket (Laravel Reverb)
         try {
-            const windowWithEcho = window as unknown as {
-                Echo?: {
-                    private: (channel: string) => {
-                        listen: (event: string, callback: (payload: { notification?: DashboardNotification; unreadCount?: number }) => void) => unknown;
-                    };
-                    channel: (channel: string) => {
-                        listen: (event: string, callback: (payload: import('@/lib/realtime-page-sync').RealtimeAppEvent) => void) => unknown;
+            const echo = getEcho();
+
+            if (echo) {
+                const userChannel = `users.${userId}`;
+                echo.private(userChannel).listen(
+                    '.notification.pushed',
+                    (data: { notification?: DashboardNotification; unreadCount?: number }) => {
+                        if (data?.notification) {
+                            this.pushNotification(data.notification, data.unreadCount, true);
+                        }
+                    },
+                );
+
+                echo.channel('app-realtime').listen(
+                    '.app.event',
+                    (data: RealtimeAppEvent) => {
+                        if (data) {
+                            handleRealtimeAppEvent(data);
+                        }
+                    },
+                );
+
+                isEchoListening = true;
+
+                // Monitor underlying Pusher connection state from Reverb
+                const connector = echo.connector as {
+                    pusher?: {
+                        connection?: {
+                            state?: string;
+                            bind?: (event: string, cb: () => void) => void;
+                        };
                     };
                 };
-            };
-            if (windowWithEcho.Echo) {
-                windowWithEcho.Echo.private(`users.${userId}`).listen('.notification.pushed', (data) => {
-                    if (data?.notification) {
-                        this.pushNotification(data.notification, data.unreadCount);
+                const conn = connector?.pusher?.connection;
+
+                if (conn?.bind) {
+                    conn.bind('connected', () => {
+                        this.state.isConnected = true;
+                        this.notify();
+
+                        if (this.eventSource) {
+                            this.eventSource.close();
+                            this.eventSource = null;
+                        }
+                    });
+
+                    conn.bind('disconnected', () => {
+                        this.state.isConnected = false;
+                        this.notify();
+                        this.setupSseFallback();
+                    });
+
+                    conn.bind('unavailable', () => {
+                        this.state.isConnected = false;
+                        this.notify();
+                        this.setupSseFallback();
+                    });
+
+                    conn.bind('error', () => {
+                        this.state.isConnected = false;
+                        this.notify();
+                        this.setupSseFallback();
+                    });
+
+                    if (conn.state === 'connected') {
+                        this.state.isConnected = true;
+                        this.notify();
+
+                        return;
                     }
-                });
-                windowWithEcho.Echo.channel('app-realtime').listen('.app.event', (data) => {
-                    if (data) {
-                        handleRealtimeAppEvent(data);
-                    }
-                });
+                } else {
+                    this.state.isConnected = true;
+                    this.notify();
+                }
             }
         } catch {
-            // Echo integration fallback
+            isEchoListening = false;
+        }
+
+        // Secondary fallback: Server-Sent Events (SSE) stream if Echo isn't immediately connected
+        if (!isEchoListening || !this.state.isConnected) {
+            this.setupSseFallback();
+        }
+    }
+
+    private setupSseFallback(): void {
+        if (typeof window === 'undefined' || !this.isDashboardActive || this.eventSource) {
+            return;
         }
 
         try {
@@ -185,6 +272,7 @@ class NotificationStore {
             es.addEventListener('init', (e: MessageEvent) => {
                 try {
                     const data = JSON.parse(e.data) as { unreadCount?: number };
+
                     if (typeof data.unreadCount === 'number') {
                         this.state.unreadCount = data.unreadCount;
                         syncDocumentTitle(data.unreadCount);
@@ -203,7 +291,7 @@ class NotificationStore {
                     };
 
                     if (data.notification) {
-                        this.pushNotification(data.notification, data.unreadCount);
+                        this.pushNotification(data.notification, data.unreadCount, true);
                     }
                 } catch {
                     // Ignore JSON parse errors
@@ -212,7 +300,8 @@ class NotificationStore {
 
             es.addEventListener('app_event', (e: MessageEvent) => {
                 try {
-                    const data = JSON.parse(e.data) as import('@/lib/realtime-page-sync').RealtimeAppEvent;
+                    const data = JSON.parse(e.data) as RealtimeAppEvent;
+
                     if (data?.domain) {
                         handleRealtimeAppEvent(data);
                     }
@@ -224,8 +313,8 @@ class NotificationStore {
             es.addEventListener('ping', (e: MessageEvent) => {
                 try {
                     const data = JSON.parse(e.data) as { unreadCount?: number };
+
                     if (typeof data.unreadCount === 'number') {
-                        // Keep count aligned if no pending optimistic changes
                         if (this.state.optimisticReadIds.size === 0) {
                             this.state.unreadCount = data.unreadCount;
                             syncDocumentTitle(data.unreadCount);
@@ -240,8 +329,6 @@ class NotificationStore {
             es.addEventListener('error', () => {
                 this.state.isConnected = false;
                 this.notify();
-                // EventSource will automatically retry in modern browsers.
-                // In addition, start a lightweight poll fallback.
                 this.startPollingFallback();
             });
         } catch {
@@ -257,7 +344,7 @@ class NotificationStore {
 
         this.pollTimer = setInterval(() => {
             void this.pollNotifications();
-        }, 30000);
+        }, 10000);
     }
 
     public async pollNotifications(): Promise<void> {
@@ -293,8 +380,9 @@ class NotificationStore {
 
                 if (newItems.length > 0) {
                     this.state.notifications = [...newItems, ...this.state.notifications];
+
                     for (const item of newItems) {
-                        this.pushNotification(item, data.unreadCount, false);
+                        this.pushNotification(item, data.unreadCount, true);
                     }
                 }
             }
@@ -308,7 +396,7 @@ class NotificationStore {
     public pushNotification(
         notification: DashboardNotification,
         newUnreadCount?: number,
-        showChime = false,
+        showChime = true,
     ): void {
         if (!this.isDashboardActive) {
             return;
@@ -316,6 +404,7 @@ class NotificationStore {
 
         // Deduplicate notification
         const exists = this.state.notifications.some((n) => n.id === notification.id);
+
         if (!exists) {
             this.state.notifications = [notification, ...this.state.notifications];
         }
@@ -332,6 +421,15 @@ class NotificationStore {
 
         if (showChime) {
             playNotificationChime();
+            toast(notification.title, {
+                description: notification.description,
+                action: notification.url
+                    ? {
+                          label: 'View',
+                          onClick: () => this.openNotification(notification),
+                      }
+                    : undefined,
+            });
         }
     }
 
@@ -341,6 +439,7 @@ class NotificationStore {
         }
 
         const titleEl = document.querySelector('title');
+
         if (!titleEl) {
             return;
         }
@@ -351,6 +450,7 @@ class NotificationStore {
             if (isSelfUpdating || !this.isDashboardActive) {
                 return;
             }
+
             isSelfUpdating = true;
             syncDocumentTitle(this.state.unreadCount);
             isSelfUpdating = false;
@@ -479,6 +579,7 @@ class NotificationStore {
         }
 
         const toMark: string[] = [];
+
         for (const notif of this.state.notifications) {
             if (!this.isRead(notif) && notificationMatchesPath(cleanPath, notif)) {
                 toMark.push(notif.id);
@@ -492,6 +593,7 @@ class NotificationStore {
         for (const id of toMark) {
             this.state.optimisticReadIds.add(id);
         }
+
         this.state.unreadCount = Math.max(0, this.state.unreadCount - toMark.length);
         syncDocumentTitle(this.state.unreadCount);
         this.notify();
@@ -533,6 +635,18 @@ class NotificationStore {
         if (this.titleObserver) {
             this.titleObserver.disconnect();
             this.titleObserver = null;
+        }
+
+        if (this.activeUserId) {
+            try {
+                const echo = getEcho();
+
+                if (echo) {
+                    echo.leave(`users.${this.activeUserId}`);
+                }
+            } catch {
+                // Ignore cleanup errors
+            }
         }
 
         this.isInitialized = false;

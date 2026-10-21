@@ -7,6 +7,8 @@ use App\Models\Donation;
 use App\Models\FosterCareUpdate;
 use App\Models\FosterPlacement;
 use App\Models\PetReport;
+use App\Models\RehomingRequest;
+use App\Models\ShelterVisit;
 use App\Models\VolunteerApplication;
 use App\Services\RealtimeEventBroadcaster;
 
@@ -152,6 +154,58 @@ class RealtimeActivityObserver
                 payload: ['id' => $update->id, 'emergency' => (bool) $update->is_emergency],
                 targetRoles: ['admin', 'super-admin'],
             );
+        });
+
+        // 6. Shelter Visits lifecycle
+        ShelterVisit::created(function (ShelterVisit $visit): void {
+            RealtimeEventBroadcaster::publish(
+                domain: 'adoption',
+                action: 'visit_submitted',
+                title: 'New Shelter Visit Request',
+                message: "{$visit->full_name} requested a shelter visit.",
+                payload: ['id' => $visit->id],
+                targetRoles: ['admin', 'super-admin'],
+            );
+        });
+
+        ShelterVisit::updated(function (ShelterVisit $visit): void {
+            if ($visit->wasChanged('status')) {
+                RealtimeEventBroadcaster::publish(
+                    domain: 'adoption',
+                    action: 'visit_status_updated',
+                    title: 'Shelter Visit Status Updated',
+                    message: "Shelter visit status changed to {$visit->status}.",
+                    payload: ['id' => $visit->id, 'status' => $visit->status],
+                    targetRoles: ['admin', 'super-admin', 'user'],
+                    targetUserId: $visit->user_id,
+                );
+            }
+        });
+
+        // 7. Rehoming Requests lifecycle
+        RehomingRequest::created(function (RehomingRequest $rehoming): void {
+            RealtimeEventBroadcaster::publish(
+                domain: 'adoption',
+                action: 'rehoming_submitted',
+                title: 'New Rehoming Assistance Request',
+                message: "{$rehoming->full_name} submitted a rehoming request for {$rehoming->animal_name}.",
+                payload: ['id' => $rehoming->id],
+                targetRoles: ['admin', 'super-admin'],
+            );
+        });
+
+        RehomingRequest::updated(function (RehomingRequest $rehoming): void {
+            if ($rehoming->wasChanged('status')) {
+                RealtimeEventBroadcaster::publish(
+                    domain: 'adoption',
+                    action: 'rehoming_status_updated',
+                    title: 'Rehoming Request Status Updated',
+                    message: "Rehoming request for {$rehoming->animal_name} is now {$rehoming->status}.",
+                    payload: ['id' => $rehoming->id, 'status' => $rehoming->status],
+                    targetRoles: ['admin', 'super-admin', 'user'],
+                    targetUserId: $rehoming->user_id,
+                );
+            }
         });
     }
 }

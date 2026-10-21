@@ -27,6 +27,7 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 
 interface FosterPetModel {
     id: number;
@@ -645,14 +646,11 @@ export function FosterCareView({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Next Vet / Check-up Date
-                                    </label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Next Vet / Check-up Date"
                                         value={nextAppointmentDate}
-                                        onChange={(e) => setNextAppointmentDate(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                        onChange={(date) => setNextAppointmentDate(date)}
+                                        placeholder="Select appointment date..."
                                     />
                                 </div>
                             </div>

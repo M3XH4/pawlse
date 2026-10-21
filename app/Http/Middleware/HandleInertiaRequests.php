@@ -43,10 +43,12 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $dashboardRole = $this->dashboardRole($request);
-        $dashboardNotifications = $request->user() !== null
+        $dashboardNotifications = ($request->user() !== null && $dashboardRole !== null)
             ? $this->dashboardNotifications($request)
             : [];
-        $unreadNotificationCount = $request->user()?->unreadNotifications()->count() ?? 0;
+        $unreadNotificationCount = ($request->user() !== null && $dashboardRole !== null)
+            ? $request->user()->unreadNotifications()->count()
+            : 0;
 
         $dashboardChrome = $dashboardRole === null
             ? null
@@ -65,7 +67,11 @@ class HandleInertiaRequests extends Middleware
             'isMaintenanceMode' => fn () => (bool) rescue(fn () => SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false, false, false),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    ...$request->user()->toArray(),
+                    'roles' => rescue(fn () => $request->user()->roles->pluck('name')->toArray(), [$request->user()->role ?? 'user'], false),
+                    'permissions' => rescue(fn () => $request->user()->getAllPermissions()->pluck('name')->toArray(), [], false),
+                ] : null,
             ],
             'can_switch_to_volunteer' => $request->user()
                 ? rescue(fn () => $request->user()->volunteerApplications()->where('status', 'approved')->exists(), false, false)
@@ -125,6 +131,7 @@ class HandleInertiaRequests extends Middleware
                 'warning' => null,
                 'success' => null,
                 'info' => null,
+                'submitted_report' => null,
             ];
         }
 
@@ -134,6 +141,7 @@ class HandleInertiaRequests extends Middleware
             'warning' => is_string($request->session()->get('warning')) ? $request->session()->get('warning') : null,
             'success' => is_string($request->session()->get('success')) ? $request->session()->get('success') : null,
             'info' => is_string($request->session()->get('info')) ? $request->session()->get('info') : null,
+            'submitted_report' => is_array($request->session()->get('submitted_report')) ? $request->session()->get('submitted_report') : null,
         ];
     }
 

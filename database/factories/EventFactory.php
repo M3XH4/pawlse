@@ -26,7 +26,28 @@ class EventFactory extends Factory
             'spots' => 10,
             'desc' => fake()->paragraph(),
             'status' => 'open',
+            'approval_status' => 'approved',
+            'approved_at' => now(),
             'keywords' => ['feeding', 'stray'],
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'approval_status' => 'pending',
+            'status' => 'closed',
+            'approved_by' => null,
+            'approved_at' => null,
+        ]);
+    }
+
+    public function rejected(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'approval_status' => 'rejected',
+            'status' => 'closed',
+            'rejection_reason' => 'Rejected for scheduling conflict',
+        ]);
     }
 }

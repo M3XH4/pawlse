@@ -43,12 +43,15 @@ export function handleRealtimeAppEvent(event: RealtimeAppEvent): void {
         // 2. Adoption domain matching
         (event.domain === 'adoption' &&
             (pathname.includes('/admin/adoption-management') ||
-                pathname.includes('/user/adoption-applications'))) ||
+                pathname.includes('/user/adoption-applications') ||
+                pathname.includes('/user/shelter-visits') ||
+                pathname.includes('/user/rehoming-requests'))) ||
         // 3. Rescue & Incident domain matching
         (event.domain === 'rescue' &&
             (pathname.includes('/admin/rescue-management') ||
                 pathname.includes('/admin/animal-records') ||
                 pathname.includes('/user/rescue-reports') ||
+                pathname.includes('/user/missing-found') ||
                 pathname.includes('/volunteer/rescue-reports'))) ||
         // 4. Donation domain matching
         (event.domain === 'donation' &&

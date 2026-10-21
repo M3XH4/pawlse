@@ -30,15 +30,16 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { PetDetailModal, AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
-import { ShelterVisitModal } from '@/components/adoption/shelter-visit-modal';
+import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
 import { RehomingModal } from '@/components/adoption/rehoming-modal';
 import { ShareModal } from '@/components/adoption/share-modal';
 
 interface AdoptProps {
   pets: AdoptPetDetail[];
+  shelterVisitSettings?: ShelterVisitSettings;
 }
 
-export default function Adopt({ pets = [] }: AdoptProps) {
+export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
   const [selectedPet, setSelectedPet] = useState<AdoptPetDetail | null>(null);
   const [applyingPet, setApplyingPet] = useState<AdoptPetDetail | null>(null);
   const [sharingPet, setSharingPet] = useState<AdoptPetDetail | null>(null);
@@ -52,6 +53,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
   const animalsCatalogRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState({
+    type: 'All', // 'All', 'Dog', 'Cat'
     color: 'All',
     breed: 'All',
     gender: 'All',
@@ -61,11 +63,22 @@ export default function Adopt({ pets = [] }: AdoptProps) {
 
   const safePets = useMemo(() => (Array.isArray(pets) ? pets : []), [pets]);
 
+  // Counts by species
+  const dogCount = useMemo(
+    () => safePets.filter((p) => (p?.type || '').toLowerCase() === 'dog').length,
+    [safePets]
+  );
+  const catCount = useMemo(
+    () => safePets.filter((p) => (p?.type || '').toLowerCase() === 'cat').length,
+    [safePets]
+  );
+
   // Dynamic Search Suggestions
   const searchSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
     safePets.forEach((pet) => {
       if (pet?.name) suggestions.add(pet.name);
+      if (pet?.type) suggestions.add(pet.type.charAt(0).toUpperCase() + pet.type.slice(1));
       if (pet?.breed) suggestions.add(pet.breed);
       if (pet?.color) suggestions.add(pet.color);
       if (pet?.gender) suggestions.add(pet.gender);
@@ -88,19 +101,28 @@ export default function Adopt({ pets = [] }: AdoptProps) {
       const name = (pet?.name || '').toLowerCase();
       const breed = (pet?.breed || '').toLowerCase();
       const color = (pet?.color || '').toLowerCase();
+      const type = (pet?.type || '').toLowerCase();
 
       const matchesSearch =
         !query ||
         name.includes(query) ||
         breed.includes(query) ||
-        color.includes(query);
+        color.includes(query) ||
+        type.includes(query) ||
+        (query === 'dogs' && type === 'dog') ||
+        (query === 'cats' && type === 'cat');
+
+      const matchesType =
+        filters.type === 'All' ||
+        (filters.type === 'Dog' && type === 'dog') ||
+        (filters.type === 'Cat' && type === 'cat');
 
       const matchesColor = filters.color === 'All' || pet?.color === filters.color;
       const matchesBreed = filters.breed === 'All' || pet?.breed === filters.breed;
       const matchesGender = filters.gender === 'All' || pet?.gender === filters.gender;
       const matchesAge = filters.ageCategory === 'All' || pet?.ageCategory === filters.ageCategory;
 
-      return matchesSearch && matchesColor && matchesBreed && matchesGender && matchesAge;
+      return matchesSearch && matchesType && matchesColor && matchesBreed && matchesGender && matchesAge;
     });
 
     if (filters.sortBy === 'longest') {
@@ -379,6 +401,34 @@ export default function Adopt({ pets = [] }: AdoptProps) {
             </div>
           </div>
 
+          {/* Quick Species Filter Tabs */}
+          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
+            {[
+              { id: 'All', label: 'All Animals', count: safePets.length, icon: '🐾' },
+              { id: 'Dog', label: 'Dogs', count: dogCount, icon: '🐕' },
+              { id: 'Cat', label: 'Cats', count: catCount, icon: '🐈' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, type: tab.id }))}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  filters.type === tab.id
+                    ? 'bg-[#0B2340] text-white shadow-md shadow-paw-navy/20 scale-105'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/70'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  filters.type === tab.id ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* Filter Panel */}
           <AnimatePresence>
             {showFilters && (
@@ -389,7 +439,21 @@ export default function Adopt({ pets = [] }: AdoptProps) {
                 className="bg-white rounded-[32px] p-6 md:p-8 shadow-xl border border-gray-100 mb-8"
               >
                 <h3 className="font-black text-paw-navy text-lg mb-5">Filter Options</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                  {/* Animal Type */}
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Animal Type</label>
+                    <select
+                      value={filters.type}
+                      onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
+                    >
+                      <option value="All">All Types</option>
+                      <option value="Dog">Dogs</option>
+                      <option value="Cat">Cats</option>
+                    </select>
+                  </div>
+
                   {/* Color */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Color</label>
@@ -467,7 +531,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
                   </p>
                   <button
                     onClick={() => {
-                      setFilters({ color: 'All', breed: 'All', gender: 'All', ageCategory: 'All', sortBy: 'newest' });
+                      setFilters({ type: 'All', color: 'All', breed: 'All', gender: 'All', ageCategory: 'All', sortBy: 'newest' });
                       setSearchQuery('');
                     }}
                     className="px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl font-black text-xs text-paw-navy transition-colors cursor-pointer"
@@ -491,7 +555,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
               </p>
               <button
                 onClick={() => {
-                  setFilters({ color: 'All', breed: 'All', gender: 'All', ageCategory: 'All', sortBy: 'newest' });
+                  setFilters({ type: 'All', color: 'All', breed: 'All', gender: 'All', ageCategory: 'All', sortBy: 'newest' });
                   setSearchQuery('');
                 }}
                 className="px-6 py-3 bg-[#FF9B00] text-white rounded-2xl font-black hover:bg-paw-navy transition-colors text-sm shadow-lg shadow-orange-500/20 cursor-pointer"
@@ -829,6 +893,7 @@ export default function Adopt({ pets = [] }: AdoptProps) {
         isOpen={isVisitModalOpen}
         onClose={() => setIsVisitModalOpen(false)}
         pets={safePets.map((p) => ({ id: p.id, name: p.name }))}
+        settings={shelterVisitSettings}
       />
 
       {/* 4. Rehoming Assistance Modal */}

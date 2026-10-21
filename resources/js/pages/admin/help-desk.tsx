@@ -34,6 +34,13 @@ interface AdminHelpDeskProps {
         data: HelpDeskTicket[];
         links: any[];
         total: number;
+        last_page?: number;
+    };
+    escalatedTickets?: {
+        data: HelpDeskTicket[];
+        links: any[];
+        total: number;
+        last_page?: number;
     };
     frequentProblems: FrequentProblem[];
     categories: string[];
@@ -61,6 +68,7 @@ interface AdminHelpDeskProps {
 
 export default function AdminHelpDesk({
     tickets,
+    escalatedTickets,
     frequentProblems,
     categories,
     stats,
@@ -73,7 +81,10 @@ export default function AdminHelpDesk({
     const [faqModalOpen, setFaqModalOpen] = useState(false);
     const [editingFaq, setEditingFaq] = useState<FrequentProblem | null>(null);
     const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-    const selectedTicket = tickets.data.find((t) => t.id === selectedTicketId) ?? null;
+
+    const currentTicketSet = activeTab === 'escalated' ? (escalatedTickets || tickets) : tickets;
+    const allAvailableTickets = [...tickets.data, ...(escalatedTickets?.data || [])];
+    const selectedTicket = allAvailableTickets.find((t) => t.id === selectedTicketId) ?? null;
 
     // Filters
     const [search, setSearch] = useState(filters.search || '');
@@ -107,7 +118,7 @@ export default function AdminHelpDesk({
 
     const displayedTickets =
         activeTab === 'escalated'
-            ? tickets.data.filter((t) => t.is_escalated || t.target_role === 'super-admin')
+            ? (escalatedTickets?.data ?? tickets.data.filter((t) => t.is_escalated || t.target_role === 'super-admin'))
             : tickets.data;
 
     return (
@@ -450,6 +461,36 @@ export default function AdminHelpDesk({
                                     </div>
                                 </DashboardCard>
                             ))}
+                        </div>
+                    )}
+
+                    {currentTicketSet.links && currentTicketSet.links.length > 3 && (
+                        <div className="flex justify-center items-center gap-1.5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
+                            {currentTicketSet.links.map((link, idx) => {
+                                let label = link.label;
+                                if (label.includes('Previous')) label = '←';
+                                if (label.includes('Next')) label = '→';
+
+                                return (
+                                    <button
+                                        key={idx}
+                                        disabled={!link.url}
+                                        onClick={() =>
+                                            router.get(
+                                                link.url!,
+                                                {},
+                                                { preserveScroll: true, preserveState: true }
+                                            )
+                                        }
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+                                            link.active
+                                                ? 'bg-teal-600 text-white shadow-md'
+                                                : 'bg-white dark:bg-slate-800 text-[#0B2340] dark:text-gray-300 hover:bg-gray-50 border border-gray-100 dark:border-slate-800'
+                                        } ${!link.url ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        dangerouslySetInnerHTML={{ __html: label }}
+                                    />
+                                );
+                            })}
                         </div>
                     )}
                 </div>

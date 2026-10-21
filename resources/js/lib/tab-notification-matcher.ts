@@ -53,8 +53,26 @@ export function notificationMatchesTab(
     const titleLower = (item.title || '').toLowerCase();
 
     if (category) {
-        if (category === 'adoption' || category === 'rehoming') {
+        if (category === 'adoption') {
             if (itemPath.includes('adoption') || titleLower.includes('adoption')) {
+                return true;
+            }
+        }
+        if (category === 'visit' || category === 'shelter_visit') {
+            if (
+                itemPath.includes('shelter-visits') ||
+                itemPath.includes('adoption-management') ||
+                titleLower.includes('shelter visit')
+            ) {
+                return true;
+            }
+        }
+        if (category === 'rehoming') {
+            if (
+                itemPath.includes('rehoming-requests') ||
+                itemPath.includes('adoption-management') ||
+                titleLower.includes('rehoming')
+            ) {
                 return true;
             }
         }

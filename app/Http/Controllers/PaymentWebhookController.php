@@ -161,13 +161,16 @@ class PaymentWebhookController extends Controller
                 ]);
 
                 $donorDisplay = $donation->anonymous ? 'Anonymous' : $donation->donor_name;
+                $posterUrl = $donation->feedingSponsorship->poster_url ?: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=600';
 
-                Event::create([
+                $event = Event::firstOrCreate([
                     'title' => 'Sponsored Feeding Day by '.$donorDisplay,
-                    'category' => 'Feeding',
                     'date' => $donation->feedingSponsorship->preferred_date,
+                ], [
+                    'category' => 'Feeding',
                     'time' => '09:00 AM',
                     'location' => 'Iligan City Stray Shelter / Feeding Route',
+                    'img' => $posterUrl,
                     'spots' => 10,
                     'desc' => "This feeding day is fully sponsored by a generous donor!\n".
                               "Sponsor: {$donorDisplay}\n".
@@ -176,7 +179,17 @@ class PaymentWebhookController extends Controller
                               'Volunteers are invited to join us in preparing and distributing food for our stray friends in Iligan.',
                     'keywords' => json_encode(['feeding', 'sponsored', 'strays']),
                     'status' => 'open',
+                    'approval_status' => 'approved',
+                    'approved_at' => now(),
                 ]);
+
+                if ($event->approval_status !== 'approved') {
+                    $event->update([
+                        'approval_status' => 'approved',
+                        'approved_at' => now(),
+                        'status' => 'open',
+                    ]);
+                }
             }
 
             EReceiptDispatcher::sendToUserAndEmail(

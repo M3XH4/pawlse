@@ -1,4 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 import {
   X,
   Mail,
@@ -41,6 +43,25 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
     message: '',
   });
 
+  const isFormDirty = Boolean(
+    !submitted &&
+    ((data.name.trim() && data.name !== (user?.name || '')) ||
+      (data.email.trim() && data.email !== (user?.email || '')) ||
+      (data.phone.trim() && data.phone !== (user?.phone || '')) ||
+      data.subject.trim() ||
+      data.message.trim())
+  );
+
+  const {
+    showDialog: showLeaveModal,
+    handleContinueEditing,
+    handleLeaveAnyway,
+    confirmAction,
+  } = useUnsavedChanges({
+    isDirty: isFormDirty && isOpen,
+    disabled: submitted,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -65,35 +86,36 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={handleClose}
-          className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
-        />
+    <>
+      <AnimatePresence>
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => confirmAction(handleClose)}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+          />
 
-        {/* Modal Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 16 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white w-full max-w-4xl max-h-[92vh] rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl relative z-10 flex flex-col md:flex-row overflow-hidden border-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close contact modal"
-            className="absolute top-4 right-4 sm:top-5 sm:right-5 z-30 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all hover:scale-105 shadow-sm cursor-pointer"
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white w-full max-w-4xl max-h-[92vh] rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl relative z-10 flex flex-col md:flex-row overflow-hidden border-0"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={18} />
-          </button>
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => confirmAction(handleClose)}
+              aria-label="Close contact modal"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 z-30 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all hover:scale-105 shadow-sm cursor-pointer"
+            >
+              <X size={18} />
+            </button>
 
           {/* Left Sidebar (Shelter Info & Emergency Notice) */}
           <div className="md:w-5/12 bg-gradient-to-br from-slate-900 via-paw-navy to-[#18233a] text-white p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden shrink-0">
@@ -338,5 +360,13 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
         </motion.div>
       </div>
     </AnimatePresence>
+
+    <UnsavedChangesDialog
+      isOpen={showLeaveModal}
+      onContinueEditing={handleContinueEditing}
+      onLeaveAnyway={handleLeaveAnyway}
+      zIndex={350}
+    />
+  </>
   );
 }

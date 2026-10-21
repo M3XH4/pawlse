@@ -17,6 +17,7 @@ use App\Models\VolunteerApplication;
 use App\Notifications\VolunteerApplicationReviewedNotification;
 use App\Notifications\VolunteerCertificateIssuedNotification;
 use App\Notifications\VolunteerTaskAssignedNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -63,28 +64,51 @@ class VolunteerManagementController extends Controller
         // 3. Assigned Tasks
         $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule', 'petReport'])
             ->when($search !== '', function ($query) use ($search) {
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })->orWhereHas('event', function ($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%");
-                })->orWhereHas('feedingSchedule', function ($q) use ($search) {
-                    $q->where('zone', 'like', "%{$search}%");
-                })->orWhereHas('petReport', function ($q) use ($search) {
-                    $q->where('pet_name', 'like', "%{$search}%")
-                        ->orWhere('species', 'like', "%{$search}%")
-                        ->orWhere('landmark', 'like', "%{$search}%");
+                $query->where(function ($outer) use ($search) {
+                    $outer->where('guest_name', 'like', "%{$search}%")
+                        ->orWhere('guest_email', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('event', function ($q) use ($search) {
+                            $q->where('title', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('feedingSchedule', function ($q) use ($search) {
+                            $q->where('zone', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('petReport', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('animal_type', 'like', "%{$search}%")
+                                ->orWhere('location', 'like', "%{$search}%");
+                        });
                 });
             });
 
         $tasks = $tasksQuery->latest()->paginate(10, ['*'], 'tasks_page')->withQueryString();
 
-        // Get dropdown lists for manuals assignments
-        $allEvents = Event::query()->where('status', 'open')->latest()->get();
+        // Get dropdown lists for manual assignments & certificate issuance (including closed events for post-event certificates)
+        $allEvents = Event::query()->where('approval_status', 'approved')->latest()->get();
         $allSchedules = FeedingSchedule::query()->where('status', 'active')->latest()->get();
+        $allVolunteers = User::query()
+            ->where('role', Role::Volunteer->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role']);
+        $allRecipients = User::query()
+            ->where(function ($query) {
+                $query->where('role', Role::Volunteer->value)
+                    ->orWhereHas('assignedTasks', function ($q) {
+                        $q->whereNotNull('event_id');
+                    });
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role']);
 
         return Inertia::render('admin/volunteer-management', [
             'applications' => $applications,
             'volunteers' => $volunteers,
+            'allVolunteers' => $allVolunteers,
+            'allRecipients' => $allRecipients,
             'tasks' => $tasks,
             'events' => $allEvents,
             'feedingSchedules' => $allSchedules,
@@ -119,6 +143,8 @@ class VolunteerManagementController extends Controller
                 [
                     'status' => 'approved',
                     'capacity' => $application->foster_capacity ?? 2,
+                    'location' => $application->address,
+                    'pet_preference' => $application->foster_preference ?? 'both',
                     'notes' => trim(($application->foster_preference ? 'Preference: '.ucfirst($application->foster_preference).'. ' : '').($application->foster_needs ?? '')),
                     'approved_by' => auth()->id(),
                     'approved_at' => now(),
@@ -260,25 +286,109 @@ class VolunteerManagementController extends Controller
             }
         }
 
+        // If status was changed to completed and it was an event, automatically issue & email certificate if not already issued
+        if ($validated['status'] === 'completed' && $task->event_id !== null) {
+            $task->loadMissing(['event', 'user']);
+            $event = $task->event;
+
+            if ($event !== null) {
+                $existingCertQuery = Certificate::query()->where('event_id', $event->id);
+                if ($task->user_id !== null) {
+                    $existingCertQuery->where('user_id', $task->user_id);
+                } else {
+                    $existingCertQuery->whereRaw('LOWER(guest_email) = ?', [strtolower((string) $task->guest_email)]);
+                }
+
+                if (! $existingCertQuery->exists()) {
+                    do {
+                        $certificateNumber = 'CERT-'.date('Y').'-'.Str::upper(Str::random(6));
+                    } while (Certificate::where('certificate_number', $certificateNumber)->exists());
+
+                    $roleLabel = $task->role ?: 'Participant';
+                    $isParticipant = strtolower($roleLabel) === 'participant';
+
+                    $certificate = Certificate::query()->create([
+                        'user_id' => $task->user_id,
+                        'event_id' => $event->id,
+                        'role' => $roleLabel,
+                        'guest_name' => $task->guest_name,
+                        'guest_email' => $task->guest_email,
+                        'title' => $isParticipant
+                            ? "Certificate of Participation — {$event->title}"
+                            : "Certificate of Volunteer Service — {$event->title}",
+                        'description' => $isParticipant
+                            ? "For active community participation and support during {$event->title} held at {$event->location}."
+                            : "For dedicated volunteer service as {$roleLabel} during {$event->title} held at {$event->location}.",
+                        'issue_date' => now()->toDateString(),
+                        'certificate_number' => $certificateNumber,
+                    ]);
+
+                    $recipientEmail = $task->user?->email ?? $task->guest_email;
+                    EReceiptDispatcher::sendToUserAndEmail(
+                        $task->user,
+                        $recipientEmail,
+                        new VolunteerCertificateIssuedNotification($certificate)
+                    );
+                }
+            }
+        }
+
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Task status updated successfully.',
+            'message' => $validated['status'] === 'completed' && $task->event_id !== null
+                ? 'Task completed and official certificate issued & emailed!'
+                : 'Task status updated successfully.',
         ]);
 
         return redirect()->back();
     }
 
     /**
-     * Manually issue a certificate to a volunteer.
+     * Manually issue a certificate to a volunteer or event participant.
      */
     public function issueCertificate(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
             'event_id' => ['nullable', 'exists:events,id'],
+            'role' => ['nullable', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $issuedUser = User::findOrFail($validated['user_id']);
+
+        if (! empty($validated['event_id'])) {
+            $alreadyExists = Certificate::query()
+                ->where('user_id', $issuedUser->id)
+                ->where('event_id', $validated['event_id'])
+                ->exists();
+
+            if ($alreadyExists) {
+                Inertia::flash('toast', [
+                    'type' => 'warning',
+                    'message' => "A certificate for this event has already been issued to {$issuedUser->name}.",
+                ]);
+
+                return redirect()->back();
+            }
+        }
+
+        $resolvedRole = $validated['role'] ?? null;
+        if (! $resolvedRole && ! empty($validated['event_id'])) {
+            $resolvedRole = AssignedTask::query()
+                ->where('user_id', $issuedUser->id)
+                ->where('event_id', $validated['event_id'])
+                ->value('role');
+        }
+        if (! $resolvedRole) {
+            $userRole = $issuedUser->role instanceof Role ? $issuedUser->role->value : (string) $issuedUser->role;
+            if ($userRole === Role::Volunteer->value) {
+                $resolvedRole = $issuedUser->volunteerApplications()->latest()->value('role') ?? 'Volunteer';
+            } else {
+                $resolvedRole = 'Participant';
+            }
+        }
 
         do {
             $certificateNumber = 'CERT-'.date('Y').'-'.Str::upper(Str::random(6));
@@ -287,20 +397,24 @@ class VolunteerManagementController extends Controller
         $certificate = Certificate::query()->create([
             'user_id' => $validated['user_id'],
             'event_id' => $validated['event_id'] ?? null,
+            'role' => $resolvedRole,
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'issue_date' => now()->toDateString(),
             'certificate_number' => $certificateNumber,
         ]);
 
-        $issuedUser = User::find($validated['user_id']);
-        $issuedUser?->notify(new VolunteerCertificateIssuedNotification($certificate));
+        EReceiptDispatcher::sendToUserAndEmail(
+            $issuedUser,
+            $issuedUser->email,
+            new VolunteerCertificateIssuedNotification($certificate)
+        );
 
-        AuditLog::log('volunteer_certificate_issue', "Issued certificate '{$validated['title']}' to volunteer {$issuedUser?->name}");
+        AuditLog::log('volunteer_certificate_issue', "Issued certificate '{$validated['title']}' to {$issuedUser->name} ({$resolvedRole})");
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Certificate issued successfully.',
+            'message' => 'Certificate issued and emailed successfully.',
         ]);
 
         return redirect()->back();

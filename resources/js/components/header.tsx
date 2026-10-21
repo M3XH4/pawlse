@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X, Settings, LogOut, MessageCircle, Video, UserCircle, Siren, Instagram, Stethoscope } from 'lucide-react';
+import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X, Settings, LogOut, MessageCircle, Video, UserCircle, Siren, Instagram, Stethoscope, Zap, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -41,7 +41,9 @@ const navPreviews: Record<string, { image: string; label: string }> = {
 
 export function Header() {
   const navigate = (url: string) => router.visit(url);
-  const auth = usePage().props.auth as { user?: any } | undefined;
+  const pageProps = usePage().props;
+  const auth = pageProps.auth as { user?: any } | undefined;
+  const canSwitchToVolunteer = Boolean(pageProps.can_switch_to_volunteer);
   const user = auth?.user;          
   const logout = () => router.post('/logout');
   const isAuthenticated = !!user;
@@ -108,10 +110,13 @@ export function Header() {
   };
 
   const handleLogout = () => {
-    logout();
     setProfileMenuOpen(false);
-    toast.success('Logged out successfully');
-    navigate('/');
+    setMobileMenuOpen(false);
+    router.post('/logout', {}, {
+      onSuccess: () => {
+        toast.success('Logged out successfully');
+      },
+    });
   };
 
   const getAccountPath = () => {
@@ -403,6 +408,32 @@ export function Header() {
                       </Link>
 
                       <div className="p-2">
+                        {user.role === 'volunteer' && (
+                          <button
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              router.post('/volunteer/switch-user');
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group cursor-pointer text-left"
+                          >
+                            <UserCheck size={18} className="text-gray-400 group-hover:text-paw-orange transition-colors" />
+                            <span className="font-bold text-sm">Switch to User Mode</span>
+                          </button>
+                        )}
+
+                        {user.role === 'user' && canSwitchToVolunteer && (
+                          <button
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              router.post('/volunteer/switch');
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-paw-bg dark:hover:bg-gray-700 transition-colors text-paw-navy dark:text-white group cursor-pointer text-left"
+                          >
+                            <Zap size={18} className="text-gray-400 group-hover:text-paw-orange transition-colors" />
+                            <span className="font-bold text-sm">Switch to Volunteer Mode</span>
+                          </button>
+                        )}
+
                         <Link
                           href={getAccountSettingsPath()}
                           onClick={() => setProfileMenuOpen(false)}
@@ -649,6 +680,32 @@ export function Header() {
                       <span>Dashboard</span>
                       <ChevronRight size={16} className="text-gray-400" />
                     </Link>
+
+                    {user?.role === 'volunteer' && (
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          router.post('/volunteer/switch-user');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-paw-orange hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <UserCheck size={16} />
+                        <span>Switch to User Mode</span>
+                      </button>
+                    )}
+
+                    {user?.role === 'user' && canSwitchToVolunteer && (
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          router.post('/volunteer/switch');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-paw-orange hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <Zap size={16} />
+                        <span>Switch to Volunteer Mode</span>
+                      </button>
+                    )}
 
                     <Link
                       href={getAccountSettingsPath()}

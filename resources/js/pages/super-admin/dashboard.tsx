@@ -6,10 +6,12 @@ import {
     ShieldAlert,
     Users,
     Activity,
-    Settings,
+    ServerCog,
     Sparkles,
     UserCheck,
     ChevronRight,
+    Calendar,
+    AlertCircle,
 } from 'lucide-react';
 import {
     DashboardCard,
@@ -32,6 +34,7 @@ type Stats = {
     total_volunteers: number;
     total_audit_logs: number;
     backups_count: number;
+    pending_events_count?: number;
     recent_alarms: number;
     database_size: string;
 };
@@ -63,6 +66,14 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
             color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
         },
         {
+            title: 'Event Approvals',
+            description: 'Review and approve proposed community events',
+            href: '/account/super-admin/events?approval_status=pending',
+            icon: Calendar,
+            color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+            badge: (stats.pending_events_count ?? 0) > 0 ? stats.pending_events_count : null,
+        },
+        {
             title: 'Audit Logs',
             description: 'Inspect admin action history trail',
             href: auditLogs.url(),
@@ -82,7 +93,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
             href: securityAccess.url(),
             icon: ShieldAlert,
             color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            badge: stats.recent_alarms > 0 ? `${stats.recent_alarms} Suspicious` : null,
+            badge: stats.recent_alarms > 0 ? stats.recent_alarms : null,
         },
         {
             title: 'Backup & Restore',
@@ -102,7 +113,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
             title: 'System Settings',
             description: 'Update global details and maintenance mode',
             href: systemSettings.url(),
-            icon: Settings,
+            icon: ServerCog,
             color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
         },
     ];
@@ -113,6 +124,32 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
             description="Overview of PAWLSE platform administration and operational integrity"
         >
             <div className="space-y-8">
+                {/* Pending Event Approvals Alert Banner */}
+                {(stats.pending_events_count ?? 0) > 0 && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/20 text-amber-900 dark:text-amber-200">
+                        <div className="flex items-center gap-3.5">
+                            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                                <Calendar className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-slate-850 dark:text-white">
+                                    {stats.pending_events_count} Community {stats.pending_events_count === 1 ? 'Event Requires' : 'Events Require'} Super Admin Approval
+                                </h4>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                                    New outreach events submitted by shelter administrators are awaiting review before going live.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/account/super-admin/events?approval_status=pending"
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-paw-orange text-white hover:bg-orange-600 transition shadow-xs shrink-0"
+                        >
+                            <span>Review Events</span>
+                            <ChevronRight size={14} />
+                        </Link>
+                    </div>
+                )}
+
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* User Card */}
@@ -227,7 +264,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                                                 <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
                                                     {action.title}
                                                     {action.badge ? (
-                                                        <span className="flex h-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white">
+                                                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white">
                                                             {action.badge}
                                                         </span>
                                                     ) : null}

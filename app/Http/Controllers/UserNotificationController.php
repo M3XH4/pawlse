@@ -56,7 +56,7 @@ class UserNotificationController extends Controller
             }
 
             $startTime = time();
-            $maxExecutionSeconds = 15;
+            $maxExecutionSeconds = 25;
             $lastEventsTimestamp = microtime(true);
 
             while (time() - $startTime < $maxExecutionSeconds) {
@@ -80,7 +80,6 @@ class UserNotificationController extends Controller
 
                 $newNotifications = $user->unreadNotifications()
                     ->when(! empty($seenIds), fn ($query) => $query->whereNotIn('id', $seenIds))
-                    ->where('created_at', '>=', now()->subMinutes(5))
                     ->latest()
                     ->limit(10)
                     ->get();
@@ -201,7 +200,7 @@ class UserNotificationController extends Controller
                 $matches = true;
             } elseif ($category !== '') {
                 $matches = match ($category) {
-                    'adoption', 'rehoming' => str_contains($cleanTabPath, 'adoption'),
+                    'adoption', 'rehoming', 'visit', 'shelter_visit' => str_contains($cleanTabPath, 'adoption'),
                     'rescue' => str_contains($cleanTabPath, 'rescue') || str_contains($cleanTabPath, 'missing-found'),
                     'donation' => str_contains($cleanTabPath, 'donation'),
                     'foster' => str_contains($cleanTabPath, 'foster'),

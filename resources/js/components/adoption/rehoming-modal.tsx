@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { useForm } from '@inertiajs/react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useForm, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { PhoneInput } from '@/components/phone-input';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 interface RehomingModalProps {
   isOpen: boolean;
@@ -21,11 +24,13 @@ interface RehomingModalProps {
 export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { props } = usePage<{ auth?: { user?: { name?: string; email?: string; phone?: string; contact_number?: string } | null } }>();
+  const authUser = props.auth?.user;
 
-  const { data, setData, post, processing, errors, reset } = useForm({
-    full_name: '',
-    contact_number: '',
-    email: '',
+  const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    full_name: authUser?.name || '',
+    contact_number: authUser?.phone || authUser?.contact_number || '',
+    email: authUser?.email || '',
     animal_name: '',
     species: 'Dog',
     breed: '',
@@ -38,9 +43,32 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
     photo: null as File | null,
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      setSubmitted(false);
+      clearErrors();
+      setData((prev) => ({
+        ...prev,
+        full_name: prev.full_name || authUser?.name || '',
+        contact_number: prev.contact_number || authUser?.phone || authUser?.contact_number || '',
+        email: prev.email || authUser?.email || '',
+      }));
+    }
+  }, [isOpen]);
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Photo file size must be 5MB or smaller.');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setData('photo', file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -58,19 +86,48 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
     }
   };
 
+  const [submitted, setSubmitted] = useState(false);
+
+  const isFormDirty = Boolean(
+    !submitted &&
+    (data.animal_name.trim() !== '' ||
+      data.breed.trim() !== '' ||
+      data.age.trim() !== '' ||
+      data.current_location.trim() !== '' ||
+      data.description.trim() !== '' ||
+      data.photo)
+  );
+
+  const {
+    showDialog: showLeaveModal,
+    handleContinueEditing,
+    handleLeaveAnyway,
+    confirmAction,
+  } = useUnsavedChanges({
+    isDirty: isFormDirty && isOpen,
+    disabled: submitted,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!data.photo) {
+      toast.error('Please upload a clear photo of the animal before submitting.');
+      return;
+    }
+
     post('/rehoming-requests', {
       forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
-        toast.success('Rehoming assistance request submitted! ISF will review and get in touch.');
+        setSubmitted(true);
         reset();
         removePhoto();
         onClose();
       },
-      onError: () => {
-        toast.error('Please complete all required fields correctly.');
+      onError: (formErrors) => {
+        const firstError = Object.values(formErrors)[0];
+        toast.error(firstError || 'Please complete all required fields correctly.');
       },
     });
   };
@@ -78,48 +135,49 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
-        />
+    <>
+      <AnimatePresence>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => confirmAction(onClose)}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+          />
 
-        {/* Modal Window */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 16 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl sm:rounded-3xl z-10 relative shadow-2xl flex flex-col my-auto border-0 overflow-hidden"
-        >
-          {/* Pinned Header */}
-          <div className="shrink-0 bg-slate-900 text-white px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
-                <RefreshCw size={20} />
+          {/* Modal Window */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl sm:rounded-3xl z-10 relative shadow-2xl flex flex-col my-auto border-0 overflow-hidden"
+          >
+            {/* Pinned Header */}
+            <div className="shrink-0 bg-slate-900 text-white px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                  <RefreshCw size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
+                    Request Rehoming Assistance
+                  </h3>
+                  <p className="text-xs text-slate-400 font-normal">
+                    Community Pet Support • For privately owned animals needing new homes
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
-                  Request Rehoming Assistance
-                </h3>
-                <p className="text-xs text-slate-400 font-normal">
-                  Community Pet Support • For privately owned animals needing new homes
-                </p>
-              </div>
+              <button
+                onClick={() => confirmAction(onClose)}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-              aria-label="Close modal"
-            >
-              <X size={18} />
-            </button>
-          </div>
 
           {/* Scrollable Form Body */}
           <form
@@ -161,12 +219,11 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Contact Number <span className="text-orange-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <PhoneInput
                     required
-                    placeholder="0912 345 6789"
+                    placeholder="+63 912 124 1241"
                     value={data.contact_number}
-                    onChange={(e) => setData('contact_number', e.target.value)}
+                    onChange={(val) => setData('contact_number', val)}
                     className={`w-full px-3.5 py-2.5 rounded-xl border bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 transition-all ${
                       errors.contact_number
                         ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
@@ -180,10 +237,11 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Email Address
+                    Email Address <span className="text-orange-500">*</span>
                   </label>
                   <input
                     type="email"
+                    required
                     placeholder="maria@example.com"
                     value={data.email}
                     onChange={(e) => setData('email', e.target.value)}
@@ -232,7 +290,7 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
               {/* Photo Upload Card */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Animal Photo
+                  Animal Photo <span className="text-orange-500">*</span>
                 </label>
                 <input
                   type="file"
@@ -288,7 +346,7 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
                       Click to upload animal photo
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      JPG, PNG, WebP up to 4MB (Helps adopters meet your pet)
+                      JPG, PNG, WebP up to 5MB (Helps adopters meet your pet)
                     </p>
                   </button>
                 )}
@@ -444,7 +502,7 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
           <div className="shrink-0 bg-slate-50 px-5 sm:px-6 py-3.5 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => confirmAction(onClose)}
               disabled={processing}
               className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
             >
@@ -466,5 +524,13 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
         </motion.div>
       </div>
     </AnimatePresence>
+
+    <UnsavedChangesDialog
+      isOpen={showLeaveModal}
+      onContinueEditing={handleContinueEditing}
+      onLeaveAnyway={handleLeaveAnyway}
+      zIndex={350}
+    />
+  </>
   );
 }

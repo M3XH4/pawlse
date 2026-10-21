@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { toast } from 'sonner';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import {
     Heart,
     HeartHandshake,
@@ -162,6 +163,7 @@ interface FosterManagementProps {
         needs_attention_count: number;
     };
     placements: PaginatedData<PlacementItem>;
+    historyPlacements?: PaginatedData<PlacementItem>;
     fosterParents: FosterParentItem[];
     availablePets: AvailablePetItem[];
     eligibleUsers: EligibleUserItem[];
@@ -176,6 +178,7 @@ interface FosterManagementProps {
 export default function FosterManagement({
     metrics,
     placements,
+    historyPlacements,
     fosterParents,
     availablePets,
     eligibleUsers,
@@ -1118,14 +1121,18 @@ export default function FosterManagement({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {placements.data.filter((p) => p.status !== 'active').length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-8 text-center text-gray-400 font-bold">
-                                            No concluded or transferred placements in this view.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    placements.data.filter((p) => p.status !== 'active').map((p) => (
+                                {(() => {
+                                    const archiveList = historyPlacements?.data ?? placements.data.filter((p) => p.status !== 'active');
+                                    if (archiveList.length === 0) {
+                                        return (
+                                            <tr>
+                                                <td colSpan={6} className="py-8 text-center text-gray-400 font-bold">
+                                                    No concluded or transferred placements in this archive.
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+                                    return archiveList.map((p) => (
                                         <tr key={p.id}>
                                             <td className="py-3 px-4 font-mono font-bold">#{p.id}</td>
                                             <td className="py-3 px-4 font-bold">{p.pet?.name}</td>
@@ -1143,8 +1150,8 @@ export default function FosterManagement({
                                                 {p.transferred_by?.name || p.assigned_by?.name || 'Admin'}
                                             </td>
                                         </tr>
-                                    ))
-                                )}
+                                    ));
+                                })()}
                             </tbody>
                         </table>
                     </div>
@@ -1263,26 +1270,20 @@ export default function FosterManagement({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Placement Start Date *
-                                    </label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Placement Start Date"
                                         required
                                         value={assignStartDate}
-                                        onChange={(e) => setAssignStartDate(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                        onChange={(date) => setAssignStartDate(date)}
+                                        placeholder="Select placement start date..."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Expected Review Date
-                                    </label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Expected Review Date"
                                         value={assignReviewDate}
-                                        onChange={(e) => setAssignReviewDate(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                        onChange={(date) => setAssignReviewDate(date)}
+                                        placeholder="Select review date..."
                                     />
                                 </div>
                             </div>
@@ -1415,14 +1416,11 @@ export default function FosterManagement({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                    Next Progress Review Date
-                                </label>
-                                <input
-                                    type="date"
+                                <ModernDatePicker
+                                    label="Next Progress Review Date"
                                     value={transferReviewDate}
-                                    onChange={(e) => setTransferReviewDate(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                    onChange={(date) => setTransferReviewDate(date)}
+                                    placeholder="Select next review date..."
                                 />
                             </div>
 
@@ -1868,14 +1866,11 @@ export default function FosterManagement({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Expected Review Date
-                                    </label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Expected Review Date"
                                         value={instReviewDate}
-                                        onChange={(e) => setInstReviewDate(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
+                                        onChange={(date) => setInstReviewDate(date)}
+                                        placeholder="Select review date..."
                                     />
                                 </div>
                             </div>

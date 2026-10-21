@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { FileSearch, Search, Activity, Terminal } from 'lucide-react';
 import { DashboardSectionPage } from '@/components/dashboard/section-page';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 
 interface AuditLogRecord {
     id: number;
@@ -218,23 +219,29 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
 
                         {/* Date From */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Date From</label>
-                            <input
-                                type="date"
-                                className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                            <ModernDatePicker
+                                label="Date From"
+                                allowPast={true}
                                 value={dateFrom}
-                                onChange={handleDateFromChange}
+                                onChange={(date) => {
+                                    setDateFrom(date);
+                                    applyFilters({ date_from: date });
+                                }}
+                                placeholder="From date..."
                             />
                         </div>
 
                         {/* Date To */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Date To</label>
-                            <input
-                                type="date"
-                                className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                            <ModernDatePicker
+                                label="Date To"
+                                allowPast={true}
                                 value={dateTo}
-                                onChange={handleDateToChange}
+                                onChange={(date) => {
+                                    setDateTo(date);
+                                    applyFilters({ date_to: date });
+                                }}
+                                placeholder="To date..."
                             />
                         </div>
 

@@ -290,7 +290,7 @@ test('admin can view admin events management dashboard', function () {
 });
 
 test('admin can create a new event with validation', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($admin)
         ->post(route('account.admin.events.store'), [

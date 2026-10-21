@@ -21,6 +21,9 @@ import {
     ExternalLink,
     Sparkles,
     Trash2,
+    Mail,
+    User as UserIcon,
+    Phone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -28,6 +31,7 @@ import { toast } from 'sonner';
 import { EventShareDropdown } from '@/components/events/event-share-dropdown';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
 import {
@@ -231,12 +235,26 @@ export default function Events({
         ).slice(0, 5);
     }, [searchQuery]);
 
+    const [guestModalEvent, setGuestModalEvent] = useState<EventModel | null>(null);
+    const [guestForm, setGuestForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+    });
+    const [isSubmittingGuest, setIsSubmittingGuest] = useState(false);
+
     const handleJoinEvent = (
         eventId: number,
         joinAs: 'participant' | 'volunteer' = 'participant',
     ) => {
         if (!user) {
-            router.get('/login');
+            if (joinAs === 'volunteer') {
+                toast.info('Volunteering requires a volunteer account. Please sign in or register to join as a volunteer.');
+                router.get('/volunteer');
+                return;
+            }
+            const ev = events.data.find((e) => e.id === eventId) || selectedEvent;
+            setGuestModalEvent(ev || null);
             return;
         }
 
@@ -259,25 +277,77 @@ export default function Events({
         );
     };
 
-    const handleLeaveEvent = (eventId: number) => {
-        if (
-            !confirm(
-                'Are you sure you want to cancel your attendance for this event? Your spot will be released.',
-            )
-        ) {
+    const handleGuestSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!guestModalEvent) return;
+        if (!guestForm.name.trim() || !guestForm.email.trim()) {
+            toast.error('Please enter your full name and valid email address.');
             return;
         }
 
+        setIsSubmittingGuest(true);
         router.post(
-            `/events/${eventId}/leave`,
-            {},
+            `/events/${guestModalEvent.id}/join`,
+            {
+                join_as: 'participant',
+                guest_name: guestForm.name.trim(),
+                guest_email: guestForm.email.trim(),
+                guest_phone: guestForm.phone.trim() || undefined,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
+                    setIsSubmittingGuest(false);
+                    setGuestModalEvent(null);
                     setSelectedEvent(null);
+                    setGuestForm({ name: '', email: '', phone: '' });
+                    toast.success('Registration confirmed! We sent your e-receipt to your email.');
+                },
+                onError: (errors) => {
+                    setIsSubmittingGuest(false);
+                    const firstError = Object.values(errors)[0];
+                    toast.error(typeof firstError === 'string' ? firstError : 'Failed to register as guest.');
                 },
             },
         );
+    };
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: React.ReactNode;
+        confirmText?: string;
+        cancelText?: string;
+        variant?: 'danger' | 'warning' | 'info';
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        description: '',
+        onConfirm: () => {},
+    });
+
+    const handleLeaveEvent = (eventId: number) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Cancel Attendance',
+            description: 'Are you sure you want to cancel your attendance for this event? Your spot will be released.',
+            confirmText: 'Leave Event',
+            variant: 'danger',
+            onConfirm: () => {
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                router.post(
+                    `/events/${eventId}/leave`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            setSelectedEvent(null);
+                        },
+                    },
+                );
+            },
+        });
     };
 
     const handleJoinFeeding = (scheduleId: number) => {
@@ -287,25 +357,29 @@ export default function Events({
         }
 
         if (!isVolunteer) {
-            if (
-                confirm(
-                    'Feeding routes require volunteer certification. Would you like to apply as a volunteer now?',
-                )
-            ) {
-                const feeding = feedingSchedules.data.find(
-                    (f) => f.id === scheduleId,
-                );
-                router.get('/volunteer', {
-                    selectedEvent: {
-                        type: 'feeding',
-                        zone: feeding?.zone,
-                        day: feeding?.day,
-                        time: feeding?.time,
-                        volunteers: feeding?.volunteers,
-                        strays: feeding?.strays,
-                    },
-                });
-            }
+            setConfirmModal({
+                isOpen: true,
+                title: 'Volunteer Certification Required',
+                description: 'Feeding routes require volunteer certification. Would you like to apply as a volunteer now?',
+                confirmText: 'Apply as Volunteer',
+                variant: 'info',
+                onConfirm: () => {
+                    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                    const feeding = feedingSchedules.data.find(
+                        (f) => f.id === scheduleId,
+                    );
+                    router.get('/volunteer', {
+                        selectedEvent: {
+                            type: 'feeding',
+                            zone: feeding?.zone,
+                            day: feeding?.day,
+                            time: feeding?.time,
+                            volunteers: feeding?.volunteers,
+                            strays: feeding?.strays,
+                        },
+                    });
+                },
+            });
             return;
         }
 
@@ -317,15 +391,21 @@ export default function Events({
     };
 
     const handleLeaveFeeding = (scheduleId: number) => {
-        if (!confirm('Are you sure you want to leave this feeding route?')) {
-            return;
-        }
-
-        router.post(
-            `/feeding-schedules/${scheduleId}/leave`,
-            {},
-            { preserveScroll: true },
-        );
+        setConfirmModal({
+            isOpen: true,
+            title: 'Leave Feeding Route',
+            description: 'Are you sure you want to leave this scheduled feeding route?',
+            confirmText: 'Leave Route',
+            variant: 'danger',
+            onConfirm: () => {
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                router.post(
+                    `/feeding-schedules/${scheduleId}/leave`,
+                    {},
+                    { preserveScroll: true },
+                );
+            },
+        });
     };
 
     const toggleBookmark = (e: React.MouseEvent, event: EventModel) => {
@@ -1348,6 +1428,132 @@ export default function Events({
                                     </div>
                                 </div>
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                description={confirmModal.description}
+                confirmText={confirmModal.confirmText}
+                cancelText={confirmModal.cancelText}
+                variant={confirmModal.variant}
+            />
+
+            {/* Guest Participant Registration Modal */}
+            <AnimatePresence>
+                {guestModalEvent && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-paw-navy/70 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl border border-paw-navy/10"
+                        >
+                            <div className="bg-gradient-to-r from-paw-orange to-amber-500 p-6 text-white relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setGuestModalEvent(null)}
+                                    className="absolute top-4 right-4 rounded-full bg-white/20 p-1.5 text-white hover:bg-white/30 transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold tracking-wide backdrop-blur-sm">
+                                    <Sparkles size={13} />
+                                    Guest Registration
+                                </span>
+                                <h3 className="mt-3 text-xl font-black leading-tight text-white line-clamp-1">
+                                    {guestModalEvent.title}
+                                </h3>
+                                <p className="mt-1 text-xs text-white/90">
+                                    Join without an account. We'll email your e-receipt & completion certificate.
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleGuestSubmit} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-paw-navy/70 mb-1.5">
+                                        Full Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-paw-navy/40" size={17} />
+                                        <input
+                                            type="text"
+                                            required
+                                            value={guestForm.name}
+                                            onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })}
+                                            placeholder="e.g. Maria Santos"
+                                            className="w-full rounded-2xl border-2 border-paw-navy/10 bg-paw-navy/5 py-2.5 pl-10 pr-4 text-sm font-semibold text-paw-navy placeholder-paw-navy/30 focus:border-paw-orange focus:bg-white focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-paw-navy/70 mb-1.5">
+                                        Email Address <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-paw-navy/40" size={17} />
+                                        <input
+                                            type="email"
+                                            required
+                                            value={guestForm.email}
+                                            onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })}
+                                            placeholder="you@example.com"
+                                            className="w-full rounded-2xl border-2 border-paw-navy/10 bg-paw-navy/5 py-2.5 pl-10 pr-4 text-sm font-semibold text-paw-navy placeholder-paw-navy/30 focus:border-paw-orange focus:bg-white focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-[11px] text-gray-500">
+                                        Certificate of Participation will be issued directly to this email.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-paw-navy/70 mb-1.5">
+                                        Mobile Phone <span className="text-gray-400 font-normal lowercase">(optional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-paw-navy/40" size={17} />
+                                        <input
+                                            type="tel"
+                                            value={guestForm.phone}
+                                            onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })}
+                                            placeholder="e.g. 0917 123 4567"
+                                            className="w-full rounded-2xl border-2 border-paw-navy/10 bg-paw-navy/5 py-2.5 pl-10 pr-4 text-sm font-semibold text-paw-navy placeholder-paw-navy/30 focus:border-paw-orange focus:bg-white focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-between gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setGuestModalEvent(null)}
+                                        className="w-1/3 rounded-2xl border-2 border-gray-200 py-2.5 text-xs font-black uppercase tracking-wider text-gray-600 hover:bg-gray-100 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingGuest}
+                                        className="w-2/3 rounded-2xl bg-paw-orange py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-paw-orange/25 hover:bg-orange-600 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isSubmittingGuest ? 'Registering...' : 'Confirm Registration'}
+                                    </button>
+                                </div>
+
+                                <div className="text-center pt-2 border-t border-gray-100">
+                                    <p className="text-xs text-gray-500">
+                                        Have an account?{' '}
+                                        <Link href="/login" className="font-bold text-paw-orange hover:underline">
+                                            Log in here
+                                        </Link>
+                                    </p>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}

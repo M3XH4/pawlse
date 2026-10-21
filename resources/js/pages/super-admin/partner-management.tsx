@@ -11,6 +11,8 @@ import {
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
 
@@ -74,6 +76,12 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingPartner, setEditingPartner] = useState<PartnerRecord | null>(null);
+
+    // Permission enforcement
+    const { can } = usePermissions();
+    const canCreatePartner = can('partners.create');
+    const canEditPartner = can('partners.edit');
+    const canDeletePartner = can('partners.delete');
 
     // Image Upload & Preview State
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -500,13 +508,15 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             </select>
 
                             {/* Add Button */}
-                            <button
-                                onClick={openCreateModal}
-                                className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
-                            >
-                                <Plus size={16} />
-                                <span>Add Partner</span>
-                            </button>
+                            {canCreatePartner && (
+                                <button
+                                    onClick={openCreateModal}
+                                    className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
+                                >
+                                    <Plus size={16} />
+                                    <span>Add Partner</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </DashboardCard>
@@ -640,29 +650,38 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             <td className="py-3 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     {partner.deleted_at ? (
-                                                        <button
-                                                            onClick={() => handleRestore(partner)}
-                                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
-                                                            title="Restore Partner"
-                                                        >
-                                                            <RotateCcw size={15} />
-                                                        </button>
+                                                        canDeletePartner && (
+                                                            <button
+                                                                onClick={() => handleRestore(partner)}
+                                                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                title="Restore Partner"
+                                                            >
+                                                                <RotateCcw size={15} />
+                                                            </button>
+                                                        )
                                                     ) : (
                                                         <>
-                                                            <button
-                                                                onClick={() => openEditModal(partner)}
-                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
-                                                                title="Edit Partner"
-                                                            >
-                                                                <Edit2 size={15} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(partner)}
-                                                                className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
-                                                                title="Archive Partner"
-                                                            >
-                                                                <Trash2 size={15} />
-                                                            </button>
+                                                            {canEditPartner && (
+                                                                <button
+                                                                    onClick={() => openEditModal(partner)}
+                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                    title="Edit Partner"
+                                                                >
+                                                                    <Edit2 size={15} />
+                                                                </button>
+                                                            )}
+                                                            {canDeletePartner && (
+                                                                <button
+                                                                    onClick={() => handleDelete(partner)}
+                                                                    className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                    title="Archive Partner"
+                                                                >
+                                                                    <Trash2 size={15} />
+                                                                </button>
+                                                            )}
+                                                            {!canEditPartner && !canDeletePartner && (
+                                                                <span className="text-gray-400 italic text-[11px]">Read-only</span>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -712,29 +731,31 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-[28px] sm:rounded-[36px] max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto"
+                            className="bg-white dark:bg-slate-900 rounded-[24px] sm:rounded-[32px] max-w-2xl w-full shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] flex flex-col overflow-hidden"
                         >
-                            <button
-                                onClick={closeModals}
-                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
-                            >
-                                <X size={20} />
-                            </button>
+                            {/* Sticky Header */}
+                            <div className="p-6 border-b border-gray-100 dark:border-slate-800 shrink-0 relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs pr-14">
+                                <button
+                                    onClick={closeModals}
+                                    className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
+                                >
+                                    <X size={20} />
+                                </button>
 
-                            <div className="mb-6">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2 ${getCategoryBadgeClass(data.category)}`}>
                                     {getCategoryIcon(data.category)}
                                     {data.category.replace('_', ' ')}
                                 </span>
-                                <h3 className="text-2xl font-black text-paw-navy dark:text-white mb-1">
+                                <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white">
                                     {editingPartner ? 'Edit Partner' : 'Add New Partner'}
                                 </h3>
-                                <p className="text-xs text-gray-500">
-                                    Configure partner information, verified image, and category-tailored details
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Configure partner details, branding, contacts, and verification status
                                 </p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
+                            {/* Scrollable Form Body with styled thin scrollbar */}
+                            <form id="partner-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs font-semibold scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700">
                                 {/* Basic Identification */}
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
@@ -1055,24 +1076,27 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                         <span>Emergency triage flags are reserved exclusively for licensed veterinary clinics.</span>
                                     </p>
                                 )}
-
-                                <div className="pt-4 flex justify-end gap-2 border-t border-gray-100 dark:border-slate-800">
-                                    <button
-                                        type="button"
-                                        onClick={closeModals}
-                                        className="px-4 py-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="px-6 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20 cursor-pointer disabled:opacity-50 transition-all"
-                                    >
-                                        {editingPartner ? 'Update Partner' : 'Create Partner'}
-                                    </button>
-                                </div>
                             </form>
+
+                            {/* Sticky Footer */}
+                            <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/95 dark:bg-slate-850/95 backdrop-blur-xs shrink-0 flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeModals}
+                                    className="px-4 py-2.5 rounded-xl text-gray-500 hover:bg-gray-200/60 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="partner-modal-form"
+                                    disabled={processing}
+                                    className="px-6 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-2"
+                                >
+                                    {processing && <Spinner size="xs" />}
+                                    <span>{editingPartner ? 'Update Partner' : 'Create Partner'}</span>
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

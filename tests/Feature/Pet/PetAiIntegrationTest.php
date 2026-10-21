@@ -107,6 +107,28 @@ test('predict endpoint returns 403 when AI identification is disabled', function
         ]);
 });
 
+test('predict endpoint returns 403 when mode is reporting and AI reporting is disabled', function () {
+    SystemSetting::setValue('ai_settings', [
+        'ai_enabled' => true,
+        'ai_reporting_enabled' => false,
+        'ai_identifying_enabled' => true,
+        'ai_confidence_threshold' => 0.70,
+        'ai_auto_validation' => false,
+    ]);
+
+    $file = UploadedFile::fake()->image('dog.jpg');
+
+    $response = $this->postJson('/ai/predict', [
+        'image' => $file,
+        'mode' => 'reporting',
+    ]);
+
+    $response->assertStatus(403)
+        ->assertJson([
+            'message' => 'AI reporting is currently disabled by the administrator. Please use Manual Entry.',
+        ]);
+});
+
 test('predict endpoint gracefully handles AI service offline or unreachable', function () {
     Http::fake([
         '*/predict' => function () {

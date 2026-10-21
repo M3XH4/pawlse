@@ -297,14 +297,25 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right whitespace-nowrap">
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedReceiptDonation(donation)}
-                                                className="inline-flex items-center gap-1.5 rounded-xl bg-paw-orange/10 px-3 py-1.5 text-xs font-black text-paw-orange transition-colors hover:bg-paw-orange hover:text-white cursor-pointer"
-                                            >
-                                                <FileText size={13} />
-                                                View Receipt
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {donation.type !== 'in_kind' && (donation.status === 'pending_payment' || donation.status === 'pending_verification') && (
+                                                    <Link
+                                                        href={`/checkout/${donation.public_reference}`}
+                                                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-black text-white transition-colors hover:bg-emerald-700 shadow-sm"
+                                                    >
+                                                        <CreditCard size={13} />
+                                                        Complete Payment
+                                                    </Link>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedReceiptDonation(donation)}
+                                                    className="inline-flex items-center gap-1.5 rounded-xl bg-paw-orange/10 px-3 py-1.5 text-xs font-black text-paw-orange transition-colors hover:bg-paw-orange hover:text-white cursor-pointer"
+                                                >
+                                                    <FileText size={13} />
+                                                    View Receipt
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -376,6 +387,26 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                     ) : (
                                         <span className="text-xs font-bold text-gray-500">Public Donor</span>
                                     )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                    {donation.type !== 'in_kind' && (donation.status === 'pending_payment' || donation.status === 'pending_verification') && (
+                                        <Link
+                                            href={`/checkout/${donation.public_reference}`}
+                                            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-black text-white transition-colors hover:bg-emerald-700 shadow-sm"
+                                        >
+                                            <CreditCard size={12} />
+                                            Complete Payment
+                                        </Link>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedReceiptDonation(donation)}
+                                        className="inline-flex items-center gap-1.5 rounded-xl bg-paw-orange/10 px-3 py-1.5 text-xs font-black text-paw-orange transition-colors hover:bg-paw-orange hover:text-white cursor-pointer"
+                                    >
+                                        <FileText size={12} />
+                                        View Receipt
+                                    </button>
                                 </div>
                             </div>
                         ))

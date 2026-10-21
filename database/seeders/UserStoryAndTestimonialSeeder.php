@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\AdoptionApplicationStatus;
 use App\Enums\Role;
-use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
 use App\Models\BlogPost;
 use App\Models\BlogPostReaction;
@@ -34,46 +33,9 @@ class UserStoryAndTestimonialSeeder extends Seeder
             'password' => 'password',
         ]);
 
-        // Create or get adopted shelter animals
-        $adoptedDog = ShelterAnimal::firstOrCreate(
-            ['name' => 'Bantay'],
-            [
-                'type' => 'dog',
-                'breed' => 'Aspin Mix',
-                'age' => '2 yrs',
-                'age_category' => 'adult',
-                'gender' => 'male',
-                'color' => 'Golden Brown',
-                'status' => ShelterAnimalStatus::Adopted->value,
-                'photo_url' => 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80',
-                'behavior' => 'Gentle, affectionate, great with children',
-                'story' => 'Rescued near Pala-o market in early 2025 and fully rehabilitated.',
-                'vaccinated' => true,
-                'admitted_at' => now()->subMonths(8),
-                'adoption_date' => now()->subMonths(4),
-                'current_location' => 'Adopted - Forever Home',
-            ]
-        );
-
-        $adoptedCat = ShelterAnimal::firstOrCreate(
-            ['name' => 'Koko'],
-            [
-                'type' => 'cat',
-                'breed' => 'Puspin',
-                'age' => '1 yr',
-                'age_category' => 'young',
-                'gender' => 'female',
-                'color' => 'Calico',
-                'status' => ShelterAnimalStatus::Adopted->value,
-                'photo_url' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop&q=80',
-                'behavior' => 'Curious, playful, loves chin scratches',
-                'story' => 'Found shivering in a box near Suarez junction as a tiny kitten.',
-                'vaccinated' => true,
-                'admitted_at' => now()->subMonths(6),
-                'adoption_date' => now()->subMonths(2),
-                'current_location' => 'Adopted - Forever Home',
-            ]
-        );
+        // Link to real resident dogs
+        $adoptedDog = ShelterAnimal::where('name', 'Reto')->first() ?? ShelterAnimal::first();
+        $adoptedDog2 = ShelterAnimal::where('name', 'Happy')->first() ?? ShelterAnimal::skip(1)->first();
 
         // Ensure user has approved adoption application for Bantay
         $adoptionApp = AdoptionApplication::where('user_id', $user->id)
@@ -155,13 +117,13 @@ class UserStoryAndTestimonialSeeder extends Seeder
             ['slug' => 'kokos-first-month-forever-home-purrs-and-playtime'],
             [
                 'author_id' => $user->id,
-                'shelter_animal_id' => $adoptedCat->id,
-                'title' => "Koko's First Month in Her Forever Home: Purrs and Endless Playtime",
+                'shelter_animal_id' => $adoptedDog2->id,
+                'title' => "Happy's First Month in Her Forever Sanctuary: Tail Wags and Endless Sunshine",
                 'category' => 'adoption_success',
-                'summary' => 'Our sweet rescue kitten Koko has turned our living room into her kingdom and our hearts into her throne.',
-                'content' => "We welcomed Koko into our apartment exactly 30 days ago. She was once an abandoned stray kitten rescued near Suarez junction, but you would never guess it from her regal demeanor today!\n\nShe spends her mornings sunbathing on the window sill and her evenings chasing plush mice down the hallway. Thank you to the PAWLSE team for the spotless medical records, initial vaccination care, and transition advice.",
-                'featured_image' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80',
-                'tags' => ['Adoption Story', 'Kitten', 'Puspin Love'],
+                'summary' => 'Our sweet rescue dog Happy brings endless laughter and warmth to the whole sanctuary family.',
+                'content' => "We welcomed Happy into our sanctuary community after her rescue in San Miguel. She is a bundle of unconditional joy!\n\nShe spends her mornings welcoming visitors with eager tail wags and her afternoons napping in the shade. Thank you to the PAWLSE team for the spotless medical records, initial vaccination care, and dedicated volunteer support.",
+                'featured_image' => 'https://images.unsplash.com/photo-1588943211346-090881b578cb?w=1200&auto=format&fit=crop&q=80',
+                'tags' => ['Adoption Story', 'Aspin Love', 'Sanctuary Ambassador'],
                 'reading_time_minutes' => 2,
                 'status' => BlogPost::STATUS_PENDING,
                 'rating' => 5,

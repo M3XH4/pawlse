@@ -12,7 +12,7 @@ class AdoptionApplicationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->isAdmin() || $user->isSuperAdmin();
     }
 
     /**
@@ -20,7 +20,15 @@ class AdoptionApplicationPolicy
      */
     public function view(User $user, AdoptionApplication $adoptionApplication): bool
     {
-        return false;
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($adoptionApplication->user_id !== null && $adoptionApplication->user_id === $user->id) {
+            return true;
+        }
+
+        return $adoptionApplication->email !== null && strcasecmp($adoptionApplication->email, $user->email) === 0;
     }
 
     /**
@@ -28,7 +36,7 @@ class AdoptionApplicationPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -36,7 +44,15 @@ class AdoptionApplicationPolicy
      */
     public function update(User $user, AdoptionApplication $adoptionApplication): bool
     {
-        return false;
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($adoptionApplication->user_id !== null && $adoptionApplication->user_id === $user->id) {
+            return true;
+        }
+
+        return $adoptionApplication->email !== null && strcasecmp($adoptionApplication->email, $user->email) === 0;
     }
 
     /**

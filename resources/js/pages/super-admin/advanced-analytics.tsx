@@ -349,8 +349,19 @@ export default function SuperAdminAdvancedAnalytics() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // Real-Time Polling & Live Status State
+    const [isLiveMode, setIsLiveMode] = useState(true);
+    const [pollIntervalSeconds] = useState(30);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+    const [isSilentUpdating, setIsSilentUpdating] = useState(false);
+    const [secondsAgo, setSecondsAgo] = useState(0);
+
+    const fetchAnalytics = useCallback(async (silent = false) => {
+        if (!silent) {
+            setLoading(true);
+        } else {
+            setIsSilentUpdating(true);
+        }
         setError(null);
         try {
             const url = `/account/super-admin/analytics?period=${period}`;
@@ -361,16 +372,39 @@ export default function SuperAdminAdvancedAnalytics() {
                 throw new Error(`HTTP ${res.status}`);
             }
             setData(await res.json());
+            setLastUpdated(new Date());
+            setSecondsAgo(0);
         } catch (e) {
-            setError('Failed to load advanced analytics data. Please try again.');
+            if (!silent) {
+                setError('Failed to load advanced analytics data. Please try again.');
+            }
         } finally {
             setLoading(false);
+            setIsSilentUpdating(false);
         }
     }, [period]);
 
+    // Initial load and period changes
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetchAnalytics(false);
+    }, [fetchAnalytics]);
+
+    // Real-time automatic background polling
+    useEffect(() => {
+        if (!isLiveMode) return;
+        const interval = setInterval(() => {
+            fetchAnalytics(true);
+        }, pollIntervalSeconds * 1000);
+        return () => clearInterval(interval);
+    }, [isLiveMode, pollIntervalSeconds, fetchAnalytics]);
+
+    // Seconds-ago live counter ticker
+    useEffect(() => {
+        const ticker = setInterval(() => {
+            setSecondsAgo(Math.floor((Date.now() - lastUpdated.getTime()) / 1000));
+        }, 1000);
+        return () => clearInterval(ticker);
+    }, [lastUpdated]);
 
     const handleExport = () => {
         window.location.href = `/account/super-admin/analytics/export?period=${period}`;
@@ -407,7 +441,7 @@ export default function SuperAdminAdvancedAnalytics() {
                             key={p.key}
                             onClick={() => setPeriod(p.key)}
                             className={cn(
-                                'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all',
+                                'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer',
                                 period === p.key
                                     ? 'bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-indigo-400'
                                     : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
@@ -418,18 +452,42 @@ export default function SuperAdminAdvancedAnalytics() {
                     ))}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2.5">
+                {/* Actions & Real-Time Indicators */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {/* Real-time Live Badge */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setIsLiveMode(!isLiveMode)}
+                            className="flex items-center gap-2 cursor-pointer focus:outline-hidden"
+                            title={isLiveMode ? 'Live real-time polling enabled (click to pause)' : 'Real-time paused (click to resume)'}
+                        >
+                            <span className="relative flex h-2.5 w-2.5">
+                                {isLiveMode && (
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                )}
+                                <span className={cn('relative inline-flex rounded-full h-2.5 w-2.5', isLiveMode ? 'bg-emerald-500' : 'bg-gray-400')}></span>
+                            </span>
+                            <span className="font-bold text-gray-700 dark:text-gray-200">
+                                {isLiveMode ? 'Live (30s)' : 'Paused'}
+                            </span>
+                        </button>
+                        <span className="text-gray-300 dark:text-gray-700">|</span>
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 min-w-[55px]">
+                            {isSilentUpdating ? 'Syncing...' : secondsAgo < 5 ? 'Just now' : `${secondsAgo}s ago`}
+                        </span>
+                    </div>
+
                     <button
-                        onClick={fetchData}
-                        disabled={loading}
-                        className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs transition-colors hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
+                        onClick={() => fetchAnalytics(false)}
+                        disabled={loading || isSilentUpdating}
+                        className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs transition-colors hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 cursor-pointer"
                     >
                         {loading ? (
                             <Spinner size="xs" showProgress label="Refreshing..." />
                         ) : (
                             <>
-                                <RefreshCw className="h-3.5 w-3.5" />
+                                <RefreshCw className={cn('h-3.5 w-3.5', isSilentUpdating && 'animate-spin text-indigo-500')} />
                                 <span>Refresh</span>
                             </>
                         )}
@@ -437,7 +495,7 @@ export default function SuperAdminAdvancedAnalytics() {
 
                     <button
                         onClick={handleExport}
-                        className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-indigo-700 active:scale-95"
+                        className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-indigo-700 active:scale-95 cursor-pointer"
                     >
                         <Download className="h-3.5 w-3.5" />
                         Export Full CSV
@@ -1040,35 +1098,35 @@ export default function SuperAdminAdvancedAnalytics() {
                                         <table className="w-full text-left text-xs">
                                             <thead>
                                                 <tr className="border-b border-gray-100 text-gray-400 dark:border-slate-800">
-                                                    <th className="pb-2 font-semibold">User</th>
-                                                    <th className="pb-2 font-semibold">Role</th>
-                                                    <th className="pb-2 font-semibold text-right">Actions</th>
-                                                    <th className="pb-2 font-semibold text-right">Last Active</th>
+                                                    <th className="py-2.5 px-3 font-semibold">User</th>
+                                                    <th className="py-2.5 px-3 font-semibold">Role</th>
+                                                    <th className="py-2.5 px-3 font-semibold text-right">Actions</th>
+                                                    <th className="py-2.5 px-3 font-semibold text-right">Last Active</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                                                 {data.top_audit_actors.length === 0 && (
                                                     <tr>
-                                                        <td colSpan={4} className="py-4 text-center text-gray-400">
+                                                        <td colSpan={4} className="py-4 px-3 text-center text-gray-400">
                                                             No audit events recorded for this period
                                                         </td>
                                                     </tr>
                                                 )}
                                                 {data.top_audit_actors.map((actor, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
-                                                        <td className="py-2.5 font-medium text-slate-800 dark:text-slate-200">
+                                                        <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-slate-200">
                                                             <div>{actor.name}</div>
                                                             <div className="text-[10px] text-gray-400">{actor.email}</div>
                                                         </td>
-                                                        <td className="py-2.5">
+                                                        <td className="py-2.5 px-3">
                                                             <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
                                                                 {actor.role}
                                                             </span>
                                                         </td>
-                                                        <td className="py-2.5 text-right font-bold text-slate-700 dark:text-slate-300">
+                                                        <td className="py-2.5 px-3 text-right font-bold text-slate-700 dark:text-slate-300">
                                                             {formatNumber(actor.actions_count)}
                                                         </td>
-                                                        <td className="py-2.5 text-right text-gray-400">
+                                                        <td className="py-2.5 px-3 text-right text-gray-400">
                                                             {actor.last_action}
                                                         </td>
                                                     </tr>

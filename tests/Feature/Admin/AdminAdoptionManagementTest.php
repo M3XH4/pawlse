@@ -468,8 +468,8 @@ test('admin can intake a rehoming request directly into shelter master records',
     $response->assertRedirect(route('account.admin.adoption-management'));
 
     $rehoming->refresh();
-    expect($rehoming->status)->toBe('home_found');
-    expect($rehoming->admin_notes)->toContain('Pet successfully admitted to shelter master records');
+    expect($rehoming->status)->toBe('shelter_intake');
+    expect($rehoming->admin_notes)->toContain('Pet successfully admitted to shelter');
 
     $this->assertDatabaseHas('shelter_animals', [
         'name' => 'Milo',
@@ -562,7 +562,7 @@ test('ending a foster placement with adopted status automatically populates fost
 });
 
 test('shelter visits slot enforces capacity limit', function () {
-    $date = now()->addDays(5)->toDateString();
+    $date = now()->next('Wednesday')->toDateString();
     $slot = 'Morning (9:00 AM - 12:00 PM)';
 
     // Pre-book 8 visitors for this slot
@@ -577,6 +577,7 @@ test('shelter visits slot enforces capacity limit', function () {
     $response = $this->post(route('shelter-visits.store'), [
         'full_name' => 'George Lucas',
         'contact_number' => '09887766554',
+        'email' => 'george@example.com',
         'preferred_date' => $date,
         'preferred_time_slot' => $slot,
         'number_of_visitors' => 5,

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LogOut, Menu, Zap } from 'lucide-react';
+import { LogOut, Menu, User, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
@@ -88,16 +88,33 @@ export function DashboardSidebar({
                 }
                 return null;
             }
+            if (item.title === 'Volunteer Status' && theme === 'user' && canSwitchToVolunteer) {
+                return null;
+            }
+            if (item.href === '/volunteer/switch-user') {
+                return null;
+            }
             return item;
         })
         .filter(Boolean) as typeof navItems;
 
     if (theme === 'user' && canSwitchToVolunteer) {
         displayedNavItems.push({
-            title: 'Volunteer Dashboard',
+            title: 'Switch to Volunteer Dashboard',
             href: '/volunteer/switch',
             match: '/volunteer/switch',
             icon: Zap,
+            method: 'post',
+            as: 'button',
+        });
+    }
+
+    if (theme === 'volunteer') {
+        displayedNavItems.push({
+            title: 'Switch to User Dashboard',
+            href: '/volunteer/switch-user',
+            match: '/volunteer/switch-user',
+            icon: User,
             method: 'post',
             as: 'button',
         });

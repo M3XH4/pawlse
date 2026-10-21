@@ -29,9 +29,13 @@ class DonationRejectedNotification extends Notification
         return $this->buildBrandedMail(
             notifiable: $notifiable,
             summaryItems: $summary,
-            actionText: 'Review My Donations',
+            actionText: 'Track Donation Status',
             level: 'error',
-            categoryBadge: 'DONATION UPDATE',
+            categoryBadge: "DONATION UPDATE ({$this->donation->public_reference})",
+            actionUrl: route('track', [
+                'reference' => $this->donation->public_reference,
+                'email' => $this->donation->donor_email,
+            ]),
         );
     }
 
@@ -40,11 +44,18 @@ class DonationRejectedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $url = $this->donation->user_id
+            ? route('account.user.donations')
+            : route('track', [
+                'reference' => $this->donation->public_reference,
+                'email' => $this->donation->donor_email,
+            ]);
+
         return [
-            'title' => 'Donation Payment Unsuccessful',
+            'title' => "Donation Payment Unsuccessful ({$this->donation->public_reference})",
             'message' => "Payment for donation (Ref: {$this->donation->public_reference}) was unsuccessful.".($this->reason ? " Reason: {$this->reason}" : ''),
             'description' => "Unsuccessful donation payment (Ref: {$this->donation->public_reference}).",
-            'url' => route('account.user.donations'),
+            'url' => $url,
             'icon' => 'donation',
             'category' => 'donation',
             'donation_id' => $this->donation->id,

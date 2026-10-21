@@ -11,11 +11,11 @@ export interface PhoneInputProps
 }
 
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
-    ({ value = '', onChange, onRawChange, className, onFocus, onBlur, ...props }, ref) => {
+    ({ value = '', onChange, onRawChange, className, placeholder = '+63 912 124 1241', onFocus, onBlur, ...props }, ref) => {
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const rawVal = e.target.value;
             // If user cleared everything, let it be empty
-            if (rawVal === '' || rawVal === '+') {
+            if (rawVal === '' || rawVal === '+' || rawVal === '+6' || rawVal === '+63') {
                 onChange?.('');
                 onRawChange?.(e);
                 return;
@@ -49,7 +49,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
                 onChange={handleChange}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                placeholder="+63 9XX XXX XXXX"
+                placeholder={placeholder}
                 className={cn('font-medium', className)}
             />
         );

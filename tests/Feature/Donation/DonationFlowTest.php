@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\DonationStatus;
+use App\Enums\DonationType;
 use App\Enums\PaymentStatus;
 use App\Models\AnimalDonationNeed;
 use App\Models\Donation;
@@ -168,11 +169,12 @@ test('simulating successful payment processes the donation and schedules event',
     expect($payment->status)->toBe(PaymentStatus::Verified->value);
     expect($sponsorship->status)->toBe('completed');
 
-    // Confirm that a feeding event has been created automatically
+    // Confirm that a feeding event has been created automatically and approved
     $event = Event::where('category', 'Feeding')->first();
     expect($event)->not->toBeNull();
     expect($event->title)->toContain('Jane Sponsor');
     expect($event->date->format('Y-m-d'))->toBe('2026-09-01');
+    expect($event->approval_status)->toBe('approved');
 
     $response->assertRedirect(route('donate'));
 });
@@ -346,4 +348,217 @@ test('super admin can toggle payment_simulation_enabled in system settings', fun
 
     $settings = SystemSetting::getValue('system_settings', []);
     expect($settings['payment_simulation_enabled'])->toBeFalse();
+});
+
+test('guest can initiate sponsor feeding donation with custom event poster upload', function () {
+    Storage::fake('public');
+
+    $poster = UploadedFile::fake()->image('my_custom_event_poster.jpg', 800, 600);
+
+    $response = $this->post(route('donate.store-sponsor'), [
+        'fullName' => 'Poster Sponsor',
+        'email' => 'postersponsor@example.com',
+        'mobile' => '09175556666',
+        'date' => now()->addDays(10)->format('Y-m-d'),
+        'occasion' => 'Pet Birthday Bash',
+        'message' => 'Celebration feeding run for rescues',
+        'poster' => $poster,
+    ]);
+
+    $donation = Donation::where('donor_email', 'postersponsor@example.com')->first();
+    expect($donation)->not->toBeNull();
+
+    $sponsorship = FeedingSponsorship::where('donation_id', $donation->id)->first();
+    expect($sponsorship)->not->toBeNull();
+    expect($sponsorship->poster_image)->not->toBeNull();
+    Storage::disk('public')->assertExists($sponsorship->poster_image);
+
+    $response->assertRedirect(route('donate.checkout', $donation->public_reference));
+});
+
+test('completing payment for feeding sponsorship creates event with custom poster image', function () {
+    Storage::fake('public');
+
+    $poster = UploadedFile::fake()->image('event_banner.png', 1200, 630);
+    $path = $poster->store('event-posters', 'public');
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-FEED-POSTER',
+        'donor_name' => 'Generous Sponsor',
+        'donor_email' => 'sponsor_poster@example.com',
+        'anonymous' => false,
+        'type' => DonationType::FeedingSponsorship->value,
+        'amount' => 3500,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $sponsorship = FeedingSponsorship::create([
+        'public_reference' => 'FS-TEST-POSTER',
+        'donation_id' => $donation->id,
+        'donor_name' => 'Generous Sponsor',
+        'donor_email' => 'sponsor_poster@example.com',
+        'donor_mobile' => '09178889999',
+        'preferred_date' => now()->addDays(14)->format('Y-m-d'),
+        'occasion' => 'Adoption Anniversary',
+        'message' => 'Happy feeding day!',
+        'poster_image' => $path,
+        'amount' => 3500,
+        'status' => 'pending',
+    ]);
+
+    Payment::create([
+        'donation_id' => $donation->id,
+        'method' => 'gcash',
+        'provider' => 'gcash',
+        'amount' => 3500,
+        'payment_reference' => 'PAY-SPONSOR-99',
+        'status' => PaymentStatus::Pending->value,
+    ]);
+
+    $response = $this->post(route('donate.pay', $donation->public_reference), [
+        'action' => 'success',
+        'method' => 'gcash',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $event = Event::where('date', $sponsorship->preferred_date)->first();
+    expect($event)->not->toBeNull();
+    expect($event->img)->toBe($sponsorship->poster_url);
+    expect($event->approval_status)->toBe('approved');
+});
+
+test('cash donation with blank string name defaults to Guest Donor', function () {
+    $response = $this->post(route('donate.store-cash'), [
+        'amount' => 500,
+        'donor_name' => '',
+        'donor_email' => 'blankname@example.com',
+        'anonymous' => false,
+    ]);
+
+    $donation = Donation::where('donor_email', 'blankname@example.com')->first();
+    expect($donation)->not->toBeNull();
+    expect($donation->donor_name)->toBe('Guest Donor');
+    $response->assertRedirect(route('donate.checkout', $donation->public_reference));
+});
+
+test('cash donation rejects zero or negative amounts', function () {
+    $response = $this->post(route('donate.store-cash'), [
+        'amount' => 0,
+        'donor_email' => 'zero@example.com',
+    ]);
+    $response->assertSessionHasErrors(['amount']);
+
+    $responseNeg = $this->post(route('donate.store-cash'), [
+        'amount' => -100,
+        'donor_email' => 'neg@example.com',
+    ]);
+    $responseNeg->assertSessionHasErrors(['amount']);
+});
+
+test('guest can initiate sponsor feeding with bank_transfer payment method', function () {
+    $response = $this->post(route('donate.store-sponsor'), [
+        'fullName' => 'Bank Sponsor',
+        'email' => 'banksponsor@example.com',
+        'mobile' => '09174445555',
+        'date' => now()->addDays(10)->format('Y-m-d'),
+        'payment_method' => 'bank_transfer',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $donation = Donation::where('donor_email', 'banksponsor@example.com')->first();
+    expect($donation)->not->toBeNull();
+
+    $payment = Payment::where('donation_id', $donation->id)->first();
+    expect($payment->method)->toBe('bank_transfer');
+});
+
+test('submitting duplicate payment reference returns friendly validation error instead of 500', function () {
+    Storage::fake('public');
+
+    // Create an existing payment with reference REF-EXISTS-123
+    $firstDonation = Donation::create([
+        'public_reference' => 'DON-FIRST',
+        'donor_name' => 'First Donor',
+        'donor_email' => 'first@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 1000,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    Payment::create([
+        'donation_id' => $firstDonation->id,
+        'method' => 'gcash',
+        'provider' => 'gcash',
+        'amount' => 1000,
+        'payment_reference' => 'REF-EXISTS-123',
+        'status' => PaymentStatus::Pending->value,
+    ]);
+
+    // Second donation attempts to use the same reference
+    $secondDonation = Donation::create([
+        'public_reference' => 'DON-SECOND',
+        'donor_name' => 'Second Donor',
+        'donor_email' => 'second@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 500,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $file = UploadedFile::fake()->image('receipt.jpg');
+
+    $response = $this->post(route('donate.checkout.proof', $secondDonation->public_reference), [
+        'payment_reference' => 'REF-EXISTS-123',
+        'proof' => $file,
+    ]);
+
+    $response->assertSessionHasErrors(['payment_reference']);
+    $errors = session('errors')->get('payment_reference');
+    expect($errors[0])->toContain('already been recorded for another donation');
+});
+
+test('resubmitting reference without re-uploading file succeeds when proof already exists', function () {
+    Storage::fake('public');
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-RESUBMIT',
+        'donor_name' => 'Resubmit Donor',
+        'donor_email' => 'resubmit@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 800,
+        'status' => DonationStatus::PaymentProofSubmitted->value,
+    ]);
+
+    $payment = Payment::create([
+        'donation_id' => $donation->id,
+        'method' => 'gcash',
+        'provider' => 'gcash',
+        'amount' => 800,
+        'payment_reference' => 'REF-OLD-111',
+        'status' => PaymentStatus::Pending->value,
+    ]);
+
+    PaymentProof::create([
+        'donation_id' => $donation->id,
+        'payment_id' => $payment->id,
+        'disk' => 'public',
+        'path' => 'donation_proofs/fake.jpg',
+        'original_filename' => 'fake.jpg',
+        'mime_type' => 'image/jpeg',
+        'file_size' => 1234,
+        'uploaded_at' => now(),
+    ]);
+
+    // Donor corrects reference without re-attaching file
+    $response = $this->post(route('donate.checkout.proof', $donation->public_reference), [
+        'payment_reference' => 'REF-CORRECTED-222',
+        'payment_method' => 'gcash',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $payment->refresh();
+    expect($payment->payment_reference)->toBe('REF-CORRECTED-222');
 });

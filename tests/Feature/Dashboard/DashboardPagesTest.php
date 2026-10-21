@@ -19,6 +19,8 @@ test('all user dashboard pages are reachable for users', function (string $route
     ['account.user.bookmark', 'user/bookmark'],
     ['account.user.rescue-reports', 'user/rescue-reports'],
     ['account.user.adoption-applications', 'user/adoption-applications'],
+    ['account.user.shelter-visits', 'user/shelter-visits'],
+    ['account.user.rehoming-requests', 'user/rehoming-requests'],
     ['account.user.donations', 'user/donations'],
     ['account.user.missing-found', 'user/missing-found'],
     ['account.user.notifications', 'user/notifications'],

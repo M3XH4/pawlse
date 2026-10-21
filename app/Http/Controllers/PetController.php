@@ -33,13 +33,20 @@ class PetController extends Controller
 
         if (! ($settings['ai_enabled'] ?? true)) {
             return response()->json([
-                'message' => 'AI services are currently disabled by the system administrator. Please use Manual Entry to fill in the pet details.',
+                'message' => 'AI services are currently disabled by the system administrator.',
             ], 403);
         }
 
-        if (! ($settings['ai_identifying_enabled'] ?? true)) {
+        $mode = $request->input('mode');
+        if ($mode === 'reporting') {
+            if (! ($settings['ai_reporting_enabled'] ?? true)) {
+                return response()->json([
+                    'message' => 'AI reporting is currently disabled by the administrator. Please use Manual Entry.',
+                ], 403);
+            }
+        } elseif (! ($settings['ai_identifying_enabled'] ?? true)) {
             return response()->json([
-                'message' => 'AI pet identification is currently disabled. Please enter the animal details manually.',
+                'message' => 'AI pet identification is currently disabled.',
             ], 403);
         }
 
@@ -98,7 +105,7 @@ class PetController extends Controller
 
             return response()->json([
                 'accepted' => false,
-                'message' => 'AI service is currently unavailable or unreachable. Please use Manual Entry to submit your pet report.',
+                'message' => 'AI service is currently unavailable or unreachable.',
             ], 503);
         }
     }

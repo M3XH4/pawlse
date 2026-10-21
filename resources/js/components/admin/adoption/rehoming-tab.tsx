@@ -40,7 +40,7 @@ export interface RehomingRequestData {
   health_notes?: string | null;
   description?: string | null;
   photo_url?: string | null;
-  status: 'pending' | 'reviewed' | 'posted' | 'home_found' | 'declined';
+  status: 'pending' | 'reviewed' | 'posted' | 'shelter_intake' | 'home_found' | 'declined';
   admin_notes?: string | null;
   reviewed_by_name?: string | null;
   created_at: string;
@@ -57,7 +57,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
   const [enlargedPhotoUrl, setEnlargedPhotoUrl] = useState<string | null>(null);
 
   const { data, setData, post, processing, reset } = useForm({
-    status: 'reviewed' as 'pending' | 'reviewed' | 'posted' | 'home_found' | 'declined',
+    status: 'reviewed' as 'pending' | 'reviewed' | 'posted' | 'shelter_intake' | 'home_found' | 'declined',
     admin_notes: '',
   });
 
@@ -78,12 +78,11 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
     post(`/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/status`, {
       preserveScroll: true,
       onSuccess: () => {
-        toast.success(`Rehoming request for ${selectedRequest.animal_name} updated to ${data.status}.`);
         setSelectedRequest(null);
         reset();
       },
-      onError: () => {
-        toast.error('Failed to update request.');
+      onError: (errs) => {
+        toast.error(Object.values(errs)[0] || 'Failed to update request.');
       },
     });
   };
@@ -99,12 +98,11 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
       {
         preserveScroll: true,
         onSuccess: () => {
-          toast.success(`${selectedRequest.animal_name} successfully admitted to shelter master records!`);
           setSelectedRequest(null);
           reset();
         },
-        onError: () => {
-          toast.error('Failed to intake pet to shelter.');
+        onError: (errs) => {
+          toast.error(Object.values(errs)[0] || 'Failed to intake pet to shelter.');
         },
         onFinish: () => {
           setIsIntaking(false);
@@ -139,7 +137,13 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
       case 'posted':
         return (
           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 flex items-center gap-1">
-            <Share2 size={11} /> Posted / Shared
+            <Share2 size={11} /> Cross-Posted to Socials
+          </span>
+        );
+      case 'shelter_intake':
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300 flex items-center gap-1">
+            <Sparkles size={11} /> Admitted to Shelter
           </span>
         );
       case 'home_found':
@@ -181,7 +185,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <p className="text-xs font-black uppercase tracking-wider text-gray-400">Total Requests</p>
           <div className="flex items-center justify-between mt-2">
@@ -207,7 +211,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-wider text-gray-400">Posted / Active</p>
+          <p className="text-xs font-black uppercase tracking-wider text-gray-400">Cross-Posted</p>
           <div className="flex items-center justify-between mt-2">
             <h3 className="text-2xl font-black text-purple-600 dark:text-purple-400">
               {rehomingRequests.filter((r) => r.status === 'posted').length}
@@ -216,7 +220,20 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
               <Share2 size={18} />
             </div>
           </div>
-          <p className="text-[11px] text-gray-500 font-bold mt-1">Shared on social channels</p>
+          <p className="text-[11px] text-gray-500 font-bold mt-1">Shared to ISF socials</p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-wider text-gray-400">Shelter Intakes</p>
+          <div className="flex items-center justify-between mt-2">
+            <h3 className="text-2xl font-black text-cyan-600 dark:text-cyan-400">
+              {rehomingRequests.filter((r) => r.status === 'shelter_intake').length}
+            </h3>
+            <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+              <Sparkles size={18} />
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-500 font-bold mt-1">Transferred to shelter care</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
@@ -229,7 +246,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <p className="text-[11px] text-gray-500 font-bold mt-1">Successfully rehomed</p>
+          <p className="text-[11px] text-gray-500 font-bold mt-1">Directly rehomed</p>
         </div>
       </div>
 
@@ -267,7 +284,8 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
             <option value="All">All Statuses</option>
             <option value="pending">Pending</option>
             <option value="reviewed">Reviewed</option>
-            <option value="posted">Posted / Shared</option>
+            <option value="posted">Cross-Posted to Socials</option>
+            <option value="shelter_intake">Admitted to Shelter</option>
             <option value="home_found">Home Found</option>
             <option value="declined">Declined</option>
           </select>
@@ -443,7 +461,8 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                   >
                     <option value="pending">Pending Review</option>
                     <option value="reviewed">Reviewed (Awaiting Coordination)</option>
-                    <option value="posted">Posted / Shared on Socials</option>
+                    <option value="posted">Cross-Posted to Socials</option>
+                    <option value="shelter_intake">Admitted to Shelter (Intake)</option>
                     <option value="home_found">Home Found (Successfully Rehomed)</option>
                     <option value="declined">Declined</option>
                   </select>
@@ -466,7 +485,11 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                 {/* Actions */}
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    {selectedRequest.status !== 'home_found' && (
+                    {selectedRequest.status === 'shelter_intake' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 text-xs font-black">
+                        <Sparkles size={14} /> Already Admitted to Shelter
+                      </span>
+                    ) : !['home_found', 'declined'].includes(selectedRequest.status) ? (
                       <button
                         type="button"
                         disabled={isIntaking || processing}
@@ -482,7 +505,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
                           </>
                         )}
                       </button>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-2">

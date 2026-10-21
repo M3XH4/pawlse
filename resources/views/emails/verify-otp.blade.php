@@ -1,5 +1,12 @@
 @php
-    $logoUrl = asset('images/logo.png');
+    $logoFile = public_path('images/logo.png');
+    if (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
+        $logoUrl = $message->embed($logoFile);
+    } elseif (file_exists($logoFile)) {
+        $logoUrl = 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile));
+    } else {
+        $logoUrl = asset('images/logo.png');
+    }
     $spacedOtp = implode(' ', str_split((string) ($otp ?? '000000')));
     $appName = config('app.name', 'PAWLSE');
 @endphp

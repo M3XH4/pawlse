@@ -318,21 +318,25 @@ export default function UserStories({
 
     return (
         <DashboardSectionPage
-            title="Adoption Stories & Testimonials"
+            title="My Testimonials"
             description="Share your heartwarming journey or community testimonial to inspire others. Submissions are reviewed by our team before publishing to the blog."
             badge={
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-row items-center gap-2.5 sm:gap-3 shrink-0 flex-nowrap">
                     <button
+                        type="button"
                         onClick={() => openCreateModal('testimonial')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-teal-600/20 transition-all hover:bg-teal-700 active:scale-95 cursor-pointer"
+                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal-600 px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-teal-600/25 transition-all hover:bg-teal-700 hover:shadow-md active:scale-95 cursor-pointer"
                     >
-                        <MessageSquareQuote size={16} /> Write Testimonial
+                        <MessageSquareQuote size={16} className="shrink-0" />
+                        <span>Write Testimonial</span>
                     </button>
                     <button
+                        type="button"
                         onClick={() => openCreateModal('adoption_success')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-paw-orange px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-paw-orange/20 transition-all hover:bg-paw-orange/90 active:scale-95 cursor-pointer"
+                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-paw-orange px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-paw-orange/25 transition-all hover:bg-paw-orange/90 hover:shadow-md active:scale-95 cursor-pointer"
                     >
-                        <Plus size={16} /> Adoption Story
+                        <Plus size={16} className="shrink-0" />
+                        <span>Adoption Story</span>
                     </button>
                 </div>
             }

@@ -6,6 +6,8 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 type Event = {
     type: string,
@@ -52,26 +54,6 @@ function PawIcon({ size = 20, className = '' }: { size?: number; className?: str
             className={className}
         >
             <path d="M12 11.5c-2.3 0-4.2 1.9-4.2 4.2 0 2.2 1.7 3.8 4.2 3.8s4.2-1.6 4.2-3.8c0-2.3-1.9-4.2-4.2-4.2zM5.5 10c1.2 0 2.2-1.2 2.2-2.7S6.7 4.6 5.5 4.6s-2.2 1.2-2.2 2.7S4.3 10 5.5 10zm4-4c1.2 0 2.2-1.2 2.2-2.7S10.7.6 9.5.6s-2.2 1.2-2.2 2.7S8.3 6 9.5 6zm5 0c1.2 0 2.2-1.2 2.2-2.7S15.7.6 14.5.6s-2.2 1.2-2.2 2.7S13.3 6 14.5 6zm4 4c1.2 0 2.2-1.2 2.2-2.7S19.7 4.6 18.5 4.6s-2.2 1.2-2.2 2.7S17.3 10 18.5 10z" />
-        </svg>
-    );
-}
-
-function WarningTriangleIcon({ size = 32, className = '' }: { size?: number; className?: string }) {
-    return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
     );
 }
@@ -140,15 +122,13 @@ interface VolunteerPageProps {
 }
 
 export default function VolunteerPage({ application, selectedEvent, auth }: VolunteerPageProps) {
+    const { auth: pageAuth, flash: pageFlash, application: pageApplication } = usePage<any>().props;
+    const currentUser = auth?.user || pageAuth?.user;
+    const activeApplication = pageApplication || application;
     const selectedEventFromState = selectedEvent || null;
     const [currentStep, setCurrentStep] = useState(1);
     const [submitted, setSubmitted] = useState(false);
     const [ignoreApplication, setIgnoreApplication] = useState(false);
-    const [showLeaveModal, setShowLeaveModal] = useState(false);
-    const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
-    const allowNavigationRef = useRef(false);
-
-    const currentUser = auth?.user;
 
     const { data, setData, post, processing, errors, reset } = useForm({
         fullName: currentUser?.name || '',
@@ -166,6 +146,52 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
         transport_has_license: false,
     });
 
+    const [termsAccepted, setTermsAccepted] = useState({
+        codeOfConduct: false,
+        orientation: false,
+        backgroundCheck: false,
+        availability: false,
+        safetyProtocol: false,
+    });
+
+    const allTermsAccepted = Boolean(
+        termsAccepted.codeOfConduct &&
+        termsAccepted.orientation &&
+        termsAccepted.backgroundCheck &&
+        termsAccepted.availability &&
+        termsAccepted.safetyProtocol
+    );
+
+    const toggleAllTerms = () => {
+        const nextState = !allTermsAccepted;
+        setTermsAccepted({
+            codeOfConduct: nextState,
+            orientation: nextState,
+            backgroundCheck: nextState,
+            availability: nextState,
+            safetyProtocol: nextState,
+        });
+    };
+
+    const handleTermToggle = (key: keyof typeof termsAccepted, checked: boolean) => {
+        setTermsAccepted((prev) => ({
+            ...prev,
+            [key]: checked,
+        }));
+    };
+
+    useEffect(() => {
+        if (currentUser) {
+            setData((prev) => ({
+                ...prev,
+                fullName: prev.fullName || currentUser.name || '',
+                email: prev.email || currentUser.email || '',
+                mobile: prev.mobile || (currentUser.phone ? formatPhoneNumber(currentUser.phone) : ''),
+                address: prev.address || currentUser.location || '',
+            }));
+        }
+    }, [currentUser]);
+
     const isFormDirty = Boolean(!application || ignoreApplication) && (
         (data.fullName.trim() !== '' && data.fullName !== (currentUser?.name || '')) ||
         (data.mobile.trim() !== '' && data.mobile !== (currentUser?.phone ? formatPhoneNumber(currentUser.phone) : '')) ||
@@ -178,66 +204,18 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
         data.medic_experience.trim() !== '' ||
         data.foster_needs.trim() !== '' ||
         data.transport_has_license ||
+        Object.values(termsAccepted).some(Boolean) ||
         currentStep > 1
     );
 
-    // Intercept Inertia routing and browser navigation when form is dirty
-    useEffect(() => {
-        const unsubscribe = router.on('before', (event) => {
-            if (allowNavigationRef.current || submitted) {
-                return;
-            }
-
-            if (isFormDirty) {
-                event.preventDefault();
-                const targetUrl = event.detail.visit.url.href;
-                setPendingNavigation(targetUrl);
-                setShowLeaveModal(true);
-            }
-        });
-
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (!allowNavigationRef.current && !submitted && isFormDirty) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            }
-        };
-
-        const handlePopState = () => {
-            if (!allowNavigationRef.current && !submitted && isFormDirty) {
-                window.history.pushState(null, '', window.location.href);
-                setPendingNavigation('back');
-                setShowLeaveModal(true);
-            }
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        window.addEventListener('popstate', handlePopState);
-
-        return () => {
-            unsubscribe();
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            window.removeEventListener('popstate', handlePopState);
-        };
-    }, [isFormDirty, submitted]);
-
-    const handleLeaveAnyway = () => {
-        allowNavigationRef.current = true;
-        setShowLeaveModal(false);
-        if (pendingNavigation === 'back') {
-            window.history.back();
-        } else if (pendingNavigation) {
-            router.visit(pendingNavigation);
-        } else {
-            window.history.back();
-        }
-    };
-
-    const handleContinueEditing = () => {
-        setShowLeaveModal(false);
-        setPendingNavigation(null);
-    };
+    const {
+        showDialog: showLeaveModal,
+        handleContinueEditing,
+        handleLeaveAnyway,
+    } = useUnsavedChanges({
+        isDirty: isFormDirty,
+        disabled: submitted || processing,
+    });
 
     const hasRoleSpecificStep = data.role === 'Foster Volunteer' || data.role === 'Medic Volunteer';
     const totalSteps = hasRoleSpecificStep ? 4 : 3;
@@ -249,13 +227,42 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
         }
     }, [hasRoleSpecificStep, currentStep]);
 
+    const isValidEmail = (email: string) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    };
+
     const validateStep1 = () => {
-        return data.fullName.trim() !== '' &&
-            data.mobile.trim() !== '' &&
-            isValidPhoneNumber(data.mobile) &&
-            data.email.trim() !== '' &&
-            data.address.trim() !== '' &&
-            data.role !== '';
+        const hasName = data.fullName.trim() !== '';
+        const hasMobile = data.mobile.trim() !== '' && data.mobile.trim() !== '+63' && isValidPhoneNumber(data.mobile);
+        const hasEmail = data.email.trim() !== '' && isValidEmail(data.email);
+        const hasAddress = data.address.trim() !== '';
+        const hasRole = data.role !== '';
+
+        return hasName && hasMobile && hasEmail && hasAddress && hasRole;
+    };
+
+    const getStep1MissingRequirements = () => {
+        const missing: string[] = [];
+        if (!data.fullName.trim()) {
+            missing.push('Full Name');
+        }
+        if (!data.mobile.trim() || data.mobile.trim() === '+63') {
+            missing.push('Mobile Number');
+        } else if (!isValidPhoneNumber(data.mobile)) {
+            missing.push('Complete 10-digit Mobile Number');
+        }
+        if (!data.email.trim()) {
+            missing.push('Email Address');
+        } else if (!isValidEmail(data.email)) {
+            missing.push('Valid Email Address (e.g. name@example.com)');
+        }
+        if (!data.address.trim()) {
+            missing.push('Address');
+        }
+        if (!data.role) {
+            missing.push('Preferred Role Selection');
+        }
+        return missing;
     };
 
     const validateStep2 = () => {
@@ -264,6 +271,29 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
             return false;
         }
         return true;
+    };
+
+    const getStep2MissingRequirements = () => {
+        const missing: string[] = [];
+        if (!termsAccepted.codeOfConduct) {
+            missing.push('Code of Conduct Agreement');
+        }
+        if (!termsAccepted.orientation) {
+            missing.push('Mandatory Orientation Attendance');
+        }
+        if (!termsAccepted.backgroundCheck) {
+            missing.push('Background Verification');
+        }
+        if (!termsAccepted.availability) {
+            missing.push('Time Commitment');
+        }
+        if (!termsAccepted.safetyProtocol) {
+            missing.push('Animal Safety Protocols');
+        }
+        if (data.role === 'Transport' && !data.transport_has_license) {
+            missing.push("Driver's License & Vehicle Registration Declaration");
+        }
+        return missing;
     };
 
     const validateStep3 = () => {
@@ -308,27 +338,19 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
         e.preventDefault();
 
         if (currentStep === totalSteps && canProceed()) {
-            allowNavigationRef.current = true;
             post('/volunteer/apply', {
                 onSuccess: () => {
                     setSubmitted(true);
                 },
-                onError: () => {
-                    allowNavigationRef.current = false;
+                onError: (formErrors) => {
+                    if (formErrors.fullName || formErrors.mobile || formErrors.email || formErrors.address || formErrors.role) {
+                        setCurrentStep(1);
+                    }
                 }
             });
         }
     };
 
-    const [termsAccepted, setTermsAccepted] = useState({
-        codeOfConduct: false,
-        orientation: false,
-        backgroundCheck: false,
-        availability: false,
-        safetyProtocol: false
-    });
-
-    const allTermsAccepted = Object.values(termsAccepted).every(val => val);
 
     // Auto-select role based on event type and scroll to top
     useEffect(() => {
@@ -410,31 +432,109 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                         <div className="max-w-4xl mx-auto">
                             <div className="bg-white rounded-[60px] shadow-2xl shadow-paw-navy/10 border-2 border-paw-orange/10 relative overflow-hidden p-8 md:p-12">
                                 
-                                {application && !ignoreApplication ? (
+                                {!currentUser ? (
+                                    /* Public/Guest User Screen - Account Required */
+                                    <div className="py-6 text-center">
+                                        <div className="w-20 h-20 bg-paw-orange/10 text-paw-orange rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                            <ShieldCheck size={42} className="text-paw-orange" />
+                                        </div>
+
+                                        <div className="inline-flex items-center gap-2 border border-amber-300 bg-amber-50/70 text-amber-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm mb-4">
+                                            <User size={14} className="text-amber-500" />
+                                            Registered Account Required
+                                        </div>
+
+                                        <h2 className="text-3xl sm:text-4xl font-black text-paw-navy mb-4">
+                                            Sign In to Apply as a Volunteer
+                                        </h2>
+
+                                        <p className="text-gray-500 font-bold text-base max-w-xl mx-auto mb-8 leading-relaxed">
+                                            To ensure volunteer accountability and allow you to track your application review progress in real-time, volunteer sign-ups are reserved for registered users.
+                                        </p>
+
+                                        {/* Reasons Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-10 text-left">
+                                            <div className="bg-paw-bg/70 border-2 border-paw-orange/10 rounded-3xl p-5">
+                                                <div className="w-10 h-10 bg-paw-orange/10 text-paw-orange rounded-2xl flex items-center justify-center mb-3">
+                                                    <Clock size={20} />
+                                                </div>
+                                                <h4 className="font-black text-paw-navy text-sm mb-1.5">Live Status Tracking</h4>
+                                                <p className="text-xs text-gray-500 font-bold leading-relaxed">
+                                                    Check your application standing (Pending, Approved, or Feedback) right inside your personal user dashboard.
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-paw-bg/70 border-2 border-paw-orange/10 rounded-3xl p-5">
+                                                <div className="w-10 h-10 bg-blue-500/10 text-blue-600 rounded-2xl flex items-center justify-center mb-3">
+                                                    <Mail size={20} />
+                                                </div>
+                                                <h4 className="font-black text-paw-navy text-sm mb-1.5">Official E-Receipts</h4>
+                                                <p className="text-xs text-gray-500 font-bold leading-relaxed">
+                                                    Receive email confirmation and an official submission receipt with your unique reference number.
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-paw-bg/70 border-2 border-paw-orange/10 rounded-3xl p-5">
+                                                <div className="w-10 h-10 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center mb-3">
+                                                    <CheckCircle2 size={20} />
+                                                </div>
+                                                <h4 className="font-black text-paw-navy text-sm mb-1.5">Volunteer Dashboard</h4>
+                                                <p className="text-xs text-gray-500 font-bold leading-relaxed">
+                                                    Once approved, switch seamlessly to the Volunteer Portal to join feeding routes, rescue tasks, and log hours.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                            <Link
+                                                href="/login"
+                                                className="w-full sm:w-auto px-8 py-4 bg-paw-orange text-white rounded-[24px] font-black text-base hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20 flex items-center justify-center gap-2 cursor-pointer"
+                                            >
+                                                <User size={18} />
+                                                LOG IN TO APPLY
+                                            </Link>
+                                            <Link
+                                                href="/register"
+                                                className="w-full sm:w-auto px-8 py-4 bg-paw-navy text-white rounded-[24px] font-black text-base hover:bg-slate-800 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                                            >
+                                                CREATE AN ACCOUNT
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ) : activeApplication && !ignoreApplication ? (
                                     /* Active Application Status Screen */
                                     <div className="py-6">
-                                        {application.status === 'pending' && (
+                                        {activeApplication.status === 'pending' && (
                                             <div className="text-center">
                                                 <div className="w-20 h-20 bg-paw-orange/10 text-paw-orange rounded-[32px] flex items-center justify-center mx-auto mb-6">
                                                     <Clock size={40} className="text-paw-orange animate-pulse" />
                                                 </div>
                                                 <h2 className="text-3xl sm:text-4xl font-black text-paw-navy mb-4">Application Under Review</h2>
                                                 <p className="text-gray-500 font-bold text-base max-w-xl mx-auto mb-8">
-                                                    Thank you for applying! Your application (Ref: <span className="text-paw-orange">{application.reference_number}</span>) is currently pending review. 
+                                                    Thank you for applying! Your application (Ref: <span className="text-paw-orange">{activeApplication.reference_number}</span>) is currently pending review. 
                                                     Our volunteer coordinator will update your status soon.
                                                 </p>
-                                                <div className="bg-paw-bg max-w-md mx-auto rounded-3xl p-6 text-left border-2 border-paw-orange/5">
+                                                <div className="bg-paw-bg max-w-md mx-auto rounded-3xl p-6 text-left border-2 border-paw-orange/5 mb-8">
                                                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Submitted Info</p>
                                                     <div className="space-y-2 font-bold text-sm text-gray-700">
-                                                        <p><span className="text-gray-400">Name:</span> {application.full_name}</p>
-                                                        <p><span className="text-gray-400">Preferred Role:</span> {application.role}</p>
-                                                        <p><span className="text-gray-400">Contact:</span> {application.mobile}</p>
+                                                        <p><span className="text-gray-400">Name:</span> {activeApplication.full_name}</p>
+                                                        <p><span className="text-gray-400">Preferred Role:</span> {activeApplication.role}</p>
+                                                        <p><span className="text-gray-400">Contact:</span> {activeApplication.mobile}</p>
                                                     </div>
                                                 </div>
+
+                                                <Link
+                                                    href="/account/user/volunteer-status"
+                                                    className="inline-flex items-center gap-2 px-8 py-4 bg-paw-orange text-white rounded-[24px] font-black text-base hover:bg-orange-600 transition-all shadow-xl shadow-paw-orange/20 cursor-pointer"
+                                                >
+                                                    <Zap size={18} />
+                                                    VIEW STATUS IN DASHBOARD
+                                                </Link>
                                             </div>
                                         )}
 
-                                        {application.status === 'approved' && (
+                                        {activeApplication.status === 'approved' && (
                                             <div className="text-center">
                                                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-600/10">
                                                     <CheckCircle2 size={40} strokeWidth={3} />
@@ -462,7 +562,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                             </div>
                                         )}
 
-                                        {application.status === 'rejected' && (
+                                        {activeApplication.status === 'rejected' && (
                                             <div className="text-center">
                                                 <div className="w-20 h-20 bg-red-100 text-red-600 rounded-[32px] flex items-center justify-center mx-auto mb-6">
                                                     <X size={40} strokeWidth={3} />
@@ -471,10 +571,10 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                 <p className="text-gray-500 font-bold text-base max-w-xl mx-auto mb-6">
                                                     We appreciate your interest, but we are unable to accept your volunteer application at this time.
                                                 </p>
-                                                {application.rejection_reason && (
+                                                {activeApplication.rejection_reason && (
                                                     <div className="bg-red-50 max-w-lg mx-auto rounded-3xl p-6 border-2 border-red-200 text-left mb-8">
                                                         <p className="text-xs font-black text-red-500 uppercase tracking-widest mb-2">Coordinator Feedback</p>
-                                                        <p className="font-bold text-sm text-red-800">{application.rejection_reason}</p>
+                                                        <p className="font-bold text-sm text-red-800">{activeApplication.rejection_reason}</p>
                                                     </div>
                                                 )}
                                                 <button
@@ -619,28 +719,86 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                         <div className="grid md:grid-cols-2 gap-8">
                                                             <div>
                                                                 <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Full Name *</label>
-                                                                <input required type="text" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="First & Last Name" name="fullName" value={data.fullName} onChange={handleInputChange} />
+                                                                <input
+                                                                    required
+                                                                    type="text"
+                                                                    className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800"
+                                                                    placeholder="First & Last Name"
+                                                                    name="fullName"
+                                                                    value={data.fullName}
+                                                                    onChange={handleInputChange}
+                                                                />
+                                                                {errors.fullName && <p className="text-xs font-bold text-red-500 mt-2">{errors.fullName}</p>}
                                                             </div>
                                                             <div>
                                                                 <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Mobile Number *</label>
-                                                                <input required type="tel" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="+63 9XX XXX XXXX" name="mobile" value={data.mobile} onChange={handleInputChange} />
+                                                                <input
+                                                                    required
+                                                                    type="tel"
+                                                                    className={`w-full p-6 bg-paw-bg border-2 rounded-[24px] outline-none transition-all font-bold text-gray-800 ${
+                                                                        data.mobile.trim() !== '' && data.mobile.trim() !== '+63' && !isValidPhoneNumber(data.mobile)
+                                                                            ? 'border-red-300 focus:border-red-500'
+                                                                            : 'border-transparent focus:border-paw-orange'
+                                                                    }`}
+                                                                    placeholder="+63 912 124 1241"
+                                                                    name="mobile"
+                                                                    value={data.mobile}
+                                                                    onChange={handleInputChange}
+                                                                />
+                                                                {data.mobile.trim() !== '' && data.mobile.trim() !== '+63' && !isValidPhoneNumber(data.mobile) && (
+                                                                    <p className="text-xs font-bold text-red-500 mt-2">
+                                                                        Mobile number must be a valid 10-digit number (e.g. +63 912 345 6789).
+                                                                    </p>
+                                                                )}
+                                                                {errors.mobile && <p className="text-xs font-bold text-red-500 mt-2">{errors.mobile}</p>}
                                                             </div>
                                                         </div>
 
                                                         <div className="grid md:grid-cols-2 gap-8">
                                                             <div>
                                                                 <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Email Address *</label>
-                                                                <input required type="email" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="your@email.com" name="email" value={data.email} onChange={handleInputChange} />
+                                                                <input
+                                                                    required
+                                                                    type="email"
+                                                                    className={`w-full p-6 bg-paw-bg border-2 rounded-[24px] outline-none transition-all font-bold text-gray-800 ${
+                                                                        data.email.trim() !== '' && !isValidEmail(data.email)
+                                                                            ? 'border-red-300 focus:border-red-500'
+                                                                            : 'border-transparent focus:border-paw-orange'
+                                                                    }`}
+                                                                    placeholder="your@email.com"
+                                                                    name="email"
+                                                                    value={data.email}
+                                                                    onChange={handleInputChange}
+                                                                />
+                                                                {data.email.trim() !== '' && !isValidEmail(data.email) && (
+                                                                    <p className="text-xs font-bold text-red-500 mt-2">
+                                                                        Please enter a valid email address (e.g. your@email.com).
+                                                                    </p>
+                                                                )}
+                                                                {errors.email && <p className="text-xs font-bold text-red-500 mt-2">{errors.email}</p>}
                                                             </div>
                                                             <div>
                                                                 <label className="block text-sm font-black text-gray-400 mb-2 uppercase tracking-widest">Address *</label>
-                                                                <input required type="text" className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800" placeholder="City, Barangay" name="address" value={data.address} onChange={handleInputChange} />
+                                                                <input
+                                                                    required
+                                                                    type="text"
+                                                                    className="w-full p-6 bg-paw-bg border-2 border-transparent rounded-[24px] outline-none focus:border-paw-orange transition-all font-bold text-gray-800"
+                                                                    placeholder="City, Barangay"
+                                                                    name="address"
+                                                                    value={data.address}
+                                                                    onChange={handleInputChange}
+                                                                />
+                                                                {errors.address && <p className="text-xs font-bold text-red-500 mt-2">{errors.address}</p>}
                                                             </div>
                                                         </div>
 
                                                         <div>
                                                             <label className="block text-sm font-black text-gray-400 mb-4 uppercase tracking-widest">
-                                                                Preferred Role * {data.role && <span className="text-paw-orange">({data.role.toUpperCase()} SELECTED)</span>}
+                                                                Preferred Role * {data.role ? (
+                                                                    <span className="text-paw-orange">({data.role.toUpperCase()} SELECTED)</span>
+                                                                ) : (
+                                                                    <span className="text-amber-600 font-bold lowercase text-xs ml-1">(please select a role)</span>
+                                                                )}
                                                             </label>
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                 {VOLUNTEER_ROLES.map((r) => {
@@ -672,11 +830,16 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                         </div>
 
                                                         {!validateStep1() && (
-                                                            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
-                                                                <Info size={20} className="text-yellow-600 shrink-0 mt-0.5" />
-                                                                <p className="text-xs font-bold text-yellow-800">
-                                                                    Please fill in all required fields and select a role to continue.
-                                                                </p>
+                                                            <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                                                                <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                                                                <div>
+                                                                    <p className="text-xs font-black text-amber-900 mb-1">
+                                                                        Please complete the following to continue:
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-amber-800">
+                                                                        {getStep1MissingRequirements().join(' • ')}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </motion.div>
@@ -701,68 +864,121 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                             </p>
                                                         </div>
 
+                                                        <div className="flex items-center justify-between pb-1">
+                                                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                                                                Required Agreements ({Object.values(termsAccepted).filter(Boolean).length}/5 accepted)
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={toggleAllTerms}
+                                                                className="text-xs font-black text-paw-orange hover:text-orange-600 transition-colors cursor-pointer underline underline-offset-4"
+                                                            >
+                                                                {allTermsAccepted ? 'Deselect All' : 'Accept All Requirements'}
+                                                            </button>
+                                                        </div>
+
                                                         <div className="space-y-4">
-                                                            <label className="flex items-start gap-4 p-5 bg-white border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-paw-orange transition-all">
+                                                            <label
+                                                                className={`flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                    termsAccepted.codeOfConduct
+                                                                        ? 'bg-amber-50/50 border-paw-orange shadow-xs'
+                                                                        : 'bg-white border-gray-200 hover:border-paw-orange/50'
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={termsAccepted.codeOfConduct}
-                                                                    onChange={(e) => setTermsAccepted({ ...termsAccepted, codeOfConduct: e.target.checked })}
-                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0"
+                                                                    onChange={(e) => handleTermToggle('codeOfConduct', e.target.checked)}
+                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0 cursor-pointer"
                                                                 />
                                                                 <div>
-                                                                    <p className="font-black text-paw-navy mb-1">Code of Conduct Agreement</p>
+                                                                    <p className={`font-black mb-1 ${termsAccepted.codeOfConduct ? 'text-paw-orange' : 'text-paw-navy'}`}>
+                                                                        Code of Conduct Agreement
+                                                                    </p>
                                                                     <p className="text-xs font-bold text-gray-500">I agree to follow ISF's Code of Conduct which includes treating all animals with compassion, respecting team members, and upholding the organization's values.</p>
                                                                 </div>
                                                             </label>
 
-                                                            <label className="flex items-start gap-4 p-5 bg-white border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-paw-orange transition-all">
+                                                            <label
+                                                                className={`flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                    termsAccepted.orientation
+                                                                        ? 'bg-amber-50/50 border-paw-orange shadow-xs'
+                                                                        : 'bg-white border-gray-200 hover:border-paw-orange/50'
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={termsAccepted.orientation}
-                                                                    onChange={(e) => setTermsAccepted({ ...termsAccepted, orientation: e.target.checked })}
-                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0"
+                                                                    onChange={(e) => handleTermToggle('orientation', e.target.checked)}
+                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0 cursor-pointer"
                                                                 />
                                                                 <div>
-                                                                    <p className="font-black text-paw-navy mb-1">Mandatory Orientation Attendance</p>
+                                                                    <p className={`font-black mb-1 ${termsAccepted.orientation ? 'text-paw-orange' : 'text-paw-navy'}`}>
+                                                                        Mandatory Orientation Attendance
+                                                                    </p>
                                                                     <p className="text-xs font-bold text-gray-500">I commit to attending a 1-hour orientation session before my first volunteer activity to learn about safety protocols and procedures.</p>
                                                                 </div>
                                                             </label>
 
-                                                            <label className="flex items-start gap-4 p-5 bg-white border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-paw-orange transition-all">
+                                                            <label
+                                                                className={`flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                    termsAccepted.backgroundCheck
+                                                                        ? 'bg-amber-50/50 border-paw-orange shadow-xs'
+                                                                        : 'bg-white border-gray-200 hover:border-paw-orange/50'
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={termsAccepted.backgroundCheck}
-                                                                    onChange={(e) => setTermsAccepted({ ...termsAccepted, backgroundCheck: e.target.checked })}
-                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0"
+                                                                    onChange={(e) => handleTermToggle('backgroundCheck', e.target.checked)}
+                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0 cursor-pointer"
                                                                 />
                                                                 <div>
-                                                                    <p className="font-black text-paw-navy mb-1">Background Verification</p>
+                                                                    <p className={`font-black mb-1 ${termsAccepted.backgroundCheck ? 'text-paw-orange' : 'text-paw-navy'}`}>
+                                                                        Background Verification
+                                                                    </p>
                                                                     <p className="text-xs font-bold text-gray-500">I consent to a basic background check and provide valid identification for volunteer registration purposes.</p>
                                                                 </div>
                                                             </label>
 
-                                                            <label className="flex items-start gap-4 p-5 bg-white border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-paw-orange transition-all">
+                                                            <label
+                                                                className={`flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                    termsAccepted.availability
+                                                                        ? 'bg-amber-50/50 border-paw-orange shadow-xs'
+                                                                        : 'bg-white border-gray-200 hover:border-paw-orange/50'
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={termsAccepted.availability}
-                                                                    onChange={(e) => setTermsAccepted({ ...termsAccepted, availability: e.target.checked })}
-                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0"
+                                                                    onChange={(e) => handleTermToggle('availability', e.target.checked)}
+                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0 cursor-pointer"
                                                                 />
                                                                 <div>
-                                                                    <p className="font-black text-paw-navy mb-1">Time Commitment</p>
+                                                                    <p className={`font-black mb-1 ${termsAccepted.availability ? 'text-paw-orange' : 'text-paw-navy'}`}>
+                                                                        Time Commitment
+                                                                    </p>
                                                                     <p className="text-xs font-bold text-gray-500">I understand that I need to commit at least 4 hours per month and will inform my coordinator if I cannot fulfill scheduled activities.</p>
                                                                 </div>
                                                             </label>
 
-                                                            <label className="flex items-start gap-4 p-5 bg-white border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-paw-orange transition-all">
+                                                            <label
+                                                                className={`flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                    termsAccepted.safetyProtocol
+                                                                        ? 'bg-amber-50/50 border-paw-orange shadow-xs'
+                                                                        : 'bg-white border-gray-200 hover:border-paw-orange/50'
+                                                                }`}
+                                                            >
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={termsAccepted.safetyProtocol}
-                                                                    onChange={(e) => setTermsAccepted({ ...termsAccepted, safetyProtocol: e.target.checked })}
-                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0"
+                                                                    onChange={(e) => handleTermToggle('safetyProtocol', e.target.checked)}
+                                                                    className="w-5 h-5 accent-paw-orange mt-1 shrink-0 cursor-pointer"
                                                                 />
                                                                 <div>
-                                                                    <p className="font-black text-paw-navy mb-1">Animal Safety Protocols</p>
+                                                                    <p className={`font-black mb-1 ${termsAccepted.safetyProtocol ? 'text-paw-orange' : 'text-paw-navy'}`}>
+                                                                        Animal Safety Protocols
+                                                                    </p>
                                                                     <p className="text-xs font-bold text-gray-500">I will follow all animal handling and safety protocols, wear appropriate gear, and immediately report any incidents or injuries.</p>
                                                                 </div>
                                                             </label>
@@ -782,7 +998,11 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                                         </div>
                                                                     </div>
 
-                                                                    <label className="flex items-start gap-4 p-4 bg-white border-2 border-teal-200 rounded-2xl cursor-pointer hover:border-teal-500 transition-all">
+                                                                    <label className={`flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${
+                                                                        data.transport_has_license
+                                                                            ? 'bg-teal-500/10 border-teal-500 shadow-xs'
+                                                                            : 'bg-white border-teal-200 hover:border-teal-400'
+                                                                    }`}>
                                                                         <input
                                                                             type="checkbox"
                                                                             checked={data.transport_has_license}
@@ -810,13 +1030,16 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                         )}
 
                                                         {!validateStep2() && (
-                                                            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
-                                                                <Info size={20} className="text-yellow-600 shrink-0 mt-0.5" />
-                                                                <p className="text-xs font-bold text-yellow-800">
-                                                                    {data.role === 'Transport' && !data.transport_has_license
-                                                                        ? 'Please accept all volunteer requirements and confirm the driver\'s license declaration to continue.'
-                                                                        : 'Please accept all requirements above to proceed to the next step.'}
-                                                                </p>
+                                                            <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                                                                <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                                                                <div>
+                                                                    <p className="text-xs font-black text-amber-900 mb-1">
+                                                                        Please accept all requirements above to proceed to the next step:
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-amber-800">
+                                                                        {getStep2MissingRequirements().join(' • ')}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </motion.div>
@@ -1179,10 +1402,17 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                     setSubmitted(false);
                     setCurrentStep(1);
                     reset();
+                    setTermsAccepted({
+                        codeOfConduct: false,
+                        orientation: false,
+                        backgroundCheck: false,
+                        availability: false,
+                        safetyProtocol: false,
+                    });
                 }}
                 title="Volunteer Application Submitted!"
                 subtitle="Welcome to the Iligan Stray Feeders family"
-                referenceNumber={application?.reference_number || 'VOL-PENDING'}
+                referenceNumber={pageFlash?.submitted_reference_number || activeApplication?.reference_number || application?.reference_number || 'VOL-PENDING'}
                 items={[
                     { label: 'Full Name', value: data.fullName, icon: <User size={20} /> },
                     { label: 'Mobile Number', value: data.mobile, icon: <Phone size={20} /> },
@@ -1221,58 +1451,11 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
             />
 
             {/* Unsaved Changes Confirmation Modal */}
-            <AnimatePresence>
-                {showLeaveModal && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        {/* Blurred Background Overlay */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md"
-                            onClick={handleContinueEditing}
-                        />
-
-                        {/* Modal Dialog Card */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="relative z-10 bg-white rounded-[36px] p-8 md:p-10 shadow-2xl max-w-md w-full text-center border border-gray-100"
-                        >
-                            <div className="w-16 h-16 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-500 shadow-sm">
-                                <WarningTriangleIcon size={32} className="text-amber-500" />
-                            </div>
-
-                            <h3 className="text-2xl md:text-3xl font-black text-paw-navy mb-3">
-                                Leave this page?
-                            </h3>
-
-                            <p className="text-sm md:text-base font-bold text-gray-400 mb-8 max-w-sm mx-auto leading-relaxed">
-                                You have unsaved information. If you leave now, your current changes may be lost.
-                            </p>
-
-                            <div className="space-y-3">
-                                <button
-                                    type="button"
-                                    onClick={handleContinueEditing}
-                                    className="w-full py-4 bg-paw-orange hover:bg-orange-600 text-white font-black text-base rounded-2xl shadow-lg shadow-paw-orange/20 transition-all cursor-pointer"
-                                >
-                                    Continue Editing
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleLeaveAnyway}
-                                    className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-paw-navy font-black text-base rounded-2xl transition-all cursor-pointer"
-                                >
-                                    Leave Anyway
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <UnsavedChangesDialog
+                isOpen={showLeaveModal}
+                onContinueEditing={handleContinueEditing}
+                onLeaveAnyway={handleLeaveAnyway}
+            />
 
             <Footer />
         </div>

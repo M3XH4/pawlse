@@ -437,12 +437,6 @@
         display: none;
     }
 
-    /* Rounded container clipping so scrollbar stays inside corner radius */
-    .overflow-y-auto,
-    .overflow-x-auto,
-    .overflow-auto {
-        border-radius: inherit;
-    }
 
     /* Modernized native datepicker calendar icon */
     input[type='date']::-webkit-calendar-picker-indicator {

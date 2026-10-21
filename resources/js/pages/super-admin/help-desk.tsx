@@ -65,10 +65,12 @@ export default function SuperAdminHelpDesk({
     filters,
 }: SuperAdminHelpDeskProps) {
     const [activeTab, setActiveTab] = useState<'admin_inquiries' | 'all_tickets' | 'faqs'>(
-        filters.tab === 'admin_inquiries'
+        filters.tab === 'admin_inquiries' || filters.tab === 'escalated'
             ? 'admin_inquiries'
             : filters.tab === 'faqs'
             ? 'faqs'
+            : filters.tab === 'all'
+            ? 'all_tickets'
             : 'admin_inquiries'
     );
     const [faqModalOpen, setFaqModalOpen] = useState(false);
@@ -86,7 +88,22 @@ export default function SuperAdminHelpDesk({
         router.get(
             '/account/super-admin/help-desk',
             {
-                tab: tabKey === 'admin_inquiries' ? 'escalated' : undefined,
+                tab: tabKey === 'admin_inquiries' ? 'escalated' : tabKey === 'all_tickets' ? 'all' : 'faqs',
+                search: search || undefined,
+                status: statusFilter !== 'all' ? statusFilter : undefined,
+                priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+                submitter_role: roleFilter !== 'all' ? roleFilter : undefined,
+            },
+            { preserveState: true, preserveScroll: true }
+        );
+    };
+
+    const handleTabClick = (newTab: 'admin_inquiries' | 'all_tickets' | 'faqs') => {
+        setActiveTab(newTab);
+        router.get(
+            '/account/super-admin/help-desk',
+            {
+                tab: newTab === 'admin_inquiries' ? 'escalated' : newTab === 'all_tickets' ? 'all' : 'faqs',
                 search: search || undefined,
                 status: statusFilter !== 'all' ? statusFilter : undefined,
                 priority: priorityFilter !== 'all' ? priorityFilter : undefined,
@@ -205,7 +222,7 @@ export default function SuperAdminHelpDesk({
             <div className="flex items-center gap-2 border-b border-gray-100 pb-px dark:border-gray-800">
                 <button
                     type="button"
-                    onClick={() => setActiveTab('admin_inquiries')}
+                    onClick={() => handleTabClick('admin_inquiries')}
                     className={cn(
                         'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'admin_inquiries'
@@ -222,7 +239,7 @@ export default function SuperAdminHelpDesk({
 
                 <button
                     type="button"
-                    onClick={() => setActiveTab('all_tickets')}
+                    onClick={() => handleTabClick('all_tickets')}
                     className={cn(
                         'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'all_tickets'
@@ -239,7 +256,7 @@ export default function SuperAdminHelpDesk({
 
                 <button
                     type="button"
-                    onClick={() => setActiveTab('faqs')}
+                    onClick={() => handleTabClick('faqs')}
                     className={cn(
                         'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'faqs'

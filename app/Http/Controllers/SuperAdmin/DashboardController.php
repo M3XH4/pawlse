@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Backup;
+use App\Models\Event;
 use App\Models\LoginAttempt;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class DashboardController extends Controller
         $totalVolunteers = User::where('role', Role::Volunteer->value)->count();
         $totalAuditLogs = AuditLog::count();
         $backupsCount = Backup::where('status', 'completed')->count();
+        $pendingEventsCount = Event::where('approval_status', 'pending')->count();
 
         // Recent security alarms (suspicious logins in last 24 hours)
         $recentAlarms = LoginAttempt::where('is_suspicious', true)
@@ -80,6 +82,7 @@ class DashboardController extends Controller
                 'total_volunteers' => $totalVolunteers,
                 'total_audit_logs' => $totalAuditLogs,
                 'backups_count' => $backupsCount,
+                'pending_events_count' => $pendingEventsCount,
                 'recent_alarms' => $recentAlarms,
                 'database_size' => $dbSizeFormatted,
             ],

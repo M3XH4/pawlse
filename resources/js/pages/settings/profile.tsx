@@ -274,7 +274,7 @@ export default function Profile({
                                 value={data.phone}
                                 onChange={(val) => setData('phone', val)}
                                 autoComplete="tel"
-                                placeholder="+63 9XX XXX XXXX"
+                                placeholder="+63 912 124 1241"
                                 className="rounded-xl"
                             />
                             <InputError message={errors.phone} />

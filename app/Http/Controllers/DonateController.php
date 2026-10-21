@@ -32,6 +32,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -269,7 +270,7 @@ class DonateController extends Controller
     public function storeCash(Request $request)
     {
         $validated = $request->validate([
-            'amount' => 'required|integer|min:1',
+            'amount' => 'required|integer|min:1|max:10000000',
             'donor_name' => 'nullable|string|max:255',
             'donor_email' => 'required|email|max:255',
             'donor_mobile' => 'nullable|string|max:50',
@@ -279,11 +280,12 @@ class DonateController extends Controller
 
         $ref = 'DON-'.time().'-'.Str::upper(Str::random(4));
         $paymentMethod = $validated['payment_method'] ?? 'gcash';
+        $userId = auth()->id() ?: User::whereRaw('LOWER(email) = ?', [strtolower($validated['donor_email'])])->value('id');
 
         $donation = Donation::create([
             'public_reference' => $ref,
-            'user_id' => auth()->id(),
-            'donor_name' => $validated['donor_name'] ?? 'Guest Donor',
+            'user_id' => $userId,
+            'donor_name' => ! empty($validated['donor_name']) ? $validated['donor_name'] : 'Guest Donor',
             'donor_email' => $validated['donor_email'],
             'donor_mobile' => $validated['donor_mobile'] ?? null,
             'anonymous' => $validated['anonymous'] ?? false,
@@ -307,7 +309,8 @@ class DonateController extends Controller
             Notification::send($admins, new DonationReceivedNotification($donation));
         }
 
-        EReceiptDispatcher::sendToEmail(
+        EReceiptDispatcher::sendToUserAndEmail(
+            $donation->user ?? auth()->user(),
             $donation->donor_email,
             SubmissionEReceiptNotification::forDonation($donation, 'submitted')
         );
@@ -338,9 +341,11 @@ class DonateController extends Controller
         $contactPerson = ! empty($validated['contact_person']) ? $validated['contact_person'] : $donorName;
 
         DB::transaction(function () use ($validated, $ref, $donorName, $contactPerson) {
+            $userId = auth()->id() ?: User::whereRaw('LOWER(email) = ?', [strtolower($validated['donor_email'])])->value('id');
+
             $donation = Donation::create([
                 'public_reference' => $ref,
-                'user_id' => auth()->id(),
+                'user_id' => $userId,
                 'donor_name' => $donorName,
                 'donor_email' => $validated['donor_email'],
                 'donor_mobile' => $validated['donor_mobile'],
@@ -384,7 +389,8 @@ class DonateController extends Controller
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
 
-            EReceiptDispatcher::sendToEmail(
+            EReceiptDispatcher::sendToUserAndEmail(
+                $donation->user ?? auth()->user(),
                 $donation->donor_email,
                 SubmissionEReceiptNotification::forDonation($donation, 'submitted')
             );
@@ -411,17 +417,25 @@ class DonateController extends Controller
             'occasion' => 'nullable|string|max:255',
             'message' => 'nullable|string',
             'anonymous' => 'boolean',
-            'payment_method' => 'nullable|string|in:gcash,maya,paypal',
+            'payment_method' => 'nullable|string|in:gcash,maya,paypal,bank_transfer',
+            'poster' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $ref = 'DON-'.time().'-'.Str::upper(Str::random(4));
         $amount = 3500; // Sponsor feeding standard amount
         $paymentMethod = $validated['payment_method'] ?? 'gcash';
 
-        DB::transaction(function () use ($validated, $ref, $amount, $paymentMethod) {
+        $posterPath = null;
+        if ($request->hasFile('poster')) {
+            $posterPath = $request->file('poster')->store('event-posters', 'public');
+        }
+
+        DB::transaction(function () use ($validated, $ref, $amount, $paymentMethod, $posterPath) {
+            $userId = auth()->id() ?: User::whereRaw('LOWER(email) = ?', [strtolower($validated['email'])])->value('id');
+
             $donation = Donation::create([
                 'public_reference' => $ref,
-                'user_id' => auth()->id(),
+                'user_id' => $userId,
                 'donor_name' => $validated['fullName'],
                 'donor_email' => $validated['email'],
                 'donor_mobile' => $validated['mobile'],
@@ -450,6 +464,7 @@ class DonateController extends Controller
                 'preferred_date' => $validated['date'],
                 'occasion' => $validated['occasion'] ?? null,
                 'message' => $validated['message'] ?? null,
+                'poster_image' => $posterPath,
                 'anonymous' => $validated['anonymous'] ?? false,
                 'amount' => $amount,
                 'status' => 'pending',
@@ -460,7 +475,8 @@ class DonateController extends Controller
                 Notification::send($admins, new DonationReceivedNotification($donation));
             }
 
-            EReceiptDispatcher::sendToEmail(
+            EReceiptDispatcher::sendToUserAndEmail(
+                $donation->user ?? auth()->user(),
                 $donation->donor_email,
                 SubmissionEReceiptNotification::forDonation($donation, 'submitted')
             );
@@ -499,6 +515,7 @@ class DonateController extends Controller
                 'sponsorship' => $donation->feedingSponsorship ? [
                     'preferred_date' => $donation->feedingSponsorship->preferred_date,
                     'occasion' => $donation->feedingSponsorship->occasion,
+                    'poster_url' => $donation->feedingSponsorship->poster_url,
                 ] : null,
                 'latest_proof' => $latestProof ? [
                     'original_filename' => $latestProof->original_filename,
@@ -509,18 +526,14 @@ class DonateController extends Controller
             'simulation_enabled' => $simulationEnabled,
             'official_accounts' => [
                 'gcash' => [
-                    'account_name' => 'PAWLSE Stray Care Initiative',
-                    'account_number' => '0917-888-PAWL',
-                    'qr_image' => null,
-                ],
-                'maya' => [
-                    'account_name' => 'PAWLSE Iligan Stray Feeders',
-                    'account_number' => '0918-999-STRAY',
-                    'qr_image' => null,
+                    'account_name' => 'I.S.F',
+                    'account_number' => '093* ****547',
+                    'user_id' => '***********WEWRBP',
+                    'qr_image' => '/images/gcash-qr.jpg',
                 ],
                 'bank_transfer' => [
                     'bank_name' => 'BDO Unibank',
-                    'account_name' => 'PAWLSE Welfare Fund',
+                    'account_name' => 'Iligan Stray Feeders',
                     'account_number' => '0012-3456-7890',
                 ],
             ],
@@ -532,28 +545,37 @@ class DonateController extends Controller
      */
     public function submitProof(Request $request, $ref): RedirectResponse
     {
-        $donation = Donation::with(['payments'])->where('public_reference', $ref)->firstOrFail();
+        $donation = Donation::with(['payments', 'proofs'])->where('public_reference', $ref)->firstOrFail();
 
         if ($donation->status === DonationStatus::Completed->value) {
             return redirect()->back()->with('error', 'Your payment receipt was not uploaded because this donation has already been verified and completed. No further action is needed.');
         }
 
+        $payment = $donation->payments()->first();
+
         $validated = $request->validate([
-            'payment_reference' => ['required', 'string', 'max:100'],
+            'payment_reference' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('payments', 'payment_reference')->ignore($payment?->id),
+            ],
             'proof_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'proof' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'payment_method' => ['nullable', 'string', 'in:gcash,maya,bank_transfer,paypal'],
             'payment_channel' => ['nullable', 'string', 'in:gcash,maya,bank_transfer,paypal'],
+        ], [
+            'payment_reference.unique' => 'This transaction reference number has already been recorded for another donation. Please double-check your receipt.',
         ]);
 
         $file = $request->file('proof') ?? $request->file('proof_image');
-        if (! $file) {
+        $hasExistingProof = $donation->proofs->isNotEmpty();
+
+        if (! $file && ! $hasExistingProof) {
             return redirect()->back()->withErrors(['proof' => 'Your payment proof could not be submitted because no receipt image was attached. Please select a screenshot or photo of your payment receipt and try again.']);
         }
 
-        $path = $file->store('donation_proofs', 'public');
-
-        DB::transaction(function () use ($donation, $validated, $path, $file) {
+        DB::transaction(function () use ($donation, $validated, $file) {
             $paymentMethod = $validated['payment_method'] ?? $validated['payment_channel'] ?? 'gcash';
             $payment = $donation->payments()->first();
 
@@ -575,16 +597,20 @@ class DonateController extends Controller
                 ]);
             }
 
-            PaymentProof::create([
-                'donation_id' => $donation->id,
-                'payment_id' => $payment->id,
-                'disk' => 'public',
-                'path' => $path,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getClientMimeType(),
-                'file_size' => $file->getSize(),
-                'uploaded_at' => now(),
-            ]);
+            if ($file) {
+                $path = $file->store('donation_proofs', 'public');
+
+                PaymentProof::create([
+                    'donation_id' => $donation->id,
+                    'payment_id' => $payment->id,
+                    'disk' => 'public',
+                    'path' => $path,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_at' => now(),
+                ]);
+            }
 
             $oldStatus = $donation->status;
             $donation->update([
@@ -698,14 +724,17 @@ class DonateController extends Controller
                     ]);
 
                     $donorDisplay = $donation->anonymous ? 'Anonymous' : $donation->donor_name;
+                    $posterUrl = $donation->feedingSponsorship->poster_url ?: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=600';
 
                     // Automatically schedule event!
-                    Event::create([
+                    $event = Event::firstOrCreate([
                         'title' => 'Sponsored Feeding Day by '.$donorDisplay,
-                        'category' => 'Feeding',
                         'date' => $donation->feedingSponsorship->preferred_date,
+                    ], [
+                        'category' => 'Feeding',
                         'time' => '09:00 AM',
                         'location' => 'Iligan City Stray Shelter / Feeding Route',
+                        'img' => $posterUrl,
                         'spots' => 10,
                         'desc' => "This feeding day is fully sponsored by a generous donor!\n".
                                   "Sponsor: {$donorDisplay}\n".
@@ -714,7 +743,20 @@ class DonateController extends Controller
                                   'Volunteers are invited to join us in preparing and distributing food for our stray friends in Iligan.',
                         'keywords' => json_encode(['feeding', 'sponsored', 'strays']),
                         'status' => 'open',
+                        'approval_status' => 'approved',
+                        'approved_at' => now(),
+                        'approved_by' => auth()->id(),
+                        'created_by' => auth()->id(),
                     ]);
+
+                    if ($event->approval_status !== 'approved') {
+                        $event->update([
+                            'approval_status' => 'approved',
+                            'approved_at' => now(),
+                            'approved_by' => auth()->id(),
+                            'status' => 'open',
+                        ]);
+                    }
                 }
 
                 EReceiptDispatcher::sendToUserAndEmail(

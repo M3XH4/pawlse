@@ -29,6 +29,8 @@ import { PhoneInput } from '@/components/phone-input';
 import { reverseGeocode } from '@/lib/geocoding';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 import { Spinner } from '@/components/ui/spinner';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 type BreedPrediction = {
     name: string;
@@ -214,6 +216,24 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const [contactEmail, setContactEmail] = useState(user?.email || '');
     const [submitting, setSubmitting] = useState(false);
 
+    const isFormDirty = mode !== 'selection' && mode !== 'success' && Boolean(
+        uploadedFiles.length > 0 ||
+        incidentDesc.trim() ||
+        suggestedName.trim() ||
+        breed.trim() ||
+        (location && location !== (user?.location || '')) ||
+        wizardStep > 1
+    );
+
+    const {
+        showDialog: showLeaveModal,
+        handleContinueEditing,
+        handleLeaveAnyway,
+    } = useUnsavedChanges({
+        isDirty: isFormDirty,
+        disabled: mode === 'success' || submitting,
+    });
+
     useEffect(() => {
         if (user) {
             if (!contactName && user.name) setContactName(user.name);
@@ -245,26 +265,110 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const currentAgeCategories =
         animalType === 'Dog' ? dogAgeCategories : catAgeCategories;
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
+    const [isDragging, setIsDragging] = useState(false);
+
+    const updateActiveAnimalField = (
+        updates: Partial<
+            Pick<
+                AnimalReviewItem,
+                'species' | 'breed' | 'ageCategory' | 'gender' | 'suggestedName'
+            >
+        >,
+    ) => {
+        if (updates.species !== undefined) {
+            setAnimalType(updates.species);
+        }
+        if (updates.breed !== undefined) {
+            setBreed(updates.breed);
+        }
+        if (updates.ageCategory !== undefined) {
+            setAgeCategory(updates.ageCategory);
+        }
+        if (updates.gender !== undefined) {
+            setGender(updates.gender);
+        }
+        if (updates.suggestedName !== undefined) {
+            setSuggestedName(updates.suggestedName);
+        }
+
+        setAiResult((prev) =>
+            prev
+                ? {
+                      ...prev,
+                      species: updates.species
+                          ? (updates.species.toLowerCase() as 'dog' | 'cat')
+                          : prev.species,
+                      breed: updates.breed ?? prev.breed,
+                      ageCategory: updates.ageCategory ?? prev.ageCategory,
+                      gender: updates.gender ?? prev.gender,
+                      suggestedName:
+                          updates.suggestedName ?? prev.suggestedName,
+                  }
+                : null,
+        );
+
+        setEditedResult((prev) =>
+            prev
+                ? {
+                      ...prev,
+                      species: updates.species
+                          ? (updates.species.toLowerCase() as 'dog' | 'cat')
+                          : prev.species,
+                      breed: updates.breed ?? prev.breed,
+                      ageCategory: updates.ageCategory ?? prev.ageCategory,
+                      gender: updates.gender ?? prev.gender,
+                      suggestedName:
+                          updates.suggestedName ?? prev.suggestedName,
+                  }
+                : null,
+        );
+
+        setAnimalReviews((prev) =>
+            prev.map((item, idx) =>
+                idx === selectedAnimalIdx ? { ...item, ...updates } : item,
+            ),
+        );
+    };
+
+    const generateImagePreviews = async (files: File[]) => {
+        const validFiles: File[] = [];
+        const newPreviews: string[] = [];
+
+        for (const file of files) {
+            const isImage =
+                file.type.startsWith('image/') ||
+                /\.(jpe?g|png|webp|gif|bmp|heic|heif|svg)$/i.test(file.name);
+
+            if (!isImage) {
+                toast.error(
+                    `"${file.name}" is not a supported image file. Please upload JPG, PNG, or WEBP.`,
+                );
+                continue;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error(`"${file.name}" exceeds the 10MB file size limit.`);
+                continue;
+            }
+
+            validFiles.push(file);
+            const reader = new FileReader();
+            const preview = await new Promise<string>((resolve) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+            });
+            newPreviews.push(preview);
+        }
+
+        return { validFiles, newPreviews };
+    };
+
+    const processAiFiles = async (rawFiles: File[]) => {
+        const { validFiles: files, newPreviews } =
+            await generateImagePreviews(rawFiles);
         if (files.length === 0) return;
 
         setUploadedFiles(files);
-
-        // Generate previews
-        const newPreviews: string[] = [];
-        for (const file of files) {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                const preview = await new Promise<string>((resolve) => {
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                });
-                newPreviews.push(preview);
-            } else if (file.type.startsWith('video/')) {
-                newPreviews.push(URL.createObjectURL(file));
-            }
-        }
         setFilePreviews(newPreviews);
         setImageUploaded(true);
         setAnalyzing(true);
@@ -275,6 +379,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         try {
             const formData = new FormData();
             formData.append('image', firstFile);
+            formData.append(
+                'mode',
+                mode === 'ai-full' ? 'reporting' : 'identifying',
+            );
 
             const token = document
                 .querySelector('meta[name="csrf-token"]')
@@ -290,7 +398,9 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
-                const errMsg = errData?.message || 'AI prediction failed. Please try again.';
+                const errMsg =
+                    errData?.message ||
+                    'AI prediction failed. Please try again.';
                 throw new Error(errMsg);
             }
 
@@ -309,8 +419,6 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             if (data.prediction_log_id) {
                 setPredictionLogId(data.prediction_log_id);
             }
-
-            console.log('AI Response:', data);
 
             const suggestedName = Array.isArray(data.neutral_names)
                 ? data.neutral_names[0]
@@ -414,11 +522,30 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             }
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.message || 'AI identification failed. Please try again.');
+            toast.error(
+                error?.message || 'AI identification failed. Please try again.',
+            );
             setImageUploaded(false);
+            setUploadedFiles([]);
+            setFilePreviews([]);
         } finally {
             setAnalyzing(false);
         }
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length === 0) return;
+        await processAiFiles(files);
+        e.target.value = '';
+    };
+
+    const handleManualFiles = async (rawFiles: File[]) => {
+        const { validFiles: files, newPreviews } =
+            await generateImagePreviews(rawFiles);
+        if (files.length === 0) return;
+        setUploadedFiles(files);
+        setFilePreviews(newPreviews);
     };
 
     const handleSelectAnimal = (idx: number) => {
@@ -591,16 +718,15 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         });
     };
 
-    const handleBackToSelection = () => {
-        // Reset all states
-        setMode('selection');
-        setSubmittedMode('');
+    const resetFormFields = () => {
         setAiResult(null);
         setEditedResult(null);
         setAnimalReviews([]);
+        setSelectedAnimalIdx(0);
         setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
+        setAnalyzing(false);
         setUploadedFiles([]);
         setFilePreviews([]);
         setAnimalType('Dog');
@@ -609,33 +735,36 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         setGender('Male');
         setSuggestedName('');
         setIncidentDesc('');
-        setLocation('');
-        setContactName('');
-        setContactPhone('');
-        setContactEmail('');
+        setLocation(user?.location || '');
+        setContactName(user?.name || '');
+        setContactPhone(user?.phone || '');
+        setContactEmail(user?.email || '');
+    };
+
+    const handleBackToSelection = () => {
+        setMode('selection');
+        setWizardStep(1);
+        setSubmittedMode('');
+        resetFormFields();
     };
 
     const handleReset = () => {
         setMode('selection');
         setWizardStep(1);
+        resetFormFields();
+    };
+
+    const handleChangePhotoInStep2 = () => {
+        setWizardStep(1);
         setAiResult(null);
         setEditedResult(null);
         setAnimalReviews([]);
+        setSelectedAnimalIdx(0);
         setPredictionLogId(null);
         setIsEditing(false);
         setImageUploaded(false);
         setUploadedFiles([]);
         setFilePreviews([]);
-        setAnimalType('Dog');
-        setBreed('');
-        setAgeCategory('Adult: 1 to 7 years');
-        setGender('Male');
-        setSuggestedName('');
-        setIncidentDesc('');
-        setLocation('');
-        setContactName('');
-        setContactPhone('');
-        setContactEmail('');
     };
 
     const handleModeSelect = (selectedMode: ReportMode) => {
@@ -647,14 +776,9 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             toast.error(identifyingDisabledMessage);
             return;
         }
+        resetFormFields();
+        setWizardStep(1);
         setMode(selectedMode);
-        // Reset states when changing modes
-        setImageUploaded(false);
-        setAnalyzing(false);
-        setAiResult(null);
-        setAnimalReviews([]);
-        setUploadedFiles([]);
-        setFilePreviews([]);
     };
 
     const handleSaveEdit = () => {
@@ -1067,11 +1191,40 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             </div>
 
                                             {!imageUploaded && !analyzing ? (
-                                                <div className="cursor-pointer rounded-3xl border-4 border-dashed border-paw-orange/30 bg-gradient-to-br from-white to-orange-50/10 p-12 text-center transition-all hover:border-paw-orange/50">
+                                                <div
+                                                    onDragOver={(e) => {
+                                                        e.preventDefault();
+                                                        setIsDragging(true);
+                                                    }}
+                                                    onDragLeave={() =>
+                                                        setIsDragging(false)
+                                                    }
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        setIsDragging(false);
+                                                        if (
+                                                            e.dataTransfer.files
+                                                                ?.length
+                                                        ) {
+                                                            processAiFiles(
+                                                                Array.from(
+                                                                    e
+                                                                        .dataTransfer
+                                                                        .files,
+                                                                ),
+                                                            );
+                                                        }
+                                                    }}
+                                                    className={`cursor-pointer rounded-3xl border-4 border-dashed bg-gradient-to-br from-white to-orange-50/10 p-12 text-center transition-all ${
+                                                        isDragging
+                                                            ? 'border-paw-orange bg-orange-50/40 scale-[1.01]'
+                                                            : 'border-paw-orange/30 hover:border-paw-orange/50'
+                                                    }`}
+                                                >
                                                     <input
                                                         type="file"
                                                         id="rescue-file-upload"
-                                                        accept="image/*,video/*"
+                                                        accept="image/*"
                                                         onChange={
                                                             handleFileChange
                                                         }
@@ -1089,7 +1242,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         </h3>
                                                         <p className="mb-6 max-w-sm font-bold text-gray-500">
                                                             Upload a clear image
-                                                            (JPG or PNG). AI
+                                                            (JPG, PNG, or WEBP up to 10MB). AI
                                                             will generate
                                                             identification
                                                             suggestions.
@@ -1165,41 +1318,64 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
                                             {/* Uploaded Photo Preview */}
                                             {filePreviews.length > 0 && (
-                                                <div className="grid grid-cols-2 gap-3 rounded-3xl border-2 border-gray-100 bg-white p-3 sm:grid-cols-3">
-                                                    {filePreviews.map(
-                                                        (preview, index) => {
-                                                            const file =
-                                                                uploadedFiles[
-                                                                    index
-                                                                ];
-                                                            return (
-                                                                <div
-                                                                    key={index}
-                                                                    className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
-                                                                >
-                                                                    {file?.type.startsWith(
-                                                                        'image/',
-                                                                    ) ? (
-                                                                        <img
-                                                                            src={
-                                                                                preview
-                                                                            }
-                                                                            alt={`Preview ${index}`}
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <video
-                                                                            src={
-                                                                                preview
-                                                                            }
-                                                                            controls
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        },
-                                                    )}
+                                                <div className="space-y-2 rounded-3xl border-2 border-gray-100 bg-white p-3">
+                                                    <div className="flex items-center justify-between px-1">
+                                                        <span className="text-xs font-black tracking-widest text-gray-400 uppercase">
+                                                            Uploaded Photo
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={
+                                                                handleChangePhotoInStep2
+                                                            }
+                                                            className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-black text-paw-navy transition-colors hover:border-paw-orange hover:bg-orange-50 hover:text-paw-orange"
+                                                        >
+                                                            <Upload size={13} />
+                                                            Upload Different
+                                                            Photo
+                                                        </button>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                        {filePreviews.map(
+                                                            (
+                                                                preview,
+                                                                index,
+                                                            ) => {
+                                                                const file =
+                                                                    uploadedFiles[
+                                                                        index
+                                                                    ];
+                                                                return (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
+                                                                    >
+                                                                        {file?.type.startsWith(
+                                                                            'image/',
+                                                                        ) ? (
+                                                                            <img
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                alt={`Preview ${index}`}
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <video
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                controls
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
 
@@ -1604,13 +1780,21 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
                                             {/* Auto-Filled Details */}
                                             <div className="space-y-4 rounded-3xl border-2 border-gray-100 bg-white p-6">
-                                                <h3 className="flex items-center gap-2 font-black text-paw-navy">
-                                                    <FileText
-                                                        size={18}
-                                                        className="text-paw-orange"
-                                                    />
-                                                    Auto-Filled Report Details
-                                                </h3>
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="flex items-center gap-2 font-black text-paw-navy">
+                                                        <FileText
+                                                            size={18}
+                                                            className="text-paw-orange"
+                                                        />
+                                                        Auto-Filled Report
+                                                        Details
+                                                    </h3>
+                                                    {animalReviews.length > 1 && (
+                                                        <span className="rounded-lg bg-paw-orange/10 px-2.5 py-1 text-[10px] font-black text-paw-orange uppercase">
+                                                            Editing Animal #{selectedAnimalIdx + 1}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
@@ -1619,18 +1803,21 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         <select
                                                             value={animalType}
                                                             onChange={(e) => {
-                                                                setAnimalType(
+                                                                const nextSpecies =
                                                                     e.target
                                                                         .value as
                                                                         | 'Dog'
-                                                                        | 'Cat',
-                                                                );
-                                                                setAgeCategory(
-                                                                    e.target
-                                                                        .value ===
-                                                                        'Dog'
-                                                                        ? dogAgeCategories[0]
-                                                                        : catAgeCategories[0],
+                                                                        | 'Cat';
+                                                                updateActiveAnimalField(
+                                                                    {
+                                                                        species:
+                                                                            nextSpecies,
+                                                                        ageCategory:
+                                                                            nextSpecies ===
+                                                                            'Dog'
+                                                                                ? dogAgeCategories[0]
+                                                                                : catAgeCategories[0],
+                                                                    },
                                                                 );
                                                             }}
                                                             className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
@@ -1651,9 +1838,12 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                             type="text"
                                                             value={breed}
                                                             onChange={(e) =>
-                                                                setBreed(
-                                                                    e.target
-                                                                        .value,
+                                                                updateActiveAnimalField(
+                                                                    {
+                                                                        breed: e
+                                                                            .target
+                                                                            .value,
+                                                                    },
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
@@ -1666,9 +1856,13 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         <select
                                                             value={ageCategory}
                                                             onChange={(e) =>
-                                                                setAgeCategory(
-                                                                    e.target
-                                                                        .value,
+                                                                updateActiveAnimalField(
+                                                                    {
+                                                                        ageCategory:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                    },
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 text-sm font-bold text-paw-navy outline-none focus:border-paw-orange"
@@ -1696,9 +1890,12 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         <select
                                                             value={gender}
                                                             onChange={(e) =>
-                                                                setGender(
-                                                                    e.target
-                                                                        .value,
+                                                                updateActiveAnimalField(
+                                                                    {
+                                                                        gender: e
+                                                                            .target
+                                                                            .value,
+                                                                    },
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
@@ -1724,9 +1921,13 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                 suggestedName
                                                             }
                                                             onChange={(e) =>
-                                                                setSuggestedName(
-                                                                    e.target
-                                                                        .value,
+                                                                updateActiveAnimalField(
+                                                                    {
+                                                                        suggestedName:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                    },
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
@@ -1735,13 +1936,39 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={() => setWizardStep(3)}
-                                                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-paw-orange py-5 font-black text-white shadow-xl transition-all hover:bg-orange-600"
-                                            >
-                                                CONTINUE TO REPORT DETAILS{' '}
-                                                <ArrowRight size={20} />
-                                            </button>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        handleChangePhotoInStep2
+                                                    }
+                                                    className="rounded-2xl bg-gray-200 px-6 py-5 font-black text-paw-navy transition-all hover:bg-gray-300"
+                                                >
+                                                    BACK
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (
+                                                            animalReviews.length >
+                                                                0 &&
+                                                            animalReviews.filter(
+                                                                (a) =>
+                                                                    a.included,
+                                                            ).length === 0
+                                                        ) {
+                                                            toast.error(
+                                                                'Please select at least one animal to include in the rescue report.',
+                                                            );
+                                                            return;
+                                                        }
+                                                        setWizardStep(3);
+                                                    }}
+                                                    className="flex flex-1 items-center justify-center gap-3 rounded-2xl bg-paw-orange py-5 font-black text-white shadow-xl transition-all hover:bg-orange-600"
+                                                >
+                                                    CONTINUE TO REPORT DETAILS{' '}
+                                                    <ArrowRight size={20} />
+                                                </button>
+                                            </div>
                                         </motion.div>
                                     )}
 
@@ -1767,7 +1994,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             <div className="space-y-6 rounded-3xl border-2 border-gray-100 bg-white p-6">
                                                 <div>
                                                     <label className="mb-2 block text-sm font-black tracking-widest text-gray-500 uppercase">
-                                                        Incident Description *
+                                                        Incident Description (Optional)
                                                     </label>
                                                     <textarea
                                                         value={incidentDesc}
@@ -1902,7 +2129,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                         )
                                                                     }
                                                                     className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
-                                                                    placeholder="+63 9XX XXX XXXX"
+                                                                    placeholder="+63 912 124 1241"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1978,7 +2205,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                         )
                                                                     }
                                                                     className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
-                                                                    placeholder="+63 9XX XXX XXXX"
+                                                                    placeholder="+63 912 124 1241"
                                                                 />
                                                             </div>
                                                         </div>
@@ -2223,12 +2450,32 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="flex aspect-video flex-col items-center justify-center rounded-[60px] border-4 border-dashed border-paw-navy/30 bg-white p-12 text-center shadow-2xl"
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            setIsDragging(true);
+                                        }}
+                                        onDragLeave={() => setIsDragging(false)}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setIsDragging(false);
+                                            if (e.dataTransfer.files?.length) {
+                                                processAiFiles(
+                                                    Array.from(
+                                                        e.dataTransfer.files,
+                                                    ),
+                                                );
+                                            }
+                                        }}
+                                        className={`flex aspect-video flex-col items-center justify-center rounded-[60px] border-4 border-dashed bg-white p-12 text-center shadow-2xl transition-all ${
+                                            isDragging
+                                                ? 'border-paw-orange bg-orange-50/30 scale-[1.01]'
+                                                : 'border-paw-navy/30 hover:border-paw-navy/50'
+                                        }`}
                                     >
                                         <input
                                             type="file"
                                             id="ai-only-upload"
-                                            accept="image/*,video/*"
+                                            accept="image/*"
                                             onChange={handleFileChange}
                                             className="hidden"
                                         />
@@ -2243,13 +2490,17 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 Upload Animal Photo
                                             </h3>
                                             <p className="mb-8 max-w-md font-bold text-gray-400">
-                                                Upload a clear image (JPG or
-                                                PNG). AI will generate
-                                                identification suggestions.
+                                                Upload a clear image (JPG, PNG,
+                                                or WEBP up to 10MB). AI will
+                                                generate identification
+                                                suggestions.
                                             </p>
                                             <div className="flex items-center gap-3 rounded-[24px] bg-paw-navy px-12 py-5 text-xl font-black text-white shadow-xl transition-all hover:bg-paw-orange">
                                                 <Upload size={20} /> SELECT FILE
                                             </div>
+                                            <p className="mt-4 text-xs font-bold text-gray-400">
+                                                or drag and drop here
+                                            </p>
                                         </label>
                                     </motion.div>
                                 )}
@@ -2562,6 +2813,17 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         <div className="flex flex-col gap-4 sm:flex-row">
                                             <button
                                                 onClick={() => {
+                                                    if (isAiReportingDisabled) {
+                                                        setPredictionLogId(
+                                                            null,
+                                                        );
+                                                        setAnimalReviews([]);
+                                                        setMode('manual');
+                                                        toast.info(
+                                                            'AI-Assisted Reporting is disabled; switched to Manual Entry with your animal details pre-filled.',
+                                                        );
+                                                        return;
+                                                    }
                                                     setMode('ai-full');
                                                     setWizardStep(2);
                                                     toast.info(
@@ -2575,7 +2837,16 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 ANIMAL
                                             </button>
                                             <button
-                                                onClick={handleReset}
+                                                onClick={() => {
+                                                    setAiResult(null);
+                                                    setEditedResult(null);
+                                                    setAnimalReviews([]);
+                                                    setSelectedAnimalIdx(0);
+                                                    setPredictionLogId(null);
+                                                    setImageUploaded(false);
+                                                    setUploadedFiles([]);
+                                                    setFilePreviews([]);
+                                                }}
                                                 className="flex items-center justify-center gap-3 rounded-[24px] bg-paw-navy px-8 py-6 text-lg font-black text-white shadow-xl transition-all hover:bg-gray-800 sm:w-auto"
                                             >
                                                 IDENTIFY ANOTHER ANIMAL
@@ -2641,7 +2912,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             <input
                                                 type="file"
                                                 id="manual-upload"
-                                                accept="image/*,video/*"
+                                                accept="image/*"
                                                 multiple
                                                 onChange={async (e) => {
                                                     const files = e.target.files
@@ -2651,58 +2922,42 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         : [];
                                                     if (files.length === 0)
                                                         return;
-
-                                                    setUploadedFiles(files);
-
-                                                    const newPreviews: string[] =
-                                                        [];
-                                                    for (const file of files) {
-                                                        if (
-                                                            file.type.startsWith(
-                                                                'image/',
-                                                            )
-                                                        ) {
-                                                            const reader =
-                                                                new FileReader();
-                                                            const preview =
-                                                                await new Promise<string>(
-                                                                    (
-                                                                        resolve,
-                                                                    ) => {
-                                                                        reader.onloadend =
-                                                                            () =>
-                                                                                resolve(
-                                                                                    reader.result as string,
-                                                                                );
-                                                                        reader.readAsDataURL(
-                                                                            file,
-                                                                        );
-                                                                    },
-                                                                );
-                                                            newPreviews.push(
-                                                                preview,
-                                                            );
-                                                        } else if (
-                                                            file.type.startsWith(
-                                                                'video/',
-                                                            )
-                                                        ) {
-                                                            newPreviews.push(
-                                                                URL.createObjectURL(
-                                                                    file,
-                                                                ),
-                                                            );
-                                                        }
-                                                    }
-                                                    setFilePreviews(
-                                                        newPreviews,
+                                                    await handleManualFiles(
+                                                        files,
                                                     );
+                                                    e.target.value = '';
                                                 }}
                                                 className="hidden"
                                             />
                                             <label
                                                 htmlFor="manual-upload"
-                                                className="block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-gray-400"
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    setIsDragging(true);
+                                                }}
+                                                onDragLeave={() =>
+                                                    setIsDragging(false)
+                                                }
+                                                onDrop={async (e) => {
+                                                    e.preventDefault();
+                                                    setIsDragging(false);
+                                                    if (
+                                                        e.dataTransfer.files
+                                                            ?.length
+                                                    ) {
+                                                        await handleManualFiles(
+                                                            Array.from(
+                                                                e.dataTransfer
+                                                                    .files,
+                                                            ),
+                                                        );
+                                                    }
+                                                }}
+                                                className={`block cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                                                    isDragging
+                                                        ? 'border-paw-orange bg-orange-50/30'
+                                                        : 'border-gray-300 hover:border-gray-400'
+                                                }`}
                                             >
                                                 {uploadedFiles.length === 0 ? (
                                                     <>
@@ -2711,12 +2966,14 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                             className="mx-auto mb-3 text-gray-400"
                                                         />
                                                         <p className="font-bold text-gray-600">
-                                                            Click to upload
+                                                            Click or drag and
+                                                            drop to upload
                                                             photos
                                                         </p>
                                                         <p className="mt-1 text-sm font-bold text-gray-400">
-                                                            JPG, PNG or Videos
-                                                            (Multiple allowed)
+                                                            JPG, PNG, or WEBP up
+                                                            to 10MB (Multiple
+                                                            allowed)
                                                         </p>
                                                     </>
                                                 ) : (
@@ -2924,7 +3181,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         {/* Description */}
                                         <div>
                                             <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                Description / Condition
+                                                Description / Condition (Optional)
                                             </label>
                                             <textarea
                                                 value={incidentDesc}
@@ -2941,7 +3198,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         {/* Location */}
                                         <div>
                                             <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                                                Location / Landmark
+                                                Location / Landmark *
                                             </label>
                                             <div className="flex flex-col gap-3 sm:flex-row">
                                                 <input
@@ -3041,7 +3298,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-emerald-500"
-                                                            placeholder="+63 9XX XXX XXXX"
+                                                            placeholder="+63 912 124 1241"
                                                         />
                                                     </div>
                                                 </div>
@@ -3103,7 +3360,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                 )
                                                             }
                                                             className="w-full rounded-2xl border-2 border-transparent bg-white p-4 text-sm font-bold text-paw-navy transition-all outline-none focus:border-paw-orange"
-                                                            placeholder="+63 9XX XXX XXXX"
+                                                            placeholder="+63 912 124 1241"
                                                         />
                                                     </div>
                                                 </div>
@@ -3370,6 +3627,12 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                     {/* ── Call to Action ── */}
                 </div>
             </main>
+
+            <UnsavedChangesDialog
+                isOpen={showLeaveModal}
+                onContinueEditing={handleContinueEditing}
+                onLeaveAnyway={handleLeaveAnyway}
+            />
 
             <Footer />
         </div>

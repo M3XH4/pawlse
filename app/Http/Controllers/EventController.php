@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
+use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
+use App\Models\User;
 use App\Models\VolunteerApplication;
+use App\Notifications\SubmissionEReceiptNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +27,10 @@ class EventController extends Controller
         $search = $request->input('search', '');
         $category = $request->input('category', 'All');
 
-        // Fetch events with search & category filters and pagination
+        // Fetch events with search & category filters and pagination (approved & open only)
         $eventsQuery = Event::query()
+            ->where('approval_status', 'approved')
+            ->where('status', 'open')
             ->when($category !== 'All', function ($query) use ($category) {
                 $query->where('category', $category);
             })
@@ -98,57 +104,85 @@ class EventController extends Controller
     public function joinEvent(Request $request, Event $event): RedirectResponse
     {
         $user = $request->user();
+        $guestName = null;
+        $guestEmail = null;
+        $guestPhone = null;
 
         if ($user === null) {
-            return redirect()->route('login');
-        }
-
-        $joinAs = $request->input('join_as', $user->hasRole('volunteer') ? 'volunteer' : 'participant');
-
-        if ($joinAs === 'volunteer') {
-            if (! $user->hasRole('volunteer')) {
-                Inertia::flash('toast', [
-                    'type' => 'error',
-                    'message' => 'Only approved volunteers can join events in a volunteer role. You can join as a participant instead.',
-                ]);
-
-                return redirect()->back();
+            if (! $request->filled('guest_email') && ! $request->filled('guest_name')) {
+                return redirect()->guest(route('login'));
             }
 
-            $app = VolunteerApplication::query()
-                ->where('user_id', $user->id)
-                ->first();
-            $role = $app ? $app->role : 'Volunteer Helper';
-        } else {
+            $validatedGuest = $request->validate([
+                'guest_name' => ['required', 'string', 'max:255'],
+                'guest_email' => ['required', 'email', 'max:255'],
+                'guest_phone' => ['nullable', 'string', 'max:50'],
+            ]);
+
+            $guestName = trim($validatedGuest['guest_name']);
+            $guestEmail = strtolower(trim($validatedGuest['guest_email']));
+            $guestPhone = ! empty($validatedGuest['guest_phone']) ? trim($validatedGuest['guest_phone']) : null;
             $role = 'Participant';
+
+            // If a registered account matches this email, link it so it also appears in their dashboard
+            $matchedUser = User::whereRaw('LOWER(email) = ?', [$guestEmail])->first();
+        } else {
+            $matchedUser = $user;
+            $joinAs = $request->input('join_as', $user->hasRole('volunteer') ? 'volunteer' : 'participant');
+
+            if ($joinAs === 'volunteer') {
+                if (! $user->hasRole('volunteer')) {
+                    Inertia::flash('toast', [
+                        'type' => 'error',
+                        'message' => 'Only approved volunteers can join events in a volunteer role. You can join as a participant instead.',
+                    ]);
+
+                    return redirect()->back();
+                }
+
+                $app = VolunteerApplication::query()
+                    ->where('user_id', $user->id)
+                    ->first();
+                $role = $app ? $app->role : 'Volunteer Helper';
+            } else {
+                $role = 'Participant';
+            }
         }
 
+        $createdTask = null;
+
         try {
-            DB::transaction(function () use ($event, $user, $role) {
+            DB::transaction(function () use ($event, $matchedUser, $guestName, $guestEmail, $guestPhone, $role, &$createdTask) {
                 /** @var Event|null $lockedEvent */
                 $lockedEvent = Event::query()->where('id', $event->id)->lockForUpdate()->first();
 
-                if (! $lockedEvent || $lockedEvent->status !== 'open') {
-                    throw new \RuntimeException('You could not join this event because registration is now closed. Please browse our other open community events.');
+                if (! $lockedEvent || $lockedEvent->status !== 'open' || $lockedEvent->approval_status !== 'approved') {
+                    throw new \RuntimeException('You could not join this event because it is not currently open for registration. Please browse our other open community events.');
                 }
 
-                $alreadyJoined = AssignedTask::query()
-                    ->where('user_id', $user->id)
+                $alreadyJoinedQuery = AssignedTask::query()
                     ->where('event_id', $lockedEvent->id)
-                    ->whereIn('status', ['pending', 'completed'])
-                    ->lockForUpdate()
-                    ->exists();
+                    ->whereIn('status', ['pending', 'completed']);
 
-                if ($alreadyJoined) {
-                    throw new \RuntimeException('You have already joined this event. You can view or manage your registration in your Joined Events tab.');
+                if ($matchedUser !== null) {
+                    $alreadyJoinedQuery->where('user_id', $matchedUser->id);
+                } else {
+                    $alreadyJoinedQuery->whereRaw('LOWER(guest_email) = ?', [$guestEmail]);
+                }
+
+                if ($alreadyJoinedQuery->lockForUpdate()->exists()) {
+                    throw new \RuntimeException('You have already registered for this event.');
                 }
 
                 if ($lockedEvent->spots !== null && $lockedEvent->spots <= 0) {
                     throw new \RuntimeException('You could not join this event because all participant spots are now filled. Please check back later or join another upcoming event.');
                 }
 
-                AssignedTask::query()->create([
-                    'user_id' => $user->id,
+                $createdTask = AssignedTask::query()->create([
+                    'user_id' => $matchedUser?->id,
+                    'guest_name' => $matchedUser ? null : $guestName,
+                    'guest_email' => $matchedUser ? null : $guestEmail,
+                    'guest_phone' => $matchedUser ? null : $guestPhone,
                     'event_id' => $lockedEvent->id,
                     'role' => $role,
                     'status' => 'pending',
@@ -158,7 +192,8 @@ class EventController extends Controller
                     $lockedEvent->decrement('spots');
                 }
 
-                AuditLog::log('event_join', "User '{$user->name}' joined event '{$lockedEvent->title}' as {$role}");
+                $actorLabel = $matchedUser ? "User '{$matchedUser->name}'" : "Guest '{$guestName}' ({$guestEmail})";
+                AuditLog::log('event_join', "{$actorLabel} joined event '{$lockedEvent->title}' as {$role}");
             });
         } catch (\RuntimeException $e) {
             Inertia::flash('toast', [
@@ -169,9 +204,30 @@ class EventController extends Controller
             return redirect()->back();
         }
 
-        $successMsg = $role === 'Participant'
-            ? 'Successfully joined the event as a participant!'
-            : 'Successfully joined the event as a volunteer!';
+        if ($createdTask instanceof AssignedTask) {
+            $recipientName = $matchedUser?->name ?? $guestName ?? 'Community Participant';
+            $recipientEmail = $matchedUser?->email ?? $guestEmail ?? '';
+
+            if ($recipientEmail !== '') {
+                EReceiptDispatcher::sendToUserAndEmail(
+                    $matchedUser,
+                    $recipientEmail,
+                    SubmissionEReceiptNotification::forEventRegistration(
+                        $event,
+                        $createdTask,
+                        $recipientName,
+                        $recipientEmail,
+                        $guestPhone
+                    )
+                );
+            }
+        }
+
+        $successMsg = $user === null
+            ? "You are registered for {$event->title}! A confirmation e-receipt has been sent to {$guestEmail}."
+            : ($role === 'Participant'
+                ? 'Successfully joined the event as a participant! Confirmation details have been sent to your email.'
+                : 'Successfully joined the event as a volunteer! Confirmation details have been sent to your email.');
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -382,8 +438,27 @@ class EventController extends Controller
             ->latest()
             ->paginate(8);
 
+        $certificatesByEvent = Certificate::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('event_id')
+            ->pluck('id', 'event_id')
+            ->toArray();
+
         return Inertia::render('user/joined-events', [
             'tasks' => $tasks,
+            'certificatesByEvent' => $certificatesByEvent,
+        ]);
+    }
+
+    /**
+     * Render a signed public certificate view for email recipients (including public guests).
+     */
+    public function showPublicCertificate(Request $request, Certificate $certificate): Response
+    {
+        $certificate->load(['event', 'user']);
+
+        return Inertia::render('public-certificate', [
+            'certificate' => $certificate,
         ]);
     }
 }

@@ -192,9 +192,14 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                                 {/* Report Details */}
                                 <div className="flex-1 space-y-3">
                                     <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
-                                            {getReportTitle(report)}
-                                        </h3>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                                                {getReportTitle(report)}
+                                            </h3>
+                                            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
+                                                {(report.type === 'sos' ? 'SOS-' : 'RES-') + String(report.id).padStart(5, '0')}
+                                            </span>
+                                        </div>
                                         <div className="flex gap-2">
                                             <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600">
                                                 {report.type}

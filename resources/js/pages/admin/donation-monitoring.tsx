@@ -7,10 +7,11 @@ import {
     TrendingUp, Plus, Upload, Clock, AlertCircle, Search, ChevronLeft, 
     ChevronRight, ArrowUpDown, RefreshCw, Layers, Boxes, Package, 
     AlertTriangle, CalendarDays, Edit2, Trash2, ShieldAlert, Sparkles,
-    Eye, MapPin, XCircle, Printer, ExternalLink, CheckCircle, HeartHandshake
+    Eye, MapPin, XCircle, Printer, ExternalLink, CheckCircle, HeartHandshake, Maximize2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SustainabilityAdminTab } from '@/components/care-sustainability/sustainability-admin-tab';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface DonationRecord {
@@ -56,17 +57,21 @@ interface DonationRecord {
             path: string;
             disk: string;
             original_filename: string;
+            url?: string;
         } | null;
     }>;
     proofs?: Array<{
         path: string;
         disk: string;
         original_filename: string;
+        url?: string;
     }>;
     feeding_sponsorship?: {
         preferred_date: string;
         occasion: string | null;
         message: string | null;
+        poster_image?: string | null;
+        poster_url?: string | null;
     } | null;
 }
 
@@ -235,6 +240,7 @@ export default function DonationMonitoring({
     const [verifyingInKind, setVerifyingInKind] = useState<DonationRecord | null>(null);
     const [rejectingDonation, setRejectingDonation] = useState<DonationRecord | null>(null);
     const [rejectReason, setRejectReason] = useState('');
+    const [zoomedProofUrl, setZoomedProofUrl] = useState<string | null>(null);
 
     // Inventory Modals
     const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -1351,191 +1357,397 @@ export default function DonationMonitoring({
             </div>
 
             {/* DONATION DETAILS DRAWER / MODAL */}
-            {selectedDonationDetails && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                    <div onClick={() => setSelectedDonationDetails(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                    <div className="bg-white dark:bg-gray-900 rounded-[32px] p-8 max-w-2xl w-full relative z-10 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-start pb-4 border-b border-gray-100 dark:border-gray-800">
-                            <div>
-                                <span className="text-[10px] font-black text-paw-orange uppercase tracking-widest block">Donation Overview</span>
-                                <h3 className="text-2xl font-black text-paw-navy dark:text-white flex items-center gap-2">
-                                    <span>{selectedDonationDetails.public_reference}</span>
-                                    <span className={`text-xs font-black px-2.5 py-0.5 rounded-full capitalize ${
-                                        selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified'
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300'
-                                            : selectedDonationDetails.status === 'rejected'
-                                                ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
-                                    }`}>
-                                        {selectedDonationDetails.status.replace('_', ' ')}
-                                    </span>
-                                </h3>
-                            </div>
-                            <button onClick={() => setSelectedDonationDetails(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl cursor-pointer">
-                                <X size={20} className="text-gray-400" />
-                            </button>
-                        </div>
+            {/* DONATION OVERVIEW MODAL */}
+            {selectedDonationDetails && (() => {
+                const paymentProof = selectedDonationDetails.proofs?.[0] || selectedDonationDetails.payments?.[0]?.proof;
+                const paymentRecord = selectedDonationDetails.payments?.[0];
+                const paymentMethod = paymentRecord?.method 
+                    ? paymentRecord.method.toUpperCase().replace('_', ' ') 
+                    : (selectedDonationDetails.type === 'in_kind' ? 'SHELTER DROP-OFF' : 'GCASH');
+                const paymentRef = paymentRecord?.payment_reference || paymentRecord?.provider_transaction_id;
+                const proofUrl = paymentProof?.url || (paymentProof?.path ? (paymentProof.path.startsWith('http') ? paymentProof.path : `/storage/${paymentProof.path.replace(/^\/?storage\//, '')}`) : null);
 
-                        <div className="py-6 space-y-6">
-                            {/* Donor Info Card */}
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-150 dark:border-gray-700">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Donor Information</span>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <div className="font-bold text-gray-400 text-xs">Donor Name</div>
-                                        <div className="font-black text-paw-navy dark:text-white flex items-center gap-1.5">
-                                            <span>{selectedDonationDetails.donor_name}</span>
-                                            {Boolean(selectedDonationDetails.anonymous) && (
-                                                <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 px-2 py-0.2 rounded-full font-black">
-                                                    Anonymous
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-400 text-xs">Email Address</div>
-                                        <div className="font-bold text-paw-navy dark:text-gray-300">{selectedDonationDetails.donor_email}</div>
-                                    </div>
-                                    {selectedDonationDetails.donor_mobile && (
-                                        <div>
-                                            <div className="font-bold text-gray-400 text-xs">Mobile Contact</div>
-                                            <div className="font-bold text-paw-navy dark:text-gray-300">{selectedDonationDetails.donor_mobile}</div>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <div className="font-bold text-gray-400 text-xs">Date Submitted</div>
-                                        <div className="font-bold text-paw-navy dark:text-gray-300">{new Date(selectedDonationDetails.created_at).toLocaleString()}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* In-Kind Details Card */}
-                            {selectedDonationDetails.type === 'in_kind' && (
-                                <div className="bg-orange-50/50 dark:bg-orange-950/20 rounded-2xl p-4 border border-orange-200 dark:border-orange-900/30 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black text-paw-orange uppercase tracking-widest block">In-Kind Drop-off Schedule & Details</span>
-                                        <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                return (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <div onClick={() => setSelectedDonationDetails(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                        <div className="bg-white dark:bg-gray-900 rounded-[32px] p-6 sm:p-8 max-w-2xl w-full relative z-10 shadow-2xl max-h-[92vh] overflow-y-auto">
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-start pb-4 border-b border-gray-150 dark:border-gray-800">
+                                <div>
+                                    <span className="text-[10px] font-black text-paw-orange uppercase tracking-widest block">Donation Overview</span>
+                                    <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span>{selectedDonationDetails.public_reference}</span>
+                                        <span className={`text-xs font-black px-2.5 py-0.5 rounded-full capitalize ${
                                             selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified'
                                                 ? 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300'
                                                 : selectedDonationDetails.status === 'rejected'
                                                     ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                                    : selectedDonationDetails.status === 'payment_proof_submitted'
+                                                        ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300'
+                                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
                                         }`}>
-                                            {selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified' ? (
-                                                <><CheckCircle2 size={12} /> Drop-Off Received & Stocked</>
-                                            ) : selectedDonationDetails.status === 'rejected' ? (
-                                                <><XCircle size={12} /> Drop-off Cancelled</>
-                                            ) : (
-                                                <><Clock size={12} /> Awaiting Drop-Off</>
-                                            )}
+                                            {selectedDonationDetails.status.replace(/_/g, ' ')}
                                         </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div className="col-span-2">
-                                            <div className="font-bold text-gray-400 text-xs">Item Description</div>
-                                            <div className="font-black text-paw-navy dark:text-white text-base">{selectedDonationDetails.in_kind_donation?.description}</div>
-                                        </div>
-                                        {selectedDonationDetails.in_kind_donation?.need?.animal && (
-                                            <div>
-                                                <div className="font-bold text-gray-400 text-xs">Dedicated Animal</div>
-                                                <div className="font-black text-paw-orange flex items-center gap-1">
-                                                    <Heart size={14} /> {selectedDonationDetails.in_kind_donation.need.animal.name}
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <div className="font-bold text-gray-400 text-xs">Scheduled Drop-off Date</div>
-                                            <div className="font-black text-paw-navy dark:text-white flex items-center gap-1">
-                                                <Calendar size={14} className="text-paw-orange" />
-                                                <span>{selectedDonationDetails.in_kind_donation?.drop_off_date || 'Not set'}</span>
-                                            </div>
-                                        </div>
-                                        {selectedDonationDetails.in_kind_donation?.contact_person && (
-                                            <div>
-                                                <div className="font-bold text-gray-400 text-xs">Drop-off Contact Person</div>
-                                                <div className="font-bold text-paw-navy dark:text-gray-300">{selectedDonationDetails.in_kind_donation.contact_person}</div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </h3>
                                 </div>
-                            )}
+                                <button onClick={() => setSelectedDonationDetails(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl cursor-pointer transition-colors">
+                                    <X size={20} className="text-gray-400" />
+                                </button>
+                            </div>
 
-                            {/* Monetary / Cash Details */}
-                            {selectedDonationDetails.type !== 'in_kind' && (
-                                <div className="bg-green-50/50 dark:bg-green-950/20 rounded-2xl p-4 border border-green-200 dark:border-green-900/30 space-y-3">
-                                    <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest block">Payment & Contribution Details</span>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="py-5 space-y-5">
+                                {/* Donor Information Card */}
+                                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 sm:p-5 border border-gray-150 dark:border-gray-700">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Donor Information</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm">
                                         <div>
-                                            <div className="font-bold text-gray-400 text-xs">Total Amount</div>
-                                            <div className="font-black text-2xl text-green-600">₱{Number(selectedDonationDetails.amount || 0).toLocaleString()}</div>
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-gray-400 text-xs">Purpose</div>
-                                            <div className="font-bold text-paw-navy dark:text-gray-300">{selectedDonationDetails.purpose || 'General Funding'}</div>
-                                        </div>
-                                        {selectedDonationDetails.feeding_sponsorship && (
-                                            <div className="col-span-2 border-t border-green-100 dark:border-green-900/40 pt-2">
-                                                <div className="font-bold text-gray-400 text-xs">Feeding Sponsorship Date</div>
-                                                <div className="font-black text-paw-navy dark:text-white">
-                                                    {selectedDonationDetails.feeding_sponsorship.preferred_date} {selectedDonationDetails.feeding_sponsorship.occasion ? `(${selectedDonationDetails.feeding_sponsorship.occasion})` : ''}
-                                                </div>
-                                                {selectedDonationDetails.feeding_sponsorship.message && (
-                                                    <div className="text-xs text-gray-500 italic mt-1">"{selectedDonationDetails.feeding_sponsorship.message}"</div>
+                                            <div className="font-bold text-gray-400 text-xs">Donor Name</div>
+                                            <div className="font-black text-paw-navy dark:text-white flex items-center gap-1.5 mt-0.5">
+                                                <span>{selectedDonationDetails.donor_name}</span>
+                                                {Boolean(selectedDonationDetails.anonymous) && (
+                                                    <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 px-2 py-0.5 rounded-full font-black">
+                                                        Anonymous
+                                                    </span>
                                                 )}
                                             </div>
-                                        )}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-400 text-xs">Email Address</div>
+                                            <div className="font-bold text-paw-navy dark:text-gray-300 mt-0.5 break-all">{selectedDonationDetails.donor_email}</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-400 text-xs">Mobile Contact</div>
+                                            <div className="font-bold text-paw-navy dark:text-gray-300 mt-0.5">
+                                                {selectedDonationDetails.donor_mobile || 'Not provided'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-400 text-xs">Date Submitted</div>
+                                            <div className="font-bold text-paw-navy dark:text-gray-300 mt-0.5">{new Date(selectedDonationDetails.created_at).toLocaleString()}</div>
+                                        </div>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Rejection Reason if applicable */}
-                            {selectedDonationDetails.rejection_reason && (
-                                <div className="bg-red-50 dark:bg-red-950/30 rounded-2xl p-4 border border-red-200 dark:border-red-900 text-sm">
-                                    <span className="text-[10px] font-black text-red-600 uppercase tracking-widest block mb-1">Rejection Reason</span>
-                                    <p className="text-red-700 dark:text-red-300 font-bold">{selectedDonationDetails.rejection_reason}</p>
-                                </div>
-                            )}
-                        </div>
+                                {/* Payment Details (Cash & Feeding Sponsorship) */}
+                                {selectedDonationDetails.type !== 'in_kind' && (
+                                    <div className="bg-green-50/50 dark:bg-green-950/20 rounded-2xl p-4 sm:p-5 border border-green-200 dark:border-green-900/30 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest block">Payment &amp; Contribution Details</span>
+                                            <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 uppercase">
+                                                {paymentMethod}
+                                            </span>
+                                        </div>
 
-                        {/* Modal Action Controls */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <div className="flex gap-2">
-                                {(selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified') && (
-                                    <button
-                                        onClick={() => {
-                                            setSelectedDonationReceipt(selectedDonationDetails);
-                                        }}
-                                        className="px-4 py-2.5 bg-paw-navy hover:bg-paw-orange text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <Printer size={14} /> Print Official Receipt
-                                    </button>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <div className="font-bold text-gray-400 text-xs">Total Amount</div>
+                                                <div className="font-black text-2xl text-green-600 mt-0.5">₱{Number(selectedDonationDetails.amount || 0).toLocaleString()}</div>
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-gray-400 text-xs">Payment Reference / Txn No.</div>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="font-black font-mono text-paw-navy dark:text-white text-sm">
+                                                        {paymentRef || 'Awaiting donor submission'}
+                                                    </span>
+                                                    {paymentRef && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(paymentRef);
+                                                                toast.success(`Copied ${paymentRef} to clipboard!`);
+                                                            }}
+                                                            className="p-1 rounded bg-white hover:bg-gray-150 border border-gray-200 text-gray-500"
+                                                            title="Copy Reference"
+                                                        >
+                                                            <Copy size={12} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="sm:col-span-2">
+                                                <div className="font-bold text-gray-400 text-xs">Purpose</div>
+                                                <div className="font-bold text-paw-navy dark:text-gray-300 mt-0.5">{selectedDonationDetails.purpose || 'Cash donation supporting stray feeding and care'}</div>
+                                            </div>
+
+                                            {selectedDonationDetails.feeding_sponsorship && (
+                                                <div className="sm:col-span-2 border-t border-green-200/60 dark:border-green-900/40 pt-2.5">
+                                                    <div className="font-bold text-gray-400 text-xs">Feeding Sponsorship Date</div>
+                                                    <div className="font-black text-paw-navy dark:text-white mt-0.5">
+                                                        {selectedDonationDetails.feeding_sponsorship.preferred_date} {selectedDonationDetails.feeding_sponsorship.occasion ? `• Occasion: ${selectedDonationDetails.feeding_sponsorship.occasion}` : ''}
+                                                    </div>
+                                                    {selectedDonationDetails.feeding_sponsorship.message && (
+                                                        <div className="text-xs text-gray-500 italic mt-1">"{selectedDonationDetails.feeding_sponsorship.message}"</div>
+                                                    )}
+                                                    {selectedDonationDetails.feeding_sponsorship.poster_url && (
+                                                        <div className="mt-3 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <img
+                                                                    src={selectedDonationDetails.feeding_sponsorship.poster_url}
+                                                                    alt="Custom Event Poster"
+                                                                    className="w-14 h-14 object-cover rounded-lg border border-amber-300 shadow-xs cursor-pointer"
+                                                                    onClick={() => setZoomedProofUrl(selectedDonationDetails.feeding_sponsorship?.poster_url || null)}
+                                                                />
+                                                                <div>
+                                                                    <div className="text-xs font-black text-amber-900 dark:text-amber-300">Custom Event Poster Attached</div>
+                                                                    <div className="text-[11px] text-amber-700 dark:text-amber-400">Featured on public event schedule upon verification</div>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setZoomedProofUrl(selectedDonationDetails.feeding_sponsorship?.poster_url || null)}
+                                                                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-amber-900 dark:text-amber-200 text-xs font-black border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                                                            >
+                                                                <Maximize2 size={12} /> Inspect Poster
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
 
-                                {selectedDonationDetails.type === 'in_kind' && selectedDonationDetails.status !== 'completed' && selectedDonationDetails.status !== 'rejected' && (
-                                    <button
-                                        onClick={() => {
-                                            handleVerifyClick(selectedDonationDetails);
-                                        }}
-                                        className="px-4 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <Gift size={14} /> Verify & Receive into Inventory
-                                    </button>
+                                {/* Proof of Payment Screenshot Preview */}
+                                {selectedDonationDetails.type !== 'in_kind' && (
+                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 sm:p-5 border border-gray-150 dark:border-gray-700 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Uploaded Proof of Payment</span>
+                                            {proofUrl && (
+                                                <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                    <CheckCircle2 size={12} /> Screenshot Attached
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {proofUrl ? (
+                                            <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-850 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-700">
+                                                <div 
+                                                    className="relative group cursor-pointer shrink-0"
+                                                    onClick={() => setZoomedProofUrl(proofUrl)}
+                                                >
+                                                    <img
+                                                        src={proofUrl}
+                                                        alt="Proof of payment"
+                                                        className="w-24 h-24 object-cover rounded-xl border border-gray-200 shadow-sm"
+                                                    />
+                                                    <div className="absolute inset-0 bg-paw-navy/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center text-white text-xs font-black gap-1 backdrop-blur-[2px]">
+                                                        <Maximize2 size={16} /> Zoom
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1.5 min-w-0 flex-1 text-center sm:text-left">
+                                                    <p className="font-black text-paw-navy dark:text-white text-sm truncate">
+                                                        {paymentProof?.original_filename || 'receipt-screenshot.jpg'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 font-bold">
+                                                        Click thumbnail to zoom or inspect full transaction details.
+                                                    </p>
+                                                    <div className="pt-1 flex items-center justify-center sm:justify-start gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setZoomedProofUrl(proofUrl)}
+                                                            className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-paw-navy hover:text-white text-gray-700 dark:text-gray-300 font-black text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Maximize2 size={12} /> View Full Receipt
+                                                        </button>
+                                                        <a
+                                                            href={proofUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-paw-orange hover:text-white text-gray-700 dark:text-gray-300 font-black text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <ExternalLink size={12} /> Open in New Tab
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-dashed border-amber-200 dark:border-amber-900/30 text-center">
+                                                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                                                    No receipt screenshot has been uploaded by the donor yet.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
 
-                                {selectedDonationDetails.type !== 'in_kind' && selectedDonationDetails.status !== 'completed' && selectedDonationDetails.status !== 'rejected' && (
-                                    <button
-                                        onClick={() => submitVerifyCash(selectedDonationDetails)}
-                                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <CheckCircle2 size={14} /> Verify Cash Payment
-                                    </button>
+                                {/* In-Kind Details Card */}
+                                {selectedDonationDetails.type === 'in_kind' && (
+                                    <div className="bg-orange-50/50 dark:bg-orange-950/20 rounded-2xl p-4 sm:p-5 border border-orange-200 dark:border-orange-900/30 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black text-paw-orange uppercase tracking-widest block">In-Kind Drop-off Schedule &amp; Details</span>
+                                            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                                                selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300'
+                                                    : selectedDonationDetails.status === 'rejected'
+                                                        ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
+                                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                            }`}>
+                                                {selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified' ? (
+                                                    <><CheckCircle2 size={12} /> Drop-Off Received &amp; Stocked</>
+                                                ) : selectedDonationDetails.status === 'rejected' ? (
+                                                    <><XCircle size={12} /> Drop-off Cancelled</>
+                                                ) : (
+                                                    <><Clock size={12} /> Awaiting Drop-Off</>
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                            <div className="sm:col-span-2">
+                                                <div className="font-bold text-gray-400 text-xs">Pledged Items / Description</div>
+                                                <div className="font-black text-paw-navy dark:text-white text-base mt-0.5">{selectedDonationDetails.in_kind_donation?.description}</div>
+                                            </div>
+                                            {selectedDonationDetails.in_kind_donation?.quantity && (
+                                                <div>
+                                                    <div className="font-bold text-gray-400 text-xs">Quantity</div>
+                                                    <div className="font-black text-paw-navy dark:text-white mt-0.5">{selectedDonationDetails.in_kind_donation.quantity}</div>
+                                                </div>
+                                            )}
+                                            {selectedDonationDetails.in_kind_donation?.need?.animal && (
+                                                <div>
+                                                    <div className="font-bold text-gray-400 text-xs">Dedicated Animal</div>
+                                                    <div className="font-black text-paw-orange flex items-center gap-1 mt-0.5">
+                                                        <Heart size={14} /> {selectedDonationDetails.in_kind_donation.need.animal.name}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="font-bold text-gray-400 text-xs">Scheduled Drop-off Date</div>
+                                                <div className="font-black text-paw-navy dark:text-white flex items-center gap-1 mt-0.5">
+                                                    <Calendar size={14} className="text-paw-orange" />
+                                                    <span>{selectedDonationDetails.in_kind_donation?.drop_off_date || 'Not set'}</span>
+                                                </div>
+                                            </div>
+                                            {selectedDonationDetails.in_kind_donation?.contact_person && (
+                                                <div>
+                                                    <div className="font-bold text-gray-400 text-xs">Drop-off Contact Person</div>
+                                                    <div className="font-bold text-paw-navy dark:text-gray-300 mt-0.5">{selectedDonationDetails.in_kind_donation.contact_person}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Verification / Completed Audit Note */}
+                                {selectedDonationDetails.verified_at && (
+                                    <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-2">
+                                        <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                                        <span>
+                                            Verified by <strong>{selectedDonationDetails.verified_by?.name || 'Administrator'}</strong> on {new Date(selectedDonationDetails.verified_at).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Rejection Reason if applicable */}
+                                {selectedDonationDetails.rejection_reason && (
+                                    <div className="bg-red-50 dark:bg-red-950/30 rounded-2xl p-4 border border-red-200 dark:border-red-900 text-sm">
+                                        <span className="text-[10px] font-black text-red-600 uppercase tracking-widest block mb-1">Rejection Reason</span>
+                                        <p className="text-red-700 dark:text-red-300 font-bold">{selectedDonationDetails.rejection_reason}</p>
+                                    </div>
                                 )}
                             </div>
 
+                            {/* Modal Action Controls */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-150 dark:border-gray-800">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Action: Verify Cash Payment */}
+                                    {selectedDonationDetails.type !== 'in_kind' && selectedDonationDetails.status !== 'completed' && selectedDonationDetails.status !== 'rejected' && (
+                                        <button
+                                            onClick={() => submitVerifyCash(selectedDonationDetails)}
+                                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
+                                        >
+                                            <CheckCircle2 size={14} /> Verify Cash Payment
+                                        </button>
+                                    )}
+
+                                    {/* Action: Verify In-Kind Drop-off into Inventory */}
+                                    {selectedDonationDetails.type === 'in_kind' && selectedDonationDetails.status !== 'completed' && selectedDonationDetails.status !== 'rejected' && (
+                                        <button
+                                            onClick={() => {
+                                                handleVerifyClick(selectedDonationDetails);
+                                            }}
+                                            className="px-4 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer shadow-md shadow-paw-orange/20"
+                                        >
+                                            <Gift size={14} /> Verify &amp; Receive into Inventory
+                                        </button>
+                                    )}
+
+                                    {/* Action: Reject / Cancel Donation */}
+                                    {selectedDonationDetails.status !== 'completed' && selectedDonationDetails.status !== 'rejected' && (
+                                        <button
+                                            onClick={() => {
+                                                setRejectingDonation(selectedDonationDetails);
+                                                setRejectReason('');
+                                            }}
+                                            className="px-4 py-2.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer border border-red-200"
+                                        >
+                                            <XCircle size={14} /> Reject Donation
+                                        </button>
+                                    )}
+
+                                    {/* Action: Print Official Receipt */}
+                                    {(selectedDonationDetails.status === 'completed' || selectedDonationDetails.status === 'verified') && (
+                                        <button
+                                            onClick={() => {
+                                                setSelectedDonationReceipt(selectedDonationDetails);
+                                            }}
+                                            className="px-4 py-2.5 bg-paw-navy hover:bg-paw-orange text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                                        >
+                                            <Printer size={14} /> Print Official Receipt
+                                        </button>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={() => setSelectedDonationDetails(null)}
+                                    className="px-6 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-xl font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* LIGHTBOX MODAL FOR ZOOMED RECEIPT PROOF */}
+            {zoomedProofUrl && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
+                    <div className="relative bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-2xl w-full text-center space-y-4 shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-gray-150 dark:border-gray-800 pb-3">
+                            <h3 className="text-base font-black text-paw-navy dark:text-white">Proof of Payment Screenshot</h3>
                             <button
-                                onClick={() => setSelectedDonationDetails(null)}
-                                className="px-6 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-xl font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                                type="button"
+                                onClick={() => setZoomedProofUrl(null)}
+                                className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors cursor-pointer"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="max-h-[70vh] overflow-y-auto rounded-2xl bg-gray-950 flex items-center justify-center p-2">
+                            <img
+                                src={zoomedProofUrl}
+                                alt="Proof of Payment Large Preview"
+                                className="max-h-[65vh] max-w-full object-contain rounded-xl"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                            <a
+                                href={zoomedProofUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-black text-paw-orange hover:underline flex items-center gap-1"
+                            >
+                                <ExternalLink size={13} /> Open Original in New Window
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => setZoomedProofUrl(null)}
+                                className="px-5 py-2 bg-paw-navy text-white font-black text-xs uppercase tracking-wider rounded-xl hover:bg-paw-orange transition-colors cursor-pointer"
                             >
                                 Close
                             </button>
@@ -1830,12 +2042,12 @@ export default function DonationMonitoring({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Expiry Date (If Any)</label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Expiry Date (If Any)"
+                                        allowPast={true}
                                         value={verifyForm.expires_at}
-                                        onChange={(e) => setVerifyForm({ ...verifyForm, expires_at: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                        onChange={(date) => setVerifyForm({ ...verifyForm, expires_at: date })}
+                                        placeholder="Select expiry date..."
                                     />
                                 </div>
                             </div>
@@ -2029,12 +2241,12 @@ export default function DonationMonitoring({
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Batch Expiry Date</label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Batch Expiry Date"
+                                        allowPast={true}
                                         value={addItemForm.expires_at}
-                                        onChange={(e) => setAddItemForm({ ...addItemForm, expires_at: e.target.value })}
-                                        className="w-full p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-xs outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                        onChange={(date) => setAddItemForm({ ...addItemForm, expires_at: date })}
+                                        placeholder="Select expiry date..."
                                     />
                                 </div>
                             </div>
@@ -2198,21 +2410,21 @@ export default function DonationMonitoring({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Expiry Date</label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Expiry Date"
+                                        allowPast={true}
                                         value={addBatchForm.expires_at}
-                                        onChange={(e) => setAddBatchForm({ ...addBatchForm, expires_at: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                        onChange={(date) => setAddBatchForm({ ...addBatchForm, expires_at: date })}
+                                        placeholder="Select expiry date..."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Received Date</label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Received Date"
+                                        allowPast={true}
                                         value={addBatchForm.received_at}
-                                        onChange={(e) => setAddBatchForm({ ...addBatchForm, received_at: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
+                                        onChange={(date) => setAddBatchForm({ ...addBatchForm, received_at: date })}
+                                        placeholder="Select received date..."
                                     />
                                 </div>
                             </div>

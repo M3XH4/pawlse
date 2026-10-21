@@ -81,6 +81,7 @@ class HomeController extends Controller
         $missingPets = PetReport::query()
             ->with('photos')
             ->where('type', 'missing')
+            ->whereNotIn('status', ['duplicate', 'cancelled'])
             ->latest('id')
             ->take(8)
             ->get()
@@ -252,11 +253,11 @@ class HomeController extends Controller
                     'story' => $animal->rescue_story ?: $animal->story,
                     'location' => $animal->rescue_location ?: 'Iligan City, 2024',
                     'status' => $displayStatus,
-                    'image' => $animal->after_photo_url ?: ($animal->photo_url ?: ($getString($animal->type, 'Dog') === 'Cat'
+                    'image' => $animal->photo_url ?: ($getString($animal->type, 'Dog') === 'Cat'
                         ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80'
-                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800')),
-                    'before_image' => $animal->before_photo_url ?: $animal->photo_url,
-                    'after_image' => $animal->after_photo_url ?: $animal->photo_url,
+                        : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800'),
+                    'before_image' => $animal->before_photo_url,
+                    'after_image' => $animal->after_photo_url,
                 ];
             });
 

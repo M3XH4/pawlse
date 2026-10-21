@@ -10,6 +10,7 @@ use App\Models\PetReport;
 use App\Models\User;
 use App\Notifications\RescueStatusUpdatedNotification;
 use App\Notifications\RescueTaskAssignedNotification;
+use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -110,10 +111,11 @@ class RescueManagementController extends Controller
             ->exists();
 
         if (! $alreadyAssigned) {
+            $roleLabel = $report->type === 'sos' ? 'SOS' : ucfirst((string) $report->type);
             AssignedTask::create([
                 'user_id' => $volunteer->id,
                 'pet_report_id' => $report->id,
-                'role' => 'Rescue Responder ('.ucfirst($report->type).')',
+                'role' => 'Rescue Responder ('.$roleLabel.')',
                 'status' => 'pending',
                 'hours_logged' => 0.00,
             ]);
@@ -157,9 +159,11 @@ class RescueManagementController extends Controller
                 ->update(['status' => 'cancelled']);
         }
 
-        if ($report->user) {
-            $report->user->notify(new RescueStatusUpdatedNotification($report));
-        }
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user,
+            $report->contact_email,
+            new RescueStatusUpdatedNotification($report)
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',

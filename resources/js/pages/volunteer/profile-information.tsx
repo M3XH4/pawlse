@@ -1,7 +1,7 @@
-import { User, Mail, Phone, MapPin, Briefcase, FileText, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, FileText, Edit, Save, X, Home, Award, ShieldCheck } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -17,6 +17,12 @@ interface VolunteerProfileProps {
         role: string;
         why: string;
         experience: string | null;
+        foster_capacity?: number | null;
+        foster_preference?: string | null;
+        foster_needs?: string | null;
+        medic_experience?: string | null;
+        medic_certifications?: string | null;
+        transport_has_license?: boolean;
         created_at: string;
     } | null;
 }
@@ -33,6 +39,9 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
+        if (data.mobile.trim() !== '' && !isValidPhoneNumber(data.mobile)) {
+            return;
+        }
         post('/account/volunteer/profile', {
             onSuccess: () => setIsEditing(false),
         });
@@ -135,6 +144,59 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
                                     </div>
                                 </div>
 
+                                {profile.role === 'Foster Volunteer' && (
+                                    <div className="flex items-start gap-3 bg-purple-50/50 dark:bg-purple-950/15 p-4 rounded-2xl border border-purple-100 dark:border-purple-900/30">
+                                        <div className="p-2 bg-purple-100 dark:bg-purple-950 text-purple-600 rounded-xl mt-0.5">
+                                            <Home size={18} />
+                                        </div>
+                                        <div className="space-y-1.5 flex-1">
+                                            <p className="text-[10px] text-purple-700 dark:text-purple-300 font-black uppercase tracking-wider">Foster Specifications</p>
+                                            <div className="grid sm:grid-cols-2 gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                                                <p><span className="text-gray-400">Capacity:</span> {profile.foster_capacity ?? 2} pet(s)</p>
+                                                <p><span className="text-gray-400">Species Preference:</span> {profile.foster_preference === 'cats' ? 'Cats Only' : profile.foster_preference === 'dogs' ? 'Dogs Only' : 'Both Cats & Dogs'}</p>
+                                            </div>
+                                            {profile.foster_needs && (
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-semibold leading-relaxed">
+                                                    <span className="font-bold text-gray-700 dark:text-gray-300">Environment/Supplies:</span> {profile.foster_needs}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {profile.role === 'Medic Volunteer' && (
+                                    <div className="flex items-start gap-3 bg-rose-50/50 dark:bg-rose-950/15 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30">
+                                        <div className="p-2 bg-rose-100 dark:bg-rose-950 text-rose-600 rounded-xl mt-0.5">
+                                            <Award size={18} />
+                                        </div>
+                                        <div className="space-y-1.5 flex-1">
+                                            <p className="text-[10px] text-rose-700 dark:text-rose-300 font-black uppercase tracking-wider">Medical Credentials & Experience</p>
+                                            <p className="text-xs font-bold text-rose-900 dark:text-rose-200">
+                                                Certifications: <span className="font-semibold text-gray-700 dark:text-gray-300">{profile.medic_certifications || 'Not on file'}</span>
+                                            </p>
+                                            {profile.medic_experience && (
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-semibold leading-relaxed">
+                                                    <span className="font-bold text-gray-700 dark:text-gray-300">Clinical Background:</span> {profile.medic_experience}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {profile.role === 'Transport' && (
+                                    <div className="flex items-start gap-3 bg-teal-50/50 dark:bg-teal-950/15 p-4 rounded-2xl border border-teal-100 dark:border-teal-900/30">
+                                        <div className="p-2 bg-teal-100 dark:bg-teal-950 text-teal-600 rounded-xl mt-0.5">
+                                            <ShieldCheck size={18} />
+                                        </div>
+                                        <div className="space-y-1 flex-1">
+                                            <p className="text-[10px] text-teal-700 dark:text-teal-300 font-black uppercase tracking-wider">Transport Volunteer Verification</p>
+                                            <p className="text-xs font-bold text-teal-950 dark:text-teal-200">
+                                                Driver's License & Vehicle Registration: <span className="text-emerald-600 font-black">{profile.transport_has_license ? 'Declared & Verified ✓' : 'Pending verification'}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex items-start gap-3">
                                     <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 text-blue-500 rounded-xl mt-0.5">
                                         <FileText size={18} />
@@ -186,10 +248,13 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
                                             type="text"
                                             value={data.mobile}
                                             onChange={(e) => setData('mobile', formatPhoneNumber(e.target.value))}
-                                            placeholder="+63 9XX XXX XXXX"
+                                            placeholder="+63 912 124 1241"
                                             className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] dark:border-[#334155] rounded-xl outline-none focus:border-paw-orange transition-all font-bold text-sm text-[#0B2340] dark:text-[#F8FAFC] dark:bg-[#1E293B]"
                                             required
                                         />
+                                        {data.mobile.trim() !== '' && !isValidPhoneNumber(data.mobile) && (
+                                            <p className="text-red-500 text-xs mt-1">Please enter a valid 10-digit mobile number.</p>
+                                        )}
                                         {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile}</p>}
                                     </div>
                                 </div>

@@ -5,6 +5,8 @@ import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { PhoneInput } from '@/components/phone-input';
 import {
     PawPrint,
     Search,
@@ -2272,13 +2274,13 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Admitted Date *</label>
-                            <input
-                                type="date"
+                            <ModernDatePicker
+                                label="Admitted Date"
                                 required
+                                allowPast={true}
                                 value={data.admittedAt}
-                                onChange={(e) => setData('admittedAt', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                onChange={(date) => setData('admittedAt', date)}
+                                placeholder="Select admission date..."
                             />
                         </div>
                     </div>
@@ -2361,11 +2363,10 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
                     <div className="p-3 bg-gray-50 dark:bg-[#070e1c] rounded-xl border border-gray-200 dark:border-gray-800 space-y-2">
                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Rescue Information</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input
-                                type="date"
+                            <ModernDatePicker
+                                allowPast={true}
                                 value={data.rescue_date}
-                                onChange={(e) => setData('rescue_date', e.target.value)}
-                                className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#0B1527] border border-gray-300 dark:border-gray-700 rounded-lg"
+                                onChange={(date) => setData('rescue_date', date)}
                                 placeholder="Rescue Date"
                             />
                             <input
@@ -2618,12 +2619,12 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                             </span>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Adoption Date</label>
-                                    <input
-                                        type="date"
+                                    <ModernDatePicker
+                                        label="Adoption Date"
+                                        allowPast={true}
                                         value={data.adoption_date}
-                                        onChange={(e) => setData('adoption_date', e.target.value)}
-                                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                        onChange={(date) => setData('adoption_date', date)}
+                                        placeholder="Select adoption date..."
                                     />
                                 </div>
                                 <div>
@@ -2638,10 +2639,10 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                                 </div>
                                 <div>
                                     <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Adopter Phone</label>
-                                    <input
-                                        type="text"
+                                    <PhoneInput
                                         value={data.adopter_phone}
-                                        onChange={(e) => setData('adopter_phone', e.target.value)}
+                                        onChange={(val) => setData('adopter_phone', val)}
+                                        placeholder="+63 912 124 1241"
                                         className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
                                     />
                                 </div>
@@ -2672,12 +2673,12 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                                 Deceased & Memorial Details
                             </span>
                             <div>
-                                <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Date of Passing</label>
-                                <input
-                                    type="date"
+                                <ModernDatePicker
+                                    label="Date of Passing"
+                                    allowPast={true}
                                     value={data.deceased_at}
-                                    onChange={(e) => setData('deceased_at', e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                    onChange={(date) => setData('deceased_at', date)}
+                                    placeholder="Select date of passing..."
                                 />
                             </div>
                             <div>
@@ -2697,11 +2698,11 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                     <div className="p-3 bg-gray-50 dark:bg-[#070e1c] rounded-xl border border-gray-200 dark:border-gray-800 space-y-2">
                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Rescue Details</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input
-                                type="date"
+                            <ModernDatePicker
+                                allowPast={true}
                                 value={data.rescue_date}
-                                onChange={(e) => setData('rescue_date', e.target.value)}
-                                className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#0B1527] border border-gray-300 dark:border-gray-700 rounded-lg"
+                                onChange={(date) => setData('rescue_date', date)}
+                                placeholder="Rescue Date"
                             />
                             <input
                                 type="text"
@@ -3079,27 +3080,22 @@ function AddMedicalModal({
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                {isCurrentCondition ? 'Incident / Diagnosis Date *' : 'Date Performed *'}
-                            </label>
-                            <input
-                                type="date"
+                            <ModernDatePicker
+                                label={isCurrentCondition ? 'Incident / Diagnosis Date' : 'Date Performed'}
                                 required
+                                allowPast={true}
                                 value={data.performed_date}
-                                onChange={(e) => setData('performed_date', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                onChange={(date) => setData('performed_date', date)}
+                                placeholder="Select date..."
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                {isCurrentCondition ? 'Follow-up / Re-check Date' : 'Next Booster / Due Date'}
-                            </label>
-                            <input
-                                type="date"
+                            <ModernDatePicker
+                                label={isCurrentCondition ? 'Follow-up / Re-check Date' : 'Next Booster / Due Date'}
                                 value={data.next_due_date}
-                                onChange={(e) => setData('next_due_date', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
+                                onChange={(date) => setData('next_due_date', date)}
+                                placeholder="Select due date..."
                             />
                         </div>
                     </div>

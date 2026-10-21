@@ -479,3 +479,111 @@ test('authenticated user can submit a rescue report with custom contact phone', 
         'contact_email' => 'jane@example.com',
     ]);
 });
+
+test('duplicate detection does not cross-contaminate missing, sos, and rescue report types', function () {
+    $missing = PetReport::create([
+        'type' => 'missing',
+        'name' => 'Bantay',
+        'animal_type' => 'Dog',
+        'location' => '8.228000, 124.245000',
+        'status' => 'pending',
+    ]);
+
+    // SOS report at the exact same location should NOT be flagged as duplicate of a missing pet
+    $sosResponse = $this->post('/pet-reports/sos', [
+        'situationType' => 'Injured',
+        'animalType' => 'Dog',
+        'location' => '8.228000, 124.245000',
+        'urgency' => 'high',
+        'description' => 'Injured dog near the market.',
+        'contactName' => 'Responder',
+        'contactPhone' => '09123456789',
+        'contactEmail' => 'sos_guest@example.com',
+    ]);
+
+    $sosResponse->assertRedirect();
+    $sosReport = PetReport::where('type', 'sos')->firstOrFail();
+    expect($sosReport->is_duplicate)->toBeFalse();
+    expect($sosReport->status)->toBe('pending');
+    expect($sosReport->contact_email)->toBe('sos_guest@example.com');
+
+    // A second missing dog with a DIFFERENT name in the same location should NOT be flagged as duplicate
+    $secondMissing = PetReport::create([
+        'type' => 'missing',
+        'name' => 'Max',
+        'animal_type' => 'Dog',
+        'location' => '8.228000, 124.245000',
+        'status' => 'pending',
+    ]);
+
+    expect($secondMissing->is_duplicate)->toBeFalse();
+    expect($secondMissing->status)->toBe('pending');
+
+    // Submitting the SAME missing dog name at the same location SHOULD be flagged as duplicate
+    $duplicateMissing = PetReport::create([
+        'type' => 'missing',
+        'name' => 'bantay',
+        'animal_type' => 'Dog',
+        'location' => '8.228000, 124.245000',
+        'status' => 'pending',
+    ]);
+
+    expect($duplicateMissing->is_duplicate)->toBeTrue();
+    expect($duplicateMissing->duplicate_of_id)->toBe($missing->id);
+});
+
+test('missing pets index excludes duplicate and cancelled reports', function () {
+    PetReport::create([
+        'type' => 'missing',
+        'name' => 'ActivePet',
+        'animal_type' => 'Dog',
+        'location' => 'Pala-o',
+        'status' => 'pending',
+    ]);
+
+    $cancelled = new PetReport([
+        'type' => 'missing',
+        'name' => 'CancelledPet',
+        'animal_type' => 'Cat',
+        'location' => 'Tibanga',
+        'status' => 'cancelled',
+    ]);
+    $cancelled->saveQuietly();
+
+    $duplicate = new PetReport([
+        'type' => 'missing',
+        'name' => 'DuplicatePet',
+        'animal_type' => 'Dog',
+        'location' => 'Suarez',
+        'status' => 'duplicate',
+        'is_duplicate' => true,
+    ]);
+    $duplicate->saveQuietly();
+
+    $response = $this->get(route('missing'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('missing')
+        ->has('reports.data', 1)
+        ->where('reports.data.0.name', 'ActivePet')
+    );
+});
+
+test('global search queries pet reports without sql errors and excludes duplicates', function () {
+    $active = PetReport::create([
+        'type' => 'missing',
+        'name' => 'ShadowSearchDog',
+        'animal_type' => 'Dog',
+        'breed' => 'Husky',
+        'location' => 'Villa Verde',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->get(route('search', ['q' => 'ShadowSearchDog']));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('search')
+        ->has('results.reports', 1)
+        ->where('results.reports.0.id', $active->id)
+    );
+});

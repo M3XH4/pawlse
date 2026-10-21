@@ -31,13 +31,15 @@ trait RendersBrandedMail
         string $level = 'primary',
         ?string $categoryBadge = null,
         ?string $outroLine = null,
+        ?string $actionUrl = null,
+        ?string $recipientNameOverride = null,
     ): MailMessage {
         $data = method_exists($this, 'toArray') ? $this->toArray($notifiable) : [];
         $title = (string) ($data['title'] ?? 'PAWLSE Notification');
         $message = (string) ($data['message'] ?? $data['description'] ?? 'You have a new update from PAWLSE.');
-        $url = (string) ($data['url'] ?? url('/'));
+        $url = (string) ($actionUrl ?? ($data['url'] ?? url('/')));
         $category = strtoupper((string) ($categoryBadge ?? ($data['category'] ?? 'PAWLSE UPDATE')));
-        $recipientName = $notifiable->name ?? 'there';
+        $recipientName = $recipientNameOverride ?? $notifiable->name ?? 'there';
 
         $ctaText = $actionText ?? 'Open in PAWLSE Portal';
 

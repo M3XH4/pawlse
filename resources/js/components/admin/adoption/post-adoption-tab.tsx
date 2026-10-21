@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 
 export interface PostAdoptionFollowUpData {
   id: number;
@@ -509,15 +510,12 @@ export function PostAdoptionTab({
                 {/* Follow-up Date & Method */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
-                      Check-in Date <span className="text-paw-orange">*</span>
-                    </label>
-                    <input
-                      type="date"
+                    <ModernDatePicker
+                      label="Check-in Date"
                       required
                       value={data.follow_up_date}
-                      onChange={(e) => setData('follow_up_date', e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
+                      onChange={(date) => setData('follow_up_date', date)}
+                      placeholder="Select check-in date..."
                     />
                   </div>
 
@@ -575,14 +573,11 @@ export function PostAdoptionTab({
 
                 {/* Next follow-up date */}
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
-                    Next Scheduled Follow-up (Optional)
-                  </label>
-                  <input
-                    type="date"
+                  <ModernDatePicker
+                    label="Next Scheduled Follow-up (Optional)"
                     value={data.next_follow_up_date}
-                    onChange={(e) => setData('next_follow_up_date', e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
+                    onChange={(date) => setData('next_follow_up_date', date)}
+                    placeholder="Select next follow-up date..."
                   />
                 </div>
 

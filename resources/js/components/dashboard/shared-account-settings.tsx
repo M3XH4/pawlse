@@ -457,7 +457,7 @@ export default function SharedAccountSettings({
                                         value={profileData.phone}
                                         onChange={(val) => setProfileData('phone', val)}
                                         autoComplete="tel"
-                                        placeholder="+63 9XX XXX XXXX"
+                                        placeholder="+63 912 124 1241"
                                         className="rounded-xl border-gray-200 focus:ring-paw-orange/20 focus:border-paw-orange dark:border-slate-800 dark:bg-slate-950 font-medium"
                                     />
                                     <p className="text-[11px] text-gray-400 dark:text-gray-500">

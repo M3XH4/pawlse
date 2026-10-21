@@ -405,212 +405,226 @@ export function SubmissionReceipt({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-md"
             onClick={onClose}
         >
             <motion.div
-                initial={{ scale: 0.94, y: 20 }}
+                initial={{ scale: 0.95, y: 15 }}
                 animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.94, y: 20 }}
-                className="scrollbar-thin max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-2xl"
+                exit={{ scale: 0.95, y: 15 }}
+                className="flex max-h-[94vh] w-full max-w-xl flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Hero Banner (Grab E-Receipt Reference Style) */}
-                <div className={`relative bg-gradient-to-br ${theme.gradient} px-7 py-6 text-white`}>
-                    <div className="mb-4 flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/35 bg-white/20 px-3.5 py-1 text-[11px] font-black tracking-widest text-white uppercase">
-                            <ShieldCheck size={13} />
-                            {subtitle || 'PAWLSE Official E-Receipt'}
-                        </span>
+                {/* Scrollable Container with Hidden Parent Overflow */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* Hero Banner (Grab E-Receipt Reference Style) */}
+                    <div className={`relative bg-gradient-to-br ${theme.gradient} px-6 py-6 text-white sm:px-8`}>
+                        <div className="mb-4 flex items-center justify-between gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/35 bg-white/20 px-3.5 py-1 text-[11px] font-black tracking-widest text-white uppercase shadow-sm">
+                                <ShieldCheck size={13} />
+                                {subtitle || 'PAWLSE Official E-Receipt'}
+                            </span>
 
-                        <div className="flex items-center gap-2.5">
-                            <div className="text-right">
-                                <p className="text-base leading-none font-black tracking-wide text-white">
-                                    PAWLSE
-                                </p>
-                                <p className="text-[9px] font-extrabold tracking-widest text-white/90 uppercase">
-                                    Iligan Stray Feeders
-                                </p>
+                            <div className="flex items-center gap-2.5">
+                                <div className="text-right">
+                                    <p className="text-base leading-none font-black tracking-wide text-white">
+                                        PAWLSE
+                                    </p>
+                                    <p className="text-[9px] font-extrabold tracking-widest text-white/90 uppercase">
+                                        Iligan Stray Feeders
+                                    </p>
+                                </div>
+                                <img
+                                    src="/images/logo.png"
+                                    alt="Iligan Stray Feeders Logo"
+                                    className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md"
+                                />
+                                <button
+                                    onClick={onClose}
+                                    className="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white transition-colors hover:bg-black/35 cursor-pointer"
+                                    aria-label="Close receipt"
+                                >
+                                    <X size={16} />
+                                </button>
                             </div>
-                            <img
-                                src="/images/logo.png"
-                                alt="Iligan Stray Feeders Logo"
-                                className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md"
-                            />
-                            <button
-                                onClick={onClose}
-                                className="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white transition-colors hover:bg-black/35 cursor-pointer"
-                                aria-label="Close receipt"
-                            >
-                                <X size={16} />
-                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-2xl leading-tight font-black tracking-tight text-white md:text-3xl">
+                                    {title}
+                                </h3>
+                                <p className="mt-1.5 text-xs font-bold text-white/90">
+                                    {formattedDate}
+                                </p>
+                                {referenceNumber && (
+                                    <p className="mt-0.5 font-mono text-xs font-black tracking-wider text-white/95">
+                                        Receipt ID: {referenceNumber}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="shrink-0">
+                                <div className="rounded-full bg-white/20 p-1.5 backdrop-blur-md">
+                                    <img
+                                        src="/images/logo.png"
+                                        alt="Iligan Stray Feeders Emblem"
+                                        className="h-16 w-16 rounded-full border-2 border-white object-cover shadow-lg"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                            <h3 className="text-2xl leading-tight font-black tracking-tight text-white md:text-3xl">
-                                {title}
-                            </h3>
-                            <p className="mt-1.5 text-xs font-bold text-white/90">
-                                {formattedDate}
+                    {/* Prominent Highlight Bar */}
+                    <div
+                        className={`flex items-center justify-between border-b-4 ${theme.accentBorder} bg-amber-50/70 px-6 py-4 sm:px-8`}
+                    >
+                        <div>
+                            <p className="text-[11px] font-black tracking-widest text-slate-500 uppercase">
+                                {resolvedHighlightLabel}
                             </p>
-                            {referenceNumber && (
-                                <p className="mt-0.5 font-mono text-xs font-black tracking-wider text-white/95">
-                                    Receipt ID: {referenceNumber}
+                            <p className="text-xs font-bold text-slate-600">
+                                Official PAWLSE Acknowledgment
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-2xl font-black tracking-tight text-paw-navy sm:text-3xl">
+                                {resolvedHighlightValue}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Organization Acknowledgment Row */}
+                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-3.5 sm:px-8">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src="/images/logo.png"
+                                alt="Iligan Stray Feeders"
+                                className="h-10 w-10 rounded-full border-2 border-amber-400 object-cover"
+                            />
+                            <div>
+                                <p className="text-xs font-black text-paw-navy">
+                                    Iligan Stray Feeders Shelter
+                                </p>
+                                <p className="flex items-center gap-1 text-[11px] font-extrabold text-amber-500">
+                                    <span>5.0</span>
+                                    <Star size={11} className="fill-amber-400 text-amber-400" />
+                                    <span className="text-slate-400">&bull; Verified Welfare Partner</span>
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-black tracking-wider uppercase ${theme.badgeBg} ${theme.badgeText}`}
+                        >
+                            <CheckCircle2 size={12} />
+                            {resolvedStatus}
+                        </span>
+                    </div>
+
+                    {/* In-Kind Drop-off Schedule Notice Card */}
+                    <div className="border-b border-slate-100 bg-emerald-50/50 px-6 py-3.5 sm:px-8">
+                        <div className="flex items-start gap-2.5">
+                            <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                            <div className="text-xs text-emerald-950 font-bold leading-relaxed">
+                                <span className="font-black text-emerald-900 block">Drop-off Venue: Zone 5, Barangay Tambo, Iligan City (9:00 AM – 5:00 PM)</span>
+                                <span>Present this e-receipt or Reference ID upon arrival. Our team will verify and stock your pledged items immediately into shelter inventory.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Breakdown Section */}
+                    <div className="border-b border-slate-100 px-6 py-5 sm:px-8">
+                        <h4 className="mb-3 text-xs font-black tracking-widest text-slate-400 uppercase">
+                            Breakdown
+                        </h4>
+                        <div className="divide-y divide-dashed divide-slate-200">
+                            {cleanItems.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center justify-between gap-4 py-2.5 text-sm"
+                                >
+                                    <span className="flex items-center gap-2 font-bold text-slate-500">
+                                        {item.icon && (
+                                            <span className="text-paw-navy/70">{item.icon}</span>
+                                        )}
+                                        {item.label}
+                                    </span>
+                                    <span className="text-right font-black text-paw-navy">
+                                        {item.value}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 2-Column Metadata (Supporter & Channel) */}
+                    <div className="grid grid-cols-2 gap-4 border-b border-slate-100 bg-slate-50/60 px-6 py-4 sm:px-8">
+                        <div>
+                            <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                Supporter / Applicant
+                            </p>
+                            <p className="mt-0.5 text-sm font-black text-paw-navy">
+                                {resolvedSupporter}
+                            </p>
+                            {resolvedEmail && (
+                                <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-slate-500">
+                                    <Mail size={11} className="text-paw-orange" />
+                                    <span className="truncate">{resolvedEmail}</span>
                                 </p>
                             )}
                         </div>
-                        <div className="shrink-0">
-                            <div className="rounded-full bg-white/20 p-1.5 backdrop-blur-md">
-                                <img
-                                    src="/images/logo.png"
-                                    alt="Iligan Stray Feeders Emblem"
-                                    className="h-16 w-16 rounded-full border-2 border-white object-cover shadow-lg"
-                                />
+                        <div className="text-right">
+                            <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                Processed Via
+                            </p>
+                            <p className="mt-0.5 text-sm font-black text-paw-navy">
+                                {resolvedMethod}
+                            </p>
+                            <p className="mt-0.5 text-[11px] font-extrabold text-emerald-600">
+                                PAWLSE Transparency Ledger
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Notice / Footer Message */}
+                    {footerMessage && (
+                        <div className="px-6 py-4 sm:px-8">
+                            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-3.5 text-center">
+                                <p className="text-xs font-bold text-amber-900 leading-relaxed">{footerMessage}</p>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* Prominent Highlight Bar */}
-                <div
-                    className={`flex items-center justify-between border-b-4 ${theme.accentBorder} bg-amber-50/70 px-7 py-4`}
-                >
-                    <div>
-                        <p className="text-[11px] font-black tracking-widest text-slate-500 uppercase">
-                            {resolvedHighlightLabel}
-                        </p>
-                        <p className="text-xs font-bold text-slate-600">
-                            Official PAWLSE Acknowledgment
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-2xl font-black tracking-tight text-paw-navy">
-                            {resolvedHighlightValue}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Organization Acknowledgment Row */}
-                <div className="flex items-center justify-between border-b border-slate-100 px-7 py-3.5">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="/images/logo.png"
-                            alt="Iligan Stray Feeders"
-                            className="h-10 w-10 rounded-full border-2 border-amber-400 object-cover"
-                        />
-                        <div>
-                            <p className="text-xs font-black text-paw-navy">
-                                Iligan Stray Feeders Shelter
-                            </p>
-                            <p className="flex items-center gap-1 text-[11px] font-extrabold text-amber-500">
-                                <span>5.0</span>
-                                <Star size={11} className="fill-amber-400 text-amber-400" />
-                                <span className="text-slate-400">&bull; Verified Welfare Partner</span>
-                            </p>
-                        </div>
-                    </div>
-                    <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-black tracking-wider uppercase ${theme.badgeBg} ${theme.badgeText}`}
-                    >
-                        <CheckCircle2 size={12} />
-                        {resolvedStatus}
-                    </span>
-                </div>
-
-                {/* Breakdown Section */}
-                <div className="border-b border-slate-100 px-7 py-5">
-                    <h4 className="mb-3 text-xs font-black tracking-widest text-slate-400 uppercase">
-                        Breakdown
-                    </h4>
-                    <div className="divide-y divide-dashed divide-slate-200">
-                        {cleanItems.map((item, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center justify-between gap-4 py-2.5 text-sm"
-                            >
-                                <span className="flex items-center gap-2 font-bold text-slate-500">
-                                    {item.icon && (
-                                        <span className="text-paw-navy/70">{item.icon}</span>
-                                    )}
-                                    {item.label}
-                                </span>
-                                <span className="text-right font-black text-paw-navy">
-                                    {item.value}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 2-Column Metadata (Supporter & Channel) */}
-                <div className="grid grid-cols-2 gap-4 border-b border-slate-100 bg-slate-50/60 px-7 py-4">
-                    <div>
-                        <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                            Supporter / Applicant
-                        </p>
-                        <p className="mt-0.5 text-sm font-black text-paw-navy">
-                            {resolvedSupporter}
-                        </p>
-                        {resolvedEmail && (
-                            <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-slate-500">
-                                <Mail size={11} className="text-paw-orange" />
-                                <span className="truncate">{resolvedEmail}</span>
-                            </p>
-                        )}
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                            Processed Via
-                        </p>
-                        <p className="mt-0.5 text-sm font-black text-paw-navy">
-                            {resolvedMethod}
-                        </p>
-                        <p className="mt-0.5 text-[11px] font-extrabold text-emerald-600">
-                            PAWLSE Transparency Ledger
-                        </p>
-                    </div>
-                </div>
-
-                {/* Notice / Footer Message */}
-                {footerMessage && (
-                    <div className="px-7 py-5">
-                        <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-3.5 text-center">
-                            <p className="text-xs font-bold text-amber-900">{footerMessage}</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Dark Paw-Navy Footer & Action Buttons */}
-                <div className="bg-paw-navy px-7 py-5 text-white">
-                    <div className="mb-4 flex items-center justify-between border-b border-slate-700 pb-3.5">
+                {/* Fixed Dark Paw-Navy Footer & Action Buttons */}
+                <div className="bg-paw-navy px-6 py-4 text-white sm:px-8 shrink-0 border-t border-slate-800">
+                    <div className="mb-3.5 flex items-center justify-between border-b border-slate-700/80 pb-3">
                         <div>
                             <p className="text-xs font-black text-white">
                                 PAWLSE &bull; Iligan Stray Feeders
                             </p>
                             <p className="text-[11px] font-semibold text-slate-400">
-                                Zone 5, Barangay Tambo, Iligan City, 9200 &bull; Feed Furr A Cause
+                                Zone 5, Barangay Tambo, Iligan City &bull; Feed Furr A Cause
                             </p>
                         </div>
                         <img
                             src="/images/logo.png"
                             alt="ISF Logo"
-                            className="h-9 w-9 rounded-full border border-paw-orange object-cover"
+                            className="h-8 w-8 rounded-full border border-paw-orange object-cover"
                         />
                     </div>
 
                     <div className="flex gap-3">
                         <button
                             onClick={handlePrintPdf}
-                            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-black tracking-widest text-white uppercase transition-colors hover:bg-slate-700"
+                            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-black tracking-widest text-white uppercase transition-colors hover:bg-slate-700 active:scale-[0.99]"
                         >
                             <Printer size={16} />
                             Print / Save PDF
                         </button>
                         <button
                             onClick={onClose}
-                            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${theme.buttonBg} py-3 text-xs font-black tracking-widest text-white uppercase shadow-lg transition-all`}
+                            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${theme.buttonBg} py-3 text-xs font-black tracking-widest text-white uppercase shadow-lg transition-all active:scale-[0.99]`}
                         >
                             <CheckCircle2 size={16} />
                             Done

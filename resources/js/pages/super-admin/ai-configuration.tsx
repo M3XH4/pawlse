@@ -158,6 +158,12 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
     const formatOutputData = (log: PredictionLog) => {
         if (!log.output_data) return 'None';
         if (log.feature === 'pet_prediction') {
+            if (log.output_data.species || log.output_data.breed) {
+                const sp = log.output_data.species ? String(log.output_data.species).toUpperCase() : 'UNKNOWN';
+                const br = log.output_data.breed || 'Unknown Breed';
+                const conf = Math.round((log.output_data.confidence || log.confidence || 0) * 100);
+                return `${sp}: ${br} (${conf}%)`;
+            }
             const predictions = log.output_data.predictions || [];
             if (predictions.length > 0) {
                 return `Species: ${predictions[0].label || 'unknown'} (${Math.round(predictions[0].confidence * 100)}%)`;

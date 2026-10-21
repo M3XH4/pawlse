@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface ResourceRecord {
     id: number;
@@ -63,6 +65,12 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingResource, setEditingResource] = useState<ResourceRecord | null>(null);
+
+    // Permission enforcement
+    const { can } = usePermissions();
+    const canCreateResource = can('resources.create');
+    const canEditResource = can('resources.edit');
+    const canDeleteResource = can('resources.delete');
 
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         title: '',
@@ -296,13 +304,15 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                 <option value="archived">Archived</option>
                             </select>
 
-                            <button
-                                onClick={openCreateModal}
-                                className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
-                            >
-                                <Plus size={16} />
-                                <span>Add Resource</span>
-                            </button>
+                            {canCreateResource && (
+                                <button
+                                    onClick={openCreateModal}
+                                    className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
+                                >
+                                    <Plus size={16} />
+                                    <span>Add Resource</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </DashboardCard>
@@ -352,14 +362,14 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                                 </div>
                                             </td>
 
-                                            <td className="py-3 px-4">
-                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
+                                            <td className="py-3 px-4 whitespace-nowrap min-w-[130px]">
+                                                <span className="inline-flex items-center justify-center shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
                                                     {res.category.replace('_', ' ')}
                                                 </span>
                                             </td>
 
-                                            <td className="py-3 px-4">
-                                                <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                                            <td className="py-3 px-4 whitespace-nowrap min-w-[180px]">
+                                                <span className="inline-flex items-center justify-center shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-200/50 dark:border-amber-900/30">
                                                     {res.badge || 'Community Resource'}
                                                 </span>
                                             </td>
@@ -375,7 +385,7 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                                 </p>
                                             </td>
 
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-4 whitespace-nowrap">
                                                 {res.deleted_at ? (
                                                     <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 text-[10px] font-bold">
                                                         Archived
@@ -394,41 +404,50 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                                 )}
                                             </td>
 
-                                            <td className="py-3 px-4 text-right">
+                                            <td className="py-3 px-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <a
                                                         href={`/resources/${res.id}/download`}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors"
+                                                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
                                                         title="Download / Test View File"
                                                     >
                                                         <Download size={15} />
                                                     </a>
                                                     {res.deleted_at ? (
-                                                        <button
-                                                            onClick={() => handleRestore(res)}
-                                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors"
-                                                            title="Restore Resource"
-                                                        >
-                                                            <RotateCcw size={15} />
-                                                        </button>
+                                                        canDeleteResource && (
+                                                            <button
+                                                                onClick={() => handleRestore(res)}
+                                                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                title="Restore Resource"
+                                                            >
+                                                                <RotateCcw size={15} />
+                                                            </button>
+                                                        )
                                                     ) : (
                                                         <>
-                                                            <button
-                                                                onClick={() => openEditModal(res)}
-                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
-                                                                title="Edit Resource"
-                                                            >
-                                                                <Edit2 size={15} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(res)}
-                                                                className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
-                                                                title="Archive Resource"
-                                                            >
-                                                                <Trash2 size={15} />
-                                                            </button>
+                                                            {canEditResource && (
+                                                                <button
+                                                                    onClick={() => openEditModal(res)}
+                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                    title="Edit Resource"
+                                                                >
+                                                                    <Edit2 size={15} />
+                                                                </button>
+                                                            )}
+                                                            {canDeleteResource && (
+                                                                <button
+                                                                    onClick={() => handleDelete(res)}
+                                                                    className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                                                                    title="Archive Resource"
+                                                                >
+                                                                    <Trash2 size={15} />
+                                                                </button>
+                                                            )}
+                                                            {!canEditResource && !canDeleteResource && (
+                                                                <span className="text-gray-400 italic text-[11px]">Read-only</span>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -478,23 +497,31 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto"
+                            className="bg-white dark:bg-slate-900 rounded-[24px] sm:rounded-[32px] max-w-xl w-full shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] flex flex-col overflow-hidden"
                         >
-                            <button
-                                onClick={closeModals}
-                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
+                            {/* Sticky Header */}
+                            <div className="p-6 border-b border-gray-100 dark:border-slate-800 shrink-0 relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs pr-14">
+                                <button
+                                    onClick={closeModals}
+                                    className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
+                                >
+                                    <X size={20} />
+                                </button>
 
-                            <h3 className="text-2xl font-black text-paw-navy dark:text-white mb-1">
-                                {editingResource ? 'Edit Resource File' : 'Add Resource File'}
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-6">
-                                Upload or register downloadable pet care guides, contacts, and referral handbooks
-                            </p>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-900/30">
+                                    <FolderDown size={12} className="inline mr-1" />
+                                    {data.category.replace('_', ' ')}
+                                </span>
+                                <h3 className="text-xl sm:text-2xl font-black text-paw-navy dark:text-white">
+                                    {editingResource ? 'Edit Resource File' : 'Add Resource File'}
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Upload or register downloadable pet care guides, contacts, and referral handbooks
+                                </p>
+                            </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
+                            {/* Scrollable Form Body with styled thin scrollbar */}
+                            <form id="resource-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs font-semibold scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-700">
                                 <div>
                                     <label className="block text-gray-500 mb-1">Resource Title *</label>
                                     <input
@@ -618,24 +645,27 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                         <span className="text-[11px] font-bold text-emerald-600">Active Listing</span>
                                     </label>
                                 </div>
-
-                                <div className="pt-4 flex justify-end gap-2 border-t border-gray-100 dark:border-slate-800">
-                                    <button
-                                        type="button"
-                                        onClick={closeModals}
-                                        className="px-4 py-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="px-6 py-2 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20"
-                                    >
-                                        {editingResource ? 'Update Resource' : 'Create Resource'}
-                                    </button>
-                                </div>
                             </form>
+
+                            {/* Sticky Footer */}
+                            <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/95 dark:bg-slate-850/95 backdrop-blur-xs shrink-0 flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeModals}
+                                    className="px-4 py-2.5 rounded-xl text-gray-500 hover:bg-gray-200/60 dark:hover:bg-slate-800 font-bold transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="resource-modal-form"
+                                    disabled={processing}
+                                    className="px-6 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black uppercase tracking-wider shadow-md shadow-paw-orange/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-2"
+                                >
+                                    {processing && <Spinner size="xs" />}
+                                    <span>{editingResource ? 'Update Resource' : 'Create Resource'}</span>
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

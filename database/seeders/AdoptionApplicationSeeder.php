@@ -20,13 +20,13 @@ class AdoptionApplicationSeeder extends Seeder
         $user = User::where('email', 'user@pawlse.test')->first() ?? User::first();
         $userId = $user ? $user->id : null;
 
-        $luna = ShelterAnimal::where('name', 'Luna')->first() ?? ShelterAnimal::first();
-        $milo = ShelterAnimal::where('name', 'Milo')->first() ?? ShelterAnimal::skip(1)->first();
+        $kokey = ShelterAnimal::where('name', 'Kokey')->first() ?? ShelterAnimal::first();
+        $flavo = ShelterAnimal::where('name', 'Flavo')->first() ?? ShelterAnimal::skip(1)->first();
 
-        // 1. Approved Application for Luna
+        // 1. Approved Application for Kokey
         $app1 = AdoptionApplication::create([
             'user_id' => $userId,
-            'shelter_animal_id' => $luna ? $luna->id : 1,
+            'shelter_animal_id' => $kokey ? $kokey->id : 1,
             'status' => AdoptionApplicationStatus::Approved->value,
             'full_name' => 'Pawlse User',
             'address' => 'Iligan City, Lanao del Norte',
@@ -56,7 +56,7 @@ class AdoptionApplicationSeeder extends Seeder
             'hours_alone' => '1-2 hours',
             'introduction_plan' => 'Keep inside a quiet room for the first few days and gradually introduce to other family members.',
             'family_support' => true,
-            'family_support_explanation' => 'Yes, everyone is excited to welcome Luna.',
+            'family_support_explanation' => 'Yes, everyone is excited to welcome Kokey.',
             'current_pets' => false,
             'past_pets' => true,
             'preferred_date' => now()->addDays(2)->format('Y-m-d'),
@@ -83,10 +83,10 @@ class AdoptionApplicationSeeder extends Seeder
             'file_size' => 300000,
         ]);
 
-        // 2. Pending Application for Milo
+        // 2. Pending Application for Flavo
         $app2 = AdoptionApplication::create([
             'user_id' => $userId,
-            'shelter_animal_id' => $milo ? $milo->id : 2,
+            'shelter_animal_id' => $flavo ? $flavo->id : 2,
             'status' => AdoptionApplicationStatus::Pending->value,
             'full_name' => 'Pawlse User',
             'address' => 'Iligan City, Lanao del Norte',

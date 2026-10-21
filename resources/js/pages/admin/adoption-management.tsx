@@ -15,6 +15,7 @@ import {
 import {
   ShelterVisitsTab,
   ShelterVisitData,
+  ShelterVisitSettings,
 } from '@/components/admin/adoption/shelter-visits-tab';
 import {
   RehomingTab,
@@ -119,6 +120,7 @@ interface AdoptionManagementProps {
   adoptedPets?: AdoptedPetData[];
   shelterVisits?: ShelterVisitData[];
   rehomingRequests?: RehomingRequestData[];
+  shelterVisitSettings?: ShelterVisitSettings;
 }
 
 function normalizePriority(priority?: string): 'Urgent' | 'High' | 'Medium' | 'Low' {
@@ -137,6 +139,7 @@ export default function AdoptionManagement({
   adoptedPets = [],
   shelterVisits = [],
   rehomingRequests = [],
+  shelterVisitSettings,
 }: AdoptionManagementProps) {
   const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
   
@@ -315,11 +318,11 @@ export default function AdoptionManagement({
                   onChange={(e) => setAppStatusFilter(e.target.value)}
                   className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
                 >
-                  <option>All Statuses</option>
-                  <option>Pending</option>
-                  <option>Scheduled</option>
-                  <option>Approved</option>
-                  <option>Rejected</option>
+                  <option value="All">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
               </div>
             </div>
@@ -475,7 +478,7 @@ export default function AdoptionManagement({
                   onChange={(e) => setPetTypeFilter(e.target.value)}
                   className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
                 >
-                  <option>All Types</option>
+                  <option value="All">All Types</option>
                   <option value="Cat">Cat</option>
                   <option value="Dog">Dog</option>
                   <option value="Other">Other</option>
@@ -485,7 +488,7 @@ export default function AdoptionManagement({
                   onChange={(e) => setPetStatusFilter(e.target.value)}
                   className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
                 >
-                  <option>All Statuses</option>
+                  <option value="All">All Statuses</option>
                   <option value="Available">Available</option>
                   <option value="Pending">Pending</option>
                   <option value="Adopted">Adopted</option>
@@ -595,7 +598,7 @@ export default function AdoptionManagement({
 
         {/* Shelter Visits Tab */}
         {activeTab === 'shelter-visits' && (
-          <ShelterVisitsTab visits={shelterVisits} />
+          <ShelterVisitsTab visits={shelterVisits} settings={shelterVisitSettings} />
         )}
 
         {/* Rehoming Requests Tab */}

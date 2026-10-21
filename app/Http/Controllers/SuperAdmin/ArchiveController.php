@@ -5,8 +5,11 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionApplication;
 use App\Models\AuditLog;
+use App\Models\CommunityHonor;
 use App\Models\Event;
+use App\Models\Partner;
 use App\Models\PetReport;
+use App\Models\ResourceFile;
 use App\Models\ShelterAnimal;
 use App\Models\User;
 use App\Models\VolunteerApplication;
@@ -35,6 +38,9 @@ class ArchiveController extends Controller
             'rescues' => $this->getTrashedCount('rescue'),
             'adoptions' => $this->getTrashedCount('adoption'),
             'volunteers' => $this->getTrashedCount('volunteer'),
+            'partners' => $this->getTrashedCount('partner'),
+            'resources' => $this->getTrashedCount('resource'),
+            'honors' => $this->getTrashedCount('honor'),
         ];
 
         // Fetch paginated results based on type
@@ -95,12 +101,18 @@ class ArchiveController extends Controller
             'rescue' => PetReport::onlyTrashed()->count(),
             'adoption' => AdoptionApplication::onlyTrashed()->count(),
             'volunteer' => VolunteerApplication::onlyTrashed()->count(),
+            'partner' => Partner::onlyTrashed()->count(),
+            'resource' => ResourceFile::onlyTrashed()->count(),
+            'honor' => CommunityHonor::onlyTrashed()->count(),
             'all' => User::onlyTrashed()->count() +
                      ShelterAnimal::onlyTrashed()->count() +
                      Event::onlyTrashed()->count() +
                      PetReport::onlyTrashed()->count() +
                      AdoptionApplication::onlyTrashed()->count() +
-                     VolunteerApplication::onlyTrashed()->count(),
+                     VolunteerApplication::onlyTrashed()->count() +
+                     Partner::onlyTrashed()->count() +
+                     ResourceFile::onlyTrashed()->count() +
+                     CommunityHonor::onlyTrashed()->count(),
         };
     }
 
@@ -163,6 +175,33 @@ class ArchiveController extends Controller
             $queries[] = $q;
         }
 
+        if ($type === 'all' || $type === 'partner') {
+            $q = DB::table('partners')->whereNotNull('deleted_at')
+                ->select('id', DB::raw("'partner' as type"), 'name as title', 'category as subtitle', 'deleted_at');
+            if ($search) {
+                $q->where(fn ($sub) => $sub->where('name', 'like', "%{$search}%")->orWhere('category', 'like', "%{$search}%"));
+            }
+            $queries[] = $q;
+        }
+
+        if ($type === 'all' || $type === 'resource') {
+            $q = DB::table('resource_files')->whereNotNull('deleted_at')
+                ->select('id', DB::raw("'resource' as type"), 'title as title', 'category as subtitle', 'deleted_at');
+            if ($search) {
+                $q->where(fn ($sub) => $sub->where('title', 'like', "%{$search}%")->orWhere('category', 'like', "%{$search}%"));
+            }
+            $queries[] = $q;
+        }
+
+        if ($type === 'all' || $type === 'honor') {
+            $q = DB::table('community_honors')->whereNotNull('deleted_at')
+                ->select('id', DB::raw("'honor' as type"), 'name as title', 'role_title as subtitle', 'deleted_at');
+            if ($search) {
+                $q->where(fn ($sub) => $sub->where('name', 'like', "%{$search}%")->orWhere('role_title', 'like', "%{$search}%"));
+            }
+            $queries[] = $q;
+        }
+
         // Union query assembly
         if (empty($queries)) {
             return collect();
@@ -189,6 +228,9 @@ class ArchiveController extends Controller
             'rescue' => PetReport::class,
             'adoption' => AdoptionApplication::class,
             'volunteer' => VolunteerApplication::class,
+            'partner' => Partner::class,
+            'resource' => ResourceFile::class,
+            'honor' => CommunityHonor::class,
             default => null,
         };
 
@@ -202,8 +244,8 @@ class ArchiveController extends Controller
     private function getItemName($model, string $type): string
     {
         return match ($type) {
-            'user', 'pet' => $model->name,
-            'event' => $model->title,
+            'user', 'pet', 'partner', 'honor' => $model->name,
+            'event', 'resource' => $model->title,
             'rescue' => 'Rescue at '.$model->location,
             'adoption', 'volunteer' => $model->full_name,
             default => "ID {$model->id}",

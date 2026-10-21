@@ -116,9 +116,12 @@ class SearchController extends Controller
 
         // 4. Search Pet Reports (Missing / Rescues)
         $reports = PetReport::query()
+            ->with('photos')
+            ->whereNotIn('status', ['duplicate', 'cancelled'])
             ->where(function ($q) use ($query) {
-                $q->where('pet_name', 'like', "%{$query}%")
-                    ->orWhere('name', 'like', "%{$query}%")
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('animal_type', 'like', "%{$query}%")
+                    ->orWhere('color', 'like', "%{$query}%")
                     ->orWhere('description', 'like', "%{$query}%")
                     ->orWhere('location', 'like', "%{$query}%")
                     ->orWhere('breed', 'like', "%{$query}%");
@@ -127,15 +130,19 @@ class SearchController extends Controller
             ->take(6)
             ->get()
             ->map(function (PetReport $report) {
+                $photoPath = $report->photos->first()?->path;
+
                 return [
                     'id' => $report->id,
-                    'pet_name' => $report->pet_name ?? $report->name ?? 'Pet Report',
+                    'pet_name' => $report->name ?? ($report->animal_type ? "{$report->animal_type} Report" : 'Pet Report'),
                     'type' => $report->type ?? 'missing',
                     'breed' => $report->breed ?? 'Unknown',
-                    'location' => $report->location ?? $report->location_address ?? 'Iligan City',
-                    'photo_url' => $report->photo_url ?: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
+                    'location' => $report->location ?? 'Iligan City',
+                    'photo_url' => $photoPath ?: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=800',
                     'status' => $report->status ?? 'active',
-                    'url' => route('missing'),
+                    'url' => $report->type === 'missing'
+                        ? route('missing', ['pet' => $report->id])
+                        : route('rescue'),
                 ];
             });
 

@@ -1,6 +1,13 @@
 @php
-    $logoUrl = asset('images/logo.png');
-    $appUrl = config('app.url', 'https://pawlse.org');
+    $logoFile = public_path('images/logo.png');
+    if (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
+        $logoUrl = $message->embed($logoFile);
+    } elseif (file_exists($logoFile)) {
+        $logoUrl = 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile));
+    } else {
+        $logoUrl = asset('images/logo.png');
+    }
+    $appUrl = config('app.url', 'https://pawlse.test');
     $bannerTheme = $bannerTheme ?? 'green'; // 'green', 'orange', 'blue'
     $bannerGradient = match ($bannerTheme) {
         'orange' => 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',

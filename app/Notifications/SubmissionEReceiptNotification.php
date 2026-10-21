@@ -4,13 +4,18 @@ namespace App\Notifications;
 
 use App\Enums\DonationStatus;
 use App\Enums\DonationType;
+use App\Enums\Role;
 use App\Models\AdoptionApplication;
+use App\Models\AssignedTask;
 use App\Models\Donation;
+use App\Models\Event;
 use App\Models\PetReport;
 use App\Models\RehomingRequest;
 use App\Models\ShelterVisit;
+use App\Models\User;
 use App\Models\VolunteerApplication;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -114,12 +119,12 @@ class SubmissionEReceiptNotification extends Notification
         };
 
         $actionUrl = $isCompleted
-            ? route('donate')
-            : ($type === DonationType::InKind->value ? route('donate') : route('donate.checkout', $donation->public_reference));
+            ? route('track', ['reference' => $donation->public_reference, 'email' => $donation->donor_email])
+            : ($type === DonationType::InKind->value ? route('track', ['reference' => $donation->public_reference, 'email' => $donation->donor_email]) : route('donate.checkout', $donation->public_reference));
 
         $actionText = $isCompleted
-            ? 'View Public Transparency Ledger'
-            : ($type === DonationType::InKind->value ? 'View Donation Portal' : 'Complete Checkout / Upload Receipt');
+            ? 'Track Donation Status'
+            : ($type === DonationType::InKind->value ? 'Track Drop-Off Status' : 'Complete Checkout / Upload Receipt');
 
         $footerMessage = $isCompleted
             ? 'Your official contribution has been verified by Iligan Stray Feeders and recorded in the PAWLSE Transparency Ledger.'
@@ -211,7 +216,7 @@ class SubmissionEReceiptNotification extends Notification
             purposeText: "Loving forever-home application for {$petName} at Iligan Stray Feeders Shelter.",
             footerMessage: 'Our adoption screening team will review your questionnaire and home photos and reach out to confirm your interview.',
             actionText: 'Track My Application',
-            actionUrl: route('account.user.adoption-applications'),
+            actionUrl: route('track', ['reference' => $ref, 'email' => $application->email]),
             bannerTheme: 'orange',
         );
     }
@@ -244,8 +249,8 @@ class SubmissionEReceiptNotification extends Notification
             privacyLabel: 'SHELTER VISITOR',
             purposeText: 'Scheduled community visit to Iligan Stray Feeders Shelter, Zone 5, Barangay Tambo, Iligan City.',
             footerMessage: 'ISF will review visitor capacity for your chosen slot and send a confirmation update shortly.',
-            actionText: 'Explore Our Shelter Pets',
-            actionUrl: route('adopt'),
+            actionText: 'Track Shelter Visit',
+            actionUrl: route('track', ['reference' => $ref, 'email' => $visit->email]),
             bannerTheme: 'blue',
         );
     }
@@ -276,16 +281,20 @@ class SubmissionEReceiptNotification extends Notification
             privacyLabel: 'PET GUARDIAN',
             purposeText: "Safe rehoming & community screening assistance for {$rehomingRequest->animal_name}.",
             footerMessage: 'Our shelter coordinators will evaluate your request for community adoption board posting or shelter intake.',
-            actionText: 'Visit PAWLSE Adoption Hub',
-            actionUrl: route('adopt'),
+            actionText: 'Track Rehoming Request',
+            actionUrl: route('track', ['reference' => $ref, 'email' => $rehomingRequest->email]),
             bannerTheme: 'orange',
         );
     }
 
     public static function forPetReport(PetReport $report): self
     {
-        $type = strtoupper((string) ($report->type ?: 'rescue'));
-        $ref = $type.'-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT);
+        $prefix = match ($report->type) {
+            'missing' => 'MIS',
+            'sos' => 'SOS',
+            default => 'RES',
+        };
+        $ref = $prefix.'-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT);
         $typeLabel = match ($report->type) {
             'missing' => 'Missing Pet Report',
             'sos' => 'SOS Emergency Report',
@@ -303,6 +312,14 @@ class SubmissionEReceiptNotification extends Notification
             $items[] = ['label' => 'Pet Name', 'value' => $report->name];
         }
 
+        $actionUrl = route('track', ['reference' => $ref, 'email' => $report->contact_email]);
+
+        $actionText = match ($report->type) {
+            'missing' => 'Track Missing Pet Alert',
+            'sos' => 'Track SOS Alert',
+            default => 'Track Rescue Report',
+        };
+
         return new self(
             referenceNumber: $ref,
             title: "Your {$typeLabel} has been logged!",
@@ -317,9 +334,56 @@ class SubmissionEReceiptNotification extends Notification
             privacyLabel: 'COMMUNITY REPORTER',
             purposeText: "Field rescue & community alert coordination at {$report->location}.",
             footerMessage: 'Our rescue coordinators and on-call volunteers have been alerted. Keep your contact line open for location verification.',
-            actionText: 'View Rescue & Missing Hub',
-            actionUrl: $report->type === 'missing' ? route('missing') : route('rescue'),
+            actionText: $actionText,
+            actionUrl: $actionUrl,
             bannerTheme: 'orange',
+        );
+    }
+
+    public static function forEventRegistration(
+        Event $event,
+        AssignedTask $task,
+        string $recipientName,
+        string $recipientEmail,
+        ?string $recipientPhone = null,
+    ): self {
+        $ref = 'EVT-'.str_pad((string) $task->id, 5, '0', STR_PAD_LEFT);
+        $dateStr = $event->date ? $event->date->format('M d, Y') : (string) $event->date;
+        $roleLabel = $task->role ?: 'Participant';
+
+        $items = [
+            ['label' => 'Registration Ref', 'value' => $ref],
+            ['label' => 'Event Title', 'value' => (string) $event->title],
+            ['label' => 'Event Category', 'value' => (string) $event->category],
+            ['label' => 'Attendee Name', 'value' => $recipientName],
+            ['label' => 'Participation Role', 'value' => $roleLabel],
+            ['label' => 'Event Date & Time', 'value' => "{$dateStr} • {$event->time}"],
+            ['label' => 'Venue / Location', 'value' => (string) $event->location],
+        ];
+
+        if ($recipientPhone) {
+            $items[] = ['label' => 'Contact Mobile', 'value' => $recipientPhone];
+        }
+
+        $isVolunteerRole = strtolower($roleLabel) !== 'participant';
+
+        return new self(
+            referenceNumber: $ref,
+            title: "You're registered for {$event->title}!",
+            receiptCategory: 'Event Registration E-Receipt',
+            recipientName: $recipientName,
+            recipientEmail: $recipientEmail,
+            items: $items,
+            highlightLabel: 'Participation Role',
+            highlightValue: $roleLabel,
+            methodLabel: 'PAWLSE Events',
+            statusLabel: 'SEAT CONFIRMED',
+            privacyLabel: $isVolunteerRole ? 'EVENT VOLUNTEER' : 'EVENT PARTICIPANT',
+            purposeText: "Official registration for '{$event->title}' at {$event->location} on {$dateStr}.",
+            footerMessage: 'Present this registration reference upon arrival at the event venue. Once your attendance is verified after the event, your official Certificate of Participation will be issued and emailed to you.',
+            actionText: 'View Community Events',
+            actionUrl: route('events'),
+            bannerTheme: 'green',
         );
     }
 
@@ -328,36 +392,89 @@ class SubmissionEReceiptNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        if ($notifiable instanceof AnonymousNotifiable) {
+            return ['mail'];
+        }
+
+        return ['database', 'mail'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        $prefix = strtoupper(strtok($this->referenceNumber, '-') ?: '');
+
+        $dashboardUrl = match ($prefix) {
+            'ADP' => route('account.user.adoption-applications'),
+            'VIS' => route('account.user.shelter-visits'),
+            'REH' => route('account.user.rehoming-requests'),
+            'MIS' => route('account.user.missing-found'),
+            'RES', 'SOS' => route('account.user.rescue-reports'),
+            'VOL' => route('account.user.volunteer-status'),
+            'EVT' => ($notifiable instanceof User && ($notifiable->role instanceof Role ? $notifiable->role->value : (string) $notifiable->role) === Role::Volunteer->value && strtolower($this->highlightValue) !== 'participant')
+                ? route('account.volunteer.assigned-tasks')
+                : route('account.user.joined-events'),
+            'DON' => ($this->actionUrl && str_contains($this->actionUrl, '/donate/checkout/'))
+                ? $this->actionUrl
+                : route('account.user.donations'),
+            default => $this->actionUrl ?? route('account.user.notifications'),
+        };
+
+        $icon = match ($prefix) {
+            'ADP', 'REH' => 'adoption',
+            'VIS', 'EVT' => 'event',
+            'MIS', 'RES', 'SOS' => 'rescue',
+            'VOL' => 'volunteer',
+            'DON' => 'donation',
+            default => 'system',
+        };
+
+        return [
+            'title' => $this->title,
+            'message' => "Reference: {$this->referenceNumber}. ".($this->footerMessage ?: $this->receiptCategory),
+            'description' => "Reference: {$this->referenceNumber}. ".($this->footerMessage ?: $this->receiptCategory),
+            'url' => $dashboardUrl,
+            'icon' => $icon,
+            'category' => 'receipt',
+            'reference_number' => $this->referenceNumber,
+            'receipt_category' => $this->receiptCategory,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject("[PAWLSE E-Receipt] {$this->receiptCategory} ({$this->referenceNumber})")
             ->greeting("Hello {$this->recipientName},")
             ->line($this->title)
-            ->line("Reference Number: **{$this->referenceNumber}**")
-            ->view('emails.e-receipt', [
-                'referenceNumber' => $this->referenceNumber,
-                'heroTitle' => $this->title,
-                'receiptCategory' => $this->receiptCategory,
-                'subtitle' => $this->receiptCategory.' • Iligan Stray Feeders',
-                'issuedDate' => now()->format('d M Y, g:i A'),
-                'recipientName' => $this->recipientName,
-                'recipientEmail' => $this->recipientEmail,
-                'items' => $this->items,
-                'highlightLabel' => $this->highlightLabel,
-                'highlightValue' => $this->highlightValue,
-                'methodLabel' => $this->methodLabel,
-                'statusLabel' => $this->statusLabel,
-                'statusBadgeText' => $this->statusLabel,
-                'privacyLabel' => $this->privacyLabel,
-                'purposeText' => $this->purposeText,
-                'footerMessage' => $this->footerMessage,
-                'actionText' => $this->actionText,
-                'actionUrl' => $this->actionUrl,
-                'bannerTheme' => $this->bannerTheme,
-            ]);
+            ->line("Reference Number: **{$this->referenceNumber}**");
+
+        if ($this->actionText && $this->actionUrl) {
+            $mail->action($this->actionText, $this->actionUrl);
+        }
+
+        return $mail->view('emails.e-receipt', [
+            'referenceNumber' => $this->referenceNumber,
+            'heroTitle' => $this->title,
+            'receiptCategory' => $this->receiptCategory,
+            'subtitle' => $this->receiptCategory.' • Iligan Stray Feeders',
+            'issuedDate' => now()->format('d M Y, g:i A'),
+            'recipientName' => $this->recipientName,
+            'recipientEmail' => $this->recipientEmail,
+            'items' => $this->items,
+            'highlightLabel' => $this->highlightLabel,
+            'highlightValue' => $this->highlightValue,
+            'methodLabel' => $this->methodLabel,
+            'statusLabel' => $this->statusLabel,
+            'statusBadgeText' => $this->statusLabel,
+            'privacyLabel' => $this->privacyLabel,
+            'purposeText' => $this->purposeText,
+            'footerMessage' => $this->footerMessage,
+            'actionText' => $this->actionText,
+            'actionUrl' => $this->actionUrl,
+            'bannerTheme' => $this->bannerTheme,
+        ]);
     }
 }

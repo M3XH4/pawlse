@@ -69,9 +69,14 @@ class PetReportController extends Controller
         }
 
         $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+        $contactEmail = ! empty($validated['contact_email']) ? $validated['contact_email'] : ($user ? $user->email : null);
+        $resolvedUserId = $user?->id;
+        if (! $resolvedUserId && ! empty($contactEmail)) {
+            $resolvedUserId = User::whereRaw('LOWER(email) = ?', [strtolower($contactEmail)])->value('id');
+        }
 
         $report = PetReport::create([
-            'user_id' => $user ? $user->id : null,
+            'user_id' => $resolvedUserId,
             'type' => 'rescue',
             'status' => 'pending',
             'animal_type' => $validated['animal_type'],
@@ -83,7 +88,7 @@ class PetReportController extends Controller
             'location' => $validated['location'],
             'contact_name' => ! empty($validated['contact_name']) ? $validated['contact_name'] : ($user ? $user->name : 'Anonymous'),
             'contact_phone' => ! empty($validated['contact_phone']) ? $validated['contact_phone'] : null,
-            'contact_email' => ! empty($validated['contact_email']) ? $validated['contact_email'] : ($user ? $user->email : null),
+            'contact_email' => $contactEmail,
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
             'ai_validation_status' => $aiResolution['status'],
         ]);
@@ -95,7 +100,8 @@ class PetReportController extends Controller
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
 
-        EReceiptDispatcher::sendToEmail(
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user ?? $user,
             $report->contact_email,
             SubmissionEReceiptNotification::forPetReport($report)
         );
@@ -108,16 +114,22 @@ class PetReportController extends Controller
             AuditLog::log('ai_auto_validation', "Automatically approved AI details for rescue report #{$report->id} (confidence: {$aiResolution['confidence']})");
         }
 
+        $ref = 'RES-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT);
+
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
                 'type' => 'warning',
-                'message' => 'Your report was submitted, but flagged as a potential duplicate.',
+                'message' => "Your report (Ref: {$ref}) was submitted, but flagged as a potential duplicate.",
             ]);
         } else {
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => 'Rescue report submitted successfully.',
+                'message' => "Rescue report submitted successfully (Ref: {$ref}).",
             ]);
+        }
+
+        if (! $request->user() && $report->contact_email) {
+            return redirect()->route('track', ['reference' => $ref, 'email' => $report->contact_email]);
         }
 
         return redirect()->back();
@@ -158,9 +170,14 @@ class PetReportController extends Controller
         }
 
         $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+        $contactEmail = ! empty($validated['contactEmail']) ? $validated['contactEmail'] : ($user ? $user->email : null);
+        $resolvedUserId = $user?->id;
+        if (! $resolvedUserId && ! empty($contactEmail)) {
+            $resolvedUserId = User::whereRaw('LOWER(email) = ?', [strtolower($contactEmail)])->value('id');
+        }
 
         $report = PetReport::create([
-            'user_id' => $user ? $user->id : null,
+            'user_id' => $resolvedUserId,
             'type' => 'missing',
             'status' => 'pending',
             'name' => $validated['petName'],
@@ -177,7 +194,7 @@ class PetReportController extends Controller
             'description' => $desc,
             'contact_name' => $validated['contactName'],
             'contact_phone' => $validated['contactPhone'],
-            'contact_email' => $validated['contactEmail'] ?? null,
+            'contact_email' => $contactEmail,
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
             'ai_validation_status' => $aiResolution['status'],
         ]);
@@ -189,10 +206,15 @@ class PetReportController extends Controller
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
 
-        EReceiptDispatcher::sendToEmail(
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user ?? $user,
             $report->contact_email,
             SubmissionEReceiptNotification::forPetReport($report)
         );
+
+        if (! $report->is_duplicate) {
+            PetRescueSubmittedEvent::dispatch($report);
+        }
 
         AuditLog::log('missing_report_submit', "Submitted missing pet report for '{$validated['petName']}'");
 
@@ -200,15 +222,26 @@ class PetReportController extends Controller
             AuditLog::log('ai_auto_validation', "Automatically approved AI details for missing pet report #{$report->id} (confidence: {$aiResolution['confidence']})");
         }
 
+        $ref = 'MIS-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT);
+
+        if ($request->hasSession()) {
+            $request->session()->flash('submitted_report', [
+                'reference' => $ref,
+                'email' => $report->contact_email,
+                'type' => 'missing',
+                'is_duplicate' => (bool) $report->is_duplicate,
+            ]);
+        }
+
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
                 'type' => 'warning',
-                'message' => 'Report submitted, but flagged as a potential duplicate.',
+                'message' => "Report submitted, but flagged as a potential duplicate (Ref: {$ref}).",
             ]);
         } else {
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => 'Missing pet report submitted successfully.',
+                'message' => "Missing pet report submitted successfully (Ref: {$ref}).",
             ]);
         }
 
@@ -232,6 +265,9 @@ class PetReportController extends Controller
         if (! $request->has('contactPhone') && $request->has('contact_phone')) {
             $request->merge(['contactPhone' => $request->input('contact_phone')]);
         }
+        if (! $request->has('contactEmail') && $request->has('contact_email')) {
+            $request->merge(['contactEmail' => $request->input('contact_email')]);
+        }
         $isMultiple = is_array($request->file('images'));
         $imageRule = ['max:10240', 'mimes:jpeg,png,jpg,gif,svg,webp,heic,heif,bmp'];
 
@@ -243,6 +279,7 @@ class PetReportController extends Controller
             'description' => ['required', 'string', 'max:1000'],
             'contactName' => ['nullable', 'string', 'max:255'],
             'contactPhone' => ['nullable', 'string', 'max:255'],
+            'contactEmail' => ['nullable', 'email', 'max:255'],
             'images' => $isMultiple ? ['nullable', 'array'] : ['nullable', ...$imageRule],
             'images.*' => $imageRule,
             'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
@@ -251,9 +288,14 @@ class PetReportController extends Controller
         $user = Auth::user();
 
         $aiResolution = $this->resolveAiValidationStatus($validated['ai_prediction_log_id'] ?? null);
+        $contactEmail = ! empty($validated['contactEmail']) ? $validated['contactEmail'] : ($user ? $user->email : null);
+        $resolvedUserId = $user?->id;
+        if (! $resolvedUserId && ! empty($contactEmail)) {
+            $resolvedUserId = User::whereRaw('LOWER(email) = ?', [strtolower($contactEmail)])->value('id');
+        }
 
         $report = PetReport::create([
-            'user_id' => $user ? $user->id : null,
+            'user_id' => $resolvedUserId,
             'type' => 'sos',
             'status' => 'pending',
             'animal_type' => $validated['animalType'],
@@ -261,9 +303,9 @@ class PetReportController extends Controller
             'urgency' => $validated['urgency'],
             'situation_type' => $validated['situationType'],
             'description' => $validated['description'],
-            'contact_name' => $validated['contactName'] ?? ($user ? $user->name : 'Anonymous'),
-            'contact_phone' => $validated['contactPhone'] ?? null,
-            'contact_email' => $user ? $user->email : null,
+            'contact_name' => ! empty($validated['contactName']) ? $validated['contactName'] : ($user ? $user->name : 'Anonymous'),
+            'contact_phone' => ! empty($validated['contactPhone']) ? $validated['contactPhone'] : null,
+            'contact_email' => $contactEmail,
             'ai_prediction_log_id' => $validated['ai_prediction_log_id'] ?? null,
             'ai_validation_status' => $aiResolution['status'],
         ]);
@@ -275,10 +317,15 @@ class PetReportController extends Controller
             Notification::send($admins, new RescueReportSubmittedNotification($report));
         }
 
-        EReceiptDispatcher::sendToEmail(
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user ?? $user,
             $report->contact_email,
             SubmissionEReceiptNotification::forPetReport($report)
         );
+
+        if (! $report->is_duplicate) {
+            PetRescueSubmittedEvent::dispatch($report);
+        }
 
         AuditLog::log('sos_report_submit', "Submitted SOS report at {$validated['location']}");
 
@@ -286,15 +333,26 @@ class PetReportController extends Controller
             AuditLog::log('ai_auto_validation', "Automatically approved AI details for SOS emergency report #{$report->id} (confidence: {$aiResolution['confidence']})");
         }
 
+        $ref = 'SOS-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT);
+
+        if ($request->hasSession()) {
+            $request->session()->flash('submitted_report', [
+                'reference' => $ref,
+                'email' => $report->contact_email,
+                'type' => 'sos',
+                'is_duplicate' => (bool) $report->is_duplicate,
+            ]);
+        }
+
         if ($report->is_duplicate) {
             Inertia::flash('toast', [
                 'type' => 'warning',
-                'message' => 'SOS report submitted, but flagged as a potential duplicate.',
+                'message' => "SOS report submitted, but flagged as a potential duplicate (Ref: {$ref}).",
             ]);
         } else {
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => 'SOS emergency report submitted successfully!',
+                'message' => "SOS emergency report submitted successfully (Ref: {$ref})!",
             ]);
         }
 
@@ -335,6 +393,7 @@ class PetReportController extends Controller
 
         $reportsQuery = PetReport::with('photos')
             ->where('type', 'missing')
+            ->whereNotIn('status', ['duplicate', 'cancelled'])
             ->when($statusFilter !== 'All', function ($query) use ($statusFilter) {
                 if ($statusFilter === 'Missing') {
                     $query->whereIn('status', ['pending', 'assigned']);
@@ -365,6 +424,55 @@ class PetReportController extends Controller
     }
 
     /**
+     * Mark missing pet report as safely reunited by reporter.
+     */
+    public function markReunited(Request $request, PetReport $report): RedirectResponse
+    {
+        if ($report->type !== 'missing') {
+            abort(404);
+        }
+
+        $user = $request->user();
+        $email = trim((string) $request->input('email', $request->query('email', '')));
+
+        $isAuthorized = false;
+        if ($user && ($report->user_id === $user->id || strtolower(trim((string) $report->contact_email)) === strtolower(trim((string) $user->email)))) {
+            $isAuthorized = true;
+        } elseif ($email !== '' && strtolower(trim((string) $report->contact_email)) === strtolower($email)) {
+            $isAuthorized = true;
+        }
+
+        if (! $isAuthorized) {
+            abort(403, 'Unauthorized to update this missing report.');
+        }
+
+        $report->update([
+            'status' => 'resolved',
+        ]);
+
+        // Complete any assigned tasks
+        AssignedTask::query()
+            ->where('pet_report_id', $report->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'completed']);
+
+        AuditLog::log('missing_pet_reunited', "Missing pet report ID {$report->id} ({$report->name}) marked as safely reunited.");
+
+        EReceiptDispatcher::sendToUserAndEmail(
+            $report->user,
+            $report->contact_email,
+            new RescueStatusUpdatedNotification($report)
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Congratulations! Your missing pet report is now marked as Found & Reunited.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
      * User's reports history list.
      */
     public function userReports(Request $request): Response
@@ -374,7 +482,10 @@ class PetReportController extends Controller
         $typeFilter = $request->input('type', 'All');
 
         $reportsQuery = PetReport::with(['photos', 'assignedVolunteer'])
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(contact_email) = ?', [strtolower((string) $user->email)]);
+            })
             ->whereIn('type', ['rescue', 'sos'])
             ->when($typeFilter !== 'All', function ($query) use ($typeFilter) {
                 $query->where('type', strtolower($typeFilter));
@@ -407,7 +518,10 @@ class PetReportController extends Controller
         $search = $request->input('search', '');
 
         $reportsQuery = PetReport::with(['photos'])
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(contact_email) = ?', [strtolower((string) $user->email)]);
+            })
             ->where('type', 'missing')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {

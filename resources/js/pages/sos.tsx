@@ -9,18 +9,21 @@ import {
     Navigation,
     Hospital,
     Plus,
-    Upload,
     X,
+    ExternalLink,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React, { useRef, useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { reverseGeocode } from '@/lib/geocoding';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 import { Spinner } from '@/components/ui/spinner';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 const EMERGENCY_CONTACTS = [
     {
@@ -81,8 +84,33 @@ const NEARBY_VETS = [
 ];
 
 export default function SOS() {
+    const { auth, flash } = usePage<{
+        auth?: {
+            user?: {
+                name?: string;
+                email?: string;
+                phone?: string;
+            } | null;
+        };
+        flash?: {
+            error?: string | null;
+            submitted_report?: {
+                reference: string;
+                email?: string | null;
+                type?: string;
+                is_duplicate?: boolean;
+            } | null;
+        };
+    }>().props;
+    const authUser = auth?.user;
+
     const [submitted, setSubmitted] = useState(false);
     const [submittedLocation, setSubmittedLocation] = useState('');
+    const [submittedReportInfo, setSubmittedReportInfo] = useState<{
+        reference: string;
+        email?: string | null;
+        is_duplicate?: boolean;
+    } | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [detectingLocation, setDetectingLocation] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -94,9 +122,29 @@ export default function SOS() {
         location: '',
         urgency: 'high',
         description: '',
-        contactName: '',
-        contactPhone: '',
+        contactName: authUser?.name || '',
+        contactPhone: authUser?.phone ? formatPhoneNumber(authUser.phone) : '',
+        contactEmail: authUser?.email || '',
         situationType: '',
+    });
+
+    const isFormDirty = !submitted && Boolean(
+        formData.situationType ||
+        formData.location.trim() ||
+        formData.description.trim() ||
+        formData.contactName.trim() !== (authUser?.name || '') ||
+        formData.contactPhone.trim() !== (authUser?.phone ? formatPhoneNumber(authUser.phone) : '') ||
+        formData.contactEmail.trim() !== (authUser?.email || '') ||
+        uploadedFiles.length > 0
+    );
+
+    const {
+        showDialog: showLeaveModal,
+        handleContinueEditing,
+        handleLeaveAnyway,
+    } = useUnsavedChanges({
+        isDirty: isFormDirty,
+        disabled: submitted,
     });
 
     useEffect(() => {
@@ -115,7 +163,11 @@ export default function SOS() {
         >,
     ) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        if (name === 'contactPhone') {
+            setFormData({ ...formData, [name]: formatPhoneNumber(value) });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const processFiles = (filesToAdd: File[]) => {
@@ -259,6 +311,7 @@ export default function SOS() {
         data.append('description', formData.description);
         data.append('contactName', formData.contactName || '');
         data.append('contactPhone', formData.contactPhone || '');
+        data.append('contactEmail', formData.contactEmail || '');
         data.append('situationType', formData.situationType);
 
         uploadedFiles.forEach((file) => {
@@ -266,19 +319,35 @@ export default function SOS() {
         });
 
         const targetLocation = formData.location;
+        const targetEmail = formData.contactEmail || authUser?.email || '';
 
         router.post('/pet-reports/sos', data, {
             preserveState: true,
             preserveScroll: true,
             onSuccess: (page) => {
-                const flash = page.props.flash as { error?: string | null } | undefined;
-                if (flash?.error) {
-                    toast.error(flash.error);
+                const pageFlash = page.props.flash as {
+                    error?: string | null;
+                    submitted_report?: {
+                        reference: string;
+                        email?: string | null;
+                        is_duplicate?: boolean;
+                    } | null;
+                } | undefined;
+                if (pageFlash?.error) {
+                    toast.error(pageFlash.error);
                     return;
+                }
+                if (pageFlash?.submitted_report) {
+                    setSubmittedReportInfo(pageFlash.submitted_report);
+                } else {
+                    setSubmittedReportInfo({
+                        reference: '',
+                        email: targetEmail || null,
+                        is_duplicate: false,
+                    });
                 }
                 setSubmittedLocation(targetLocation);
                 setSubmitted(true);
-                toast.success('SOS report submitted successfully!');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
             onError: (errors) => {
@@ -384,6 +453,9 @@ export default function SOS() {
                                                 </option>
                                                 <option value="Dog">Dog</option>
                                                 <option value="Cat">Cat</option>
+                                                <option value="Other">
+                                                    Other Animal
+                                                </option>
                                             </select>
                                         </div>
                                         <div>
@@ -445,19 +517,25 @@ export default function SOS() {
                                                     id: 'high',
                                                     label: 'CRITICAL',
                                                     desc: 'Life-threatening',
-                                                    color: 'red',
+                                                    activeClasses:
+                                                        'border-red-500 bg-red-50 shadow-xl',
+                                                    dotClass: 'bg-red-500',
                                                 },
                                                 {
                                                     id: 'medium',
                                                     label: 'URGENT',
                                                     desc: 'Needs help soon',
-                                                    color: 'orange',
+                                                    activeClasses:
+                                                        'border-orange-500 bg-orange-50 shadow-xl',
+                                                    dotClass: 'bg-orange-500',
                                                 },
                                                 {
                                                     id: 'low',
                                                     label: 'MODERATE',
                                                     desc: 'Can wait',
-                                                    color: 'yellow',
+                                                    activeClasses:
+                                                        'border-yellow-500 bg-yellow-50 shadow-xl',
+                                                    dotClass: 'bg-yellow-500',
                                                 },
                                             ].map((level) => (
                                                 <button
@@ -472,12 +550,12 @@ export default function SOS() {
                                                     className={`rounded-2xl border-4 p-6 transition-all ${
                                                         formData.urgency ===
                                                         level.id
-                                                            ? `border-${level.color}-500 bg-${level.color}-50 shadow-xl`
+                                                            ? level.activeClasses
                                                             : 'border-transparent bg-gray-50'
                                                     }`}
                                                 >
                                                     <div
-                                                        className={`h-4 w-4 rounded-full bg-${level.color}-500 mx-auto mb-2`}
+                                                        className={`h-4 w-4 rounded-full ${level.dotClass} mx-auto mb-2`}
                                                     ></div>
                                                     <p className="text-sm font-black tracking-widest text-gray-900 uppercase">
                                                         {level.label}
@@ -646,19 +724,18 @@ export default function SOS() {
                                     </div>
 
                                     {/* Contact Info */}
-                                    <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="grid gap-6 md:grid-cols-3">
                                         <div>
                                             <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                                Your Name
+                                                Your Name (Optional)
                                             </label>
                                             <input
-                                                required
                                                 type="text"
                                                 name="contactName"
                                                 value={formData.contactName}
                                                 onChange={handleInputChange}
                                                 className="w-full rounded-2xl border-2 border-transparent bg-gray-50 p-4 font-bold transition-all outline-none focus:border-red-500"
-                                                placeholder="Full Name"
+                                                placeholder="Full Name or Anonymous"
                                             />
                                         </div>
                                         <div>
@@ -666,13 +743,25 @@ export default function SOS() {
                                                 Contact Number
                                             </label>
                                             <input
-                                                required
                                                 type="tel"
                                                 name="contactPhone"
                                                 value={formData.contactPhone}
                                                 onChange={handleInputChange}
                                                 className="w-full rounded-2xl border-2 border-transparent bg-gray-50 p-4 font-bold transition-all outline-none focus:border-red-500"
-                                                placeholder="09XX XXX XXXX"
+                                                placeholder="+63 912 124 1241"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
+                                                Email (For Tracking & E-Receipt)
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="contactEmail"
+                                                value={formData.contactEmail}
+                                                onChange={handleInputChange}
+                                                className="w-full rounded-2xl border-2 border-transparent bg-gray-50 p-4 font-bold transition-all outline-none focus:border-red-500"
+                                                placeholder="you@example.com"
                                             />
                                         </div>
                                     </div>
@@ -734,28 +823,91 @@ export default function SOS() {
                             className="space-y-8"
                         >
                             {/* Success Message */}
-                            <div className="rounded-[40px] bg-white p-12 text-center shadow-2xl">
+                            <div className="rounded-[40px] bg-white p-8 text-center shadow-2xl md:p-12">
                                 <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-green-100 text-green-600">
                                     <CheckCircle2 size={48} strokeWidth={3} />
                                 </div>
-                                <h2 className="mb-4 text-5xl font-black text-gray-900 uppercase">
-                                    Report Received!
+                                <h2 className="mb-4 text-4xl font-black text-gray-900 uppercase md:text-5xl">
+                                    Emergency Report Logged!
                                 </h2>
-                                <p className="mx-auto mb-8 max-w-2xl text-xl leading-relaxed font-bold text-gray-600">
-                                    Emergency responders and nearby volunteers
-                                    have been notified. Help is on the way to{' '}
+                                <p className="mx-auto mb-6 max-w-2xl text-xl leading-relaxed font-bold text-gray-600">
+                                    Emergency coordinators and nearby volunteers
+                                    have been alerted for{' '}
                                     <span className="font-black text-red-600">
                                         {submittedLocation ||
                                             formData.location ||
                                             'the reported location'}
                                     </span>
-                                    .
+                                    . If the animal is in immediate
+                                    life-threatening danger, please also call
+                                    one of the 24/7 hotlines below.
                                 </p>
-                                <div className="inline-flex items-center gap-3 rounded-full border-2 border-red-200 bg-red-50 px-6 py-3">
-                                    <div className="h-3 w-3 animate-pulse rounded-full bg-red-600"></div>
-                                    <span className="text-sm font-black tracking-widest text-red-900 uppercase">
-                                        Response Team Dispatched
-                                    </span>
+
+                                {(submittedReportInfo?.reference ||
+                                    flash?.submitted_report?.reference) && (
+                                    <div className="mx-auto mb-6 max-w-md rounded-2xl border-2 border-gray-100 bg-gray-50 p-4">
+                                        <p className="text-xs font-black tracking-widest text-gray-400 uppercase">
+                                            Your SOS Reference Number
+                                        </p>
+                                        <p className="mt-1 text-2xl font-black tracking-wider text-gray-900">
+                                            {submittedReportInfo?.reference ||
+                                                flash?.submitted_report
+                                                    ?.reference}
+                                        </p>
+                                        {(submittedReportInfo?.email ||
+                                            flash?.submitted_report?.email) && (
+                                            <p className="mt-1 text-xs font-bold text-gray-500">
+                                                Sent E-Receipt to{' '}
+                                                {submittedReportInfo?.email ||
+                                                    flash?.submitted_report
+                                                        ?.email}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap items-center justify-center gap-4">
+                                    {submittedReportInfo?.is_duplicate ||
+                                    flash?.submitted_report?.is_duplicate ? (
+                                        <div className="inline-flex items-center gap-3 rounded-full border-2 border-amber-200 bg-amber-50 px-6 py-3">
+                                            <div className="h-3 w-3 animate-pulse rounded-full bg-amber-600"></div>
+                                            <span className="text-sm font-black tracking-widest text-amber-900 uppercase">
+                                                Linked to Existing Active Alert
+                                                in Area
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="inline-flex items-center gap-3 rounded-full border-2 border-red-200 bg-red-50 px-6 py-3">
+                                            <div className="h-3 w-3 animate-pulse rounded-full bg-red-600"></div>
+                                            <span className="text-sm font-black tracking-widest text-red-900 uppercase">
+                                                Priority SOS Queued • Awaiting
+                                                Responder Dispatch
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {(submittedReportInfo?.reference ||
+                                        flash?.submitted_report?.reference) &&
+                                        (submittedReportInfo?.email ||
+                                            flash?.submitted_report?.email) && (
+                                            <Link
+                                                href={`/track?reference=${encodeURIComponent(
+                                                    submittedReportInfo?.reference ||
+                                                        flash?.submitted_report
+                                                            ?.reference ||
+                                                        '',
+                                                )}&email=${encodeURIComponent(
+                                                    submittedReportInfo?.email ||
+                                                        flash?.submitted_report
+                                                            ?.email ||
+                                                        '',
+                                                )}`}
+                                                className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-gray-800"
+                                            >
+                                                <span>Track SOS Status</span>
+                                                <ExternalLink size={16} />
+                                            </Link>
+                                        )}
                                 </div>
                             </div>
 
@@ -877,9 +1029,15 @@ export default function SOS() {
                                                     <Phone size={16} />
                                                     Call
                                                 </a>
-                                                <button className="rounded-xl border-2 border-blue-600 bg-white px-4 font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white">
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vet.name} ${vet.address} Iligan City`)}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    title={`Get directions to ${vet.name}`}
+                                                    className="flex items-center justify-center rounded-xl border-2 border-blue-600 bg-white px-4 font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white"
+                                                >
                                                     <Navigation size={16} />
-                                                </button>
+                                                </a>
                                             </div>
                                         </motion.div>
                                     ))}
@@ -892,13 +1050,20 @@ export default function SOS() {
                                     onClick={() => {
                                         setSubmitted(false);
                                         setSubmittedLocation('');
+                                        setSubmittedReportInfo(null);
                                         setFormData({
                                             animalType: '',
                                             location: '',
                                             urgency: 'high',
                                             description: '',
-                                            contactName: '',
-                                            contactPhone: '',
+                                            contactName: authUser?.name || '',
+                                            contactPhone: authUser?.phone
+                                                ? formatPhoneNumber(
+                                                      authUser.phone,
+                                                  )
+                                                : '',
+                                            contactEmail:
+                                                authUser?.email || '',
                                             situationType: '',
                                         });
                                         filePreviews.forEach((preview) => {
@@ -922,6 +1087,12 @@ export default function SOS() {
                     )}
                 </div>
             </main>
+
+            <UnsavedChangesDialog
+                isOpen={showLeaveModal}
+                onContinueEditing={handleContinueEditing}
+                onLeaveAnyway={handleLeaveAnyway}
+            />
 
             <Footer />
         </div>
