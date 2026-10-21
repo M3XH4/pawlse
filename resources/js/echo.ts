@@ -8,7 +8,9 @@ declare global {
     }
 }
 
-window.Pusher = Pusher;
+if (typeof window !== 'undefined') {
+    window.Pusher = Pusher;
+}
 
 let echoInstance: Echo<'reverb'> | null = null;
 

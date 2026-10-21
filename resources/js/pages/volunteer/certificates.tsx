@@ -15,6 +15,8 @@ interface CertificateModel {
     certificate_number: string;
     role?: string | null;
     guest_name?: string | null;
+    created_at?: string;
+    updated_at?: string;
     user?: {
         name: string;
     } | null;
@@ -56,6 +58,47 @@ const formatEventDate = (dateStr?: string | null, fallbackDateStr?: string | nul
 const formatIssueDate = (dateStr?: string | null) => {
     const d = parseLocalDate(dateStr) || new Date();
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatCertificateDateTime = (cert: CertificateModel) => {
+    if (cert.created_at) {
+        const d = new Date(cert.created_at);
+        if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+            const timeStr = d.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
+            return `${dateStr} • ${timeStr}`;
+        }
+    }
+
+    if (cert.issue_date) {
+        const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(cert.issue_date) || /T00:00:00(\.0+)?Z?$/i.test(cert.issue_date);
+        if (!isDateOnly) {
+            const d = new Date(cert.issue_date);
+            if (!isNaN(d.getTime())) {
+                const dateStr = d.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                });
+                const timeStr = d.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+                return `${dateStr} • ${timeStr}`;
+            }
+        }
+    }
+
+    return formatIssueDate(cert.issue_date);
 };
 
 export default function VolunteerCertificates({ certificates, defaultRole, auth }: CertificatesProps) {
@@ -107,18 +150,24 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
 
                 // 2. Role Slot
                 ctx.fillStyle = '#FF750F';
-                ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-                ctx.fillText((viewingCert.role || defaultRole || 'Volunteer').toUpperCase(), 1492 * 0.38, 1054 * 0.63);
+                const roleText = (viewingCert.role || defaultRole || 'Volunteer').toUpperCase();
+                let roleFontSize = 14;
+                ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
+                while (ctx.measureText(roleText).width > 185 && roleFontSize > 9) {
+                    roleFontSize -= 1;
+                    ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
+                }
+                ctx.fillText(roleText, 1492 * 0.37, 1054 * 0.655);
 
                 // 3. Event / Activity Title (auto-scale font for long titles)
                 const eventTitle = viewingCert.event?.title || viewingCert.title || 'Community Stray Feeding Outreach';
                 let eventFontSize = 14;
                 ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
-                while (ctx.measureText(eventTitle).width > 440 && eventFontSize > 10) {
+                while (ctx.measureText(eventTitle).width > 460 && eventFontSize > 10) {
                     eventFontSize -= 1;
                     ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
                 }
-                ctx.fillText(eventTitle, 1492 * 0.64, 1054 * 0.63);
+                ctx.fillText(eventTitle, 1492 * 0.649, 1054 * 0.655);
 
                 // 4. Event Date
                 ctx.fillStyle = '#0B2340';
@@ -203,7 +252,7 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
                             <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
                                 <span className="text-xs font-semibold text-gray-400 flex items-center gap-1">
                                     <Calendar size={14} />
-                                    {cert.issue_date}
+                                    {formatCertificateDateTime(cert)}
                                 </span>
                                 <button
                                     onClick={() => setViewingCert(cert)}
@@ -351,12 +400,12 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
 
                                 {/* 2. Role Slot in middle paragraph (after 'as a') */}
                                 <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center"
+                                    className="absolute flex items-center justify-center pointer-events-none text-center px-1"
                                     style={{
-                                        top: '60.5%',
-                                        left: '32.6%',
-                                        width: '10.5%',
-                                        height: '3.3%',
+                                        top: '62.6%',
+                                        left: '30.2%',
+                                        width: '13.8%',
+                                        height: '4.7%',
                                     }}
                                 >
                                     <span className="font-sans font-black text-paw-orange text-[clamp(8px,1.05vw,14px)] uppercase tracking-tight truncate">
@@ -366,12 +415,12 @@ export default function VolunteerCertificates({ certificates, defaultRole, auth 
 
                                 {/* 3. Event / Program Title in middle paragraph (after 'in the') */}
                                 <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center px-1"
+                                    className="absolute flex items-center justify-center pointer-events-none text-center px-2"
                                     style={{
-                                        top: '60.5%',
-                                        left: '48.6%',
-                                        width: '30.5%',
-                                        height: '3.3%',
+                                        top: '62.6%',
+                                        left: '48.7%',
+                                        width: '32.4%',
+                                        height: '4.7%',
                                     }}
                                 >
                                     <span className="font-sans font-black text-paw-orange text-[clamp(8px,1.05vw,14px)] tracking-tight truncate">

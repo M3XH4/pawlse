@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AlertTriangle, Trash2, Info, X } from 'lucide-react';
+import { AlertTriangle, Trash2, Info, X, CheckCircle2 } from 'lucide-react';
 
 export interface ConfirmationModalProps {
     isOpen: boolean;
@@ -9,8 +9,10 @@ export interface ConfirmationModalProps {
     description?: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
-    variant?: 'danger' | 'warning' | 'info';
+    variant?: 'danger' | 'warning' | 'info' | 'success';
+    icon?: React.ComponentType<{ size?: number; className?: string }>;
     isLoading?: boolean;
+    children?: React.ReactNode;
 }
 
 export function ConfirmationModal({
@@ -22,7 +24,9 @@ export function ConfirmationModal({
     confirmText = 'Confirm',
     cancelText = 'Cancel',
     variant = 'danger',
+    icon,
     isLoading = false,
+    children,
 }: ConfirmationModalProps) {
     useEffect(() => {
         if (!isOpen) return;
@@ -55,9 +59,14 @@ export function ConfirmationModal({
             icon: Info,
             confirmButton: 'bg-paw-orange hover:bg-orange-600 text-white shadow-orange-500/25',
         },
+        success: {
+            iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50',
+            icon: CheckCircle2,
+            confirmButton: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25',
+        },
     }[variant];
 
-    const IconComponent = variantStyles.icon;
+    const IconComponent = icon || variantStyles.icon;
 
     return (
         <div 
@@ -96,6 +105,12 @@ export function ConfirmationModal({
                         </div>
                     </div>
                 </div>
+
+                {children && (
+                    <div className="mt-4">
+                        {children}
+                    </div>
+                )}
 
                 <div className="flex justify-end items-center gap-2.5 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                     <button

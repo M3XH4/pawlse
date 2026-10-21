@@ -8,9 +8,11 @@ import {
     ToggleLeft, ToggleRight, X, Heart, Share2, Sparkles,
     Calendar, Clock, Check, ExternalLink, Image as ImageIcon,
     FileText, HelpCircle, Megaphone, PawPrint, HeartHandshake,
-    GraduationCap, Scale, Layers, Tag, Star, MessageSquareQuote
+    GraduationCap, Scale, Layers, Tag, Star, MessageSquareQuote,
+    XCircle
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
 interface BlogPostModel {
     id: number;
@@ -155,18 +157,46 @@ export default function BlogManagement({
     const [isFeatured, setIsFeatured] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Approve Modal state
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+    const [postToApprove, setPostToApprove] = useState<BlogPostModel | null>(null);
+    const [isApproving, setIsApproving] = useState(false);
+
     // Reject Modal state
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [postToReject, setPostToReject] = useState<BlogPostModel | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [isRejecting, setIsRejecting] = useState(false);
 
+    // Delete Modal state
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState<BlogPostModel | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const openApproveModal = (post: BlogPostModel) => {
+        setPostToApprove(post);
+        setIsApproveModalOpen(true);
+    };
+
     const handleApprove = (post: BlogPostModel) => {
-        if (!confirm(`Are you sure you want to approve "${post.title}" and publish it to the blog?`)) return;
-        router.post(`/account/admin/blog-management/${post.id}/approve`, {}, {
+        openApproveModal(post);
+    };
+
+    const handleConfirmApprove = () => {
+        if (!postToApprove) return;
+        setIsApproving(true);
+        router.post(`/account/admin/blog-management/${postToApprove.id}/approve`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success(`"${post.title}" approved and published to the blog!`),
-            onError: () => toast.error('Failed to approve story.'),
+            onSuccess: () => {
+                toast.success(`"${postToApprove.title}" approved and published to the blog!`);
+                setIsApproving(false);
+                setIsApproveModalOpen(false);
+                setPostToApprove(null);
+            },
+            onError: () => {
+                toast.error('Failed to approve story.');
+                setIsApproving(false);
+            },
         });
     };
 
@@ -176,8 +206,7 @@ export default function BlogManagement({
         setIsRejectModalOpen(true);
     };
 
-    const handleRejectSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleConfirmReject = () => {
         if (!postToReject) return;
         setIsRejecting(true);
         router.post(`/account/admin/blog-management/${postToReject.id}/reject`, {
@@ -193,6 +222,33 @@ export default function BlogManagement({
             onError: () => {
                 setIsRejecting(false);
                 toast.error('Failed to reject story.');
+            },
+        });
+    };
+
+    const openDeleteModal = (post: BlogPostModel) => {
+        setPostToDelete(post);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeletePost = (post: BlogPostModel) => {
+        openDeleteModal(post);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!postToDelete) return;
+        setIsDeleting(true);
+        router.delete(`/account/admin/blog-management/${postToDelete.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Article deleted successfully.');
+                setIsDeleting(false);
+                setIsDeleteModalOpen(false);
+                setPostToDelete(null);
+            },
+            onError: () => {
+                toast.error('Failed to delete article.');
+                setIsDeleting(false);
             },
         });
     };
@@ -304,17 +360,6 @@ export default function BlogManagement({
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(`Article status updated.`);
-            },
-        });
-    };
-
-    const handleDeletePost = (post: BlogPostModel) => {
-        if (!confirm(`Are you sure you want to delete "${post.title}"?`)) return;
-
-        router.delete(`/account/admin/blog-management/${post.id}`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Article deleted successfully.');
             },
         });
     };
@@ -589,7 +634,7 @@ export default function BlogManagement({
                                                     {post.status === 'pending' && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleApprove(post)}
+                                                                onClick={() => openApproveModal(post)}
                                                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer shadow-xs"
                                                                 title="Approve & Publish Story"
                                                             >
@@ -628,7 +673,7 @@ export default function BlogManagement({
                                                     </button>
 
                                                     <button
-                                                        onClick={() => handleDeletePost(post)}
+                                                        onClick={() => openDeleteModal(post)}
                                                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                                                         title="Delete Article"
                                                     >
@@ -943,52 +988,90 @@ export default function BlogManagement({
                         </div>
                     </div>
                 )}
+                {/* Approve Story Confirmation Modal */}
+                <ConfirmationModal
+                    isOpen={isApproveModalOpen && !!postToApprove}
+                    onClose={() => {
+                        if (!isApproving) {
+                            setIsApproveModalOpen(false);
+                            setPostToApprove(null);
+                        }
+                    }}
+                    onConfirm={handleConfirmApprove}
+                    title="Approve & Publish Story"
+                    description={
+                        <span>
+                            Are you sure you want to approve{' '}
+                            <strong className="text-gray-900 dark:text-white font-bold">&quot;{postToApprove?.title}&quot;</strong>{' '}
+                            and publish it to the blog? It will be publicly visible to everyone immediately.
+                        </span>
+                    }
+                    confirmText="Confirm & Publish"
+                    cancelText="Cancel"
+                    variant="success"
+                    isLoading={isApproving}
+                />
+
                 {/* Reject Story Modal */}
-                {isRejectModalOpen && postToReject && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-                            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-4">
-                                <h4 className="font-fredoka text-lg font-bold text-gray-900 dark:text-white">
-                                    Reject Story Submission
-                                </h4>
-                                <button
-                                    onClick={() => setIsRejectModalOpen(false)}
-                                    className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-                                Provide feedback to <strong>{postToReject.author?.name || 'the author'}</strong> on why &quot;{postToReject.title}&quot; was not approved. They will be notified and can revise and resubmit.
-                            </p>
-                            <form onSubmit={handleRejectSubmit}>
-                                <textarea
-                                    rows={4}
-                                    value={rejectionReason}
-                                    onChange={(e) => setRejectionReason(e.target.value)}
-                                    placeholder="e.g. Please upload higher resolution photos of your pet and expand on their rescue/adjustment journey..."
-                                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 mb-4"
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsRejectModalOpen(false)}
-                                        className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isRejecting}
-                                        className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl disabled:opacity-50 cursor-pointer"
-                                    >
-                                        {isRejecting ? 'Rejecting...' : 'Confirm Reject'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                <ConfirmationModal
+                    isOpen={isRejectModalOpen && !!postToReject}
+                    onClose={() => {
+                        if (!isRejecting) {
+                            setIsRejectModalOpen(false);
+                            setPostToReject(null);
+                        }
+                    }}
+                    onConfirm={handleConfirmReject}
+                    title="Reject Story Submission"
+                    description={
+                        <span>
+                            Provide feedback to{' '}
+                            <strong className="text-gray-900 dark:text-white font-bold">{postToReject?.author?.name || 'the author'}</strong>{' '}
+                            on why <strong className="text-gray-900 dark:text-white font-bold">&quot;{postToReject?.title}&quot;</strong> was not approved. They will be notified and can revise and resubmit.
+                        </span>
+                    }
+                    confirmText="Confirm Reject"
+                    cancelText="Cancel"
+                    variant="danger"
+                    icon={XCircle}
+                    isLoading={isRejecting}
+                >
+                    <div className="space-y-1.5 text-left">
+                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                            Rejection Feedback / Notes (Optional)
+                        </label>
+                        <textarea
+                            rows={3}
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="e.g. Please upload higher resolution photos of your pet and expand on their rescue/adjustment journey..."
+                            className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 leading-relaxed font-medium"
+                        />
                     </div>
-                )}
+                </ConfirmationModal>
+
+                {/* Delete Story Confirmation Modal */}
+                <ConfirmationModal
+                    isOpen={isDeleteModalOpen && !!postToDelete}
+                    onClose={() => {
+                        if (!isDeleting) {
+                            setIsDeleteModalOpen(false);
+                            setPostToDelete(null);
+                        }
+                    }}
+                    onConfirm={handleConfirmDelete}
+                    title="Delete Article"
+                    description={
+                        <span>
+                            Are you sure you want to permanently delete{' '}
+                            <strong className="text-gray-900 dark:text-white font-bold">&quot;{postToDelete?.title}&quot;</strong>? This action cannot be undone.
+                        </span>
+                    }
+                    confirmText="Confirm Delete"
+                    cancelText="Cancel"
+                    variant="danger"
+                    isLoading={isDeleting}
+                />
             </AdminPageShell>
         </>
     );
