@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Enums\AdoptionApplicationStatus;
 use Database\Factories\AdoptionApplicationFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class AdoptionApplication extends Model
 {
@@ -31,6 +33,28 @@ class AdoptionApplication extends Model
         'preferred_date' => 'date',
         'can_visit_shelter' => 'boolean',
     ];
+
+    /**
+     * Normalize preferred_time attribute before persisting to database.
+     *
+     * @return Attribute<string|null, string|null>
+     */
+    protected function preferredTime(): Attribute
+    {
+        return Attribute::make(
+            set: function ($value) {
+                if (blank($value)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse($value)->format('H:i:s');
+                } catch (\Throwable) {
+                    return $value;
+                }
+            },
+        );
+    }
 
     /**
      * @return BelongsTo<User, $this>

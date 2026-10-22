@@ -19,6 +19,7 @@ use App\Notifications\SubmissionEReceiptNotification;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
@@ -218,7 +219,7 @@ class AdoptionApplicationController extends Controller
 
                 // Schedule
                 'preferred_date' => $validated['preferredDate'],
-                'preferred_time' => $validated['preferredTime'],
+                'preferred_time' => $this->normalizePreferredTime($validated['preferredTime']),
                 'can_visit_shelter' => $validated['canVisitShelter'] === 'Yes',
             ]);
 
@@ -408,7 +409,7 @@ class AdoptionApplicationController extends Controller
 
                 // Schedule
                 'preferred_date' => $validated['preferredDate'],
-                'preferred_time' => $validated['preferredTime'],
+                'preferred_time' => $this->normalizePreferredTime($validated['preferredTime']),
                 'can_visit_shelter' => $validated['canVisitShelter'] === 'Yes',
             ]);
 
@@ -472,5 +473,21 @@ class AdoptionApplicationController extends Controller
             'reference' => $ref,
             'email' => $application->email,
         ]);
+    }
+
+    /**
+     * Normalize preferred time string to 24-hour H:i:s format for database storage.
+     */
+    protected function normalizePreferredTime(?string $time): ?string
+    {
+        if (blank($time)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($time)->format('H:i:s');
+        } catch (\Throwable) {
+            return $time;
+        }
     }
 }

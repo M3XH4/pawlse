@@ -77,6 +77,64 @@ test('authenticated user can submit adoption application with files', function (
     }
 });
 
+test('user can submit adoption application with 12-hour formatted preferred time like 09:00 AM', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    $response = $this->actingAs($user)->post(route('adopt.apply'), [
+        'pet_id' => $pet->id,
+        'fullName' => 'Jane Morning',
+        'address' => '789 Sunrise Blvd, Iligan City',
+        'phone' => '+639123456788',
+        'email' => 'jane.morning@example.com',
+        'birthDate' => '1998-08-20',
+        'occupation' => 'Teacher',
+        'company' => 'STI',
+        'socialMedia' => 'instagram.com/janemorning',
+        'status' => 'Single',
+        'pronouns' => 'She/Her',
+        'adoptionSource' => ['Website'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Sam Morning',
+        'emergencyRelationship' => 'Brother',
+        'emergencyPhone' => '+639987654320',
+        'emergencyEmail' => 'sam@example.com',
+
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'None',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '1 hour',
+        'introductionPlan' => 'Gentle meeting.',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+
+        'preferredDate' => now()->addDays(3)->format('Y-m-d'),
+        'preferredTime' => '09:00 AM',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('account.user.adoption-applications'));
+
+    $this->assertDatabaseHas('adoption_applications', [
+        'user_id' => $user->id,
+        'shelter_animal_id' => $pet->id,
+        'full_name' => 'Jane Morning',
+        'preferred_time' => '09:00:00',
+    ]);
+});
+
 test('user cannot submit adoption application for already adopted pet', function () {
     $user = User::factory()->create();
     $adoptedPet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Adopted]);

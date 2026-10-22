@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { HttpExceptionModal } from '@/components/ui/http-exception-modal';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { BookmarkProvider } from '@/context/bookmark-context';
@@ -73,6 +74,7 @@ createInertiaApp({
                 <TooltipProvider delayDuration={0}>
                     {app}
                     <Toaster />
+                    <HttpExceptionModal />
                 </TooltipProvider>
             </BookmarkProvider>
         );

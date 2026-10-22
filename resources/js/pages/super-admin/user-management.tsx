@@ -372,6 +372,19 @@ export default function UserManagement({
         }
     };
 
+    const getRoleBadgeClasses = (roleName: string) => {
+        switch (roleName) {
+            case 'super-admin':
+                return 'bg-rose-50 text-rose-700 ring-rose-500/25 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-500/30';
+            case 'admin':
+                return 'bg-violet-50 text-violet-700 ring-violet-500/25 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-500/30';
+            case 'volunteer':
+                return 'bg-emerald-50 text-emerald-700 ring-emerald-500/25 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30';
+            default:
+                return 'bg-slate-100 text-slate-700 ring-slate-400/25 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
+        }
+    };
+
     const renderRoleBadge = (roleName: string) => {
         switch (roleName) {
             case 'super-admin':
