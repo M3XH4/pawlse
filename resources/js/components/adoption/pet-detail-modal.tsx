@@ -118,6 +118,7 @@ export function PetDetailModal({
   React.useEffect(() => {
     setActivePhotoIdx(0);
     setLightboxPhoto(null);
+    setActiveTab('overview');
   }, [pet?.id]);
 
   if (!pet) return null;
@@ -155,11 +156,10 @@ export function PetDetailModal({
 
         {/* Modal Window */}
         <motion.div
-          layoutId={`pet-${pet.id}`}
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 0.95, y: 14 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 14 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl sm:rounded-3xl z-10 relative shadow-2xl my-auto flex flex-col border-0 overflow-hidden"
         >
           {/* Close Button */}
@@ -351,8 +351,9 @@ export function PetDetailModal({
                 {/* 3 Tabs: Overview, Story, Health */}
                 <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl mb-5">
                   <button
+                    type="button"
                     onClick={() => setActiveTab('overview')}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'overview'
                         ? 'bg-white text-slate-900 shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -363,8 +364,9 @@ export function PetDetailModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setActiveTab('story')}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'story'
                         ? 'bg-white text-slate-900 shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -375,8 +377,9 @@ export function PetDetailModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setActiveTab('health')}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'health'
                         ? 'bg-white text-slate-900 shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -387,13 +390,16 @@ export function PetDetailModal({
                   </button>
                 </div>
 
-                {/* Tab 1: Overview */}
-                {activeTab === 'overview' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-3.5"
-                  >
+                <div className="min-h-[285px]">
+                  {/* Tab 1: Overview */}
+                  {activeTab === 'overview' && (
+                    <motion.div
+                      key="tab-overview"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.15 }}
+                      className="space-y-3.5"
+                    >
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Color / Coat</p>
@@ -442,8 +448,10 @@ export function PetDetailModal({
                 {/* Tab 2: Story */}
                 {activeTab === 'story' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    key="tab-story"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.15 }}
                     className="space-y-3.5"
                   >
                     <div>
@@ -520,8 +528,10 @@ export function PetDetailModal({
                 {/* Tab 3: Health */}
                 {activeTab === 'health' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    key="tab-health"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.15 }}
                     className="space-y-3.5 max-h-[300px] overflow-y-auto modal-scroll-area pr-1"
                   >
                     {/* Master Health Summary Bar */}
@@ -609,6 +619,7 @@ export function PetDetailModal({
                     )}
                   </motion.div>
                 )}
+                </div>
               </div>
 
               {/* Action Buttons Section */}

@@ -568,7 +568,6 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               {filteredPets.map((pet) => (
                 <motion.div
                   key={pet.id}
-                  layoutId={`pet-${pet.id}`}
                   whileHover={{ y: -5 }}
                   onClick={() => setSelectedPet(pet)}
                   className="bg-white rounded-[24px] overflow-hidden shadow-lg shadow-paw-navy/5 cursor-pointer group border border-gray-100 transition-all hover:shadow-xl"
