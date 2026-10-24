@@ -31,6 +31,7 @@ import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 import { Spinner } from '@/components/ui/spinner';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { compressImageFile } from '@/lib/image-compression';
 
 type BreedPrediction = {
     name: string;
@@ -351,11 +352,12 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 continue;
             }
 
-            validFiles.push(file);
+            const optimizedFile = await compressImageFile(file);
+            validFiles.push(optimizedFile);
             const reader = new FileReader();
             const preview = await new Promise<string>((resolve) => {
                 reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(optimizedFile);
             });
             newPreviews.push(preview);
         }

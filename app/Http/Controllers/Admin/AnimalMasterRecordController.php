@@ -314,8 +314,8 @@ class AnimalMasterRecordController extends Controller
             ->all();
 
         return Inertia::render('admin/animal-records', [
-            'animals' => $transformedAnimals,
-            'statusBar' => $statusBar,
+            'animals' => fn () => $transformedAnimals,
+            'statusBar' => fn () => $statusBar,
             'filters' => [
                 'search' => $search,
                 'species' => $speciesFilter,
@@ -326,7 +326,7 @@ class AnimalMasterRecordController extends Controller
                 'sort' => $sortBy,
                 'per_page' => $perPage,
             ],
-            'locationsList' => $locationsList,
+            'locationsList' => fn () => $locationsList,
         ]);
     }
 

@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\Event;
 use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class EventApprovalStatusUpdatedNotification extends Notification
+class EventApprovalStatusUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     use RendersBrandedMail;

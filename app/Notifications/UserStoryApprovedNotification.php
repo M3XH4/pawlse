@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\BlogPost;
 use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class UserStoryApprovedNotification extends Notification
+class UserStoryApprovedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     use RendersBrandedMail;

@@ -77,6 +77,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
 
     post(`/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/status`, {
       preserveScroll: true,
+      only: ['rehomingRequests'],
       onSuccess: () => {
         setSelectedRequest(null);
         reset();
@@ -97,6 +98,7 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
       { intake_notes: data.admin_notes },
       {
         preserveScroll: true,
+        only: ['rehomingRequests', 'pets'],
         onSuccess: () => {
           setSelectedRequest(null);
           reset();

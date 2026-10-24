@@ -47,8 +47,6 @@ class VolunteerManagementController extends Controller
                 });
             });
 
-        $applications = $applicationsQuery->latest()->paginate(10, ['*'], 'apps_page')->withQueryString();
-
         // 2. Active Volunteers list
         $volunteersQuery = User::query()
             ->where('role', Role::Volunteer->value)
@@ -58,8 +56,6 @@ class VolunteerManagementController extends Controller
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             });
-
-        $volunteers = $volunteersQuery->latest()->paginate(10, ['*'], 'vols_page')->withQueryString();
 
         // 3. Assigned Tasks
         $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule', 'petReport'])
@@ -85,33 +81,25 @@ class VolunteerManagementController extends Controller
                 });
             });
 
-        $tasks = $tasksQuery->latest()->paginate(10, ['*'], 'tasks_page')->withQueryString();
-
-        // Get dropdown lists for manual assignments & certificate issuance (including closed events for post-event certificates)
-        $allEvents = Event::query()->where('approval_status', 'approved')->latest()->get();
-        $allSchedules = FeedingSchedule::query()->where('status', 'active')->latest()->get();
-        $allVolunteers = User::query()
-            ->where('role', Role::Volunteer->value)
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role']);
-        $allRecipients = User::query()
-            ->where(function ($query) {
-                $query->where('role', Role::Volunteer->value)
-                    ->orWhereHas('assignedTasks', function ($q) {
-                        $q->whereNotNull('event_id');
-                    });
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role']);
-
         return Inertia::render('admin/volunteer-management', [
-            'applications' => $applications,
-            'volunteers' => $volunteers,
-            'allVolunteers' => $allVolunteers,
-            'allRecipients' => $allRecipients,
-            'tasks' => $tasks,
-            'events' => $allEvents,
-            'feedingSchedules' => $allSchedules,
+            'applications' => fn () => $applicationsQuery->latest()->paginate(10, ['*'], 'apps_page')->withQueryString(),
+            'volunteers' => fn () => $volunteersQuery->latest()->paginate(10, ['*'], 'vols_page')->withQueryString(),
+            'allVolunteers' => fn () => User::query()
+                ->where('role', Role::Volunteer->value)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'role']),
+            'allRecipients' => fn () => User::query()
+                ->where(function ($query) {
+                    $query->where('role', Role::Volunteer->value)
+                        ->orWhereHas('assignedTasks', function ($q) {
+                            $q->whereNotNull('event_id');
+                        });
+                })
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'role']),
+            'tasks' => fn () => $tasksQuery->latest()->paginate(10, ['*'], 'tasks_page')->withQueryString(),
+            'events' => fn () => Event::query()->where('approval_status', 'approved')->latest()->get(),
+            'feedingSchedules' => fn () => FeedingSchedule::query()->where('status', 'active')->latest()->get(),
             'filters' => [
                 'search' => $search,
                 'status' => $statusFilter,

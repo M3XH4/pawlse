@@ -39,7 +39,7 @@ class AiValidationController extends Controller
             ->count();
 
         $validatedCount = $approvedCount + $rejectedCount;
-        $accuracyRate = $validatedCount > 0 ? ($approvedCount / $validatedCount) * 100 : 0;
+        $accuracyRate = $validatedCount > 0 ? (int) round(($approvedCount / $validatedCount) * 100) : 100;
 
         $avgConfidence = DB::table('pet_reports')
             ->join('ai_prediction_logs', 'pet_reports.ai_prediction_log_id', '=', 'ai_prediction_logs.id')

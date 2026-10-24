@@ -148,6 +148,7 @@ export function PostAdoptionTab({
     post('/account/admin/adoption-management/post-adoption-follow-ups', {
       forceFormData: true,
       preserveScroll: true,
+      only: ['postAdoptionFollowUps', 'adoptedPets'],
       onSuccess: () => {
         toast.success('Post-adoption follow-up check-in recorded successfully!');
         reset();

@@ -40,6 +40,7 @@ class HomeController extends Controller
         $pets = ShelterAnimal::query()
             ->where('status', ShelterAnimalStatus::Available)
             ->latest()
+            ->take(12)
             ->get()
             ->map(function (ShelterAnimal $pet) use ($getString) {
                 $defaultImg = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800';

@@ -6,11 +6,12 @@ use App\Models\HelpDeskReply;
 use App\Models\HelpDeskTicket;
 use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
-class HelpDeskTicketRepliedNotification extends Notification
+class HelpDeskTicketRepliedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     use RendersBrandedMail;

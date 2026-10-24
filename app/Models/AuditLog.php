@@ -2,11 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditLog extends Model
 {
+    use MassPrunable;
+
+    /**
+     * Get the prunable model query (retain records for 180 days).
+     */
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<=', now()->subDays(180));
+    }
+
     protected $fillable = [
         'user_id',
         'action',

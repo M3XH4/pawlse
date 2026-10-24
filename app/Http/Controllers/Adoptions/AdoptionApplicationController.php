@@ -32,33 +32,29 @@ class AdoptionApplicationController extends Controller
     {
         $user = $request->user();
 
-        $applications = AdoptionApplication::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-                ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
-        })
-            ->with(['shelterAnimal', 'files', 'followUps'])
-            ->latest()
-            ->get();
-
-        $shelterVisits = ShelterVisit::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-                ->orWhereRaw('LOWER(email) = ?', [strtolower($user->email)]);
-        })
-            ->with('shelterAnimal')
-            ->latest()
-            ->get();
-
-        $rehomingRequests = RehomingRequest::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-                ->orWhereRaw('LOWER(email) = ?', [strtolower($user->email)]);
-        })
-            ->latest()
-            ->get();
-
         return Inertia::render('user/adoption-applications', [
-            'applications' => $applications,
-            'shelterVisits' => $shelterVisits,
-            'rehomingRequests' => $rehomingRequests,
+            'applications' => fn () => AdoptionApplication::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
+                ->with(['shelterAnimal', 'files', 'followUps'])
+                ->latest()
+                ->get(),
+
+            'shelterVisits' => fn () => ShelterVisit::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower($user->email)]);
+            })
+                ->with('shelterAnimal')
+                ->latest()
+                ->get(),
+
+            'rehomingRequests' => fn () => RehomingRequest::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower($user->email)]);
+            })
+                ->latest()
+                ->get(),
         ]);
     }
 

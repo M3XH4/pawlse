@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, ChevronDown, Clock, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useFloatingPopover } from '@/hooks/use-floating-popover';
 
 export interface ModernDatePickerPreset {
     label: string;
@@ -44,7 +46,22 @@ export function ModernDatePicker({
 }: ModernDatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isYearPickerOpen, setIsYearPickerOpen] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
+
+    const handleClose = () => {
+        setIsOpen(false);
+        setIsYearPickerOpen(false);
+    };
+
+    const {
+        triggerRef: containerRef,
+        popoverRef,
+        coords,
+    } = useFloatingPopover({
+        isOpen,
+        onClose: handleClose,
+        estimatedHeight: 360,
+        estimatedWidth: 300,
+    });
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -58,22 +75,6 @@ export function ModernDatePicker({
     const initialDate = value ? new Date(value + 'T00:00:00') : today;
     const [viewYear, setViewYear] = useState(initialDate.getFullYear());
     const [viewMonth, setViewMonth] = useState(initialDate.getMonth()); // 0-11
-
-    // Close on click outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent | TouchEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-                setIsYearPickerOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('touchstart', handleClickOutside);
-        };
-    }, []);
 
     // Sync month view when value changes externally
     useEffect(() => {
@@ -348,16 +349,26 @@ export function ModernDatePicker({
             )}
 
             {/* Interactive Modern Compact Calendar Popover */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute left-0 z-50 mt-2 bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-2xl border border-gray-100 dark:border-slate-800 ring-1 ring-black/10 w-full sm:w-[290px] max-w-[320px]"
-                    >
-                        {/* Header: Month / Year / Fast Year Toggle */}
+            {typeof document !== 'undefined' &&
+                createPortal(
+                    <AnimatePresence>
+                        {isOpen && coords && (
+                            <motion.div
+                                ref={popoverRef}
+                                initial={{ opacity: 0, y: coords.placement === 'top' ? 6 : -6, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: coords.placement === 'top' ? 6 : -6, scale: 0.98 }}
+                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                style={{
+                                    position: 'fixed',
+                                    top: coords.top !== undefined ? `${coords.top}px` : undefined,
+                                    bottom: coords.bottom !== undefined ? `${coords.bottom}px` : undefined,
+                                    left: `${coords.left}px`,
+                                    zIndex: 300,
+                                }}
+                                className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-2xl border border-gray-100 dark:border-slate-800 ring-1 ring-black/10 w-[290px] max-w-[320px]"
+                            >
+                                {/* Header: Month / Year / Fast Year Toggle */}
                         <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-slate-800">
                             <button
                                 type="button"
@@ -528,9 +539,11 @@ export function ModernDatePicker({
                                 Done
                             </button>
                         </div>
-                    </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
+                    document.body
                 )}
-            </AnimatePresence>
         </div>
     );
 }

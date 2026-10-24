@@ -216,6 +216,8 @@ export default function AdoptionManagement({
     statusData.status = status;
 
     postStatus(`/account/admin/adoption-management/applications/${selectedApp.id}/status`, {
+      preserveScroll: true,
+      only: ['applications', 'pets', 'adoptedPets'],
       onSuccess: () => {
         toast.success(`Application status updated to ${status}.`);
         setIsRejectOpen(false);
@@ -993,6 +995,7 @@ export default function AdoptionManagement({
                                   },
                                   {
                                     preserveScroll: true,
+                                    only: ['pets'],
                                     onSuccess: () => {
                                       if (selectedPetForNeeds.needs) {
                                         const updated = selectedPetForNeeds.needs.map((n) =>
@@ -1075,6 +1078,7 @@ export default function AdoptionManagement({
                                   setDeletingNeedId(need.id);
                                   router.delete(`/account/admin/adoption-management/needs/${need.id}`, {
                                     preserveScroll: true,
+                                    only: ['pets'],
                                     onSuccess: () => {
                                       if (selectedPetForNeeds.needs) {
                                         const updated = selectedPetForNeeds.needs.filter((n) => n.id !== need.id);
@@ -1150,6 +1154,7 @@ export default function AdoptionManagement({
                         payload,
                         {
                           preserveScroll: true,
+                          only: ['pets'],
                           onSuccess: () => {
                             if (selectedPetForNeeds.needs) {
                               const updated = selectedPetForNeeds.needs.map((n) =>
@@ -1174,6 +1179,7 @@ export default function AdoptionManagement({
                         payload,
                         {
                           preserveScroll: true,
+                          only: ['pets'],
                           onSuccess: () => {
                             setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
                           },

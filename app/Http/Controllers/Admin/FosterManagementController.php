@@ -31,30 +31,6 @@ class FosterManagementController extends Controller
         $search = $request->input('search', '');
         $statusFilter = $request->input('status', 'all');
 
-        // 1. Placements Query
-        $placementsQuery = FosterPlacement::with([
-            'shelterAnimal',
-            'fosterParent.user',
-            'fosterParentUser',
-            'assignedBy',
-            'transferredBy',
-            'careUpdates',
-        ])
-            ->when($statusFilter !== 'all', function ($query) use ($statusFilter) {
-                $query->where('status', $statusFilter);
-            })
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('shelterAnimal', function ($sq) use ($search) {
-                        $sq->where('name', 'like', "%{$search}%")
-                            ->orWhere('breed', 'like', "%{$search}%");
-                    })->orWhereHas('fosterParentUser', function ($uq) use ($search) {
-                        $uq->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
-                });
-            });
-
         $transformPlacement = function (FosterPlacement $p): array {
             return [
                 'id' => $p->id,
@@ -102,161 +78,169 @@ class FosterManagementController extends Controller
             ];
         };
 
-        $placements = $placementsQuery->latest()->paginate(10, ['*'], 'placements_page')->withQueryString()
-            ->through($transformPlacement);
-
-        $historyPlacements = FosterPlacement::with([
-            'shelterAnimal',
-            'fosterParent.user',
-            'fosterParentUser',
-            'assignedBy',
-            'transferredBy',
-            'careUpdates',
-        ])
-            ->where('status', '!=', 'active')
-            ->latest()
-            ->limit(50)
-            ->get()
-            ->map($transformPlacement)
-            ->values();
-
-        // 2. Foster Parents List (all registered foster homes with capacity statistics)
-        $fosterParents = FosterParent::with(['user', 'approver', 'activePlacements.shelterAnimal'])
-            ->latest()
-            ->get()
-            ->map(function (FosterParent $fp) {
-                $activeCount = $fp->activePlacements->count();
-
-                return [
-                    'id' => $fp->id,
-                    'user_id' => $fp->user_id,
-                    'name' => $fp->user?->name ?? 'Unknown',
-                    'email' => $fp->user?->email ?? '',
-                    'phone' => $fp->user?->phone ?? '',
-                    'avatar' => $fp->user?->avatar,
-                    'user_role' => $fp->user?->role ?? 'user',
-                    'status' => $fp->status,
-                    'capacity' => $fp->capacity,
-                    'location' => $fp->location,
-                    'pet_preference' => $fp->pet_preference,
-                    'housing_type' => $fp->housing_type,
-                    'active_count' => $activeCount,
-                    'remaining_capacity' => max(0, $fp->capacity - $activeCount),
-                    'is_at_capacity' => $activeCount >= $fp->capacity,
-                    'notes' => $fp->notes,
-                    'approved_at' => $fp->approved_at ? $fp->approved_at->toDateString() : null,
-                    'approver_name' => $fp->approver?->name,
-                    'active_pets' => $fp->activePlacements->map(function ($placement) {
-                        return [
-                            'id' => $placement->shelterAnimal?->id,
-                            'name' => $placement->shelterAnimal?->name,
-                            'type' => $placement->shelterAnimal?->type?->value,
-                            'placement_id' => $placement->id,
-                        ];
-                    }),
-                ];
-            });
-
-        // 3. Available Shelter Pets (eligible for foster placement)
-        $availablePets = ShelterAnimal::query()
-            ->where('status', ShelterAnimalStatus::Available)
-            ->latest()
-            ->get()
-            ->map(function (ShelterAnimal $pet) {
-                return [
-                    'id' => $pet->id,
-                    'name' => $pet->name,
-                    'type' => $pet->type ? $pet->type->value : null,
-                    'breed' => $pet->breed,
-                    'age' => $pet->age,
-                    'photo_url' => $pet->photo_url,
-                    'status' => $pet->status->value,
-                    'behavior' => $pet->behavior,
-                    'vaccinated' => $pet->vaccinated,
-                ];
-            });
-
-        // 4. Eligible Users who can be registered/authorized as Foster Parents (Volunteers and Admins not yet registered)
-        $existingFosterUserIds = FosterParent::pluck('user_id')->toArray();
-        $eligibleUsers = User::query()
-            ->whereIn('role', [Role::Volunteer->value, Role::Admin->value, Role::SuperAdmin->value])
-            ->whereNotIn('id', $existingFosterUserIds)
-            ->select(['id', 'name', 'email', 'role'])
-            ->orderBy('name')
-            ->get();
-
-        // 5. Recent Care Reports & Concerns
-        $careUpdates = FosterCareUpdate::with(['shelterAnimal', 'user', 'acknowledgedBy'])
-            ->latest()
-            ->limit(20)
-            ->get()
-            ->map(function (FosterCareUpdate $update) {
-                return [
-                    'id' => $update->id,
-                    'foster_placement_id' => $update->foster_placement_id,
-                    'shelter_animal_id' => $update->shelter_animal_id,
-                    'pet_name' => $update->shelterAnimal?->name ?? 'Pet',
-                    'pet_photo' => $update->shelterAnimal?->photo_url,
-                    'author_name' => $update->user?->name ?? 'Foster Parent',
-                    'author_email' => $update->user?->email,
-                    'update_type' => $update->update_type,
-                    'urgency' => $update->urgency,
-                    'title' => $update->title,
-                    'notes' => $update->notes,
-                    'weight' => $update->weight,
-                    'feeding_notes' => $update->feeding_notes,
-                    'medication_notes' => $update->medication_notes,
-                    'next_appointment_date' => $update->next_appointment_date ? $update->next_appointment_date->toDateString() : null,
-                    'admin_notes' => $update->admin_notes,
-                    'is_acknowledged' => $update->acknowledged_at !== null,
-                    'acknowledged_at' => $update->acknowledged_at ? $update->acknowledged_at->toDateTimeString() : null,
-                    'acknowledged_by_name' => $update->acknowledgedBy?->name,
-                    'created_at' => $update->created_at->diffForHumans(),
-                ];
-            });
-
-        // 6. Audit Trail for Foster Operations
-        $auditLogs = AuditLog::with('user')
-            ->where('action', 'like', 'foster_%')
-            ->latest()
-            ->limit(30)
-            ->get()
-            ->map(function (AuditLog $log) {
-                return [
-                    'id' => $log->id,
-                    'action' => $log->action,
-                    'description' => $log->description,
-                    'user_name' => $log->user?->name ?? 'System',
-                    'created_at' => $log->created_at->toDateTimeString(),
-                    'metadata' => $log->metadata,
-                ];
-            });
-
-        // 7. Metrics
-        $activePlacementsCount = FosterPlacement::where('status', 'active')->count();
-        $availablePetsCount = ShelterAnimal::where('status', ShelterAnimalStatus::Available)->count();
-        $approvedFosterParentsCount = FosterParent::where('status', 'approved')->count();
-        $parentsAtCapacityCount = $fosterParents->filter(fn ($p) => $p['status'] === 'approved' && $p['is_at_capacity'])->count();
-        $overdueOrUrgentCount = FosterPlacement::where('status', 'active')
-            ->whereNotNull('expected_review_date')
-            ->where('expected_review_date', '<=', now()->toDateString())
-            ->count() + FosterCareUpdate::whereNull('acknowledged_at')->whereIn('urgency', ['high', 'critical'])->count();
-
         return Inertia::render('admin/foster-management', [
-            'metrics' => [
-                'active_placements_count' => $activePlacementsCount,
-                'available_pets_count' => $availablePetsCount,
-                'approved_foster_parents_count' => $approvedFosterParentsCount,
-                'parents_at_capacity_count' => $parentsAtCapacityCount,
-                'needs_attention_count' => $overdueOrUrgentCount,
+            'metrics' => fn () => [
+                'active_placements_count' => FosterPlacement::where('status', 'active')->count(),
+                'available_pets_count' => ShelterAnimal::where('status', ShelterAnimalStatus::Available)->count(),
+                'approved_foster_parents_count' => FosterParent::where('status', 'approved')->count(),
+                'parents_at_capacity_count' => FosterParent::with('activePlacements')
+                    ->where('status', 'approved')
+                    ->get()
+                    ->filter(fn ($p) => $p->activePlacements->count() >= $p->capacity)
+                    ->count(),
+                'needs_attention_count' => FosterPlacement::where('status', 'active')
+                    ->whereNotNull('expected_review_date')
+                    ->where('expected_review_date', '<=', now()->toDateString())
+                    ->count() + FosterCareUpdate::whereNull('acknowledged_at')->whereIn('urgency', ['high', 'critical'])->count(),
             ],
-            'placements' => $placements,
-            'historyPlacements' => $historyPlacements,
-            'fosterParents' => $fosterParents,
-            'availablePets' => $availablePets,
-            'eligibleUsers' => $eligibleUsers,
-            'careUpdates' => $careUpdates,
-            'auditLogs' => $auditLogs,
+            'placements' => fn () => FosterPlacement::with([
+                'shelterAnimal',
+                'fosterParent.user',
+                'fosterParentUser',
+                'assignedBy',
+                'transferredBy',
+                'careUpdates',
+            ])
+                ->when($statusFilter !== 'all', function ($query) use ($statusFilter) {
+                    $query->where('status', $statusFilter);
+                })
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->whereHas('shelterAnimal', function ($sq) use ($search) {
+                            $sq->where('name', 'like', "%{$search}%")
+                                ->orWhere('breed', 'like', "%{$search}%");
+                        })->orWhereHas('fosterParentUser', function ($uq) use ($search) {
+                            $uq->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                    });
+                })
+                ->latest()
+                ->paginate(10, ['*'], 'placements_page')
+                ->withQueryString()
+                ->through($transformPlacement),
+
+            'historyPlacements' => fn () => FosterPlacement::with([
+                'shelterAnimal',
+                'fosterParent.user',
+                'fosterParentUser',
+                'assignedBy',
+                'transferredBy',
+                'careUpdates',
+            ])
+                ->where('status', '!=', 'active')
+                ->latest()
+                ->limit(50)
+                ->get()
+                ->map($transformPlacement)
+                ->values(),
+
+            'fosterParents' => fn () => FosterParent::with(['user', 'approver', 'activePlacements.shelterAnimal'])
+                ->latest()
+                ->get()
+                ->map(function (FosterParent $fp) {
+                    $activeCount = $fp->activePlacements->count();
+
+                    return [
+                        'id' => $fp->id,
+                        'user_id' => $fp->user_id,
+                        'name' => $fp->user?->name ?? 'Unknown',
+                        'email' => $fp->user?->email ?? '',
+                        'phone' => $fp->user?->phone ?? '',
+                        'avatar' => $fp->user?->avatar,
+                        'user_role' => $fp->user?->role ?? 'user',
+                        'status' => $fp->status,
+                        'capacity' => $fp->capacity,
+                        'location' => $fp->location,
+                        'pet_preference' => $fp->pet_preference,
+                        'housing_type' => $fp->housing_type,
+                        'active_count' => $activeCount,
+                        'remaining_capacity' => max(0, $fp->capacity - $activeCount),
+                        'is_at_capacity' => $activeCount >= $fp->capacity,
+                        'notes' => $fp->notes,
+                        'approved_at' => $fp->approved_at ? $fp->approved_at->toDateString() : null,
+                        'approver_name' => $fp->approver?->name,
+                        'active_pets' => $fp->activePlacements->map(function ($placement) {
+                            return [
+                                'id' => $placement->shelterAnimal?->id,
+                                'name' => $placement->shelterAnimal?->name,
+                                'type' => $placement->shelterAnimal?->type?->value,
+                                'placement_id' => $placement->id,
+                            ];
+                        }),
+                    ];
+                }),
+
+            'availablePets' => fn () => ShelterAnimal::query()
+                ->where('status', ShelterAnimalStatus::Available)
+                ->latest()
+                ->get()
+                ->map(function (ShelterAnimal $pet) {
+                    return [
+                        'id' => $pet->id,
+                        'name' => $pet->name,
+                        'type' => $pet->type ? $pet->type->value : null,
+                        'breed' => $pet->breed,
+                        'age' => $pet->age,
+                        'photo_url' => $pet->photo_url,
+                        'status' => $pet->status->value,
+                        'behavior' => $pet->behavior,
+                        'vaccinated' => $pet->vaccinated,
+                    ];
+                }),
+
+            'eligibleUsers' => fn () => User::query()
+                ->whereIn('role', [Role::Volunteer->value, Role::Admin->value, Role::SuperAdmin->value])
+                ->whereNotIn('id', FosterParent::pluck('user_id')->toArray())
+                ->select(['id', 'name', 'email', 'role'])
+                ->orderBy('name')
+                ->get(),
+
+            'careUpdates' => fn () => FosterCareUpdate::with(['shelterAnimal', 'user', 'acknowledgedBy'])
+                ->latest()
+                ->limit(20)
+                ->get()
+                ->map(function (FosterCareUpdate $update) {
+                    return [
+                        'id' => $update->id,
+                        'foster_placement_id' => $update->foster_placement_id,
+                        'shelter_animal_id' => $update->shelter_animal_id,
+                        'pet_name' => $update->shelterAnimal?->name ?? 'Pet',
+                        'pet_photo' => $update->shelterAnimal?->photo_url,
+                        'author_name' => $update->user?->name ?? 'Foster Parent',
+                        'author_email' => $update->user?->email,
+                        'update_type' => $update->update_type,
+                        'urgency' => $update->urgency,
+                        'title' => $update->title,
+                        'notes' => $update->notes,
+                        'weight' => $update->weight,
+                        'feeding_notes' => $update->feeding_notes,
+                        'medication_notes' => $update->medication_notes,
+                        'next_appointment_date' => $update->next_appointment_date ? $update->next_appointment_date->toDateString() : null,
+                        'admin_notes' => $update->admin_notes,
+                        'is_acknowledged' => $update->acknowledged_at !== null,
+                        'acknowledged_at' => $update->acknowledged_at ? $update->acknowledged_at->toDateTimeString() : null,
+                        'acknowledged_by_name' => $update->acknowledgedBy?->name,
+                        'created_at' => $update->created_at->diffForHumans(),
+                    ];
+                }),
+
+            'auditLogs' => fn () => AuditLog::with('user')
+                ->where('action', 'like', 'foster_%')
+                ->latest()
+                ->limit(30)
+                ->get()
+                ->map(function (AuditLog $log) {
+                    return [
+                        'id' => $log->id,
+                        'action' => $log->action,
+                        'description' => $log->description,
+                        'user_name' => $log->user?->name ?? 'System',
+                        'created_at' => $log->created_at->toDateTimeString(),
+                        'metadata' => $log->metadata,
+                    ];
+                }),
+
             'filters' => [
                 'search' => $search,
                 'status' => $statusFilter,

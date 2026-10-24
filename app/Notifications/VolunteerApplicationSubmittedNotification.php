@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\VolunteerApplication;
 use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class VolunteerApplicationSubmittedNotification extends Notification
+class VolunteerApplicationSubmittedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     use RendersBrandedMail;

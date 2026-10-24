@@ -28,247 +28,248 @@ class DonationMonitoringController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Donation::query()->with([
-            'payments.proof',
-            'proofs',
-            'inKindDonation.need.animal',
-            'feedingSponsorship',
-            'user',
-            'verifiedBy',
-        ]);
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('public_reference', 'like', "%{$search}%")
-                    ->orWhere('donor_name', 'like', "%{$search}%")
-                    ->orWhere('donor_email', 'like', "%{$search}%")
-                    ->orWhere('purpose', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter Type
-        if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
-        }
-
-        // Filter Status
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        $donations = $query->latest('id')
-            ->paginate(10)
-            ->withQueryString();
-
-        // Inventory items with batches
-        $inventoryQuery = InventoryItem::with(['batches' => function ($q) {
-            $q->orderByRaw('CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END, expires_at ASC, created_at ASC');
-        }]);
-
-        if ($request->filled('inventory_search')) {
-            $search = $request->input('inventory_search');
-            $inventoryQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%")
-                    ->orWhere('storage_location', 'like', "%{$search}%")
-                    ->orWhereHas('batches', function ($bq) use ($search) {
-                        $bq->where('batch_number', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($request->filled('inventory_category')) {
-            $inventoryQuery->where('category', $request->input('inventory_category'));
-        }
-
         $today = Carbon::today();
         $soonThreshold = Carbon::today()->addDays(30);
 
-        $inventoryPaginator = $inventoryQuery->orderBy('name')
-            ->paginate(10, ['*'], 'inventory_page')
-            ->withQueryString();
+        $getDonations = function () use ($request) {
+            $query = Donation::query()->with([
+                'payments.proof',
+                'proofs',
+                'inKindDonation.need.animal',
+                'feedingSponsorship',
+                'user',
+                'verifiedBy',
+            ]);
 
-        $inventoryPaginator->through(function ($item) use ($today, $soonThreshold) {
-            $activeBatches = $item->batches->filter(fn ($b) => $b->quantity > 0);
-            $totalBatchQty = $item->batches->sum('quantity');
-
-            // If item has batches, ensure total quantity matches active batches sum
-            $displayQuantity = $item->batches->isNotEmpty() ? $totalBatchQty : $item->quantity;
-
-            // Compute expiry details
-            $expiringBatches = $activeBatches->filter(function ($b) use ($today, $soonThreshold) {
-                return $b->expires_at && $b->expires_at->greaterThanOrEqualTo($today) && $b->expires_at->lessThanOrEqualTo($soonThreshold);
-            });
-
-            $expiredBatches = $activeBatches->filter(function ($b) use ($today) {
-                return $b->expires_at && $b->expires_at->lessThan($today);
-            });
-
-            $nearestExpiryBatch = $activeBatches->filter(fn ($b) => $b->expires_at !== null)->first();
-            $nearestExpiry = $nearestExpiryBatch ? $nearestExpiryBatch->expires_at->format('Y-m-d') : null;
-
-            // Status determination
-            $stockStatus = 'in_stock';
-            if ($displayQuantity <= 0) {
-                $stockStatus = 'out_of_stock';
-            } elseif ($expiredBatches->isNotEmpty()) {
-                $stockStatus = 'expired';
-            } elseif ($expiringBatches->isNotEmpty()) {
-                $stockStatus = 'expiring_soon';
-            } elseif ($displayQuantity <= $item->min_threshold) {
-                $stockStatus = 'low_stock';
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('public_reference', 'like', "%{$search}%")
+                        ->orWhere('donor_name', 'like', "%{$search}%")
+                        ->orWhere('donor_email', 'like', "%{$search}%")
+                        ->orWhere('purpose', 'like', "%{$search}%");
+                });
             }
 
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'quantity' => $displayQuantity,
-                'unit' => $item->unit,
-                'category' => $item->category,
-                'min_threshold' => $item->min_threshold,
-                'daily_usage_rate' => $item->daily_usage_rate ? (float) $item->daily_usage_rate : null,
-                'days_of_supply' => $item->estimated_days_of_supply,
-                'storage_location' => $item->storage_location,
-                'has_expiry' => (bool) $item->has_expiry,
-                'stock_status' => $stockStatus,
-                'nearest_expiry' => $nearestExpiry,
-                'active_batches_count' => $activeBatches->count(),
-                'expired_batches_count' => $expiredBatches->count(),
-                'expiring_soon_count' => $expiringBatches->count(),
-                'batches' => $item->batches->map(function ($batch) use ($today, $soonThreshold) {
-                    $batchStatus = 'good';
-                    if ($batch->quantity <= 0) {
-                        $batchStatus = 'depleted';
-                    } elseif ($batch->expires_at && $batch->expires_at->lessThan($today)) {
-                        $batchStatus = 'expired';
-                    } elseif ($batch->expires_at && $batch->expires_at->lessThanOrEqualTo($soonThreshold)) {
-                        $batchStatus = 'expiring_soon';
-                    }
+            if ($request->filled('type')) {
+                $query->where('type', $request->input('type'));
+            }
 
-                    $daysUntilExpiry = null;
-                    if ($batch->expires_at) {
-                        $daysUntilExpiry = (int) $today->diffInDays($batch->expires_at, false);
-                    }
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
 
-                    return [
-                        'id' => $batch->id,
-                        'batch_number' => $batch->batch_number ?: 'BATCH-'.$batch->id,
-                        'quantity' => $batch->quantity,
-                        'initial_quantity' => $batch->initial_quantity,
-                        'expires_at' => $batch->expires_at ? $batch->expires_at->format('Y-m-d') : null,
-                        'received_at' => $batch->received_at ? $batch->received_at->format('Y-m-d') : null,
-                        'source' => $batch->source,
-                        'notes' => $batch->notes,
-                        'status' => $batchStatus,
-                        'days_remaining' => $daysUntilExpiry,
-                    ];
-                }),
-            ];
-        });
+            return $query->latest('id')
+                ->paginate(10)
+                ->withQueryString();
+        };
 
-        // Audit/transaction logs paginator
-        $inventoryLogsPaginator = InventoryLog::with(['item', 'batch', 'user'])
-            ->latest('created_at')
-            ->paginate(15, ['*'], 'logs_page')
-            ->withQueryString();
+        $getInventory = function () use ($request, $today, $soonThreshold) {
+            $inventoryQuery = InventoryItem::with(['batches' => function ($q) {
+                $q->orderByRaw('CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END, expires_at ASC, created_at ASC');
+            }]);
 
-        $inventoryLogsPaginator->through(function ($log) {
-            return [
-                'id' => $log->id,
-                'item_name' => $log->item ? $log->item->name : 'Deleted Item',
-                'category' => $log->item ? $log->item->category : 'N/A',
-                'action' => $log->action,
-                'quantity_changed' => $log->quantity_changed,
-                'resulting_quantity' => $log->resulting_quantity,
-                'unit' => $log->item ? $log->item->unit : '',
-                'reason' => $log->reason,
-                'batch_info' => $log->batch_info,
-                'performed_by' => $log->user ? $log->user->name : 'System',
-                'date' => $log->created_at->toDateTimeString(),
-            ];
-        });
+            if ($request->filled('inventory_search')) {
+                $search = $request->input('inventory_search');
+                $inventoryQuery->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhere('storage_location', 'like', "%{$search}%")
+                        ->orWhereHas('batches', function ($bq) use ($search) {
+                            $bq->where('batch_number', 'like', "%{$search}%");
+                        });
+                });
+            }
 
-        // Summary Stats
-        $totalCash = Donation::query()
-            ->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])
-            ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
-            ->sum('amount');
+            if ($request->filled('inventory_category')) {
+                $inventoryQuery->where('category', $request->input('inventory_category'));
+            }
 
-        $pendingCash = Donation::query()
-            ->whereIn('status', [
-                DonationStatus::PendingPayment->value,
-                DonationStatus::PaymentProofSubmitted->value,
-                DonationStatus::PendingVerification->value,
-            ])
-            ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
-            ->count();
+            $inventoryPaginator = $inventoryQuery->orderBy('name')
+                ->paginate(10, ['*'], 'inventory_page')
+                ->withQueryString();
 
-        $pendingInKind = Donation::query()
-            ->where('type', DonationType::InKind->value)
-            ->where('status', DonationStatus::PendingVerification->value)
-            ->count();
+            $inventoryPaginator->through(function ($item) use ($today, $soonThreshold) {
+                $activeBatches = $item->batches->filter(fn ($b) => $b->quantity > 0);
+                $totalBatchQty = $item->batches->sum('quantity');
 
-        // Inventory KPI Stats across all items
-        $totalItems = InventoryItem::count();
-        $outOfStockCount = InventoryItem::where('quantity', '<=', 0)->count();
-        $lowStockCount = InventoryItem::where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_threshold')->count();
-        $expiringSoonCount = InventoryBatch::where('quantity', '>', 0)
-            ->whereNotNull('expires_at')
-            ->whereDate('expires_at', '>=', $today)
-            ->whereDate('expires_at', '<=', $soonThreshold)
-            ->count();
-        $expiredCount = InventoryBatch::where('quantity', '>', 0)
-            ->whereNotNull('expires_at')
-            ->whereDate('expires_at', '<', $today)
-            ->count();
+                $displayQuantity = $item->batches->isNotEmpty() ? $totalBatchQty : $item->quantity;
 
-        // Sustainability config & live history
-        $sustainabilityModel = CareSustainability::current();
-        $sustainability = $sustainabilityModel->toPublicArray();
-        $sustainabilityHistory = $sustainabilityModel->histories()
-            ->with(['user', 'donation'])
-            ->latest('id')
-            ->take(30)
-            ->get()
-            ->map(function ($h) {
+                $expiringBatches = $activeBatches->filter(function ($b) use ($today, $soonThreshold) {
+                    return $b->expires_at && $b->expires_at->greaterThanOrEqualTo($today) && $b->expires_at->lessThanOrEqualTo($soonThreshold);
+                });
+
+                $expiredBatches = $activeBatches->filter(function ($b) use ($today) {
+                    return $b->expires_at && $b->expires_at->lessThan($today);
+                });
+
+                $nearestExpiryBatch = $activeBatches->filter(fn ($b) => $b->expires_at !== null)->first();
+                $nearestExpiry = $nearestExpiryBatch ? $nearestExpiryBatch->expires_at->format('Y-m-d') : null;
+
+                $stockStatus = 'in_stock';
+                if ($displayQuantity <= 0) {
+                    $stockStatus = 'out_of_stock';
+                } elseif ($expiredBatches->isNotEmpty()) {
+                    $stockStatus = 'expired';
+                } elseif ($expiringBatches->isNotEmpty()) {
+                    $stockStatus = 'expiring_soon';
+                } elseif ($displayQuantity <= $item->min_threshold) {
+                    $stockStatus = 'low_stock';
+                }
+
                 return [
-                    'id' => $h->id,
-                    'action' => $h->action,
-                    'funds_amount' => $h->funds_amount !== null ? (float) $h->funds_amount : null,
-                    'daily_cost' => (float) $h->daily_cost,
-                    'amount_added' => (float) $h->amount_added,
-                    'days_added' => (float) $h->days_added,
-                    'endpoint_before' => $h->endpoint_before ? $h->endpoint_before->format('M j, Y, g:i A') : 'None / Depleted',
-                    'endpoint_after' => $h->endpoint_after ? $h->endpoint_after->format('M j, Y, g:i A') : 'Depleted',
-                    'notes' => $h->notes,
-                    'performed_by' => $h->performed_by ?: ($h->user ? $h->user->name : 'System'),
-                    'donation_ref' => $h->donation ? $h->donation->public_reference : null,
-                    'created_at' => $h->created_at ? $h->created_at->format('M j, Y, g:i A') : '',
-                    'time_ago' => $h->created_at ? $h->created_at->diffForHumans() : '',
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'quantity' => $displayQuantity,
+                    'unit' => $item->unit,
+                    'category' => $item->category,
+                    'min_threshold' => $item->min_threshold,
+                    'daily_usage_rate' => $item->daily_usage_rate ? (float) $item->daily_usage_rate : null,
+                    'days_of_supply' => $item->estimated_days_of_supply,
+                    'storage_location' => $item->storage_location,
+                    'has_expiry' => (bool) $item->has_expiry,
+                    'stock_status' => $stockStatus,
+                    'nearest_expiry' => $nearestExpiry,
+                    'active_batches_count' => $activeBatches->count(),
+                    'expired_batches_count' => $expiredBatches->count(),
+                    'expiring_soon_count' => $expiringBatches->count(),
+                    'batches' => $item->batches->map(function ($batch) use ($today, $soonThreshold) {
+                        $batchStatus = 'good';
+                        if ($batch->quantity <= 0) {
+                            $batchStatus = 'depleted';
+                        } elseif ($batch->expires_at && $batch->expires_at->lessThan($today)) {
+                            $batchStatus = 'expired';
+                        } elseif ($batch->expires_at && $batch->expires_at->lessThanOrEqualTo($soonThreshold)) {
+                            $batchStatus = 'expiring_soon';
+                        }
+
+                        $daysUntilExpiry = null;
+                        if ($batch->expires_at) {
+                            $daysUntilExpiry = (int) $today->diffInDays($batch->expires_at, false);
+                        }
+
+                        return [
+                            'id' => $batch->id,
+                            'batch_number' => $batch->batch_number ?: 'BATCH-'.$batch->id,
+                            'quantity' => $batch->quantity,
+                            'initial_quantity' => $batch->initial_quantity,
+                            'expires_at' => $batch->expires_at ? $batch->expires_at->format('Y-m-d') : null,
+                            'received_at' => $batch->received_at ? $batch->received_at->format('Y-m-d') : null,
+                            'source' => $batch->source,
+                            'notes' => $batch->notes,
+                            'status' => $batchStatus,
+                            'days_remaining' => $daysUntilExpiry,
+                        ];
+                    }),
                 ];
             });
 
-        return Inertia::render('admin/donation-monitoring', [
-            'donations' => $donations,
-            'inventory' => $inventoryPaginator,
-            'inventoryLogs' => $inventoryLogsPaginator,
-            'inventoryStats' => [
-                'totalItems' => $totalItems,
-                'lowStockCount' => $lowStockCount,
-                'outOfStockCount' => $outOfStockCount,
-                'expiringSoonCount' => $expiringSoonCount,
-                'expiredCount' => $expiredCount,
-            ],
-            'sustainability' => $sustainability,
-            'sustainabilityHistory' => $sustainabilityHistory,
-            'filters' => $request->all(),
-            'stats' => [
+            return $inventoryPaginator;
+        };
+
+        $getInventoryLogs = function () {
+            $inventoryLogsPaginator = InventoryLog::with(['item', 'batch', 'user'])
+                ->latest('created_at')
+                ->paginate(15, ['*'], 'logs_page')
+                ->withQueryString();
+
+            $inventoryLogsPaginator->through(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'item_name' => $log->item ? $log->item->name : 'Deleted Item',
+                    'category' => $log->item ? $log->item->category : 'N/A',
+                    'action' => $log->action,
+                    'quantity_changed' => $log->quantity_changed,
+                    'resulting_quantity' => $log->resulting_quantity,
+                    'unit' => $log->item ? $log->item->unit : '',
+                    'reason' => $log->reason,
+                    'batch_info' => $log->batch_info,
+                    'performed_by' => $log->user ? $log->user->name : 'System',
+                    'date' => $log->created_at->toDateTimeString(),
+                ];
+            });
+
+            return $inventoryLogsPaginator;
+        };
+
+        $getInventoryStats = function () use ($today, $soonThreshold) {
+            return [
+                'totalItems' => InventoryItem::count(),
+                'lowStockCount' => InventoryItem::where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_threshold')->count(),
+                'outOfStockCount' => InventoryItem::where('quantity', '<=', 0)->count(),
+                'expiringSoonCount' => InventoryBatch::where('quantity', '>', 0)
+                    ->whereNotNull('expires_at')
+                    ->whereDate('expires_at', '>=', $today)
+                    ->whereDate('expires_at', '<=', $soonThreshold)
+                    ->count(),
+                'expiredCount' => InventoryBatch::where('quantity', '>', 0)
+                    ->whereNotNull('expires_at')
+                    ->whereDate('expires_at', '<', $today)
+                    ->count(),
+            ];
+        };
+
+        $getStats = function () {
+            $totalCash = Donation::query()
+                ->whereIn('status', [DonationStatus::Verified->value, DonationStatus::Completed->value])
+                ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
+                ->sum('amount');
+
+            $pendingCash = Donation::query()
+                ->whereIn('status', [
+                    DonationStatus::PendingPayment->value,
+                    DonationStatus::PaymentProofSubmitted->value,
+                    DonationStatus::PendingVerification->value,
+                ])
+                ->whereIn('type', [DonationType::Cash->value, DonationType::FeedingSponsorship->value])
+                ->count();
+
+            $pendingInKind = Donation::query()
+                ->where('type', DonationType::InKind->value)
+                ->where('status', DonationStatus::PendingVerification->value)
+                ->count();
+
+            return [
                 'totalCash' => (int) $totalCash,
                 'pendingCashCount' => $pendingCash,
                 'pendingInKindCount' => $pendingInKind,
-            ],
+            ];
+        };
+
+        $getSustainabilityHistory = function () {
+            return CareSustainability::current()->histories()
+                ->with(['user', 'donation'])
+                ->latest('id')
+                ->take(30)
+                ->get()
+                ->map(function ($h) {
+                    return [
+                        'id' => $h->id,
+                        'action' => $h->action,
+                        'funds_amount' => $h->funds_amount !== null ? (float) $h->funds_amount : null,
+                        'daily_cost' => (float) $h->daily_cost,
+                        'amount_added' => (float) $h->amount_added,
+                        'days_added' => (float) $h->days_added,
+                        'endpoint_before' => $h->endpoint_before ? $h->endpoint_before->format('M j, Y, g:i A') : 'None / Depleted',
+                        'endpoint_after' => $h->endpoint_after ? $h->endpoint_after->format('M j, Y, g:i A') : 'Depleted',
+                        'notes' => $h->notes,
+                        'performed_by' => $h->performed_by ?: ($h->user ? $h->user->name : 'System'),
+                        'donation_ref' => $h->donation ? $h->donation->public_reference : null,
+                        'created_at' => $h->created_at ? $h->created_at->format('M j, Y, g:i A') : '',
+                        'time_ago' => $h->created_at ? $h->created_at->diffForHumans() : '',
+                    ];
+                });
+        };
+
+        return Inertia::render('admin/donation-monitoring', [
+            'donations' => $getDonations,
+            'inventory' => $getInventory,
+            'inventoryLogs' => $getInventoryLogs,
+            'inventoryStats' => $getInventoryStats,
+            'sustainability' => fn () => CareSustainability::current()->toPublicArray(),
+            'sustainabilityHistory' => $getSustainabilityHistory,
+            'filters' => $request->all(),
+            'stats' => $getStats,
         ]);
     }
 

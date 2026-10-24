@@ -89,6 +89,7 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
     e.preventDefault();
     postConfig('/account/admin/adoption-management/shelter-visits/settings', {
       preserveScroll: true,
+      only: ['shelterVisitSettings'],
       onSuccess: () => {
         setIsConfigOpen(false);
       },
@@ -121,6 +122,7 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
 
     post(`/account/admin/adoption-management/shelter-visits/${selectedVisit.id}/status`, {
       preserveScroll: true,
+      only: ['shelterVisits'],
       onSuccess: () => {
         setSelectedVisit(null);
         reset();

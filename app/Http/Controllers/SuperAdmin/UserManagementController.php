@@ -25,7 +25,7 @@ class UserManagementController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = User::query()->with(['roles', 'permissions']);
+        $query = User::query()->with(['roles.permissions', 'permissions']);
 
         // Search
         if ($search = $request->input('search')) {
@@ -66,7 +66,7 @@ class UserManagementController extends Controller
                     'role' => $user->roles->first()?->name ?? $user->role ?? 'user',
                     'roles' => $user->roles->pluck('name')->toArray(),
                     'direct_permissions' => $user->permissions->pluck('name')->toArray(),
-                    'all_permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+                    'all_permissions' => $user->roles->flatMap->permissions->merge($user->permissions)->pluck('name')->unique()->values()->toArray(),
                     'email_verified_at' => $user->email_verified_at,
                     'created_at' => $user->created_at->toDateTimeString(),
                 ];

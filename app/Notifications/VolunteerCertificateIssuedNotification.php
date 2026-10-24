@@ -7,12 +7,13 @@ use App\Models\Certificate;
 use App\Models\User;
 use App\Notifications\Concerns\RendersBrandedMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class VolunteerCertificateIssuedNotification extends Notification
+class VolunteerCertificateIssuedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     use RendersBrandedMail;

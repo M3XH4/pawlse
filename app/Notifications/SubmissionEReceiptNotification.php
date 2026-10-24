@@ -15,11 +15,12 @@ use App\Models\ShelterVisit;
 use App\Models\User;
 use App\Models\VolunteerApplication;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SubmissionEReceiptNotification extends Notification
+class SubmissionEReceiptNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

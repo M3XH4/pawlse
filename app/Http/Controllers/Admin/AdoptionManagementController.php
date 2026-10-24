@@ -32,226 +32,218 @@ class AdoptionManagementController extends Controller
 {
     public function index(Request $request): Response
     {
-        $applications = AdoptionApplication::with(['user', 'shelterAnimal', 'files'])
-            ->latest()
-            ->get()
-            ->map(function ($app) {
-                return [
-                    'id' => $app->id,
-                    'status' => $app->status->value,
-                    'full_name' => $app->full_name,
-                    'address' => $app->address,
-                    'phone' => $app->phone,
-                    'email' => $app->email,
-                    'birth_date' => $app->birth_date ? $app->birth_date->format('Y-m-d') : null,
-                    'occupation' => $app->occupation,
-                    'company' => $app->company,
-                    'social_media' => $app->social_media,
-                    'status_marital' => $app->status_marital,
-                    'pronouns' => $app->pronouns,
-                    'adoption_source' => $app->adoption_source,
-                    'adopted_before' => (bool) $app->adopted_before,
-                    'emergency_name' => $app->emergency_name,
-                    'emergency_relationship' => $app->emergency_relationship,
-                    'emergency_phone' => $app->emergency_phone,
-                    'emergency_email' => $app->emergency_email,
-                    'adoption_preference' => $app->adoption_preference,
-                    'residence_type' => $app->residence_type,
-                    'is_renting' => (bool) $app->is_renting,
-                    'moving_plan' => $app->moving_plan,
-                    'lives_with' => $app->lives_with,
-                    'has_allergies' => (bool) $app->has_allergies,
-                    'daily_care_handler' => $app->daily_care_handler,
-                    'expenses_handler' => $app->expenses_handler,
-                    'emergency_handler' => $app->emergency_handler,
-                    'hours_alone' => $app->hours_alone,
-                    'introduction_plan' => $app->introduction_plan,
-                    'family_support' => (bool) $app->family_support,
-                    'family_support_explanation' => $app->family_support_explanation,
-                    'current_pets' => (bool) $app->current_pets,
-                    'past_pets' => (bool) $app->past_pets,
-                    'preferred_date' => $app->preferred_date ? $app->preferred_date->format('Y-m-d') : null,
-                    'preferred_time' => $app->preferred_time,
-                    'can_visit_shelter' => (bool) $app->can_visit_shelter,
-                    'rejection_reason' => $app->rejection_reason,
-                    'notes' => $app->notes,
-                    'created_at' => $app->created_at->toDateTimeString(),
-                    'pet' => $app->shelterAnimal ? [
-                        'id' => $app->shelterAnimal->id,
-                        'name' => $app->shelterAnimal->name,
-                        'type' => $app->shelterAnimal->type ? $app->shelterAnimal->type->value : null,
-                        'breed' => $app->shelterAnimal->breed,
-                        'age' => $app->shelterAnimal->age,
-                        'photo_url' => $app->shelterAnimal->photo_url,
-                        'status' => $app->shelterAnimal->status->value,
-                    ] : null,
-                    'user' => $app->user ? [
-                        'id' => $app->user->id,
-                        'name' => $app->user->name,
-                        'email' => $app->user->email,
-                    ] : null,
-                    'files' => $app->files->map(function ($file) {
-                        return [
-                            'id' => $file->id,
-                            'kind' => $file->kind->value,
-                            'name' => $file->original_filename,
-                            'url' => Storage::url($file->path),
-                            'size' => $file->file_size,
-                        ];
-                    }),
-                ];
-            });
-
-        $pets = ShelterAnimal::with('needs')
-            ->latest()
-            ->get()
-            ->map(function ($pet) {
-                return [
-                    'id' => $pet->id,
-                    'name' => $pet->name,
-                    'type' => $pet->type ? $pet->type->value : null,
-                    'breed' => $pet->breed,
-                    'age' => $pet->age,
-                    'ageCategory' => $pet->age_category ? ucfirst($pet->age_category->value) : null,
-                    'gender' => $pet->gender ? ucfirst($pet->gender->value) : null,
-                    'color' => $pet->color,
-                    'behavior' => $pet->behavior,
-                    'story' => $pet->story,
-                    'img' => $pet->photo_url,
-                    'mainImg' => $pet->photo_url,
-                    'vaccinated' => (bool) $pet->vaccinated,
-                    'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 0,
-                    'status' => $pet->status->value,
-                    'needs' => $pet->needs->map(function ($need) {
-                        return [
-                            'id' => $need->id,
-                            'item' => $need->item,
-                            'quantity' => $need->quantity,
-                            'priority' => ucfirst(strtolower($need->priority ?? 'Medium')),
-                            'status' => strtolower($need->status ?? 'open'),
-                        ];
-                    }),
-                ];
-            });
-
-        $postAdoptionFollowUps = PostAdoptionFollowUp::with(['shelterAnimal', 'conductedBy'])
-            ->latest('follow_up_date')
-            ->get()
-            ->map(function (PostAdoptionFollowUp $followUp) {
-                return [
-                    'id' => $followUp->id,
-                    'shelter_animal_id' => $followUp->shelter_animal_id,
-                    'follow_up_date' => $followUp->follow_up_date->format('Y-m-d'),
-                    'method' => $followUp->method,
-                    'status' => $followUp->status,
-                    'pet_condition' => $followUp->pet_condition,
-                    'notes' => $followUp->notes,
-                    'photo_url' => $followUp->photo_url,
-                    'next_follow_up_date' => $followUp->next_follow_up_date?->format('Y-m-d'),
-                    'conducted_by_name' => $followUp->conductedBy?->name ?? 'ISF Staff',
-                    'pet' => $followUp->shelterAnimal ? [
-                        'id' => $followUp->shelterAnimal->id,
-                        'name' => $followUp->shelterAnimal->name,
-                        'type' => $followUp->shelterAnimal->type?->value,
-                        'breed' => $followUp->shelterAnimal->breed,
-                        'photo_url' => $followUp->shelterAnimal->photo_url,
-                        'adopter_name' => $followUp->shelterAnimal->adopter_name,
-                        'adopter_phone' => $followUp->shelterAnimal->adopter_phone,
-                        'adoption_date' => $followUp->shelterAnimal->adoption_date?->format('Y-m-d'),
-                    ] : null,
-                ];
-            });
-
-        $adoptedPets = ShelterAnimal::query()
-            ->where('status', ShelterAnimalStatus::Adopted)
-            ->withCount('postAdoptionFollowUps')
-            ->latest('adoption_date')
-            ->get()
-            ->map(function (ShelterAnimal $pet) {
-                return [
-                    'id' => $pet->id,
-                    'name' => $pet->name,
-                    'type' => $pet->type?->value,
-                    'breed' => $pet->breed,
-                    'photo_url' => $pet->photo_url,
-                    'adopter_name' => $pet->adopter_name,
-                    'adopter_phone' => $pet->adopter_phone,
-                    'adopter_email' => $pet->adopter_email,
-                    'adoption_date' => $pet->adoption_date?->format('Y-m-d'),
-                    'follow_ups_count' => $pet->post_adoption_follow_ups_count,
-                ];
-            });
-
-        $shelterVisits = ShelterVisit::with(['shelterAnimal', 'user', 'confirmedBy'])
-            ->latest('preferred_date')
-            ->get()
-            ->map(function (ShelterVisit $visit) {
-                return [
-                    'id' => $visit->id,
-                    'full_name' => $visit->full_name,
-                    'contact_number' => $visit->contact_number,
-                    'email' => $visit->email,
-                    'preferred_date' => $visit->preferred_date->format('Y-m-d'),
-                    'preferred_time_slot' => $visit->preferred_time_slot,
-                    'number_of_visitors' => $visit->number_of_visitors,
-                    'purpose' => $visit->purpose,
-                    'status' => $visit->status,
-                    'confirmed_date' => $visit->confirmed_date?->format('Y-m-d'),
-                    'confirmed_time_slot' => $visit->confirmed_time_slot,
-                    'additional_notes' => $visit->additional_notes,
-                    'admin_notes' => $visit->admin_notes,
-                    'confirmed_by_name' => $visit->confirmedBy?->name,
-                    'pet' => $visit->shelterAnimal ? [
-                        'id' => $visit->shelterAnimal->id,
-                        'name' => $visit->shelterAnimal->name,
-                        'photo_url' => $visit->shelterAnimal->photo_url,
-                    ] : null,
-                    'created_at' => $visit->created_at->toDateTimeString(),
-                ];
-            });
-
-        $rehomingRequests = RehomingRequest::with(['user', 'reviewedBy'])
-            ->latest()
-            ->get()
-            ->map(function (RehomingRequest $rehoming) {
-                return [
-                    'id' => $rehoming->id,
-                    'full_name' => $rehoming->full_name,
-                    'contact_number' => $rehoming->contact_number,
-                    'email' => $rehoming->email,
-                    'animal_name' => $rehoming->animal_name,
-                    'species' => $rehoming->species,
-                    'breed' => $rehoming->breed,
-                    'gender' => $rehoming->gender,
-                    'age' => $rehoming->age,
-                    'current_location' => $rehoming->current_location,
-                    'reason' => $rehoming->reason,
-                    'health_notes' => $rehoming->health_notes,
-                    'description' => $rehoming->description,
-                    'photo_url' => $rehoming->photo_url,
-                    'status' => $rehoming->status,
-                    'admin_notes' => $rehoming->admin_notes,
-                    'reviewed_by_name' => $rehoming->reviewedBy?->name,
-                    'created_at' => $rehoming->created_at->toDateTimeString(),
-                ];
-            });
-
-        $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
-            'max_visitors_per_slot' => 10,
-            'max_visitors_per_booking' => 10,
-            'closed_days' => ['Sunday'],
-            'blackout_dates' => [],
-            'is_accepting_visits' => true,
-        ]);
-
         return Inertia::render('admin/adoption-management', [
-            'applications' => $applications,
-            'pets' => $pets,
-            'postAdoptionFollowUps' => $postAdoptionFollowUps,
-            'adoptedPets' => $adoptedPets,
-            'shelterVisits' => $shelterVisits,
-            'rehomingRequests' => $rehomingRequests,
-            'shelterVisitSettings' => $shelterVisitSettings,
+            'applications' => fn () => AdoptionApplication::with(['user', 'shelterAnimal', 'files'])
+                ->latest()
+                ->get()
+                ->map(function ($app) {
+                    return [
+                        'id' => $app->id,
+                        'status' => $app->status->value,
+                        'full_name' => $app->full_name,
+                        'address' => $app->address,
+                        'phone' => $app->phone,
+                        'email' => $app->email,
+                        'birth_date' => $app->birth_date ? $app->birth_date->format('Y-m-d') : null,
+                        'occupation' => $app->occupation,
+                        'company' => $app->company,
+                        'social_media' => $app->social_media,
+                        'status_marital' => $app->status_marital,
+                        'pronouns' => $app->pronouns,
+                        'adoption_source' => $app->adoption_source,
+                        'adopted_before' => (bool) $app->adopted_before,
+                        'emergency_name' => $app->emergency_name,
+                        'emergency_relationship' => $app->emergency_relationship,
+                        'emergency_phone' => $app->emergency_phone,
+                        'emergency_email' => $app->emergency_email,
+                        'adoption_preference' => $app->adoption_preference,
+                        'residence_type' => $app->residence_type,
+                        'is_renting' => (bool) $app->is_renting,
+                        'moving_plan' => $app->moving_plan,
+                        'lives_with' => $app->lives_with,
+                        'has_allergies' => (bool) $app->has_allergies,
+                        'daily_care_handler' => $app->daily_care_handler,
+                        'expenses_handler' => $app->expenses_handler,
+                        'emergency_handler' => $app->emergency_handler,
+                        'hours_alone' => $app->hours_alone,
+                        'introduction_plan' => $app->introduction_plan,
+                        'family_support' => (bool) $app->family_support,
+                        'family_support_explanation' => $app->family_support_explanation,
+                        'current_pets' => (bool) $app->current_pets,
+                        'past_pets' => (bool) $app->past_pets,
+                        'preferred_date' => $app->preferred_date ? $app->preferred_date->format('Y-m-d') : null,
+                        'preferred_time' => $app->preferred_time,
+                        'can_visit_shelter' => (bool) $app->can_visit_shelter,
+                        'rejection_reason' => $app->rejection_reason,
+                        'notes' => $app->notes,
+                        'created_at' => $app->created_at->toDateTimeString(),
+                        'pet' => $app->shelterAnimal ? [
+                            'id' => $app->shelterAnimal->id,
+                            'name' => $app->shelterAnimal->name,
+                            'type' => $app->shelterAnimal->type ? $app->shelterAnimal->type->value : null,
+                            'breed' => $app->shelterAnimal->breed,
+                            'age' => $app->shelterAnimal->age,
+                            'photo_url' => $app->shelterAnimal->photo_url,
+                            'status' => $app->shelterAnimal->status->value,
+                        ] : null,
+                        'user' => $app->user ? [
+                            'id' => $app->user->id,
+                            'name' => $app->user->name,
+                            'email' => $app->user->email,
+                        ] : null,
+                        'files' => $app->files->map(function ($file) {
+                            return [
+                                'id' => $file->id,
+                                'kind' => $file->kind->value,
+                                'name' => $file->original_filename,
+                                'url' => Storage::url($file->path),
+                                'size' => $file->file_size,
+                            ];
+                        }),
+                    ];
+                }),
+
+            'pets' => fn () => ShelterAnimal::with('needs')
+                ->latest()
+                ->get()
+                ->map(function ($pet) {
+                    return [
+                        'id' => $pet->id,
+                        'name' => $pet->name,
+                        'type' => $pet->type ? $pet->type->value : null,
+                        'breed' => $pet->breed,
+                        'age' => $pet->age,
+                        'ageCategory' => $pet->age_category ? ucfirst($pet->age_category->value) : null,
+                        'gender' => $pet->gender ? ucfirst($pet->gender->value) : null,
+                        'color' => $pet->color,
+                        'behavior' => $pet->behavior,
+                        'story' => $pet->story,
+                        'img' => $pet->photo_url,
+                        'mainImg' => $pet->photo_url,
+                        'vaccinated' => (bool) $pet->vaccinated,
+                        'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 0,
+                        'status' => $pet->status->value,
+                        'needs' => $pet->needs->map(function ($need) {
+                            return [
+                                'id' => $need->id,
+                                'item' => $need->item,
+                                'quantity' => $need->quantity,
+                                'priority' => ucfirst(strtolower($need->priority ?? 'Medium')),
+                                'status' => strtolower($need->status ?? 'open'),
+                            ];
+                        }),
+                    ];
+                }),
+
+            'postAdoptionFollowUps' => fn () => PostAdoptionFollowUp::with(['shelterAnimal', 'conductedBy'])
+                ->latest('follow_up_date')
+                ->get()
+                ->map(function (PostAdoptionFollowUp $followUp) {
+                    return [
+                        'id' => $followUp->id,
+                        'shelter_animal_id' => $followUp->shelter_animal_id,
+                        'follow_up_date' => $followUp->follow_up_date->format('Y-m-d'),
+                        'method' => $followUp->method,
+                        'status' => $followUp->status,
+                        'pet_condition' => $followUp->pet_condition,
+                        'notes' => $followUp->notes,
+                        'photo_url' => $followUp->photo_url,
+                        'next_follow_up_date' => $followUp->next_follow_up_date?->format('Y-m-d'),
+                        'conducted_by_name' => $followUp->conductedBy?->name ?? 'ISF Staff',
+                        'pet' => $followUp->shelterAnimal ? [
+                            'id' => $followUp->shelterAnimal->id,
+                            'name' => $followUp->shelterAnimal->name,
+                            'type' => $followUp->shelterAnimal->type?->value,
+                            'breed' => $followUp->shelterAnimal->breed,
+                            'photo_url' => $followUp->shelterAnimal->photo_url,
+                            'adopter_name' => $followUp->shelterAnimal->adopter_name,
+                            'adopter_phone' => $followUp->shelterAnimal->adopter_phone,
+                            'adoption_date' => $followUp->shelterAnimal->adoption_date?->format('Y-m-d'),
+                        ] : null,
+                    ];
+                }),
+
+            'adoptedPets' => fn () => ShelterAnimal::query()
+                ->where('status', ShelterAnimalStatus::Adopted)
+                ->withCount('postAdoptionFollowUps')
+                ->latest('adoption_date')
+                ->get()
+                ->map(function (ShelterAnimal $pet) {
+                    return [
+                        'id' => $pet->id,
+                        'name' => $pet->name,
+                        'type' => $pet->type?->value,
+                        'breed' => $pet->breed,
+                        'photo_url' => $pet->photo_url,
+                        'adopter_name' => $pet->adopter_name,
+                        'adopter_phone' => $pet->adopter_phone,
+                        'adopter_email' => $pet->adopter_email,
+                        'adoption_date' => $pet->adoption_date?->format('Y-m-d'),
+                        'follow_ups_count' => $pet->post_adoption_follow_ups_count,
+                    ];
+                }),
+
+            'shelterVisits' => fn () => ShelterVisit::with(['shelterAnimal', 'user', 'confirmedBy'])
+                ->latest('preferred_date')
+                ->get()
+                ->map(function (ShelterVisit $visit) {
+                    return [
+                        'id' => $visit->id,
+                        'full_name' => $visit->full_name,
+                        'contact_number' => $visit->contact_number,
+                        'email' => $visit->email,
+                        'preferred_date' => $visit->preferred_date->format('Y-m-d'),
+                        'preferred_time_slot' => $visit->preferred_time_slot,
+                        'number_of_visitors' => $visit->number_of_visitors,
+                        'purpose' => $visit->purpose,
+                        'status' => $visit->status,
+                        'confirmed_date' => $visit->confirmed_date?->format('Y-m-d'),
+                        'confirmed_time_slot' => $visit->confirmed_time_slot,
+                        'additional_notes' => $visit->additional_notes,
+                        'admin_notes' => $visit->admin_notes,
+                        'confirmed_by_name' => $visit->confirmedBy?->name,
+                        'pet' => $visit->shelterAnimal ? [
+                            'id' => $visit->shelterAnimal->id,
+                            'name' => $visit->shelterAnimal->name,
+                            'photo_url' => $visit->shelterAnimal->photo_url,
+                        ] : null,
+                        'created_at' => $visit->created_at->toDateTimeString(),
+                    ];
+                }),
+
+            'rehomingRequests' => fn () => RehomingRequest::with(['user', 'reviewedBy'])
+                ->latest()
+                ->get()
+                ->map(function (RehomingRequest $rehoming) {
+                    return [
+                        'id' => $rehoming->id,
+                        'full_name' => $rehoming->full_name,
+                        'contact_number' => $rehoming->contact_number,
+                        'email' => $rehoming->email,
+                        'animal_name' => $rehoming->animal_name,
+                        'species' => $rehoming->species,
+                        'breed' => $rehoming->breed,
+                        'gender' => $rehoming->gender,
+                        'age' => $rehoming->age,
+                        'current_location' => $rehoming->current_location,
+                        'reason' => $rehoming->reason,
+                        'health_notes' => $rehoming->health_notes,
+                        'description' => $rehoming->description,
+                        'photo_url' => $rehoming->photo_url,
+                        'status' => $rehoming->status,
+                        'admin_notes' => $rehoming->admin_notes,
+                        'reviewed_by_name' => $rehoming->reviewedBy?->name,
+                        'created_at' => $rehoming->created_at->toDateTimeString(),
+                    ];
+                }),
+
+            'shelterVisitSettings' => fn () => SystemSetting::getValue('shelter_visit_settings', [
+                'max_visitors_per_slot' => 10,
+                'max_visitors_per_booking' => 10,
+                'closed_days' => ['Sunday'],
+                'blackout_dates' => [],
+                'is_accepting_visits' => true,
+            ]),
         ]);
     }
 
@@ -265,8 +257,9 @@ class AdoptionManagementController extends Controller
 
         $newStatus = AdoptionApplicationStatus::from($validated['status']);
         $oldStatus = $application->status;
+        $competingToNotify = [];
 
-        DB::transaction(function () use ($application, $validated, $newStatus, $oldStatus) {
+        DB::transaction(function () use ($application, $validated, $newStatus, $oldStatus, &$competingToNotify) {
             $animal = ShelterAnimal::where('id', $application->shelter_animal_id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -298,12 +291,7 @@ class AdoptionManagementController extends Controller
                         'rejection_reason' => 'Another applicant was approved and matched for this pet.',
                     ]);
 
-                    EReceiptDispatcher::sendToUserAndEmail(
-                        $competing->user,
-                        $competing->email,
-                        new AdoptionApplicationStatusUpdatedNotification($competing)
-                    );
-                    AdoptionApplicationStatusUpdatedEvent::dispatch($competing);
+                    $competingToNotify[] = $competing;
                 }
             } elseif ($newStatus === AdoptionApplicationStatus::Scheduled) {
                 $animal->update([
@@ -333,15 +321,25 @@ class AdoptionManagementController extends Controller
                 }
             }
 
-            EReceiptDispatcher::sendToUserAndEmail(
-                $application->user,
-                $application->email,
-                new AdoptionApplicationStatusUpdatedNotification($application)
-            );
-            AdoptionApplicationStatusUpdatedEvent::dispatch($application);
-
             AuditLog::log('adoption_application_update', "Updated status of adoption application ID {$application->id} to {$validated['status']}");
         });
+
+        // Send notifications and dispatch events outside the transaction lock
+        foreach ($competingToNotify as $competing) {
+            EReceiptDispatcher::sendToUserAndEmail(
+                $competing->user,
+                $competing->email,
+                new AdoptionApplicationStatusUpdatedNotification($competing)
+            );
+            AdoptionApplicationStatusUpdatedEvent::dispatch($competing);
+        }
+
+        EReceiptDispatcher::sendToUserAndEmail(
+            $application->user,
+            $application->email,
+            new AdoptionApplicationStatusUpdatedNotification($application)
+        );
+        AdoptionApplicationStatusUpdatedEvent::dispatch($application);
 
         Inertia::flash('toast', [
             'type' => 'success',

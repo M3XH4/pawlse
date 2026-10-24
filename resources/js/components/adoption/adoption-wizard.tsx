@@ -9,6 +9,7 @@ import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernTimePicker } from '@/components/ui/modern-time-picker';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { compressImageFile } from '@/lib/image-compression';
 
 const STORAGE_KEY = 'pawlse_saved_adoption_applicant';
 
@@ -256,12 +257,17 @@ export function AdoptionWizard({
     { number: 4, title: 'Interview', icon: Calendar }
   ];
 
-  const handleFileUpload = (key: string, file: File | null) => {
+  const handleFileUpload = async (key: string, file: File | null) => {
     if (file && file.size > 8 * 1024 * 1024) {
       toast.error('File size must be less than 8MB');
       return;
     }
-    setData(key as any, file);
+    if (!file) {
+      setData(key as any, null);
+      return;
+    }
+    const processed = await compressImageFile(file);
+    setData(key as any, processed);
   };
 
   const validateStep1 = () => {
@@ -1141,13 +1147,18 @@ export function AdoptionWizard({
                   <input
                     type="file"
                     accept="image/*,.pdf"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
                       if (file && file.size > 8 * 1024 * 1024) {
                         toast.error('File size must be less than 8MB');
                         return;
                       }
-                      setData('uploadedId', file);
+                      if (!file) {
+                        setData('uploadedId', null);
+                        return;
+                      }
+                      const processed = await compressImageFile(file);
+                      setData('uploadedId', processed);
                     }}
                     className="hidden"
                     id="upload-id"

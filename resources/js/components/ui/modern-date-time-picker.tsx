@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, Clock, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useFloatingPopover } from '@/hooks/use-floating-popover';
 
 export interface ModernDateTimePickerProps {
     value: string; // "YYYY-MM-DDTHH:MM" or "YYYY-MM-DD HH:MM"
@@ -27,7 +29,21 @@ export function ModernDateTimePicker({
 }: ModernDateTimePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'date' | 'time'>('date');
-    const containerRef = useRef<HTMLDivElement>(null);
+
+    const handleClose = () => {
+        setIsOpen(false);
+    };
+
+    const {
+        triggerRef: containerRef,
+        popoverRef,
+        coords,
+    } = useFloatingPopover({
+        isOpen,
+        onClose: handleClose,
+        estimatedHeight: 380,
+        estimatedWidth: 310,
+    });
 
     // Split value into date and time
     const [datePart, setDatePart] = useState('');
@@ -41,21 +57,6 @@ export function ModernDateTimePicker({
             if (t) setTimePart(t.slice(0, 5));
         }
     }, [value]);
-
-    // Close on click outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent | TouchEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('touchstart', handleClickOutside);
-        };
-    }, []);
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -174,16 +175,26 @@ export function ModernDateTimePicker({
             {error && <p className="text-xs text-red-500 font-medium mt-1">{error}</p>}
 
             {/* Popover */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute left-0 z-50 mt-2 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-2xl border border-gray-100 dark:border-slate-800 ring-1 ring-black/10 w-full sm:w-[310px]"
-                    >
-                        {/* Tab Switcher: Date / Time */}
+            {typeof document !== 'undefined' &&
+                createPortal(
+                    <AnimatePresence>
+                        {isOpen && coords && (
+                            <motion.div
+                                ref={popoverRef}
+                                initial={{ opacity: 0, y: coords.placement === 'top' ? 6 : -6, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: coords.placement === 'top' ? 6 : -6, scale: 0.98 }}
+                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                style={{
+                                    position: 'fixed',
+                                    top: coords.top !== undefined ? `${coords.top}px` : undefined,
+                                    bottom: coords.bottom !== undefined ? `${coords.bottom}px` : undefined,
+                                    left: `${coords.left}px`,
+                                    zIndex: 300,
+                                }}
+                                className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-2xl border border-gray-100 dark:border-slate-800 ring-1 ring-black/10 w-[310px]"
+                            >
+                                {/* Tab Switcher: Date / Time */}
                         <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-xl mb-3">
                             <button
                                 type="button"
@@ -374,9 +385,11 @@ export function ModernDateTimePicker({
                                 Done
                             </button>
                         </div>
-                    </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
+                    document.body
                 )}
-            </AnimatePresence>
         </div>
     );
 }

@@ -1,12 +1,13 @@
 import { Link, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Wallet, TrendingUp, History, Info, Filter, ArrowRight, ShieldCheck, User, Clock, Heart, Plus, Minus, Camera, FileText, Phone, Mail } from 'lucide-react';
-import React, { useState } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import React, { useState } from 'react';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useMounted } from '@/hooks/use-mounted';
 import { toast } from 'sonner';
+
+const DonationAreaChart = React.lazy(() => import('@/components/sections/donation-area-chart'));
 
 const chartData = [
   { id: 'month-jan', name: 'Jan', amount: 35000 },
@@ -718,30 +719,25 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
 
                 <div className="h-[300px] w-full mb-12 relative">
                   {isMounted ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart key={`area-chart-${activeTab}`} data={activeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs key="defs">
-                            <linearGradient key="gradient" id={`donation-gradient-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#22C55E" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid key="grid" strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                        <XAxis key="xaxis" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94A3B8' }} />
-                        <YAxis key="yaxis" hide />
-                        <Tooltip
-                            key="tooltip"
-                            contentStyle={{ borderRadius: '1.5rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)', fontWeight: 'black' }}
-                        />
-                        <Area key="area" type="monotone" dataKey="amount" stroke="#22C55E" strokeWidth={4} fillOpacity={1} fill={`url(#donation-gradient-${gradientId})`} />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    <React.Suspense
+                      fallback={
+                        <div className="h-[300px] w-full flex items-center justify-center text-gray-300 font-bold">
+                          Loading chart...
+                        </div>
+                      }
+                    >
+                      <DonationAreaChart
+                        activeTab={activeTab}
+                        activeChartData={activeChartData}
+                        gradientId={gradientId}
+                      />
+                    </React.Suspense>
                   ) : (
-                  // 👇 optional placeholder (prevents layout jump)
-                  <div className="h-[300px] w-full flex items-center justify-center text-gray-300 font-bold">
-                    Loading chart...
-                  </div>
-                              )}
+                    // 👇 optional placeholder (prevents layout jump)
+                    <div className="h-[300px] w-full flex items-center justify-center text-gray-300 font-bold">
+                      Loading chart...
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-6">
