@@ -89,7 +89,7 @@ export function AdoptionWizard({
     socialMedia: initialData?.socialMedia || '',
     status: initialData?.status || '',
     pronouns: initialData?.pronouns || '',
-    adoptionSource: initialData?.adoptionSource || ([] as string[]),
+    adoptionSource: Array.isArray(initialData?.adoptionSource) ? initialData.adoptionSource : [],
     adoptedBefore: initialData?.adoptedBefore || '',
     emergencyName: initialData?.emergencyName || '',
     emergencyRelationship: initialData?.emergencyRelationship || '',
@@ -101,7 +101,7 @@ export function AdoptionWizard({
     residenceType: initialData?.residenceType || '',
     isRenting: initialData?.isRenting || '',
     movingPlan: initialData?.movingPlan || '',
-    livesWith: initialData?.livesWith || ([] as string[]),
+    livesWith: Array.isArray(initialData?.livesWith) ? initialData.livesWith : [],
     hasAllergies: initialData?.hasAllergies || '',
     dailyCareHandler: initialData?.dailyCareHandler || '',
     expensesHandler: initialData?.expensesHandler || '',
@@ -137,6 +137,9 @@ export function AdoptionWizard({
     }
   }, [currentStep]);
 
+  // Check if pet already has an active application
+  const isAlreadyApplied = Boolean(pet?.has_applied && !resubmitApplicationId);
+
   // Load from localStorage if not editing an existing application and fields are empty
   useEffect(() => {
     if (initialData) {
@@ -149,15 +152,30 @@ export function AdoptionWizard({
       if (savedRaw) {
         const saved = JSON.parse(savedRaw);
         let filledAny = false;
+        const toUpdate: Record<string, any> = {};
 
         Object.keys(saved).forEach((key) => {
-          if (key in data && !data[key as keyof typeof data] && saved[key]) {
-            setData(key as any, saved[key]);
-            filledAny = true;
+          if (key in data) {
+            const currentVal = data[key as keyof typeof data];
+            const savedVal = saved[key];
+
+            const isCurrentEmpty = Array.isArray(currentVal)
+              ? currentVal.length === 0
+              : currentVal === undefined || currentVal === null || currentVal === '';
+
+            const hasSavedVal = Array.isArray(savedVal)
+              ? savedVal.length > 0
+              : savedVal !== undefined && savedVal !== null && savedVal !== '';
+
+            if (isCurrentEmpty && hasSavedVal) {
+              toUpdate[key] = savedVal;
+              filledAny = true;
+            }
           }
         });
 
         if (filledAny) {
+          setData((prev) => ({ ...prev, ...toUpdate }));
           setHasLoadedSavedData(true);
         }
       }
@@ -166,46 +184,97 @@ export function AdoptionWizard({
     }
   }, [initialData]);
 
-  const saveApplicantProfile = () => {
+  const saveApplicantProfile = (currentData = data) => {
     try {
       const toSave = {
-        fullName: data.fullName,
-        address: data.address,
-        phone: data.phone,
-        email: data.email,
-        birthDate: data.birthDate,
-        occupation: data.occupation,
-        company: data.company,
-        socialMedia: data.socialMedia,
-        status: data.status,
-        pronouns: data.pronouns,
-        adoptionSource: data.adoptionSource,
-        adoptedBefore: data.adoptedBefore,
-        emergencyName: data.emergencyName,
-        emergencyRelationship: data.emergencyRelationship,
-        emergencyPhone: data.emergencyPhone,
-        emergencyEmail: data.emergencyEmail,
-        adoptionPreference: data.adoptionPreference,
-        residenceType: data.residenceType,
-        isRenting: data.isRenting,
-        movingPlan: data.movingPlan,
-        livesWith: data.livesWith,
-        hasAllergies: data.hasAllergies,
-        dailyCareHandler: data.dailyCareHandler,
-        expensesHandler: data.expensesHandler,
-        emergencyHandler: data.emergencyHandler,
-        hoursAlone: data.hoursAlone,
-        introductionPlan: data.introductionPlan,
-        familySupport: data.familySupport,
-        familySupportExplanation: data.familySupportExplanation,
-        currentPets: data.currentPets,
-        pastPets: data.pastPets,
+        fullName: currentData.fullName,
+        address: currentData.address,
+        phone: currentData.phone,
+        email: currentData.email,
+        birthDate: currentData.birthDate,
+        occupation: currentData.occupation,
+        company: currentData.company,
+        socialMedia: currentData.socialMedia,
+        status: currentData.status,
+        pronouns: currentData.pronouns,
+        adoptionSource: currentData.adoptionSource,
+        adoptedBefore: currentData.adoptedBefore,
+        emergencyName: currentData.emergencyName,
+        emergencyRelationship: currentData.emergencyRelationship,
+        emergencyPhone: currentData.emergencyPhone,
+        emergencyEmail: currentData.emergencyEmail,
+        adoptionPreference: currentData.adoptionPreference,
+        residenceType: currentData.residenceType,
+        isRenting: currentData.isRenting,
+        movingPlan: currentData.movingPlan,
+        livesWith: currentData.livesWith,
+        hasAllergies: currentData.hasAllergies,
+        dailyCareHandler: currentData.dailyCareHandler,
+        expensesHandler: currentData.expensesHandler,
+        emergencyHandler: currentData.emergencyHandler,
+        hoursAlone: currentData.hoursAlone,
+        introductionPlan: currentData.introductionPlan,
+        familySupport: currentData.familySupport,
+        familySupportExplanation: currentData.familySupportExplanation,
+        currentPets: currentData.currentPets,
+        pastPets: currentData.pastPets,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch (e) {
       console.error('Error writing applicant profile to storage', e);
     }
   };
+
+  // Auto-save applicant profile to localStorage on field or checkbox changes
+  useEffect(() => {
+    if (resubmitApplicationId) return;
+
+    const hasAnyContent = Boolean(
+      (data.fullName && data.fullName.trim()) ||
+      (data.email && data.email.trim()) ||
+      (data.phone && data.phone.trim()) ||
+      (data.address && data.address.trim()) ||
+      (Array.isArray(data.adoptionSource) && data.adoptionSource.length > 0) ||
+      (Array.isArray(data.livesWith) && data.livesWith.length > 0)
+    );
+
+    if (hasAnyContent) {
+      saveApplicantProfile(data);
+    }
+  }, [
+    data.fullName,
+    data.address,
+    data.phone,
+    data.email,
+    data.birthDate,
+    data.occupation,
+    data.company,
+    data.socialMedia,
+    data.status,
+    data.pronouns,
+    data.adoptionSource,
+    data.adoptedBefore,
+    data.emergencyName,
+    data.emergencyRelationship,
+    data.emergencyPhone,
+    data.emergencyEmail,
+    data.adoptionPreference,
+    data.residenceType,
+    data.isRenting,
+    data.movingPlan,
+    data.livesWith,
+    data.hasAllergies,
+    data.dailyCareHandler,
+    data.expensesHandler,
+    data.emergencyHandler,
+    data.hoursAlone,
+    data.introductionPlan,
+    data.familySupport,
+    data.familySupportExplanation,
+    data.currentPets,
+    data.pastPets,
+    resubmitApplicationId,
+  ]);
 
   const handleClearSavedData = () => {
     try {
@@ -396,6 +465,11 @@ export function AdoptionWizard({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isAlreadyApplied) {
+      toast.error(`You have already submitted an adoption application for ${pet.name}. Duplicate applications are not allowed.`);
+      return;
+    }
+
     if (!validateStep4()) {
       const minDateStr = new Date().toISOString().split('T')[0];
       if (!data.preferredDate) {
@@ -544,6 +618,20 @@ export function AdoptionWizard({
 
         {/* Content */}
         <div ref={scrollAreaRef} className="flex-1 overflow-y-auto modal-scroll-area p-4 sm:p-6 md:p-8">
+          {isAlreadyApplied && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 flex items-start gap-3 shadow-xs">
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-black text-amber-900 dark:text-amber-200">
+                  Application Already Submitted
+                </h4>
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
+                  You already have an active adoption application for {pet.name}. Duplicate applications for the same pet are not permitted. You can check the status of your existing application in your account dashboard.
+                </p>
+              </div>
+            </div>
+          )}
+
           <AnimatePresence mode="wait">
             {/* Step 1: Applicant Information */}
             {currentStep === 1 && (
@@ -1320,14 +1408,21 @@ export function AdoptionWizard({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={processing}
+              disabled={processing || isAlreadyApplied}
               className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ml-auto cursor-pointer ${
-                validateStep4() && !processing
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30'
-                  : 'bg-green-300 dark:bg-green-950/70 text-white/90 hover:bg-green-400'
+                isAlreadyApplied
+                  ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
+                  : validateStep4() && !processing
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30'
+                    : 'bg-green-300 dark:bg-green-950/70 text-white/90 hover:bg-green-400'
               }`}
             >
-              {processing ? 'Submitting...' : (
+              {processing ? 'Submitting...' : isAlreadyApplied ? (
+                <>
+                  <CheckCircle2 size={20} />
+                  Already Applied
+                </>
+              ) : (
                 <>
                   <CheckCircle2 size={20} />
                   {resubmitApplicationId ? 'Update & Re-submit' : 'Submit Application'}

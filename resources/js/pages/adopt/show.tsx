@@ -394,15 +394,22 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                   {isAvailable ? (
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setIsWizardOpen(true)}
-                          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all text-sm group"
-                        >
-                          <Heart size={16} fill="currentColor" />
-                          Apply to Adopt
-                          <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-                        </button>
+                        {pet.has_applied ? (
+                          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-bold px-6 py-3.5 rounded-2xl flex items-center gap-2 text-sm shadow-xs">
+                            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                            <span>Application Already Submitted</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setIsWizardOpen(true)}
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all text-sm group"
+                          >
+                            <Heart size={16} fill="currentColor" />
+                            Apply to Adopt
+                            <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                          </button>
+                        )}
 
                         <button
                           type="button"
@@ -981,14 +988,21 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                   </div>
 
                   <div>
-                    <button
-                      type="button"
-                      onClick={() => setIsWizardOpen(true)}
-                      className="bg-white hover:bg-slate-50 text-amber-600 font-bold px-6 py-3.5 rounded-2xl shadow-md inline-flex items-center gap-2 cursor-pointer transition-all text-sm"
-                    >
-                      <Heart size={16} fill="currentColor" />
-                      Apply to Adopt
-                    </button>
+                    {pet.has_applied ? (
+                      <div className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold px-6 py-3.5 rounded-2xl inline-flex items-center gap-2 text-sm">
+                        <CheckCircle2 size={16} className="text-emerald-600" />
+                        <span>Application Submitted</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsWizardOpen(true)}
+                        className="bg-white hover:bg-slate-50 text-amber-600 font-bold px-6 py-3.5 rounded-2xl shadow-md inline-flex items-center gap-2 cursor-pointer transition-all text-sm"
+                      >
+                        <Heart size={16} fill="currentColor" />
+                        Apply to Adopt
+                      </button>
+                    )}
                   </div>
                 </div>
 

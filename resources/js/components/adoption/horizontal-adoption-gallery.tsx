@@ -280,6 +280,10 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
   });
 
   const handleApply = (pet: any) => {
+    if (pet.has_applied) {
+      toast.info(`You have already submitted an adoption application for ${pet.name}.`);
+      return;
+    }
     setApplyingPet(pet);
     setFlippedCard(null);
   };
@@ -370,8 +374,15 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
                             className="w-full h-full object-cover"
                           />
 
-                          {/* Rescued & In Shelter Tag */}
-                          {pet.isRescued !== false && (
+                          {/* Rescued & In Shelter Tag or Applied Badge */}
+                          {pet.has_applied ? (
+                            <div className="absolute top-4 left-4 bg-emerald-600/95 text-white backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
+                              <CheckCircle2 size={14} className="shrink-0" />
+                              <span className="text-[10px] font-black uppercase tracking-wider">
+                                Applied
+                              </span>
+                            </div>
+                          ) : pet.isRescued !== false && (
                             <div className="absolute top-4 left-4 bg-emerald-600/95 text-white backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
                               <ShieldCheck size={14} className="shrink-0" />
                               <span className="text-[10px] font-black uppercase tracking-wider">
@@ -576,13 +587,20 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
                     </div>
 
                     <div className="pt-2">
-                      <button
-                        onClick={() => handleApply(pet)}
-                        className="w-full bg-paw-green text-white py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
-                      >
-                        <Heart size={18} fill="white" />
-                        APPLY TO ADOPT
-                      </button>
+                      {pet.has_applied ? (
+                        <div className="w-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 py-3.5 rounded-2xl font-black text-xs tracking-wider uppercase flex items-center justify-center gap-2">
+                          <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Application Submitted</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleApply(pet)}
+                          className="w-full bg-paw-green text-white py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Heart size={18} fill="white" />
+                          APPLY TO ADOPT
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
 use App\Models\AdoptionApplication;
 use App\Models\AssignedTask;
@@ -37,12 +38,28 @@ class HomeController extends Controller
         };
 
         // 1. Available Pets for Adoption
+        $user = $request->user();
+        $appliedPetIds = $user
+            ? AdoptionApplication::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
+                ->whereIn('status', [
+                    AdoptionApplicationStatus::Pending,
+                    AdoptionApplicationStatus::Scheduled,
+                    AdoptionApplicationStatus::Approved,
+                ])
+                ->pluck('shelter_animal_id')
+                ->flip()
+                ->all()
+            : [];
+
         $pets = ShelterAnimal::query()
             ->where('status', ShelterAnimalStatus::Available)
             ->latest()
             ->take(12)
             ->get()
-            ->map(function (ShelterAnimal $pet) use ($getString) {
+            ->map(function (ShelterAnimal $pet) use ($getString, $appliedPetIds) {
                 $defaultImg = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800';
                 $allPhotos = $pet->all_photos;
                 $primaryImg = $pet->photo_url ?: ($allPhotos[0] ?? $defaultImg);
@@ -50,6 +67,7 @@ class HomeController extends Controller
 
                 return [
                     'id' => $pet->id,
+                    'has_applied' => isset($appliedPetIds[$pet->id]),
                     'name' => $pet->name,
                     'type' => $getString($pet->type, 'Dog'),
                     'breed' => $pet->breed ?? 'Mixed Breed',

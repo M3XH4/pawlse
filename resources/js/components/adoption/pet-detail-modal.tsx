@@ -57,6 +57,7 @@ export interface PostAdoptionFollowUpItem {
 
 export interface AdoptPetDetail {
   id: number;
+  has_applied?: boolean;
   code?: string;
   status?: string;
   status_label?: string;
@@ -614,14 +615,21 @@ export function PetDetailModal({
               <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
                 {/* 1. Main Button: Apply to Adopt if available, else view care profile */}
                 {(pet.status || 'available').toLowerCase() === 'available' ? (
-                  <button
-                    type="button"
-                    onClick={() => onApply(pet)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Heart size={16} fill="currentColor" />
-                    Apply to Adopt {pet.name}
-                  </button>
+                  pet.has_applied ? (
+                    <div className="w-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                      <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>Application Already Submitted</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onApply(pet)}
+                      className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Heart size={16} fill="currentColor" />
+                      Apply to Adopt {pet.name}
+                    </button>
+                  )
                 ) : (
                   <a
                     href={`/adopt/${pet.id}`}

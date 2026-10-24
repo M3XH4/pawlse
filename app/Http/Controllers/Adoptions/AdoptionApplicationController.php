@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -164,11 +165,59 @@ class AdoptionApplicationController extends Controller
             'canVisitShelter' => ['required', 'in:Yes,No'],
         ]);
 
-        $application = DB::transaction(function () use ($request, $validated) {
-            $userId = $request->user()?->id;
-            if (! $userId) {
-                $existingUser = User::where('email', $validated['email'])->first();
-                $userId = $existingUser?->id;
+        $userId = $request->user()?->id;
+        if (! $userId) {
+            $existingUser = User::where('email', $validated['email'])->first();
+            $userId = $existingUser?->id;
+        }
+
+        // Prevent duplicate adoption applications by the same user for the same pet
+        $existingApplication = AdoptionApplication::where('shelter_animal_id', $validated['pet_id'])
+            ->where(function ($query) use ($userId, $validated) {
+                if ($userId) {
+                    $query->where('user_id', $userId)
+                        ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $validated['email'])]);
+                } else {
+                    $query->whereRaw('LOWER(email) = ?', [strtolower((string) $validated['email'])]);
+                }
+            })
+            ->first();
+
+        if ($existingApplication) {
+            if ($existingApplication->status === AdoptionApplicationStatus::Approved) {
+                throw ValidationException::withMessages([
+                    'pet_id' => 'You have already adopted or been approved to adopt this pet.',
+                ]);
+            }
+
+            if ($existingApplication->status === AdoptionApplicationStatus::Rejected) {
+                throw ValidationException::withMessages([
+                    'pet_id' => 'You have already submitted an application for this pet that was reviewed. Please visit your dashboard to update and resubmit it.',
+                ]);
+            }
+
+            throw ValidationException::withMessages([
+                'pet_id' => 'You already have an active adoption application for this pet. Duplicate applications are not allowed.',
+            ]);
+        }
+
+        $application = DB::transaction(function () use ($request, $validated, $userId) {
+            $conflict = AdoptionApplication::where('shelter_animal_id', $validated['pet_id'])
+                ->where(function ($query) use ($userId, $validated) {
+                    if ($userId) {
+                        $query->where('user_id', $userId)
+                            ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $validated['email'])]);
+                    } else {
+                        $query->whereRaw('LOWER(email) = ?', [strtolower((string) $validated['email'])]);
+                    }
+                })
+                ->lockForUpdate()
+                ->first();
+
+            if ($conflict) {
+                throw ValidationException::withMessages([
+                    'pet_id' => 'You already have an active adoption application for this pet.',
+                ]);
             }
 
             $app = AdoptionApplication::create([

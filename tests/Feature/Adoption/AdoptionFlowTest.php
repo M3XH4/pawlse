@@ -525,3 +525,292 @@ test('guest applicant receives notification and email with direct track link whe
         }
     );
 });
+
+test('user cannot submit duplicate adoption application for the same pet', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $pet->id,
+        'email' => $user->email,
+        'status' => AdoptionApplicationStatus::Pending,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('adopt.apply'), [
+        'pet_id' => $pet->id,
+        'fullName' => $user->name,
+        'address' => '123 Main St, Iligan City',
+        'phone' => '+639123456789',
+        'email' => $user->email,
+        'birthDate' => '1995-05-15',
+        'occupation' => 'Engineer',
+        'company' => 'Pawlse',
+        'socialMedia' => 'facebook.com/user',
+        'status' => 'Single',
+        'pronouns' => 'He/Him',
+        'adoptionSource' => ['Website'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Jane Doe',
+        'emergencyRelationship' => 'Sister',
+        'emergencyPhone' => '+639987654321',
+        'emergencyEmail' => 'jane@example.com',
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'None',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '2 hours',
+        'introductionPlan' => 'Gentle intro.',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+        'preferredDate' => now()->addDays(2)->format('Y-m-d'),
+        'preferredTime' => '14:30',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasErrors(['pet_id']);
+    expect(AdoptionApplication::where('shelter_animal_id', $pet->id)->count())->toBe(1);
+});
+
+test('guest cannot submit duplicate adoption application for the same pet with matching email', function () {
+    Storage::fake('public');
+
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => null,
+        'shelter_animal_id' => $pet->id,
+        'email' => 'duplicate.guest@example.com',
+        'status' => AdoptionApplicationStatus::Pending,
+    ]);
+
+    $response = $this->post(route('adopt.apply'), [
+        'pet_id' => $pet->id,
+        'fullName' => 'Guest Two',
+        'address' => '456 Second St, Iligan City',
+        'phone' => '+639123456781',
+        'email' => 'duplicate.guest@example.com',
+        'birthDate' => '1996-06-16',
+        'occupation' => 'Designer',
+        'company' => 'Pawlse',
+        'socialMedia' => 'instagram.com/guest',
+        'status' => 'Single',
+        'pronouns' => 'They/Them',
+        'adoptionSource' => ['Social Media'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Friend',
+        'emergencyRelationship' => 'Friend',
+        'emergencyPhone' => '+639987654322',
+        'emergencyEmail' => 'friend@example.com',
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'None',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '1 hour',
+        'introductionPlan' => 'Slow intro.',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+        'preferredDate' => now()->addDays(3)->format('Y-m-d'),
+        'preferredTime' => '10:00',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasErrors(['pet_id']);
+    expect(AdoptionApplication::where('shelter_animal_id', $pet->id)->count())->toBe(1);
+});
+
+test('adopt index provides has_applied indicator for pets the user has already applied for', function () {
+    $user = User::factory()->create();
+    $appliedPet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+    $otherPet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $appliedPet->id,
+        'status' => AdoptionApplicationStatus::Pending,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('adopt'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('adopt')
+        ->has('pets', 2)
+        ->where('pets.0.has_applied', fn ($val) => true)
+    );
+});
+
+test('user can submit an application for a different pet even if they have an existing pending application', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $petA = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+    $petB = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $petA->id,
+        'status' => AdoptionApplicationStatus::Pending,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('adopt.apply'), [
+        'pet_id' => $petB->id,
+        'fullName' => 'John Doe',
+        'address' => '123 Main St, Iligan City',
+        'phone' => '+639123456789',
+        'email' => $user->email,
+        'birthDate' => '1995-05-15',
+        'occupation' => 'Software Engineer',
+        'company' => 'Google',
+        'socialMedia' => 'facebook.com/johndoe',
+        'status' => 'Single',
+        'pronouns' => 'He/Him',
+        'adoptionSource' => ['Social Media', 'Website'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Jane Doe',
+        'emergencyRelationship' => 'Sister',
+        'emergencyPhone' => '+639987654321',
+        'emergencyEmail' => 'jane@example.com',
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'Bring the dog with me.',
+        'livesWith' => ['Partner'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '2 hours',
+        'introductionPlan' => 'Introduce slowly on leash.',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'Yes',
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+        'preferredDate' => now()->addDays(2)->format('Y-m-d'),
+        'preferredTime' => '14:30',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    expect(AdoptionApplication::where('shelter_animal_id', $petB->id)->count())->toBe(1);
+    expect(AdoptionApplication::where('user_id', $user->id)->count())->toBe(2);
+});
+
+test('duplicate check is case-insensitive for email address', function () {
+    Storage::fake('public');
+
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => null,
+        'shelter_animal_id' => $pet->id,
+        'email' => 'adopter@example.com',
+        'status' => AdoptionApplicationStatus::Pending,
+    ]);
+
+    $response = $this->post(route('adopt.apply'), [
+        'pet_id' => $pet->id,
+        'fullName' => 'Case Test User',
+        'address' => '789 Elm St',
+        'phone' => '+639123456789',
+        'email' => 'ADOPTER@EXAMPLE.COM',
+        'birthDate' => '1995-05-15',
+        'company' => 'Pawlse',
+        'status' => 'Single',
+        'pronouns' => 'He/Him',
+        'adoptionSource' => ['Website'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Emergency Jane',
+        'emergencyRelationship' => 'Sister',
+        'emergencyPhone' => '+639987654321',
+        'emergencyEmail' => 'jane@example.com',
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'None',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '2 hours',
+        'introductionPlan' => 'Intro',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+        'preferredDate' => now()->addDays(2)->format('Y-m-d'),
+        'preferredTime' => '14:30',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasErrors(['pet_id']);
+    expect(AdoptionApplication::where('shelter_animal_id', $pet->id)->count())->toBe(1);
+});
+
+test('user cannot apply for a pet if their previous application for that pet was already approved', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
+
+    AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $pet->id,
+        'status' => AdoptionApplicationStatus::Approved,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('adopt.apply'), [
+        'pet_id' => $pet->id,
+        'fullName' => 'Approved User',
+        'address' => '123 Main St',
+        'phone' => '+639123456789',
+        'email' => $user->email,
+        'birthDate' => '1995-05-15',
+        'company' => 'Pawlse',
+        'status' => 'Single',
+        'pronouns' => 'He/Him',
+        'adoptionSource' => ['Website'],
+        'adoptedBefore' => 'No',
+        'emergencyName' => 'Jane',
+        'emergencyRelationship' => 'Sister',
+        'emergencyPhone' => '+639987654321',
+        'emergencyEmail' => 'jane@example.com',
+        'adoptionPreference' => 'Dog',
+        'residenceType' => 'House',
+        'isRenting' => 'No',
+        'movingPlan' => 'None',
+        'livesWith' => ['Self'],
+        'hasAllergies' => 'No',
+        'dailyCareHandler' => 'Myself',
+        'expensesHandler' => 'Myself',
+        'emergencyHandler' => 'Myself',
+        'hoursAlone' => '2 hours',
+        'introductionPlan' => 'Intro',
+        'familySupport' => 'Yes',
+        'currentPets' => 'No',
+        'pastPets' => 'No',
+        'uploadedId' => UploadedFile::fake()->image('id.jpg'),
+        'preferredDate' => now()->addDays(2)->format('Y-m-d'),
+        'preferredTime' => '14:30',
+        'canVisitShelter' => 'Yes',
+    ]);
+
+    $response->assertSessionHasErrors(['pet_id' => 'You have already adopted or been approved to adopt this pet.']);
+});

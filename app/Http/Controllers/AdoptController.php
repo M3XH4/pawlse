@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdoptionApplicationStatus;
 use App\Enums\ShelterAnimalStatus;
+use App\Models\AdoptionApplication;
 use App\Models\ShelterAnimal;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
@@ -13,12 +15,28 @@ class AdoptController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $appliedPetIds = $user
+            ? AdoptionApplication::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
+                ->whereIn('status', [
+                    AdoptionApplicationStatus::Pending,
+                    AdoptionApplicationStatus::Scheduled,
+                    AdoptionApplicationStatus::Approved,
+                ])
+                ->pluck('shelter_animal_id')
+                ->flip()
+                ->all()
+            : [];
+
         $pets = ShelterAnimal::query()
             ->with(['medicalRecords'])
             ->where('status', ShelterAnimalStatus::Available)
             ->latest('id')
             ->get()
-            ->map(fn (ShelterAnimal $pet) => static::transformPet($pet));
+            ->map(fn (ShelterAnimal $pet) => static::transformPet($pet, isset($appliedPetIds[$pet->id])));
 
         $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
             'max_visitors_per_slot' => 10,
@@ -34,8 +52,21 @@ class AdoptController extends Controller
         ]);
     }
 
-    public function show(ShelterAnimal $pet): Response
+    public function show(Request $request, ShelterAnimal $pet): Response
     {
+        $user = $request->user();
+        $hasApplied = $user ? AdoptionApplication::where('shelter_animal_id', $pet->id)
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+            })
+            ->whereIn('status', [
+                AdoptionApplicationStatus::Pending,
+                AdoptionApplicationStatus::Scheduled,
+                AdoptionApplicationStatus::Approved,
+            ])
+            ->exists() : false;
+
         $pet->loadMissing(['medicalRecords', 'fosterPlacements.fosterParent.user', 'postAdoptionFollowUps']);
 
         $shelterVisitSettings = SystemSetting::getValue('shelter_visit_settings', [
@@ -47,7 +78,7 @@ class AdoptController extends Controller
         ]);
 
         return Inertia::render('adopt/show', [
-            'pet' => static::transformPet($pet),
+            'pet' => static::transformPet($pet, $hasApplied),
             'shelterVisitSettings' => $shelterVisitSettings,
         ]);
     }
@@ -55,7 +86,7 @@ class AdoptController extends Controller
     /**
      * @return array<string, mixed>
      */
-    public static function transformPet(ShelterAnimal $pet): array
+    public static function transformPet(ShelterAnimal $pet, bool $hasApplied = false): array
     {
         $typeVal = strtolower($pet->type ? $pet->type->value : '');
         $codePrefix = match ($typeVal) {
@@ -70,6 +101,7 @@ class AdoptController extends Controller
 
         return [
             'id' => $pet->id,
+            'has_applied' => $hasApplied,
             'code' => $code,
             'status' => $pet->status?->value ?? 'available',
             'status_label' => match ($pet->status) {

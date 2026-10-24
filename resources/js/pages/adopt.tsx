@@ -592,11 +592,18 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                       </span>
                     </div>
 
-                    {/* Available Badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[#FF9B00] font-black text-[9px] flex items-center gap-1 shadow-md">
-                      <Heart size={9} fill="currentColor" />
-                      Available
-                    </div>
+                    {/* Available or Applied Badge */}
+                    {pet.has_applied ? (
+                      <div className="absolute top-2.5 left-2.5 bg-emerald-600 text-white font-black text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+                        <CheckCircle2 size={10} />
+                        Applied
+                      </div>
+                    ) : (
+                      <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[#FF9B00] font-black text-[9px] flex items-center gap-1 shadow-md">
+                        <Heart size={9} fill="currentColor" />
+                        Available
+                      </div>
+                    )}
 
                     {/* Rescued & In Shelter Tag + Multi-Photo Counter */}
                     <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
@@ -651,9 +658,13 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
 
                     <button
                       type="button"
-                      className="w-full bg-[#0B2340] text-white py-2 rounded-xl font-black text-[10px] hover:bg-paw-orange transition-colors uppercase tracking-wider shadow-sm"
+                      className={`w-full py-2 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-sm transition-colors ${
+                        pet.has_applied
+                          ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                          : 'bg-[#0B2340] text-white hover:bg-paw-orange'
+                      }`}
                     >
-                      Meet {pet.name}
+                      {pet.has_applied ? 'Applied • View Details' : `Meet ${pet.name}`}
                     </button>
                   </div>
                 </motion.div>
