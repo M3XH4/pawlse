@@ -378,7 +378,7 @@ export function SubmissionReceipt({
             <div class="footer-dark">
               <div>
                 <div style="font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; color: #ffffff;">PAWLSE &bull; Iligan Stray Feeders</div>
-                <div style="font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px;">Zone 5, Barangay Tambo, Iligan City, 9200 &bull; Official Computer-Generated Receipt</div>
+                <div style="font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px;">Purok 13, Kiwalan, Iligan City, 9200 &bull; Official Computer-Generated Receipt</div>
               </div>
               <img src="${logoUrl}" alt="ISF Logo" style="width: 38px; height: 38px; border-radius: 9999px; border: 1.5px solid #f59e0b;" />
             </div>
@@ -526,7 +526,7 @@ export function SubmissionReceipt({
                         <div className="flex items-start gap-2.5">
                             <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
                             <div className="text-xs text-emerald-950 font-bold leading-relaxed">
-                                <span className="font-black text-emerald-900 block">Drop-off Venue: Zone 5, Barangay Tambo, Iligan City (9:00 AM – 5:00 PM)</span>
+                                <span className="font-black text-emerald-900 block">Drop-off Venue: Purok 13, Kiwalan, Iligan City (9:00 AM – 5:00 PM)</span>
                                 <span>Present this e-receipt or Reference ID upon arrival. Our team will verify and stock your pledged items immediately into shelter inventory.</span>
                             </div>
                         </div>
@@ -604,7 +604,7 @@ export function SubmissionReceipt({
                                 PAWLSE &bull; Iligan Stray Feeders
                             </p>
                             <p className="text-[11px] font-semibold text-slate-400">
-                                Zone 5, Barangay Tambo, Iligan City &bull; Feed Furr A Cause
+                                Purok 13, Kiwalan, Iligan City &bull; Feed Furr A Cause
                             </p>
                         </div>
                         <img

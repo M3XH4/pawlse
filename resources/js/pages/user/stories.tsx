@@ -536,7 +536,7 @@ export default function UserStories({
                             <div>
                                 <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                                     <ImageWithFallback
-                                        src={story.featured_image || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1200&auto=format&fit=crop&q=80'}
+                                        src={story.featured_image || 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=1200&auto=format&fit=crop&q=80'}
                                         alt={story.title}
                                         className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                                     />

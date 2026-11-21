@@ -125,7 +125,7 @@ const CATEGORY_STYLES: Record<string, {
 const PRESET_IMAGES = [
     { label: 'Rescue Puppy', url: 'https://images.unsplash.com/photo-1594004844613-19d4db632e0f?w=1200&auto=format&fit=crop&q=80' },
     { label: 'Adoption Love', url: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=1200&auto=format&fit=crop&q=80' },
-    { label: 'Animal Welfare Law', url: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1200&auto=format&fit=crop&q=80' },
+    { label: 'Animal Welfare Law', url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1200&auto=format&fit=crop&q=80' },
     { label: 'Vet Care Clinic', url: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=1200&auto=format&fit=crop&q=80' },
     { label: 'Spay & Neuter', url: 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?w=1200&auto=format&fit=crop&q=80' },
     { label: 'Feeding Convoy', url: 'https://images.unsplash.com/photo-1544568100-847a948585b9?w=1200&auto=format&fit=crop&q=80' },
@@ -519,7 +519,7 @@ export default function BlogManagement({
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0 border border-gray-200 dark:border-gray-700">
                                                         <ImageWithFallback
-                                                            src={post.featured_image || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=120&auto=format&fit=crop&q=80'}
+                                                            src={post.featured_image || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=120&auto=format&fit=crop&q=80'}
                                                             alt={post.title}
                                                             className="w-full h-full object-cover"
                                                         />

@@ -437,7 +437,7 @@ export function Footer() {
             </h3>
             <div className="space-y-8">
               <a
-                href="https://www.google.com/maps/search/?api=1&query=Zone+5+Barangay+Tambo+Iligan+City+Lanao+del+Norte+9200"
+                href="https://www.google.com/maps/search/?api=1&query=ILIGAN+STRAY+FEEDERS+-+ILIGAN+STRAY+FOSTER+AND+ADOPTION+CENTER,+Purok+13,+Kiwalan,+Iligan+City"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-4 group cursor-pointer"
@@ -447,7 +447,7 @@ export function Footer() {
                 </div>
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-1">Our Shelter</span>
-                  <p className="text-sm font-bold italic">Zone 5, Barangay Tambo, Iligan City, Lanao del Norte, 9200</p>
+                  <p className="text-sm font-bold italic">Purok 13, Kiwalan, Iligan City, Lanao del Norte, 9200</p>
                   <span className="text-xs font-black text-paw-blue uppercase tracking-widest mt-1 block group-hover:text-white">View on Maps →</span>
                 </div>
               </a>

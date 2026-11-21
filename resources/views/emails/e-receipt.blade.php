@@ -290,7 +290,7 @@
                                         </table>
                                         <div style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; line-height: 1.55;">
                                             Iligan Stray Feeders Shelter<br>
-                                            Zone 5, Barangay Tambo, Iligan City, 9200 Philippines<br>
+                                            Purok 13, Kiwalan, Iligan City, 9200 Philippines<br>
                                             <span style="color: #94a3b8;">info@pawlse.org &bull; +63 912 345 6789</span>
                                         </div>
                                     </td>

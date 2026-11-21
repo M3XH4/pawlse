@@ -214,7 +214,7 @@ export default function LegalTermsModal({
                                     5. Contact Our Privacy Team
                                 </h4>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    For inquiries regarding your personal data or privacy concerns, contact us at <span className="font-bold text-paw-navy dark:text-white">privacy@pawlse.org</span> or visit our shelter at Zone 5, Barangay Tambo, Iligan City.
+                                    For inquiries regarding your personal data or privacy concerns, contact us at <span className="font-bold text-paw-navy dark:text-white">privacy@pawlse.org</span> or visit our shelter at Purok 13, Kiwalan, Iligan City.
                                 </p>
                             </section>
                         </div>

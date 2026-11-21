@@ -410,8 +410,8 @@ export default function UserShelterVisits({
                                             <p className="mt-0.5 text-emerald-800 leading-relaxed">
                                                 Please present your reference code{' '}
                                                 <strong>{ref}</strong> upon arrival at the
-                                                Iligan Stray Feeders Sanctuary (Zone 5, Brgy.
-                                                Tambo, Iligan City).
+                                                Iligan Stray Feeders Sanctuary (Purok 13,
+                                                Kiwalan, Iligan City).
                                             </p>
                                         </div>
                                     </div>

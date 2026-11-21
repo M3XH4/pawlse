@@ -1,0 +1,1 @@
+This is a plain text file, not a valid JPEG/PNG image. Uploading this tests application rejection.

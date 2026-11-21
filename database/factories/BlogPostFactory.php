@@ -31,7 +31,7 @@ class BlogPostFactory extends Factory
             'category' => fake()->randomElement($categories),
             'summary' => fake()->paragraph(2),
             'content' => fake()->paragraphs(4, true),
-            'featured_image' => 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1200&auto=format&fit=crop&q=80',
+            'featured_image' => 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=1200&auto=format&fit=crop&q=80',
             'tags' => ['Animal Welfare', 'Rescue', 'Iligan City'],
             'reading_time_minutes' => 3,
             'status' => 'published',

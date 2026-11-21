@@ -18,6 +18,7 @@ import {
     AlertCircle,
     MapPin,
     FileText,
+    Maximize2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
@@ -166,6 +167,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     // File upload state
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const mapAgeCategory = (
         ageGroup: string | undefined,
@@ -243,6 +245,18 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             if (!location && user.location) setLocation(user.location);
         }
     }, [user]);
+
+    // Handle Escape key to close image lightbox modal
+    useEffect(() => {
+        if (!lightboxUrl) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setLightboxUrl(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [lightboxUrl]);
 
     // Age category options based on animal type
     const dogAgeCategories = [
@@ -354,11 +368,18 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
             const optimizedFile = await compressImageFile(file);
             validFiles.push(optimizedFile);
-            const reader = new FileReader();
-            const preview = await new Promise<string>((resolve) => {
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(optimizedFile);
-            });
+
+            // Use original file object URL for maximum crisp resolution in preview & fullscreen lightbox
+            let preview = '';
+            try {
+                preview = URL.createObjectURL(file);
+            } catch {
+                const reader = new FileReader();
+                preview = await new Promise<string>((resolve) => {
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+            }
             newPreviews.push(preview);
         }
 
@@ -865,14 +886,56 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                 )}
 
                                 <div className="grid gap-8 md:grid-cols-3">
-                                    {/* CARD 1: Use AI for Reporting */}
+                                    {/* CARD 1: Manual Entry */}
+                                    <motion.div
+                                        whileHover={{
+                                            scale: 1.03,
+                                            boxShadow:
+                                                '0 20px 60px rgba(100, 100, 100, 0.3)',
+                                        }}
+                                        onClick={() => handleModeSelect('manual')}
+                                        className={`group flex flex-col cursor-pointer rounded-[40px] border-2 bg-gradient-to-br from-white p-8 shadow-xl transition-all ${
+                                            isAiReportingDisabled || isAiIdentifyingDisabled
+                                                ? 'border-paw-orange/40 to-orange-50/40 ring-2 ring-paw-orange/30'
+                                                : 'border-gray-200 to-gray-50/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg shadow-gray-700/30 transition-transform group-hover:scale-110">
+                                                <Pencil size={32} />
+                                            </div>
+                                            {(isAiReportingDisabled || isAiIdentifyingDisabled) && (
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800">
+                                                    <CheckCircle2 size={12} className="shrink-0 text-emerald-600" />
+                                                    Recommended
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className="mb-4 text-2xl font-black text-paw-navy">
+                                            Manual Entry
+                                        </h3>
+                                        <p className="mb-6 leading-relaxed font-bold text-gray-600">
+                                            Prefer to enter all details yourself?
+                                            Skip AI and fill out the form manually.
+                                        </p>
+                                        <div className="mt-auto flex items-center gap-2 text-sm font-black text-gray-700 group-hover:text-paw-orange transition-colors">
+                                            <span>ENTER MANUALLY</span>
+                                            <ArrowRight
+                                                size={16}
+                                                className="transition-transform group-hover:translate-x-1"
+                                            />
+                                        </div>
+                                    </motion.div>
+
+                                    {/* CARD 2: Use AI for Reporting */}
                                     <motion.div
                                         whileHover={
                                             !isAiReportingDisabled
                                                 ? {
                                                       scale: 1.03,
                                                       boxShadow:
-                                                          '0 20px 60px rgba(255, 107, 0, 0.3)',
+                                                          '0 20px 60px rgba(220, 38, 38, 0.3)',
                                                   }
                                                 : undefined
                                         }
@@ -883,10 +946,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             }
                                             handleModeSelect('ai-full');
                                         }}
-                                        className={`group rounded-[40px] border-2 p-8 shadow-xl transition-all ${
+                                        className={`group flex flex-col rounded-[40px] border-2 p-8 shadow-xl transition-all ${
                                             isAiReportingDisabled
                                                 ? 'cursor-not-allowed border-gray-200 bg-gray-50/90 opacity-75 select-none shadow-none'
-                                                : 'cursor-pointer border-paw-orange/20 bg-gradient-to-br from-white to-orange-50/50'
+                                                : 'cursor-pointer border-red-600/20 bg-gradient-to-br from-white to-red-50/50'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between mb-6">
@@ -894,7 +957,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg transition-transform ${
                                                     isAiReportingDisabled
                                                         ? 'bg-gray-400 shadow-none'
-                                                        : 'bg-paw-orange shadow-paw-orange/30 group-hover:scale-110'
+                                                        : 'bg-red-600 shadow-red-600/30 group-hover:scale-110'
                                                 }`}
                                             >
                                                 <Brain size={32} />
@@ -930,8 +993,8 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             </p>
                                         )}
 
-                                        <div className={`flex items-center gap-2 text-sm font-black ${
-                                            isAiReportingDisabled ? 'text-gray-400' : 'text-paw-orange'
+                                        <div className={`mt-auto flex items-center gap-2 text-sm font-black ${
+                                            isAiReportingDisabled ? 'text-gray-400' : 'text-red-600'
                                         }`}>
                                             <span>{isAiReportingDisabled ? 'DISABLED' : 'GET STARTED'}</span>
                                             {!isAiReportingDisabled && (
@@ -943,7 +1006,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         </div>
                                     </motion.div>
 
-                                    {/* CARD 2: AI Identification Only */}
+                                    {/* CARD 3: AI Identification Only */}
                                     <motion.div
                                         whileHover={
                                             !isAiIdentifyingDisabled
@@ -961,7 +1024,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             }
                                             handleModeSelect('ai-only');
                                         }}
-                                        className={`group rounded-[40px] border-2 p-8 shadow-xl transition-all ${
+                                        className={`group flex flex-col rounded-[40px] border-2 p-8 shadow-xl transition-all ${
                                             isAiIdentifyingDisabled
                                                 ? 'cursor-not-allowed border-gray-200 bg-gray-50/90 opacity-75 select-none shadow-none'
                                                 : 'cursor-pointer border-paw-navy/20 bg-gradient-to-br from-white to-blue-50/50'
@@ -1008,7 +1071,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                             </p>
                                         )}
 
-                                        <div className={`flex items-center gap-2 text-sm font-black ${
+                                        <div className={`mt-auto flex items-center gap-2 text-sm font-black ${
                                             isAiIdentifyingDisabled ? 'text-gray-400' : 'text-paw-navy'
                                         }`}>
                                             <span>{isAiIdentifyingDisabled ? 'DISABLED' : 'IDENTIFY NOW'}</span>
@@ -1018,48 +1081,6 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                     className="transition-transform group-hover:translate-x-1"
                                                 />
                                             )}
-                                        </div>
-                                    </motion.div>
-
-                                    {/* CARD 3: Manual Entry */}
-                                    <motion.div
-                                        whileHover={{
-                                            scale: 1.03,
-                                            boxShadow:
-                                                '0 20px 60px rgba(100, 100, 100, 0.3)',
-                                        }}
-                                        onClick={() => handleModeSelect('manual')}
-                                        className={`group cursor-pointer rounded-[40px] border-2 bg-gradient-to-br from-white p-8 shadow-xl transition-all ${
-                                            isAiReportingDisabled || isAiIdentifyingDisabled
-                                                ? 'border-paw-orange/40 to-orange-50/40 ring-2 ring-paw-orange/30'
-                                                : 'border-gray-200 to-gray-50/50'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-700 text-white shadow-lg shadow-gray-700/30 transition-transform group-hover:scale-110">
-                                                <Pencil size={32} />
-                                            </div>
-                                            {(isAiReportingDisabled || isAiIdentifyingDisabled) && (
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800">
-                                                    <CheckCircle2 size={12} className="shrink-0 text-emerald-600" />
-                                                    Recommended
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <h3 className="mb-4 text-2xl font-black text-paw-navy">
-                                            Manual Entry
-                                        </h3>
-                                        <p className="mb-6 leading-relaxed font-bold text-gray-600">
-                                            Prefer to enter all details yourself?
-                                            Skip AI and fill out the form manually.
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm font-black text-gray-700 group-hover:text-paw-orange transition-colors">
-                                            <span>ENTER MANUALLY</span>
-                                            <ArrowRight
-                                                size={16}
-                                                className="transition-transform group-hover:translate-x-1"
-                                            />
                                         </div>
                                     </motion.div>
                                 </div>
@@ -1320,7 +1341,13 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
                                             {/* Uploaded Photo Preview */}
                                             {filePreviews.length > 0 && (
-                                                <div className="space-y-2 rounded-3xl border-2 border-gray-100 bg-white p-3">
+                                                <div
+                                                    className={`space-y-2 rounded-3xl border-2 border-gray-100 bg-white p-3 ${
+                                                        filePreviews.length === 1
+                                                            ? 'mx-auto max-w-lg shadow-sm'
+                                                            : ''
+                                                    }`}
+                                                >
                                                     <div className="flex items-center justify-between px-1">
                                                         <span className="text-xs font-black tracking-widest text-gray-400 uppercase">
                                                             Uploaded Photo
@@ -1337,47 +1364,113 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                             Photo
                                                         </button>
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                                        {filePreviews.map(
-                                                            (
-                                                                preview,
-                                                                index,
-                                                            ) => {
-                                                                const file =
-                                                                    uploadedFiles[
-                                                                        index
-                                                                    ];
-                                                                return (
-                                                                    <div
-                                                                        key={
+                                                    {filePreviews.length === 1 ? (
+                                                        <div
+                                                            onClick={() =>
+                                                                (uploadedFiles[0]?.type.startsWith('image/') ||
+                                                                    !uploadedFiles[0]) &&
+                                                                setLightboxUrl(filePreviews[0])
+                                                            }
+                                                            className="group relative flex h-60 w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm sm:h-72"
+                                                            title="Click image to view full screen"
+                                                        >
+                                                            {uploadedFiles[0]?.type.startsWith('image/') ||
+                                                            !uploadedFiles[0] ? (
+                                                                <img
+                                                                    src={filePreviews[0]}
+                                                                    alt="Uploaded preview"
+                                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                />
+                                                            ) : (
+                                                                <video
+                                                                    src={filePreviews[0]}
+                                                                    controls
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            )}
+                                                            {(uploadedFiles[0]?.type.startsWith('image/') ||
+                                                                !uploadedFiles[0]) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setLightboxUrl(filePreviews[0]);
+                                                                    }}
+                                                                    className="absolute right-3.5 bottom-3.5 z-10 flex cursor-pointer items-center gap-1.5 rounded-xl bg-black/75 px-3.5 py-2 text-xs font-black tracking-wide text-white opacity-0 shadow-lg backdrop-blur-md transition-all duration-200 group-hover:opacity-100 hover:scale-105 hover:bg-black/90"
+                                                                    title="View Fullscreen"
+                                                                >
+                                                                    <Maximize2 size={15} />
+                                                                    <span>View Fullscreen</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                            {filePreviews.map(
+                                                                (
+                                                                    preview,
+                                                                    index,
+                                                                ) => {
+                                                                    const file =
+                                                                        uploadedFiles[
                                                                             index
-                                                                        }
-                                                                        className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
-                                                                    >
-                                                                        {file?.type.startsWith(
-                                                                            'image/',
-                                                                        ) ? (
-                                                                            <img
-                                                                                src={
-                                                                                    preview
-                                                                                }
-                                                                                alt={`Preview ${index}`}
-                                                                                className="h-full w-full object-cover"
-                                                                            />
-                                                                        ) : (
-                                                                            <video
-                                                                                src={
-                                                                                    preview
-                                                                                }
-                                                                                controls
-                                                                                className="h-full w-full object-cover"
-                                                                            />
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            },
-                                                        )}
-                                                    </div>
+                                                                        ];
+                                                                    const isImage =
+                                                                        file?.type.startsWith('image/') || !file;
+                                                                    return (
+                                                                        <div
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            onClick={() =>
+                                                                                isImage &&
+                                                                                setLightboxUrl(preview)
+                                                                            }
+                                                                            className={`group relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50 ${
+                                                                                isImage ? 'cursor-pointer' : ''
+                                                                            }`}
+                                                                            title={
+                                                                                isImage
+                                                                                    ? 'Click to view full screen'
+                                                                                    : undefined
+                                                                            }
+                                                                        >
+                                                                            {isImage ? (
+                                                                                <img
+                                                                                    src={
+                                                                                        preview
+                                                                                    }
+                                                                                    alt={`Preview ${index}`}
+                                                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                                />
+                                                                            ) : (
+                                                                                <video
+                                                                                    src={
+                                                                                        preview
+                                                                                    }
+                                                                                    controls
+                                                                                    className="h-full w-full object-cover"
+                                                                                />
+                                                                            )}
+                                                                            {isImage && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setLightboxUrl(preview);
+                                                                                    }}
+                                                                                    className="absolute right-2 bottom-2 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/75 text-white opacity-0 shadow-md backdrop-blur-md transition-all duration-200 group-hover:opacity-100 hover:scale-110 hover:bg-black/90"
+                                                                                    title="View Fullscreen"
+                                                                                >
+                                                                                    <Maximize2 size={14} />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -2558,40 +2651,114 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
                                         {/* Uploaded file preview */}
                                         {filePreviews.length > 0 && (
-                                            <div className="grid grid-cols-2 gap-3 rounded-3xl border-2 border-gray-100 bg-white p-3 sm:grid-cols-3">
-                                                {filePreviews.map(
-                                                    (preview, index) => {
-                                                        const file =
-                                                            uploadedFiles[
-                                                                index
-                                                            ];
-                                                        return (
-                                                            <div
-                                                                key={index}
-                                                                className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50"
+                                            <div
+                                                className={`rounded-3xl border-2 border-gray-100 bg-white p-3 ${
+                                                    filePreviews.length === 1
+                                                        ? 'mx-auto max-w-lg shadow-sm'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {filePreviews.length === 1 ? (
+                                                    <div
+                                                        onClick={() =>
+                                                            (uploadedFiles[0]?.type.startsWith('image/') ||
+                                                                !uploadedFiles[0]) &&
+                                                            setLightboxUrl(filePreviews[0])
+                                                        }
+                                                        className="group relative flex h-60 w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm sm:h-72"
+                                                        title="Click image to view full screen"
+                                                    >
+                                                        {uploadedFiles[0]?.type.startsWith('image/') ||
+                                                        !uploadedFiles[0] ? (
+                                                            <img
+                                                                src={filePreviews[0]}
+                                                                alt="AI preview"
+                                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <video
+                                                                src={filePreviews[0]}
+                                                                controls
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        )}
+                                                        {(uploadedFiles[0]?.type.startsWith('image/') ||
+                                                            !uploadedFiles[0]) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setLightboxUrl(filePreviews[0]);
+                                                                }}
+                                                                className="absolute right-3.5 bottom-3.5 z-10 flex cursor-pointer items-center gap-1.5 rounded-xl bg-black/75 px-3.5 py-2 text-xs font-black tracking-wide text-white opacity-0 shadow-lg backdrop-blur-md transition-all duration-200 group-hover:opacity-100 hover:scale-105 hover:bg-black/90"
+                                                                title="View Fullscreen"
                                                             >
-                                                                {file?.type.startsWith(
-                                                                    'image/',
-                                                                ) ? (
-                                                                    <img
-                                                                        src={
-                                                                            preview
+                                                                <Maximize2 size={15} />
+                                                                <span>View Fullscreen</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                        {filePreviews.map(
+                                                            (preview, index) => {
+                                                                const file =
+                                                                    uploadedFiles[
+                                                                        index
+                                                                    ];
+                                                                const isImage =
+                                                                    file?.type.startsWith('image/') || !file;
+                                                                return (
+                                                                    <div
+                                                                        key={index}
+                                                                        onClick={() =>
+                                                                            isImage &&
+                                                                            setLightboxUrl(preview)
                                                                         }
-                                                                        alt={`Preview ${index}`}
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <video
-                                                                        src={
-                                                                            preview
+                                                                        className={`group relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border bg-gray-50 ${
+                                                                            isImage ? 'cursor-pointer' : ''
+                                                                        }`}
+                                                                        title={
+                                                                            isImage
+                                                                                ? 'Click to view full screen'
+                                                                                : undefined
                                                                         }
-                                                                        controls
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    },
+                                                                    >
+                                                                        {isImage ? (
+                                                                            <img
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                alt={`Preview ${index}`}
+                                                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                            />
+                                                                        ) : (
+                                                                            <video
+                                                                                src={
+                                                                                    preview
+                                                                                }
+                                                                                controls
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        )}
+                                                                        {isImage && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setLightboxUrl(preview);
+                                                                                }}
+                                                                                className="absolute right-2 bottom-2 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/75 text-white opacity-0 shadow-md backdrop-blur-md transition-all duration-200 group-hover:opacity-100 hover:scale-110 hover:bg-black/90"
+                                                                                title="View Fullscreen"
+                                                                            >
+                                                                                <Maximize2 size={14} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -3635,6 +3802,36 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 onContinueEditing={handleContinueEditing}
                 onLeaveAnyway={handleLeaveAnyway}
             />
+
+            {/* Fullscreen Image Lightbox Modal */}
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-in fade-in duration-200"
+                    onClick={() => setLightboxUrl(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Image Fullscreen Preview"
+                >
+                    <button
+                        type="button"
+                        onClick={() => setLightboxUrl(null)}
+                        className="absolute top-6 right-6 z-10 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/30"
+                        aria-label="Close fullscreen view"
+                    >
+                        <X size={24} />
+                    </button>
+                    <div
+                        className="relative flex max-h-[90vh] max-w-5xl items-center justify-center overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={lightboxUrl}
+                            alt="Fullscreen Preview"
+                            className="max-h-[88vh] max-w-full rounded-2xl object-contain shadow-2xl"
+                        />
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </div>

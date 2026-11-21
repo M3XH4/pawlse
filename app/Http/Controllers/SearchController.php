@@ -109,7 +109,7 @@ class SearchController extends Controller
                     'excerpt' => $post->excerpt,
                     'category' => BlogPost::CATEGORIES[$post->category] ?? ucfirst($post->category),
                     'date' => $post->published_at ? $post->published_at->format('M d, Y') : $post->created_at->format('M d, Y'),
-                    'featured_image' => $post->featured_image_url ?: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?q=80&w=600',
+                    'featured_image' => $post->featured_image_url ?: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=600',
                     'url' => route('blog.show', $post->slug),
                 ];
             });

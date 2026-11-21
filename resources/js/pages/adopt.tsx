@@ -755,8 +755,8 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               {/* Right Image Column (5 cols) */}
               <div className="lg:col-span-5 relative min-h-[300px] lg:min-h-full">
                 <img
-                  src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1000&auto=format&fit=crop&q=80"
-                  alt="Shelter animals"
+                  src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1000&auto=format&fit=crop&q=80"
+                  alt="Shelter dogs"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-[#1A2638] via-transparent to-transparent opacity-80 lg:opacity-60 pointer-events-none" />

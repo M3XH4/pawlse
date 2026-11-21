@@ -155,7 +155,7 @@
                                             PAWLSE &bull; Iligan Stray Feeders
                                         </div>
                                         <div style="font-size: 11.5px; font-weight: 600; color: #94a3b8; margin-top: 2px;">
-                                            Zone 5, Barangay Tambo, Iligan City, 9200 &bull; Feed Furr A Cause
+                                            Purok 13, Kiwalan, Iligan City, 9200 &bull; Feed Furr A Cause
                                         </div>
                                     </td>
                                     <td align="right" valign="middle">

@@ -4,7 +4,6 @@ import {
     Gift, Sparkles, Stethoscope, Search, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export interface CommunityHonoree {
     id: number;
@@ -132,6 +131,39 @@ function getBadgeConfig(badgeName: string) {
         bg: 'bg-gray-100 text-gray-800 border-gray-200',
         icon: <Award size={12} className="shrink-0 text-gray-500" />
     };
+}
+
+const AVATAR_BADGE_PRIORITY: Array<{ keywords: string[]; bg: string; text: string }> = [
+    { keywords: ['recurring'], bg: 'bg-amber-100', text: 'text-amber-800' },
+    { keywords: ['long-time', 'champion', 'gold'], bg: 'bg-yellow-100', text: 'text-yellow-900' },
+    { keywords: ['feeding', 'food'], bg: 'bg-emerald-100', text: 'text-emerald-800' },
+    { keywords: ['community'], bg: 'bg-purple-100', text: 'text-purple-800' },
+    { keywords: ['kind heart', 'heart', 'compassion'], bg: 'bg-rose-100', text: 'text-rose-800' },
+    { keywords: ['in-kind', 'supply'], bg: 'bg-sky-100', text: 'text-sky-800' },
+    { keywords: ['vet', 'medical', 'clinic'], bg: 'bg-blue-100', text: 'text-blue-800' },
+    { keywords: ['rescue', 'lead', 'volunteer'], bg: 'bg-orange-100', text: 'text-orange-800' },
+];
+
+/**
+ * Resolve the avatar background and text color from the supporter's highest-priority badge.
+ */
+function getAvatarColorByBadges(badges: string[] = [], roleTitle = ''): { bg: string; text: string } {
+    const lowerBadges = badges.map((b) => b.toLowerCase());
+    const lowerRole = roleTitle.toLowerCase();
+
+    for (const rule of AVATAR_BADGE_PRIORITY) {
+        if (rule.keywords.some((kw) => lowerBadges.some((b) => b.includes(kw)))) {
+            return { bg: rule.bg, text: rule.text };
+        }
+    }
+
+    for (const rule of AVATAR_BADGE_PRIORITY) {
+        if (rule.keywords.some((kw) => lowerRole.includes(kw))) {
+            return { bg: rule.bg, text: rule.text };
+        }
+    }
+
+    return { bg: 'bg-gray-100', text: 'text-gray-700' };
 }
 
 export function HonorWallTab({
@@ -270,7 +302,9 @@ export function HonorWallTab({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                        {featuredSupporters.map((supporter) => (
+                        {featuredSupporters.map((supporter) => {
+                            const avatarColors = getAvatarColorByBadges(supporter.badges, supporter.role_title);
+                            return (
                             <div
                                 key={supporter.id}
                                 className="relative rounded-[32px] bg-[#fffbf2] border-2 border-amber-200/70 p-8 shadow-lg shadow-amber-900/5 text-center flex flex-col justify-between hover:shadow-xl transition-all group"
@@ -283,18 +317,10 @@ export function HonorWallTab({
                                 <div className="space-y-4">
                                     {/* Avatar with star badge */}
                                     <div className="relative inline-block mx-auto">
-                                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-amber-100 flex items-center justify-center">
-                                            {supporter.avatar_url ? (
-                                                <ImageWithFallback
-                                                    src={supporter.avatar_url}
-                                                    alt={supporter.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <span className="text-2xl font-black text-amber-800">
-                                                    {supporter.initials || supporter.name.substring(0, 2).toUpperCase()}
-                                                </span>
-                                            )}
+                                        <div className={`w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md ${avatarColors.bg} flex items-center justify-center`}>
+                                            <span className={`text-2xl font-black ${avatarColors.text}`}>
+                                                {supporter.initials || supporter.name.substring(0, 2).toUpperCase()}
+                                            </span>
                                         </div>
                                         {/* Golden star badge */}
                                         <div 
@@ -336,7 +362,8 @@ export function HonorWallTab({
                                     )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -458,7 +485,9 @@ export function HonorWallTab({
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {filteredHonors.map((item) => (
+                        {filteredHonors.map((item) => {
+                            const avatarColors = getAvatarColorByBadges(item.badges, item.role_title);
+                            return (
                             <div
                                 key={item.id}
                                 className="relative rounded-[28px] bg-white border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:border-amber-200/80 transition-all text-center flex flex-col justify-between group"
@@ -471,18 +500,10 @@ export function HonorWallTab({
                                 <div className="space-y-3">
                                     {/* Avatar */}
                                     <div className="relative inline-block mx-auto">
-                                        <div className="w-18 h-18 rounded-full overflow-hidden border-3 border-gray-100 shadow-sm bg-gray-50 flex items-center justify-center">
-                                            {item.avatar_url ? (
-                                                <ImageWithFallback
-                                                    src={item.avatar_url}
-                                                    alt={item.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <span className="text-lg font-black text-gray-700">
-                                                    {item.initials || item.name.substring(0, 2).toUpperCase()}
-                                                </span>
-                                            )}
+                                        <div className={`w-18 h-18 rounded-full overflow-hidden border-3 border-white shadow-sm ${avatarColors.bg} flex items-center justify-center`}>
+                                            <span className={`text-lg font-black ${avatarColors.text}`}>
+                                                {item.initials || item.name.substring(0, 2).toUpperCase()}
+                                            </span>
                                         </div>
                                         {item.is_featured && (
                                             <div 
@@ -527,7 +548,8 @@ export function HonorWallTab({
                                     )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

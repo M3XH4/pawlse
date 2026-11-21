@@ -54,7 +54,7 @@ export function ContactSection({
 
             <div className="space-y-6 pt-2">
               <a
-                href="https://www.google.com/maps/search/?api=1&query=Zone+5+Barangay+Tambo+Iligan+City+Lanao+del+Norte+9200"
+                href="https://www.google.com/maps/search/?api=1&query=ILIGAN+STRAY+FEEDERS+-+ILIGAN+STRAY+FOSTER+AND+ADOPTION+CENTER,+Purok+13,+Kiwalan,+Iligan+City"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
@@ -64,7 +64,7 @@ export function ContactSection({
                 </div>
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/50 block">Shelter Location</span>
-                  <p className="text-sm font-bold text-white mt-0.5">Zone 5, Brgy. Tambo, Iligan City</p>
+                  <p className="text-sm font-bold text-white mt-0.5">Purok 13, Kiwalan, Iligan City</p>
                   <span className="text-xs font-bold text-paw-orange flex items-center gap-1 mt-1">
                     Open in Maps <ArrowUpRight size={13} />
                   </span>

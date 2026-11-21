@@ -34,7 +34,7 @@ const navPreviews: Record<string, { image: string; label: string }> = {
     label: 'AI Rescue'
   },
   '/blog': {
-    image: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
+    image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
     label: 'Stories & News'
   }
 };

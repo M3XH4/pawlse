@@ -139,7 +139,7 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
               {/* Contact Details List */}
               <div className="space-y-3 pt-1">
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=Zone+5+Barangay+Tambo+Iligan+City+Lanao+del+Norte+9200"
+                  href="https://www.google.com/maps/search/?api=1&query=ILIGAN+STRAY+FEEDERS+-+ILIGAN+STRAY+FOSTER+AND+ADOPTION+CENTER,+Purok+13,+Kiwalan,+Iligan+City"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
@@ -149,7 +149,7 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
                   </div>
                   <div className="min-w-0">
                     <span className="text-[9px] font-black uppercase tracking-widest text-white/40 block">Shelter Location</span>
-                    <p className="text-xs font-bold text-white truncate">Zone 5, Brgy. Tambo, Iligan City</p>
+                    <p className="text-xs font-bold text-white truncate">Purok 13, Kiwalan, Iligan City</p>
                     <span className="text-[10px] font-bold text-paw-orange flex items-center gap-1 mt-0.5">
                       Open in Maps <ArrowUpRight size={10} />
                     </span>

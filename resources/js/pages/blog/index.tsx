@@ -575,7 +575,7 @@ export default function BlogIndex({
                         <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-xl grid grid-cols-1 lg:grid-cols-12 group hover:shadow-2xl transition duration-300">
                             <div className="lg:col-span-7 relative h-72 sm:h-96 lg:h-auto overflow-hidden">
                                 <ImageWithFallback
-                                    src={featuredPost.featured_image || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1200&auto=format&fit=crop&q=80'}
+                                    src={featuredPost.featured_image || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1200&auto=format&fit=crop&q=80'}
                                     alt={featuredPost.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                 />
@@ -698,7 +698,7 @@ export default function BlogIndex({
                                             {/* Image container */}
                                             <div className="relative h-52 overflow-hidden bg-gray-100 dark:bg-gray-800">
                                                 <ImageWithFallback
-                                                    src={post.featured_image || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=800&auto=format&fit=crop&q=80'}
+                                                    src={post.featured_image || 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&auto=format&fit=crop&q=80'}
                                                     alt={post.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                                 />

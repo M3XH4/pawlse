@@ -86,7 +86,7 @@ class UserStoryAndTestimonialSeeder extends Seeder
                 'category' => 'testimonial',
                 'summary' => 'Transparent health screening, attentive volunteer counselors, and genuine dedication to every animal in their care.',
                 'content' => "Having visited several shelters over the years, our experience with PAWLSE was on a completely different level. From the clean and well-ventilated kennels to the detailed medical breakdown provided by their on-site clinic, the standard of care is astonishing.\n\n### Exceptional Volunteer Guidance\nThe adoption counselors did not rush us into choosing a pet. Instead, they took time to understand our household lifestyle, energy levels, and routine to recommend animals that would genuinely thrive with us.\n\n### Comprehensive Post-Adoption Support\nEven weeks after bringing our companion home, PAWLSE followed up with wellness check-ins and feeding guidance. They don't just find homes for animals; they build long-lasting community relationships.",
-                'featured_image' => 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1200&auto=format&fit=crop&q=80',
+                'featured_image' => 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80',
                 'tags' => ['Testimonial', 'Shelter Review', 'Compassion In Action', 'Community Voice'],
                 'reading_time_minutes' => 3,
                 'status' => BlogPost::STATUS_PUBLISHED,

@@ -527,7 +527,7 @@ export default function BlogShow({
                                             <div>
                                                 <div className="relative h-44 overflow-hidden bg-gray-100 dark:bg-gray-800">
                                                     <ImageWithFallback
-                                                        src={rel.featured_image || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=80'}
+                                                        src={rel.featured_image || 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&auto=format&fit=crop&q=80'}
                                                         alt={rel.title}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                                     />
