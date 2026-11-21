@@ -62,6 +62,19 @@ class Event extends Model
         return $query->where('approval_status', 'approved')->where('status', 'open');
     }
 
+    /**
+     * Scope a query to only include approved, open, upcoming events ordered nearest-first.
+     *
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
+     */
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->publicVisible()
+            ->whereDate('date', '>=', now()->toDateString())
+            ->orderBy('date', 'asc');
+    }
+
     public function isApproved(): bool
     {
         return $this->approval_status === 'approved';

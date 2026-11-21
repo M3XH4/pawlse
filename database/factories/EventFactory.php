@@ -20,7 +20,7 @@ class EventFactory extends Factory
         return [
             'title' => fake()->sentence(3),
             'category' => 'Feeding',
-            'date' => fake()->date(),
+            'date' => now()->addDays(fake()->numberBetween(1, 30))->format('Y-m-d'),
             'time' => '8:00 AM - 11:00 AM',
             'location' => fake()->address(),
             'spots' => 10,

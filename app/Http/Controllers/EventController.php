@@ -27,12 +27,25 @@ class EventController extends Controller
         $search = $request->input('search', '');
         $category = $request->input('category', 'All');
 
-        // Fetch events with search & category filters and pagination (approved & open only)
+        // Fetch approved events filtered by category/tab (Past shows past events; All & categories show upcoming)
+        $today = now()->toDateString();
         $eventsQuery = Event::query()
-            ->where('approval_status', 'approved')
-            ->where('status', 'open')
-            ->when($category !== 'All', function ($query) use ($category) {
-                $query->where('category', $category);
+            ->approved()
+            ->when($category === 'Past', function ($query) use ($today) {
+                $query->whereDate('date', '<', $today)
+                    ->orderBy('date', 'desc');
+            }, function ($query) use ($category, $today) {
+                $query->whereDate('date', '>=', $today)
+                    ->when($category === 'Closed', function ($q) {
+                        $q->where(function ($sub) {
+                            $sub->where('status', '!=', 'open')
+                                ->orWhere('spots', 0);
+                        });
+                    })
+                    ->when(! in_array($category, ['All', 'Closed'], true), function ($q) use ($category) {
+                        $q->where('category', $category);
+                    })
+                    ->orderBy('date', 'asc');
             })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -42,7 +55,7 @@ class EventController extends Controller
                 });
             });
 
-        $events = $eventsQuery->latest()->paginate(6, ['*'], 'events_page')->withQueryString();
+        $events = $eventsQuery->paginate(6, ['*'], 'events_page')->withQueryString();
 
         // Fetch feeding schedules with search and pagination
         $feedingQuery = FeedingSchedule::query()
@@ -158,6 +171,10 @@ class EventController extends Controller
 
                 if (! $lockedEvent || $lockedEvent->status !== 'open' || $lockedEvent->approval_status !== 'approved') {
                     throw new \RuntimeException('You could not join this event because it is not currently open for registration. Please browse our other open community events.');
+                }
+
+                if ($lockedEvent->date && $lockedEvent->date->lt(now()->startOfDay())) {
+                    throw new \RuntimeException('You cannot join this event because it has already ended.');
                 }
 
                 $alreadyJoinedQuery = AssignedTask::query()

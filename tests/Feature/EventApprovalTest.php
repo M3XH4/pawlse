@@ -146,6 +146,103 @@ test('only displays approved and open events on public events page', function ()
     );
 });
 
+test('home and events pages filter open upcoming events and order nearest date first', function () {
+    $farthestEvent = Event::factory()->create([
+        'title' => 'Farthest Event',
+        'date' => now()->addDays(14)->toDateString(),
+        'status' => 'open',
+        'approval_status' => 'approved',
+    ]);
+
+    $nearestEvent = Event::factory()->create([
+        'title' => 'Nearest Event',
+        'date' => now()->addDays(2)->toDateString(),
+        'status' => 'open',
+        'approval_status' => 'approved',
+    ]);
+
+    $middleEvent = Event::factory()->create([
+        'title' => 'Middle Event',
+        'date' => now()->addDays(7)->toDateString(),
+        'status' => 'open',
+        'approval_status' => 'approved',
+    ]);
+
+    $pastEvent = Event::factory()->create([
+        'title' => 'Past Event',
+        'date' => now()->subDays(2)->toDateString(),
+        'status' => 'open',
+        'approval_status' => 'approved',
+    ]);
+
+    $closedEvent = Event::factory()->create([
+        'title' => 'Closed Upcoming Event',
+        'date' => now()->addDays(3)->toDateString(),
+        'status' => 'closed',
+        'approval_status' => 'approved',
+    ]);
+
+    $fullEvent = Event::factory()->create([
+        'title' => 'Full Upcoming Event',
+        'date' => now()->addDays(5)->toDateString(),
+        'status' => 'open',
+        'spots' => 0,
+        'approval_status' => 'approved',
+    ]);
+
+    $expectedHomeOrder = [$nearestEvent->id, $fullEvent->id, $middleEvent->id, $farthestEvent->id];
+    $expectedAllOrder = [$nearestEvent->id, $closedEvent->id, $fullEvent->id, $middleEvent->id, $farthestEvent->id];
+
+    $this->get(route('events'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('events')
+            ->where('events.data', function ($items) use ($expectedAllOrder, $pastEvent) {
+                $ids = collect($items)->pluck('id')->all();
+
+                return $ids === $expectedAllOrder
+                    && ! in_array($pastEvent->id, $ids, true);
+            })
+        );
+
+    $this->get(route('events', ['category' => 'Closed']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('events')
+            ->where('events.data', fn ($items) => collect($items)->pluck('id')->all() === [$closedEvent->id, $fullEvent->id])
+        );
+
+    $this->get(route('events', ['category' => 'Past']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('events')
+            ->where('events.data', fn ($items) => collect($items)->pluck('id')->all() === [$pastEvent->id])
+        );
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('welcome')
+            ->where('events', function ($items) use ($expectedHomeOrder, $pastEvent, $closedEvent) {
+                $ids = collect($items)->pluck('id')->all();
+
+                return $ids === $expectedHomeOrder
+                    && ! in_array($pastEvent->id, $ids, true)
+                    && ! in_array($closedEvent->id, $ids, true);
+            })
+        );
+
+    $user = User::factory()->create();
+    $this->actingAs($user)
+        ->post(route('events.join', $pastEvent))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('assigned_tasks', [
+        'event_id' => $pastEvent->id,
+        'user_id' => $user->id,
+    ]);
+});
+
 test('automatically approves sponsored feeding day event when donation is verified', function () {
     $admin = User::factory()->create(['role' => Role::Admin->value]);
     $admin->assignRole(Role::Admin->value);

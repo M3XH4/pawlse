@@ -394,11 +394,16 @@ export async function shareEvent({
                 await navigator.clipboard.writeText(fullPost);
                 toast.success('Full event post copied to clipboard!', {
                     description:
-                        'Ready to paste into your Instagram caption, story, or DM.',
+                        'Opening Instagram — paste (Ctrl+V) into your caption, story, or DM.',
                 });
-            } catch (e) {
-                toast.error('Failed to copy event details.');
+            } catch {
+                toast.info('Opening Instagram...');
             }
+            window.open(
+                'https://www.instagram.com/',
+                '_blank',
+                'noopener,noreferrer',
+            );
             break;
         }
 

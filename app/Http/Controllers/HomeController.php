@@ -132,7 +132,7 @@ class HomeController extends Controller
 
         // 3. Events
         $events = Event::query()
-            ->latest()
+            ->upcoming()
             ->take(4)
             ->get()
             ->map(function (Event $event) use ($getString) {

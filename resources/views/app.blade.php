@@ -62,17 +62,24 @@
         @fonts
 
         @php
-            $ogTitle = isset($sharedEvent) && $sharedEvent ? $sharedEvent->title . ' - Pawlse Events' : config('app.name', 'Pawlse') . ' - Animal Rescue & Care Platform';
-            $ogDesc = isset($sharedEvent) && $sharedEvent ? ($sharedEvent->desc ?: 'Join us for ' . $sharedEvent->title . ' on ' . $sharedEvent->date . ' at ' . $sharedEvent->location) : 'Connecting strays to loving homes, animal rescues, and community volunteers in Iligan City.';
-            $ogImage = isset($sharedEvent) && $sharedEvent && $sharedEvent->img ? (str_starts_with($sharedEvent->img, 'http') ? $sharedEvent->img : url($sharedEvent->img)) : url('/assets/paw-icon.png');
-            $ogUrl = isset($sharedEvent) && $sharedEvent ? url('/events?event=' . $sharedEvent->id) : url()->current();
+            $hasSharedEvent = isset($sharedEvent) && $sharedEvent;
+            $ogDate = $hasSharedEvent && $sharedEvent->date ? ($sharedEvent->date instanceof \Carbon\CarbonInterface ? $sharedEvent->date->format('M d, Y') : (string) $sharedEvent->date) : 'Upcoming';
+            $ogMetaLine = $hasSharedEvent ? trim(implode(' • ', array_filter([$ogDate, $sharedEvent->time ?? null, $sharedEvent->location ?? null]))) : '';
+            $ogTitle = $hasSharedEvent ? $sharedEvent->title . ' - Pawlse Events' : config('app.name', 'Pawlse') . ' - Animal Rescue & Care Platform';
+            $ogDesc = $hasSharedEvent
+                ? trim($ogMetaLine . ($sharedEvent->desc ? ' — ' . \Illuminate\Support\Str::limit($sharedEvent->desc, 180) : ''))
+                : 'Connecting strays to loving homes, animal rescues, and community volunteers in Iligan City.';
+            $ogImage = $hasSharedEvent && $sharedEvent->img ? (str_starts_with($sharedEvent->img, 'http') ? $sharedEvent->img : url($sharedEvent->img)) : url('/assets/paw-icon.png');
+            $ogUrl = $hasSharedEvent ? url('/events?event=' . $sharedEvent->id) : url()->current();
         @endphp
         <meta property="og:site_name" content="{{ config('app.name', 'Pawlse') }}">
-        <meta property="og:type" content="{{ isset($sharedEvent) && $sharedEvent ? 'article' : 'website' }}">
+        <meta property="og:type" content="{{ $hasSharedEvent ? 'article' : 'website' }}">
         <meta property="og:title" content="{{ $ogTitle }}">
         <meta property="og:description" content="{{ $ogDesc }}">
         <meta property="og:image" content="{{ $ogImage }}">
         <meta property="og:image:secure_url" content="{{ $ogImage }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
         <meta property="og:image:alt" content="{{ $ogTitle }}">
         <meta property="og:url" content="{{ $ogUrl }}">
         <meta name="twitter:card" content="summary_large_image">

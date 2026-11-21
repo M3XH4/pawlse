@@ -51,6 +51,7 @@ interface PaginatedData<T> {
     }[];
     current_page: number;
     last_page: number;
+    total?: number;
     prev_page_url: string | null;
     next_page_url: string | null;
 }
@@ -140,6 +141,17 @@ const categoryConfig: Record<
     },
 };
 
+function isPastEventDate(dateStr: string): boolean {
+    const normalized = dateStr?.slice(0, 10);
+    if (!normalized) {
+        return false;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(`${normalized}T00:00:00`);
+    return !Number.isNaN(eventDate.getTime()) && eventDate < today;
+}
+
 export default function Events({
     events,
     feedingSchedules,
@@ -203,6 +215,7 @@ export default function Events({
             },
             {
                 preserveState: true,
+                preserveScroll: true,
                 replace: true,
             },
         );
@@ -522,7 +535,7 @@ export default function Events({
             <main className="py-12 pb-24">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
-                    <div className="mb-10 flex flex-col items-start justify-between gap-6 md:mb-16 md:flex-row md:items-end">
+                    <div className="mb-8 md:mb-10">
                         <div className="max-w-2xl">
                             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-paw-orange/20 bg-paw-orange/10 px-3.5 py-1.5">
                                 <Sparkles
@@ -545,89 +558,10 @@ export default function Events({
                                 furry friends in Iligan.
                             </p>
                         </div>
-
-                        {/* Search Input with Autocomplete */}
-                        <div className="flex w-full gap-4 md:w-auto">
-                            <div className="relative flex-1 md:w-84">
-                                <Search
-                                    className="absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400"
-                                    size={18}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Search events, locations, keywords..."
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                        handleSearchChange(e.target.value)
-                                    }
-                                    onFocus={() => setShowSuggestions(true)}
-                                    onBlur={() =>
-                                        setTimeout(
-                                            () => setShowSuggestions(false),
-                                            200,
-                                        )
-                                    }
-                                    className="w-full rounded-2xl border-2 border-transparent bg-white py-3.5 pr-10 pl-11 text-sm font-bold text-paw-navy shadow-xl shadow-paw-navy/5 transition-all outline-none placeholder:text-gray-400 focus:border-paw-orange md:py-4"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => handleSearchChange('')}
-                                        className="absolute top-1/2 right-3.5 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-paw-orange"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
-
-                                <AnimatePresence>
-                                    {showSuggestions &&
-                                        filteredSuggestions.length > 0 && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-2xl border-2 border-gray-100 bg-white font-bold text-gray-700 shadow-2xl"
-                                            >
-                                                {filteredSuggestions.map(
-                                                    (suggestion, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={() =>
-                                                                handleSuggestionClick(
-                                                                    suggestion.keyword,
-                                                                )
-                                                            }
-                                                            className="w-full cursor-pointer border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 hover:bg-paw-orange/10"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <Search
-                                                                    size={15}
-                                                                    className="shrink-0 text-paw-orange"
-                                                                />
-                                                                <div>
-                                                                    <p className="text-sm font-black text-paw-navy">
-                                                                        {
-                                                                            suggestion.keyword
-                                                                        }
-                                                                    </p>
-                                                                    <p className="text-xs font-bold text-gray-500">
-                                                                        {
-                                                                            suggestion.description
-                                                                        }
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ),
-                                                )}
-                                            </motion.div>
-                                        )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Section Switcher Tabs */}
-                    <div className="mb-8 flex gap-4 border-b-2 border-gray-200">
+                    <div className="mb-6 flex gap-4 border-b-2 border-gray-200">
                         <button
                             onClick={() => setActiveTab('events')}
                             className={`relative flex cursor-pointer items-center gap-2 px-6 py-4 text-base font-black transition-all md:text-lg ${
@@ -664,34 +598,124 @@ export default function Events({
                         </button>
                     </div>
 
-                    {/* Category Filter Pills */}
-                    {activeTab === 'events' && (
-                        <div className="scrollbar-hide mb-8 flex gap-2.5 overflow-x-auto pb-4 md:mb-12 md:gap-3">
-                            {[
-                                'All',
-                                'Feeding',
-                                'Medical',
-                                'Social',
-                                'Adoption',
-                            ].map((f) => {
-                                const isSelected =
-                                    filter.toLowerCase() === f.toLowerCase();
-                                return (
-                                    <button
-                                        key={f}
-                                        onClick={() => handleCategoryChange(f)}
-                                        className={`cursor-pointer rounded-2xl px-5 py-2.5 text-xs font-black whitespace-nowrap shadow-sm transition-all md:px-7 md:py-3 md:text-sm ${
-                                            isSelected
-                                                ? 'scale-105 bg-paw-orange text-white shadow-xl shadow-paw-orange/25'
-                                                : 'border border-gray-100 bg-white text-paw-navy hover:border-paw-orange/30 hover:bg-paw-orange/10'
-                                        }`}
-                                    >
-                                        {f.toUpperCase()}
-                                    </button>
-                                );
-                            })}
+                    {/* Aligned Category Filter Pills & Search Toolbar */}
+                    <div
+                        className={`mb-8 flex flex-col gap-4 lg:flex-row lg:items-center ${
+                            activeTab === 'events'
+                                ? 'lg:justify-between'
+                                : 'lg:justify-end'
+                        }`}
+                    >
+                        {activeTab === 'events' && (
+                            <div className="flex flex-wrap items-center gap-2.5 py-1 md:gap-3">
+                                {[
+                                    'All',
+                                    'Feeding',
+                                    'Medical',
+                                    'Social',
+                                    'Adoption',
+                                    'Closed',
+                                    'Past',
+                                ].map((f) => {
+                                    const isSelected =
+                                        filter.toLowerCase() ===
+                                        f.toLowerCase();
+                                    return (
+                                        <button
+                                            key={f}
+                                            onClick={() =>
+                                                handleCategoryChange(f)
+                                            }
+                                            className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-black whitespace-nowrap shadow-sm transition-all md:px-5 md:py-3 md:text-sm ${
+                                                isSelected
+                                                    ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25'
+                                                    : 'border border-gray-100 bg-white text-paw-navy hover:border-paw-orange/30 hover:bg-paw-orange/10'
+                                            }`}
+                                        >
+                                            {f.toUpperCase()}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Search Input with Autocomplete (Aligned with Tags) */}
+                        <div className="relative w-full shrink-0 lg:w-84">
+                            <Search
+                                className="absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400"
+                                size={18}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search events, locations, keywords..."
+                                value={searchQuery}
+                                onChange={(e) =>
+                                    handleSearchChange(e.target.value)
+                                }
+                                onFocus={() => setShowSuggestions(true)}
+                                onBlur={() =>
+                                    setTimeout(
+                                        () => setShowSuggestions(false),
+                                        200,
+                                    )
+                                }
+                                className="w-full rounded-2xl border-2 border-gray-100 bg-white py-2.5 pr-10 pl-11 text-sm font-bold text-paw-navy shadow-sm transition-all outline-none placeholder:text-gray-400 focus:border-paw-orange md:py-3"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => handleSearchChange('')}
+                                    className="absolute top-1/2 right-3.5 -translate-y-1/2 cursor-pointer p-1 text-gray-400 transition-colors hover:text-paw-orange"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+
+                            <AnimatePresence>
+                                {showSuggestions &&
+                                    filteredSuggestions.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-2xl border-2 border-gray-100 bg-white font-bold text-gray-700 shadow-2xl"
+                                        >
+                                            {filteredSuggestions.map(
+                                                (suggestion, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() =>
+                                                            handleSuggestionClick(
+                                                                suggestion.keyword,
+                                                            )
+                                                        }
+                                                        className="w-full cursor-pointer border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 hover:bg-paw-orange/10"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Search
+                                                                size={15}
+                                                                className="shrink-0 text-paw-orange"
+                                                            />
+                                                            <div>
+                                                                <p className="text-sm font-black text-paw-navy">
+                                                                    {
+                                                                        suggestion.keyword
+                                                                    }
+                                                                </p>
+                                                                <p className="text-xs font-bold text-gray-500">
+                                                                    {
+                                                                        suggestion.description
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                ),
+                                            )}
+                                        </motion.div>
+                                    )}
+                            </AnimatePresence>
                         </div>
-                    )}
+                    </div>
 
                     {/* Events Grid */}
                     {activeTab === 'events' && (
@@ -755,6 +779,11 @@ export default function Events({
                                                 ] || categoryConfig.Community;
                                             const CategoryIcon =
                                                 config.icon || Heart;
+                                            const isPast = isPastEventDate(
+                                                event.date,
+                                            );
+                                            const isClosed =
+                                                event.status !== 'open';
 
                                             return (
                                                 <motion.div
@@ -767,14 +796,20 @@ export default function Events({
                                                     onClick={() =>
                                                         setSelectedEvent(event)
                                                     }
-                                                    className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[28px] border-2 border-transparent bg-white shadow-xl shadow-paw-navy/5 transition-all hover:border-paw-orange/30 md:flex-row md:rounded-[36px]"
+                                                    className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[28px] border-2 border-transparent bg-white shadow-xl shadow-paw-navy/5 transition-all hover:border-paw-orange/30 md:flex-row md:rounded-[36px] ${
+                                                        isPast ? 'opacity-90' : ''
+                                                    }`}
                                                 >
                                                     {/* Image & Badges Container */}
                                                     <div className="relative aspect-[16/10] min-h-[220px] shrink-0 overflow-hidden bg-paw-bg md:aspect-auto md:min-h-full md:w-2/5">
                                                         <ImageWithFallback
                                                             src={event.img}
                                                             alt={event.title}
-                                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                            className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+                                                                isPast
+                                                                    ? 'grayscale-[30%]'
+                                                                    : ''
+                                                            }`}
                                                         />
 
                                                         {/* Calendar Date Badge */}
@@ -811,12 +846,18 @@ export default function Events({
                                                         </button>
 
                                                         {/* Relative Time Badge */}
-                                                        {dateBadge.relativeBadge && (
-                                                            <div className="absolute bottom-3 left-3 rounded-xl bg-paw-navy/85 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase shadow-md backdrop-blur-sm">
-                                                                {
-                                                                    dateBadge.relativeBadge
-                                                                }
+                                                        {isPast ? (
+                                                            <div className="absolute bottom-3 left-3 rounded-xl bg-slate-800/90 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase shadow-md backdrop-blur-sm">
+                                                                Past Event
                                                             </div>
+                                                        ) : (
+                                                            dateBadge.relativeBadge && (
+                                                                <div className="absolute bottom-3 left-3 rounded-xl bg-paw-navy/85 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase shadow-md backdrop-blur-sm">
+                                                                    {
+                                                                        dateBadge.relativeBadge
+                                                                    }
+                                                                </div>
+                                                            )
                                                         )}
                                                     </div>
 
@@ -839,7 +880,15 @@ export default function Events({
                                                                     }
                                                                 </span>
 
-                                                                {event.spots ===
+                                                                {isPast ? (
+                                                                    <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-slate-600 uppercase">
+                                                                        Past Event
+                                                                    </span>
+                                                                ) : isClosed ? (
+                                                                    <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-slate-600 uppercase">
+                                                                        Closed
+                                                                    </span>
+                                                                ) : event.spots ===
                                                                 null ? (
                                                                     <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-emerald-700 uppercase">
                                                                         Unlimited
@@ -1334,6 +1383,14 @@ export default function Events({
                                                 <Trash2 size={14} />
                                                 <span>Cancel Attendance / Leave Event</span>
                                             </button>
+                                        </div>
+                                    ) : isPastEventDate(selectedEvent.date) ? (
+                                        <div className="flex w-full items-center justify-center rounded-2xl bg-slate-100 py-3.5 text-xs font-black text-slate-500 uppercase">
+                                            This Event Has Already Ended
+                                        </div>
+                                    ) : selectedEvent.status !== 'open' ? (
+                                        <div className="flex w-full items-center justify-center rounded-2xl bg-slate-100 py-3.5 text-xs font-black text-slate-500 uppercase">
+                                            Registration for This Event is Closed
                                         </div>
                                     ) : selectedEvent.spots === 0 ? (
                                         <div className="flex w-full items-center justify-center rounded-2xl bg-gray-100 py-3.5 text-xs font-black text-gray-500 uppercase">

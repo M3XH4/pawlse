@@ -24,6 +24,8 @@ class EventSeeder extends Seeder
                 'desc' => 'Come and meet our lovely adoptable dogs and cats! Get a chance to match with your future best friend.',
                 'keywords' => ['adoption', 'pets', 'weekend', 'mall'],
                 'status' => 'open',
+                'approval_status' => 'approved',
+                'approved_at' => now(),
             ],
             [
                 'title' => 'Free Rabies Vaccination Clinic',
@@ -36,6 +38,8 @@ class EventSeeder extends Seeder
                 'desc' => 'We are providing free anti-rabies vaccinations for up to 50 local stray and community animals.',
                 'keywords' => ['vaccination', 'medical', 'rabies', 'free'],
                 'status' => 'open',
+                'approval_status' => 'approved',
+                'approved_at' => now(),
             ],
             [
                 'title' => 'Community Stray Feeding Drive',
@@ -48,6 +52,8 @@ class EventSeeder extends Seeder
                 'desc' => 'Join us as we hand out meals and clean water to stray animals along the Boulevard Zone.',
                 'keywords' => ['feeding', 'stray', 'volunteer', 'boulevard'],
                 'status' => 'open',
+                'approval_status' => 'approved',
+                'approved_at' => now(),
             ],
             [
                 'title' => 'Responsible Pet Ownership Seminar',
@@ -60,11 +66,16 @@ class EventSeeder extends Seeder
                 'desc' => 'A seminar highlighting the basic requirements, laws, and best practices for raising domestic pets.',
                 'keywords' => ['seminar', 'education', 'pet-care', 'social'],
                 'status' => 'closed',
+                'approval_status' => 'approved',
+                'approved_at' => now()->subDays(15),
             ],
         ];
 
         foreach ($events as $event) {
-            Event::create($event);
+            Event::updateOrCreate(
+                ['title' => $event['title']],
+                $event
+            );
         }
     }
 }
