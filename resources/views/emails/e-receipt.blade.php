@@ -1,13 +1,30 @@
 @php
-    $logoFile = public_path('images/logo.png');
-    if (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
+    $appUrl = rtrim((string) config('app.url', 'https://pawlse.test'), '/');
+    $isPublicAppUrl = preg_match('#^https?://(?!(?:localhost|127\.0\.0\.1)(?::|/|$)|[^/]+\.test(?::|/|$))#i', $appUrl) === 1;
+    $logoFile = public_path('images/email-logo.png');
+    if ($isPublicAppUrl) {
+        $logoUrl = $appUrl.'/images/email-logo.png';
+    } elseif (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
         $logoUrl = $message->embed($logoFile);
     } elseif (file_exists($logoFile)) {
-        $logoUrl = 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile));
+        $logoUrl = 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoFile));
     } else {
-        $logoUrl = asset('images/logo.png');
+        $logoUrl = asset('images/email-logo.png');
     }
-    $appUrl = config('app.url', 'https://pawlse.test');
+    $embedIcon = static function (string $name) use (&$message, $appUrl, $isPublicAppUrl): string {
+        if ($isPublicAppUrl) {
+            return $appUrl."/images/email-icons/{$name}.png";
+        }
+        $iconFile = public_path("images/email-icons/{$name}.png");
+        if (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($iconFile)) {
+            return $message->embed($iconFile);
+        }
+        if (file_exists($iconFile)) {
+            return 'data:image/png;base64,'.base64_encode((string) file_get_contents($iconFile));
+        }
+
+        return asset("images/email-icons/{$name}.png");
+    };
     $bannerTheme = $bannerTheme ?? 'green'; // 'green', 'orange', 'blue'
     $bannerGradient = match ($bannerTheme) {
         'orange' => 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
@@ -74,9 +91,7 @@
                                         </div>
                                     </td>
                                     <td width="88" align="right" valign="middle">
-                                        <div style="width: 78px; height: 78px; border-radius: 9999px; background-color: #ffffff; padding: 4px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);">
-                                            <img src="{{ $logoUrl }}" alt="Iligan Stray Feeders" width="70" height="70" style="display: block; width: 70px; height: 70px; border-radius: 9999px; object-fit: cover;" />
-                                        </div>
+                                        <img src="{{ $logoUrl }}" alt="Iligan Stray Feeders" width="78" height="78" style="display: block; width: 78px; height: 78px; border-radius: 9999px; object-fit: cover; border: 3px solid #ffffff; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);" />
                                     </td>
                                 </tr>
                             </table>
@@ -116,7 +131,9 @@
                                     </td>
                                     <td valign="middle" style="padding-left: 10px;">
                                         <div style="font-size: 12px; font-weight: 800; color: #f59e0b;">
-                                            5.0 &#9733; &bull; Feed Furr A Cause
+                                            5.0
+                                            <img src="{{ $embedIcon('star') }}" alt="" width="12" height="12" style="display: inline-block; width: 12px; height: 12px; vertical-align: -1.5px; margin: 0 2px; border: 0;" />
+                                            &bull; Feed Furr A Cause
                                         </div>
                                         <div style="font-size: 11.5px; font-weight: 600; color: #64748b;">
                                             {{ $subtitle ?? 'Official Community Welfare E-Receipt' }}
@@ -243,23 +260,27 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td width="25%" align="center" style="border-right: 1px solid #e2e8f0;">
-                                        <a href="{{ $appUrl }}/donate" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800;">
-                                            &#128203;<br>Audit Ledger
+                                        <a href="{{ $appUrl }}/donate" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800; display: inline-block;">
+                                            <img src="{{ $embedIcon('clipboard-list') }}" alt="" width="20" height="20" style="display: block; width: 20px; height: 20px; margin: 0 auto 4px auto; border: 0;" />
+                                            Audit Ledger
                                         </a>
                                     </td>
                                     <td width="25%" align="center" style="border-right: 1px solid #e2e8f0;">
-                                        <a href="{{ $appUrl }}/adopt" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800;">
-                                            &#128062;<br>Meet Strays
+                                        <a href="{{ $appUrl }}/adopt" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800; display: inline-block;">
+                                            <img src="{{ $embedIcon('paw-print') }}" alt="" width="20" height="20" style="display: block; width: 20px; height: 20px; margin: 0 auto 4px auto; border: 0;" />
+                                            Meet Strays
                                         </a>
                                     </td>
                                     <td width="25%" align="center" style="border-right: 1px solid #e2e8f0;">
-                                        <a href="{{ $appUrl }}/volunteer" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800;">
-                                            &#129309;<br>Volunteer
+                                        <a href="{{ $appUrl }}/volunteer" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800; display: inline-block;">
+                                            <img src="{{ $embedIcon('handshake') }}" alt="" width="20" height="20" style="display: block; width: 20px; height: 20px; margin: 0 auto 4px auto; border: 0;" />
+                                            Volunteer
                                         </a>
                                     </td>
                                     <td width="25%" align="center">
-                                        <a href="{{ $appUrl }}/about" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800;">
-                                            &#128172;<br>Get Support
+                                        <a href="{{ $appUrl }}/about" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #0284c7; font-size: 11.5px; font-weight: 800; display: inline-block;">
+                                            <img src="{{ $embedIcon('message-circle') }}" alt="" width="20" height="20" style="display: block; width: 20px; height: 20px; margin: 0 auto 4px auto; border: 0;" />
+                                            Get Support
                                         </a>
                                     </td>
                                 </tr>
@@ -300,14 +321,20 @@
                                         </div>
                                         <table role="presentation" cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td style="padding-left: 6px;">
-                                                    <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 9999px; background-color: #374151; color: #ffffff; font-size: 12px; font-weight: 800;">f</span>
+                                                <td style="padding-left: 8px;">
+                                                    <a href="https://www.facebook.com/IliganStrayFosterandAdoptionCenter" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Follow us on Facebook" style="display: inline-block; width: 32px; height: 32px; border-radius: 9999px; background-color: #374151; text-align: center; text-decoration: none;">
+                                                        <img src="{{ $embedIcon('facebook') }}" alt="Facebook" width="16" height="16" style="display: inline-block; width: 16px; height: 16px; vertical-align: middle; margin-top: 8px; border: 0;" />
+                                                    </a>
                                                 </td>
-                                                <td style="padding-left: 6px;">
-                                                    <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 9999px; background-color: #374151; color: #ffffff; font-size: 12px; font-weight: 800;">&#9829;</span>
+                                                <td style="padding-left: 8px;">
+                                                    <a href="https://www.instagram.com/iliganstrayfeeders?igsh=MTg2OWpqZGJ5MWdudw==" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Follow us on Instagram" style="display: inline-block; width: 32px; height: 32px; border-radius: 9999px; background-color: #374151; text-align: center; text-decoration: none;">
+                                                        <img src="{{ $embedIcon('instagram') }}" alt="Instagram" width="16" height="16" style="display: inline-block; width: 16px; height: 16px; vertical-align: middle; margin-top: 8px; border: 0;" />
+                                                    </a>
                                                 </td>
-                                                <td style="padding-left: 6px;">
-                                                    <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 9999px; background-color: #374151; color: #ffffff; font-size: 12px; font-weight: 800;">&#128062;</span>
+                                                <td style="padding-left: 8px;">
+                                                    <a href="{{ $appUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Website" title="Visit PAWLSE Website" style="display: inline-block; width: 32px; height: 32px; border-radius: 9999px; background-color: #374151; text-align: center; text-decoration: none;">
+                                                        <img src="{{ $embedIcon('globe') }}" alt="Website" width="16" height="16" style="display: inline-block; width: 16px; height: 16px; vertical-align: middle; margin-top: 8px; border: 0;" />
+                                                    </a>
                                                 </td>
                                             </tr>
                                         </table>

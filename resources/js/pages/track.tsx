@@ -1,29 +1,35 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
   Heart,
+  HeartHandshake,
   Calendar,
   Clock,
   CheckCircle2,
   XCircle,
-  AlertCircle,
   Search,
   ChevronRight,
   RefreshCw,
   Mail,
   User,
-  MapPin,
-  Phone,
-  ArrowLeft,
   Sparkles,
   Hash,
   ShieldCheck,
   DollarSign,
   AlertTriangle,
   Building2,
-  Share2,
   Copy,
   Check,
+  PawPrint,
+  Siren,
+  Home,
+  Lock,
+  X,
+  MessageCircle,
+  Paperclip,
+  Send,
+  Ban,
+  FileText,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Header } from '@/components/header';
@@ -34,6 +40,24 @@ import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption
 interface TrackedItemDetail {
   label: string;
   value: string;
+}
+
+interface TrackedMessageAttachment {
+  path: string;
+  name: string;
+  mime?: string | null;
+  size?: number | null;
+  url: string;
+}
+
+interface TrackedMessage {
+  id: number;
+  sender_type: 'admin' | 'user';
+  sender_name: string;
+  message?: string | null;
+  attachments: TrackedMessageAttachment[];
+  created_at?: string | null;
+  created_at_formatted?: string | null;
 }
 
 interface TrackedItem {
@@ -49,6 +73,9 @@ interface TrackedItem {
   created_at: string;
   photo_url?: string | null;
   rejection_reason?: string | null;
+  notes?: string | null;
+  can_cancel?: boolean;
+  messages?: TrackedMessage[];
   details: TrackedItemDetail[];
   action_url?: string | null;
   action_label?: string | null;
@@ -64,6 +91,51 @@ interface TrackProps {
   item?: TrackedItem | null;
 }
 
+const SUBMISSION_TYPES = [
+  {
+    label: 'Adoption (ADP-XXXXX)',
+    prefix: 'ADP-',
+    icon: PawPrint,
+    classes:
+      'bg-orange-50 dark:bg-gray-800 text-paw-orange border-orange-100 dark:border-gray-700 hover:bg-orange-100/80 dark:hover:bg-gray-700',
+  },
+  {
+    label: 'Donations (DON-XXXXX)',
+    prefix: 'DON-',
+    icon: HeartHandshake,
+    classes:
+      'bg-emerald-50 dark:bg-gray-800 text-emerald-600 border-emerald-100 dark:border-gray-700 hover:bg-emerald-100/80 dark:hover:bg-gray-700',
+  },
+  {
+    label: 'Missing Pets (MIS-XXXXX)',
+    prefix: 'MIS-',
+    icon: Search,
+    classes:
+      'bg-amber-50 dark:bg-gray-800 text-amber-600 border-amber-100 dark:border-gray-700 hover:bg-amber-100/80 dark:hover:bg-gray-700',
+  },
+  {
+    label: 'Rescue & SOS (RES-XXXXX / SOS-XXXXX)',
+    prefix: 'RES-',
+    icon: Siren,
+    classes:
+      'bg-red-50 dark:bg-gray-800 text-red-600 border-red-100 dark:border-gray-700 hover:bg-red-100/80 dark:hover:bg-gray-700',
+  },
+  {
+    label: 'Rehoming (REH-XXXXX)',
+    prefix: 'REH-',
+    icon: Home,
+    classes:
+      'bg-blue-50 dark:bg-gray-800 text-blue-600 border-blue-100 dark:border-gray-700 hover:bg-blue-100/80 dark:hover:bg-gray-700',
+  },
+  {
+    label: 'Shelter Visits (VIS-XXXXX)',
+    prefix: 'VIS-',
+    icon: Calendar,
+    classes:
+      'bg-purple-50 dark:bg-gray-800 text-purple-600 border-purple-100 dark:border-gray-700 hover:bg-purple-100/80 dark:hover:bg-gray-700',
+  },
+] as const;
+
 export default function UnifiedTrackPage({
   searchedReference = '',
   searchedEmail = '',
@@ -74,6 +146,86 @@ export default function UnifiedTrackPage({
   const [emailInput, setEmailInput] = useState(searchedEmail);
   const [resubmittingApp, setResubmittingApp] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const referenceInputRef = useRef<HTMLInputElement>(null);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePrefillPrefix = (prefix: string) => {
+    setReferenceInput(prefix);
+    referenceInputRef.current?.focus();
+  };
+
+  const handleClearSearch = () => {
+    setReferenceInput('');
+    setEmailInput('');
+    if (searched) {
+      router.get('/track', {}, { preserveState: false });
+    } else {
+      referenceInputRef.current?.focus();
+    }
+  };
+
+  const handleRefreshStatus = () => {
+    setIsRefreshing(true);
+    router.reload({
+      only: ['item'],
+      onFinish: () => setIsRefreshing(false),
+    });
+  };
+
+  const handleReplySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!item || (!replyText.trim() && replyFiles.length === 0)) {
+      return;
+    }
+
+    setIsSendingReply(true);
+    router.post(
+      `/track/adoption-applications/${item.id}/messages`,
+      {
+        reference: item.reference,
+        email: searchedEmail || emailInput.trim(),
+        message: replyText.trim(),
+        attachments: replyFiles,
+      },
+      {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+          setReplyText('');
+          setReplyFiles([]);
+          if (replyFileInputRef.current) {
+            replyFileInputRef.current.value = '';
+          }
+        },
+        onFinish: () => setIsSendingReply(false),
+      }
+    );
+  };
+
+  const handleCancelApplication = () => {
+    if (!item || !confirm('Are you sure you want to cancel this adoption application? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsCancelling(true);
+    router.post(
+      `/track/adoption-applications/${item.id}/cancel`,
+      {
+        reference: item.reference,
+        email: searchedEmail || emailInput.trim(),
+      },
+      {
+        preserveScroll: true,
+        onFinish: () => setIsCancelling(false),
+      }
+    );
+  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -123,6 +275,12 @@ export default function UnifiedTrackPage({
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
             <XCircle size={12} /> {label}
+          </span>
+        );
+      case 'gray':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+            <Ban size={12} /> {label}
           </span>
         );
       case 'amber':
@@ -181,49 +339,38 @@ export default function UnifiedTrackPage({
 
       <main className="flex-1 pb-20 pt-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          {/* Back link */}
-          <div className="mb-6 flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-paw-orange transition-colors"
-            >
-              <ArrowLeft size={16} /> Back to Home
-            </Link>
-          </div>
-
           {/* Page Header Card */}
           <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-paw-navy/5 mb-8">
-            <div className="max-w-3xl">
-              <span className="text-xs font-black uppercase tracking-widest text-paw-orange">
-                Public Submission Portal
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-fredoka font-black text-[#0B2340] dark:text-white mt-1 mb-3">
-                Track Your Submission Status
-              </h1>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
-                Look up any adoption application, donation, missing pet report, stray rescue, emergency SOS, rehoming request, or shelter visit you submitted as a public user.
-              </p>
+            <div className="w-full">
+              <div className="text-center max-w-2xl mx-auto mb-6">
+                <span className="text-xs font-black uppercase tracking-widest text-paw-orange">
+                  Public Submission Portal
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-fredoka font-black text-[#0B2340] dark:text-white mt-1 mb-3">
+                  Track Your Submission Status
+                </h1>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Look up any adoption application, donation, missing pet report, stray rescue, emergency SOS, rehoming request, or shelter visit you submitted as a public user.
+                </p>
+              </div>
 
-              {/* Supported types chips */}
-              <div className="flex flex-wrap gap-2 mb-6 text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                <span className="px-2.5 py-1 rounded-lg bg-orange-50 dark:bg-gray-800 text-paw-orange border border-orange-100 dark:border-gray-700">
-                  🐾 Adoption (ADP-XXXXX)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-gray-800 text-emerald-600 border border-emerald-100 dark:border-gray-700">
-                  💝 Donations (DON-XXXXX)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-gray-800 text-amber-600 border border-amber-100 dark:border-gray-700">
-                  🔍 Missing Pets (MIS-XXXXX)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-red-50 dark:bg-gray-800 text-red-600 border border-red-100 dark:border-gray-700">
-                  🚨 Rescue & SOS (RES-XXXXX / SOS-XXXXX)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-gray-800 text-blue-600 border border-blue-100 dark:border-gray-700">
-                  🏠 Rehoming (REH-XXXXX)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-gray-800 text-purple-600 border border-purple-100 dark:border-gray-700">
-                  📅 Shelter Visits (VIS-XXXXX)
-                </span>
+              {/* Supported types chips — aligned end-to-end */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-6 text-[11px] font-bold">
+                {SUBMISSION_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.label}
+                      type="button"
+                      onClick={() => handlePrefillPrefix(type.prefix)}
+                      title={`Click to pre-fill ${type.prefix}`}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border transition-all cursor-pointer ${type.classes}`}
+                    >
+                      <Icon size={14} className="shrink-0" />
+                      <span className="truncate">{type.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Search Form */}
@@ -232,13 +379,25 @@ export default function UnifiedTrackPage({
                   <div className="relative flex-1">
                     <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
+                      ref={referenceInputRef}
                       type="text"
                       required
                       value={referenceInput}
                       onChange={(e) => setReferenceInput(e.target.value)}
                       placeholder="Reference Number (e.g. ADP-00001, DON-1234, MIS-00002)"
-                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-sm text-gray-900 dark:text-white transition-all uppercase"
+                      className="w-full pl-11 pr-9 py-3.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-sm text-gray-900 dark:text-white transition-all uppercase"
                     />
+                    {(referenceInput || emailInput) && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        aria-label="Clear search"
+                        title="Clear search"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                   <div className="relative flex-1">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -260,7 +419,10 @@ export default function UnifiedTrackPage({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-gray-400 font-medium">
-                  <span>🔒 Direct private tracking requires both matching credentials.</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Lock size={13} className="text-gray-400 shrink-0" />
+                    Direct private tracking requires both matching credentials.
+                  </span>
                   <Link
                     href="/account/user"
                     className="text-paw-orange hover:underline font-bold"
@@ -296,27 +458,31 @@ export default function UnifiedTrackPage({
           {item && (
             <div className="space-y-6">
               {/* One-Click Quick Info & Share Banner */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl px-5 py-3 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-sm">
-                <span className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl px-5 py-4 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-sm">
+                <span className="inline-flex items-center justify-center gap-2 text-center">
                   <Sparkles size={16} className="text-paw-orange shrink-0" />
-                  One-Click Access: Bookmark this page or use the direct button in your email to view updates anytime without typing credentials.
+                  <span>
+                    One-Click Access: Bookmark this page or use the direct button in your email to view updates anytime without typing credentials.
+                  </span>
                 </span>
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 text-xs font-black transition-all shadow-sm cursor-pointer shrink-0"
-                >
-                  {copied ? <Check size={13} className="text-green-600" /> : <Copy size={13} />}
-                  {copied ? 'Link Copied!' : 'Copy Direct Link'}
-                </button>
-                {item.dashboard_url && (
-                  <Link
-                    href={item.dashboard_url}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-paw-orange text-white hover:bg-orange-600 text-xs font-black transition-all shadow-sm shrink-0"
+                <div className="w-full flex flex-wrap items-center justify-between gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 text-xs font-black transition-all shadow-sm cursor-pointer shrink-0"
                   >
-                    Manage in My Dashboard <ChevronRight size={13} />
-                  </Link>
-                )}
+                    {copied ? <Check size={13} className="text-green-600" /> : <Copy size={13} />}
+                    {copied ? 'Link Copied!' : 'Copy Direct Link'}
+                  </button>
+                  {item.dashboard_url && (
+                    <Link
+                      href={item.dashboard_url}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-paw-orange text-white hover:bg-orange-600 text-xs font-black transition-all shadow-sm shrink-0"
+                    >
+                      Manage in My Dashboard <ChevronRight size={13} />
+                    </Link>
+                  )}
+                </div>
               </div>
 
               <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-gray-800 shadow-lg shadow-paw-navy/5 space-y-6">
@@ -357,7 +523,97 @@ export default function UnifiedTrackPage({
                           {item.subtitle}
                         </p>
                       </div>
-                      <div>{getStatusBadge(item.status_theme, item.status_label)}</div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(item.status_theme, item.status_label)}
+                        <button
+                          type="button"
+                          onClick={handleRefreshStatus}
+                          disabled={isRefreshing}
+                          title="Refresh live status"
+                          aria-label="Refresh live status"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-paw-orange hover:border-paw-orange/40 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Visual Status Progress Stepper */}
+                    <div className="pt-2 pb-1">
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          {
+                            label: 'Submitted',
+                            active: true,
+                            done: item.status !== 'cancelled',
+                            muted: item.status === 'cancelled',
+                          },
+                          {
+                            label:
+                              item.status === 'needs_info'
+                                ? 'Info Requested'
+                                : item.status === 'cancelled'
+                                  ? 'Cancelled'
+                                  : item.status === 'scheduled'
+                                    ? 'Interview Scheduled'
+                                    : 'Under Review',
+                            active:
+                              item.status_theme === 'amber' ||
+                              item.status_theme === 'blue' ||
+                              item.status_theme === 'green' ||
+                              item.status_theme === 'red' ||
+                              item.status === 'cancelled',
+                            done:
+                              item.status_theme === 'blue' ||
+                              item.status_theme === 'green' ||
+                              item.status_theme === 'red',
+                            muted: item.status === 'cancelled',
+                          },
+                          {
+                            label:
+                              item.status_theme === 'red'
+                                ? 'Needs Attention'
+                                : item.status === 'cancelled'
+                                  ? 'Closed'
+                                  : 'Completed',
+                            active: item.status_theme === 'green' || item.status_theme === 'red',
+                            done: item.status_theme === 'green',
+                            error: item.status_theme === 'red',
+                            muted: item.status === 'cancelled',
+                          },
+                        ].map((step) => (
+                          <div key={step.label} className="space-y-1.5">
+                            <div
+                              className={`h-1.5 rounded-full transition-all ${
+                                step.muted
+                                  ? 'bg-slate-300 dark:bg-slate-700'
+                                  : step.error
+                                    ? 'bg-red-500'
+                                    : step.done
+                                      ? 'bg-green-500'
+                                      : step.active
+                                        ? 'bg-paw-orange'
+                                        : 'bg-gray-200 dark:bg-gray-700'
+                              }`}
+                            />
+                            <span
+                              className={`block text-[10px] font-black uppercase tracking-wider ${
+                                step.muted
+                                  ? 'text-slate-500'
+                                  : step.error
+                                    ? 'text-red-600'
+                                    : step.done
+                                      ? 'text-green-600'
+                                      : step.active
+                                        ? 'text-paw-orange'
+                                        : 'text-gray-400'
+                              }`}
+                            >
+                              {step.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Details Grid */}
@@ -377,6 +633,32 @@ export default function UnifiedTrackPage({
                 </div>
 
                 {/* Specific Action Callouts */}
+                {item.category === 'adoption' && item.status === 'needs_info' && (
+                  <div className="bg-amber-50/80 dark:bg-amber-950/20 p-4 sm:p-5 rounded-2xl border border-amber-200 space-y-2">
+                    <p className="text-xs font-extrabold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                      <MessageCircle size={16} className="text-paw-orange shrink-0" />
+                      Additional Details or Requirements Requested
+                    </p>
+                    <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                      Our adoption coordinator requested more information or requirement photos. Please reply in the conversation below so we can continue reviewing your application.
+                    </p>
+                  </div>
+                )}
+
+                {item.category === 'adoption' && item.status === 'cancelled' && (
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+                    <Ban size={18} className="text-slate-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">
+                        Application Cancelled
+                      </p>
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        This adoption application was cancelled by the applicant and is now closed.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {item.category === 'adoption' && item.status === 'rejected' && (
                   <div className="bg-red-50/70 dark:bg-red-950/20 p-4 sm:p-5 rounded-2xl border border-red-200/80 space-y-3">
                     <div className="flex items-start gap-3">
@@ -416,6 +698,153 @@ export default function UnifiedTrackPage({
                   </div>
                 )}
 
+                {item.category === 'adoption' && (
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white flex items-center gap-2">
+                        <MessageCircle size={18} className="text-paw-orange" />
+                        Coordinator Conversation & Requirements
+                      </h3>
+                      {item.can_cancel && (
+                        <button
+                          type="button"
+                          onClick={handleCancelApplication}
+                          disabled={isCancelling}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Ban size={13} /> {isCancelling ? 'Cancelling...' : 'Cancel Application'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                      {(!item.messages || item.messages.length === 0) ? (
+                        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 p-4 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                          No messages yet. You can send additional details or upload requirement photos here for the adoption coordinator.
+                        </div>
+                      ) : (
+                        item.messages.map((msg) => {
+                          const isUser = msg.sender_type === 'user';
+                          return (
+                            <div
+                              key={msg.id}
+                              className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                            >
+                              <div
+                                className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs space-y-2 border ${
+                                  isUser
+                                    ? 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200/80 dark:border-orange-900 text-gray-900 dark:text-orange-50'
+                                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                  <span>{isUser ? `${msg.sender_name} (You)` : `${msg.sender_name} • Shelter Coordinator`}</span>
+                                  {msg.created_at_formatted && <span>{msg.created_at_formatted}</span>}
+                                </div>
+                                {msg.message && (
+                                  <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">
+                                    {msg.message}
+                                  </p>
+                                )}
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-1">
+                                    {msg.attachments.map((att, aIdx) => {
+                                      const isImage = att.mime?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+                                      return isImage ? (
+                                        <button
+                                          key={aIdx}
+                                          type="button"
+                                          onClick={() => setLightboxUrl(att.url)}
+                                          className="group relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 w-20 h-20 bg-white cursor-pointer"
+                                          title={att.name}
+                                        >
+                                          <img src={att.url} alt={att.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                        </button>
+                                      ) : (
+                                        <a
+                                          key={aIdx}
+                                          href={att.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:border-paw-orange transition-colors"
+                                        >
+                                          <FileText size={13} className="text-paw-orange" />
+                                          <span className="max-w-[140px] truncate">{att.name}</span>
+                                        </a>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {item.status !== 'cancelled' && item.status !== 'rejected' && (
+                      <form onSubmit={handleReplySubmit} className="space-y-3 pt-2">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          rows={3}
+                          placeholder="Write additional details or answer the coordinator's questions..."
+                          className="w-full p-3.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-medium text-xs text-gray-900 dark:text-white resize-none transition-all"
+                        />
+
+                        {replyFiles.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {replyFiles.map((file, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-gray-800 border border-orange-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200"
+                              >
+                                <Paperclip size={12} className="text-paw-orange" />
+                                <span className="max-w-[160px] truncate">{file.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyFiles((prev) => prev.filter((_, i) => i !== idx))}
+                                  className="text-gray-400 hover:text-red-500 cursor-pointer"
+                                  aria-label={`Remove ${file.name}`}
+                                >
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 text-xs font-bold text-gray-700 dark:text-gray-200 cursor-pointer transition-all">
+                            <Paperclip size={14} className="text-paw-orange" />
+                            <span>Attach Images / PDF (max 5)</span>
+                            <input
+                              ref={replyFileInputRef}
+                              type="file"
+                              multiple
+                              accept="image/jpeg,image/png,image/webp,application/pdf"
+                              onChange={(e) => {
+                                const selected = Array.from(e.target.files || []).slice(0, 5);
+                                setReplyFiles(selected);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+
+                          <button
+                            type="submit"
+                            disabled={isSendingReply || (!replyText.trim() && replyFiles.length === 0)}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-paw-orange text-white hover:bg-orange-600 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-paw-orange/20 cursor-pointer disabled:opacity-50"
+                          >
+                            <Send size={13} />
+                            {isSendingReply ? 'Sending...' : 'Send Reply'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+
                 {item.can_mark_reunited && (
                   <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
                     <button
@@ -444,6 +873,29 @@ export default function UnifiedTrackPage({
           />
         )}
       </AnimatePresence>
+
+      {/* Image Attachment Lightbox */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            aria-label="Close preview"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Attachment preview"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain cursor-default"
+          />
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -7,8 +7,10 @@ use App\Models\Donation;
 use App\Models\PetReport;
 use App\Models\RehomingRequest;
 use App\Models\ShelterVisit;
+use App\Services\Adoptions\AdoptionApplicationInteractionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -123,7 +125,7 @@ class PublicTrackingController extends Controller
         if ($numericId > 0 && ($isAdoptionPrefix || ! $hasKnownPrefix)) {
             $app = AdoptionApplication::where('id', $numericId)
                 ->whereRaw('LOWER(email) = ?', [$cleanEmail])
-                ->with(['shelterAnimal', 'files'])
+                ->with(['shelterAnimal', 'files', 'messages'])
                 ->first();
 
             if ($app) {
@@ -216,16 +218,19 @@ class PublicTrackingController extends Controller
             'status' => $status,
             'status_label' => match ($status) {
                 'pending' => 'Pending Review',
+                'needs_info' => 'Action Required: Info Needed',
                 'scheduled' => 'Interview Scheduled',
                 'approved' => 'Approved',
                 'rejected' => 'Declined / Needs Update',
+                'cancelled' => 'Cancelled by Applicant',
                 default => ucfirst($status),
             },
             'status_theme' => match ($status) {
-                'pending' => 'amber',
+                'pending', 'needs_info' => 'amber',
                 'scheduled' => 'blue',
                 'approved' => 'green',
                 'rejected' => 'red',
+                'cancelled' => 'gray',
                 default => 'gray',
             },
             'title' => "Adoption Application for {$app->shelterAnimal?->name}",
@@ -233,13 +238,24 @@ class PublicTrackingController extends Controller
             'created_at' => $app->created_at->toIso8601String(),
             'photo_url' => $app->shelterAnimal?->photo_url ?? $app->shelterAnimal?->mainImg,
             'rejection_reason' => $app->rejection_reason,
+            'notes' => $app->notes,
+            'can_cancel' => in_array($status, ['pending', 'needs_info', 'scheduled'], true),
+            'messages' => $app->messages->map(fn ($msg) => [
+                'id' => $msg->id,
+                'sender_type' => $msg->sender_type,
+                'sender_name' => $msg->sender_name,
+                'message' => $msg->message,
+                'attachments' => $msg->attachments ?? [],
+                'created_at' => $msg->created_at?->toIso8601String(),
+                'created_at_formatted' => $msg->created_at?->format('M d, Y g:i A'),
+            ])->values()->all(),
             'dashboard_url' => route('account.user.adoption-applications'),
             'details' => [
                 ['label' => 'Applicant Name', 'value' => $app->full_name],
                 ['label' => 'Contact Email', 'value' => $app->email],
                 ['label' => 'Contact Phone', 'value' => $app->phone],
                 ['label' => 'Pet Applied For', 'value' => $app->shelterAnimal?->name ?? 'Shelter Pet'],
-                ['label' => 'Preferred Interview', 'value' => $app->preferred_date ? "{$app->preferred_date->format('M d, Y')} at {$app->preferred_time}" : 'To be coordinated'],
+                ['label' => 'Preferred Interview', 'value' => $app->preferred_date ? ($app->preferred_time ? "{$app->preferred_date->format('M d, Y')} at ".Carbon::parse($app->preferred_time)->format('g:i A') : $app->preferred_date->format('M d, Y')) : 'To be coordinated'],
                 ['label' => 'Shelter Visit', 'value' => $app->can_visit_shelter ? 'Can visit in-person' : 'Phone / Online interview'],
             ],
             'raw' => $app,
@@ -469,5 +485,75 @@ class PublicTrackingController extends Controller
             'details' => $details,
             'raw' => $visit,
         ];
+    }
+
+    public function replyAdoptionMessage(
+        Request $request,
+        AdoptionApplication $application,
+        AdoptionApplicationInteractionService $interactionService,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'reference' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'message' => ['nullable', 'string', 'max:2000', 'required_without:attachments'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        $this->authorizeTrackingAdoptionAccess($application, $validated['reference'], $validated['email']);
+
+        $interactionService->postMessage(
+            application: $application,
+            senderType: 'user',
+            user: $request->user(),
+            senderName: $application->full_name,
+            message: $validated['message'] ?? null,
+            uploadedFiles: $request->file('attachments', []),
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Your reply and attachments have been sent to the adoption coordinator.',
+        ]);
+
+        return redirect()->route('track', [
+            'reference' => $validated['reference'],
+            'email' => $validated['email'],
+        ]);
+    }
+
+    public function cancelAdoptionApplication(
+        Request $request,
+        AdoptionApplication $application,
+        AdoptionApplicationInteractionService $interactionService,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'reference' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $this->authorizeTrackingAdoptionAccess($application, $validated['reference'], $validated['email']);
+
+        $interactionService->cancelByApplicant($application, "Applicant {$application->full_name}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Your adoption application has been cancelled.',
+        ]);
+
+        return redirect()->route('track', [
+            'reference' => $validated['reference'],
+            'email' => $validated['email'],
+        ]);
+    }
+
+    protected function authorizeTrackingAdoptionAccess(AdoptionApplication $application, string $reference, string $email): void
+    {
+        $numericId = (int) preg_replace('/[^0-9]/', '', strtoupper(trim($reference)));
+        $cleanEmail = strtolower(trim($email));
+
+        if ($numericId !== (int) $application->id || strtolower(trim((string) $application->email)) !== $cleanEmail) {
+            abort(403, 'Tracking credentials do not match this adoption application.');
+        }
     }
 }

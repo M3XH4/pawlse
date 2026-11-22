@@ -1,13 +1,16 @@
 @php
-    $logoFile = public_path('images/logo.png');
-    if (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
+    $appUrl = rtrim((string) config('app.url', 'https://pawlse.test'), '/');
+    $isPublicAppUrl = preg_match('#^https?://(?!(?:localhost|127\.0\.0\.1)(?::|/|$)|[^/]+\.test(?::|/|$))#i', $appUrl) === 1;
+    $logoFile = public_path('images/email-logo.png');
+    if ($isPublicAppUrl) {
+        $logoUrl = $appUrl.'/images/email-logo.png';
+    } elseif (isset($message) && is_object($message) && method_exists($message, 'embed') && file_exists($logoFile)) {
         $logoUrl = $message->embed($logoFile);
     } elseif (file_exists($logoFile)) {
-        $logoUrl = 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile));
+        $logoUrl = 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoFile));
     } else {
-        $logoUrl = asset('images/logo.png');
+        $logoUrl = asset('images/email-logo.png');
     }
-    $appUrl = config('app.url', 'https://pawlse.test');
     $headerBg = match ($level ?? 'primary') {
         'success' => 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
         'error' => 'linear-gradient(135deg, #e11d48 0%, #fb7185 100%)',

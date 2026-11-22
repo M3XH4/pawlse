@@ -1,6 +1,6 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles } from 'lucide-react';
+import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles, Send, Mail } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
@@ -28,6 +28,24 @@ interface ApplicationFile {
   name: string;
   url: string;
   size: number;
+}
+
+interface ApplicationMessageAttachment {
+  path: string;
+  name: string;
+  mime?: string | null;
+  size?: number | null;
+  url: string;
+}
+
+interface ApplicationMessage {
+  id: number;
+  sender_type: 'admin' | 'user';
+  sender_name: string;
+  message?: string | null;
+  attachments: ApplicationMessageAttachment[];
+  created_at?: string | null;
+  created_at_formatted?: string | null;
 }
 
 interface Application {
@@ -84,6 +102,7 @@ interface Application {
     email: string;
   } | null;
   files: ApplicationFile[];
+  messages?: ApplicationMessage[];
 }
 
 interface PetNeed {
@@ -186,6 +205,37 @@ export default function AdoptionManagement({
     rejection_reason: '',
     notes: '',
   });
+  const [adminMessageText, setAdminMessageText] = useState('');
+  const [isSendingAdminMessage, setIsSendingAdminMessage] = useState(false);
+
+  const activeSelectedApp = useMemo(() => {
+    if (!selectedApp) return null;
+    return applications.find((a) => a.id === selectedApp.id) || selectedApp;
+  }, [applications, selectedApp]);
+
+  const handleSendAdminMessage = (requestInfo: boolean) => {
+    if (!activeSelectedApp || !adminMessageText.trim()) return;
+    setIsSendingAdminMessage(true);
+    router.post(
+      `/account/admin/adoption-management/applications/${activeSelectedApp.id}/messages`,
+      {
+        message: adminMessageText.trim(),
+        request_info: requestInfo,
+      },
+      {
+        preserveScroll: true,
+        only: ['applications'],
+        onSuccess: () => {
+          toast.success(requestInfo ? 'Additional info request emailed to applicant.' : 'Message sent to applicant.');
+          setAdminMessageText('');
+        },
+        onError: () => {
+          toast.error('Failed to send message.');
+        },
+        onFinish: () => setIsSendingAdminMessage(false),
+      }
+    );
+  };
 
   // Filtered Applications
   const filteredApps = useMemo(() => {
@@ -322,9 +372,11 @@ export default function AdoptionManagement({
                 >
                   <option value="All">All Statuses</option>
                   <option value="Pending">Pending</option>
+                  <option value="needs_info">Info Requested</option>
                   <option value="Scheduled">Scheduled</option>
                   <option value="Approved">Approved</option>
                   <option value="Rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
             </div>
@@ -383,9 +435,11 @@ export default function AdoptionManagement({
                               app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
                               app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
                               app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
+                              app.status === 'needs_info' ? 'bg-amber-100 text-amber-700' :
+                              app.status === 'cancelled' ? 'bg-slate-200 text-slate-600' :
                               'bg-paw-yellow/10 text-paw-navy'
                             }`}>
-                              {app.status}
+                              {app.status === 'needs_info' ? 'Info Requested' : app.status}
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
@@ -418,9 +472,11 @@ export default function AdoptionManagement({
                           app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
                           app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
                           app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
+                          app.status === 'needs_info' ? 'bg-amber-100 text-amber-700' :
+                          app.status === 'cancelled' ? 'bg-slate-200 text-slate-600' :
                           'bg-paw-yellow/10 text-paw-navy'
                         }`}>
-                          {app.status}
+                          {app.status === 'needs_info' ? 'Info Requested' : app.status}
                         </span>
                       </div>
 
@@ -791,13 +847,103 @@ export default function AdoptionManagement({
                   )}
                 </div>
 
-                {/* Admin Notes & Status Forms */}
+                {/* Applicant Conversation & Info Requests */}
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-6 space-y-4">
-                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquare size={14} /> Admin Comments & Notes</h4>
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <MessageSquare size={14} /> Applicant Conversation &amp; Additional Requirements
+                  </h4>
+
+                  {activeSelectedApp?.messages && activeSelectedApp.messages.length > 0 ? (
+                    <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                      {activeSelectedApp.messages.map((msg) => {
+                        const isAdmin = msg.sender_type === 'admin';
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`rounded-2xl p-3 text-xs border space-y-1.5 ${
+                              isAdmin
+                                ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-200/70 dark:border-blue-900'
+                                : 'bg-orange-50/70 dark:bg-orange-950/20 border-orange-200/70 dark:border-orange-900'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-gray-500">
+                              <span>{isAdmin ? `${msg.sender_name} (Coordinator)` : `${msg.sender_name} (Applicant)`}</span>
+                              {msg.created_at_formatted && <span>{msg.created_at_formatted}</span>}
+                            </div>
+                            {msg.message && <p className="font-medium text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{msg.message}</p>}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {msg.attachments.map((att, idx) => {
+                                  const isImage = att.mime?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+                                  return isImage ? (
+                                    <a
+                                      key={idx}
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white"
+                                      title={att.name}
+                                    >
+                                      <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                                    </a>
+                                  ) : (
+                                    <a
+                                      key={idx}
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 text-[10px] font-bold text-gray-700 dark:text-gray-200"
+                                    >
+                                      <FileText size={11} className="text-paw-orange" /> {att.name}
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic font-bold">No conversation messages sent yet.</p>
+                  )}
+
+                  {selectedApp.status !== 'cancelled' && (
+                    <div className="space-y-2.5">
+                      <textarea
+                        value={adminMessageText}
+                        onChange={(e) => setAdminMessageText(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-gray-800 p-3.5 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-xs text-gray-900 dark:text-white h-20 resize-none"
+                        placeholder="Ask the applicant a question or request additional requirement photos..."
+                      />
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSendAdminMessage(false)}
+                          disabled={!adminMessageText.trim() || isSendingAdminMessage}
+                          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-paw-navy dark:text-white rounded-xl font-black text-[11px] uppercase tracking-wider inline-flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <Send size={12} /> Send Reply
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendAdminMessage(true)}
+                          disabled={!adminMessageText.trim() || isSendingAdminMessage}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-[11px] uppercase tracking-wider inline-flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <Mail size={12} /> Request Info &amp; Email Applicant
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 pt-2">
+                    <MessageSquare size={14} /> Internal Admin Notes
+                  </h4>
                   <textarea
                     value={statusData.notes}
                     onChange={(e) => setStatusData('notes', e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-sm text-gray-900 dark:text-white h-24 resize-none"
+                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-sm text-gray-900 dark:text-white h-20 resize-none"
                     placeholder="Enter internal volunteer notes here..."
                   />
                 </div>
@@ -805,7 +951,7 @@ export default function AdoptionManagement({
 
               {/* Drawer Footer Actions */}
               <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 flex justify-between gap-4">
-                {selectedApp.status === 'pending' && (
+                {(selectedApp.status === 'pending' || selectedApp.status === 'needs_info') && (
                   <>
                     <button
                       onClick={() => setIsRejectOpen(true)}
@@ -841,16 +987,23 @@ export default function AdoptionManagement({
                   </>
                 )}
 
-                {(selectedApp.status === 'approved' || selectedApp.status === 'rejected') && (
+                {(selectedApp.status === 'approved' || selectedApp.status === 'rejected' || selectedApp.status === 'cancelled') && (
                   <div className="w-full flex items-center justify-between text-xs font-bold text-gray-500">
-                    <span>Final Application Status: <span className="uppercase font-black text-paw-navy dark:text-white">{selectedApp.status}</span></span>
-                    <button
-                      onClick={() => handleStatusUpdate(selectedApp.status as any)}
-                      disabled={statusProcessing}
-                      className="px-5 py-2 bg-paw-navy text-white rounded-lg font-bold hover:bg-paw-orange transition-all uppercase tracking-wider"
-                    >
-                      Save Comments
-                    </button>
+                    <span>
+                      Final Application Status:{' '}
+                      <span className="uppercase font-black text-paw-navy dark:text-white">
+                        {selectedApp.status === 'cancelled' ? 'Cancelled by Applicant' : selectedApp.status}
+                      </span>
+                    </span>
+                    {selectedApp.status !== 'cancelled' && (
+                      <button
+                        onClick={() => handleStatusUpdate(selectedApp.status as any)}
+                        disabled={statusProcessing}
+                        className="px-5 py-2 bg-paw-navy text-white rounded-lg font-bold hover:bg-paw-orange transition-all uppercase tracking-wider"
+                      >
+                        Save Comments
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

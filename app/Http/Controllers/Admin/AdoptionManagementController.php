@@ -19,6 +19,7 @@ use App\Models\SystemSetting;
 use App\Notifications\AdoptionApplicationStatusUpdatedNotification;
 use App\Notifications\RehomingRequestStatusUpdatedNotification;
 use App\Notifications\ShelterVisitStatusUpdatedNotification;
+use App\Services\Adoptions\AdoptionApplicationInteractionService;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class AdoptionManagementController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('admin/adoption-management', [
-            'applications' => fn () => AdoptionApplication::with(['user', 'shelterAnimal', 'files'])
+            'applications' => fn () => AdoptionApplication::with(['user', 'shelterAnimal', 'files', 'messages'])
                 ->latest()
                 ->get()
                 ->map(function ($app) {
@@ -98,6 +99,17 @@ class AdoptionManagementController extends Controller
                                 'name' => $file->original_filename,
                                 'url' => Storage::url($file->path),
                                 'size' => $file->file_size,
+                            ];
+                        }),
+                        'messages' => $app->messages->map(function ($msg) {
+                            return [
+                                'id' => $msg->id,
+                                'sender_type' => $msg->sender_type,
+                                'sender_name' => $msg->sender_name,
+                                'message' => $msg->message,
+                                'attachments' => $msg->attachments ?? [],
+                                'created_at' => $msg->created_at?->toIso8601String(),
+                                'created_at_formatted' => $msg->created_at?->format('M d, Y g:i A'),
                             ];
                         }),
                     ];
@@ -250,7 +262,7 @@ class AdoptionManagementController extends Controller
     public function updateStatus(Request $request, AdoptionApplication $application): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:approved,rejected,scheduled'],
+            'status' => ['required', 'string', 'in:approved,rejected,scheduled,needs_info'],
             'rejection_reason' => ['required_if:status,rejected', 'nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -279,10 +291,10 @@ class AdoptionManagementController extends Controller
                     'adopter_email' => $application->email,
                 ]);
 
-                // Auto-reject competing pending/scheduled applications for this animal
+                // Auto-reject competing pending/needs_info/scheduled applications for this animal
                 $competingApplications = AdoptionApplication::where('shelter_animal_id', $animal->id)
                     ->where('id', '!=', $application->id)
-                    ->whereIn('status', [AdoptionApplicationStatus::Pending, AdoptionApplicationStatus::Scheduled])
+                    ->whereIn('status', [AdoptionApplicationStatus::Pending, AdoptionApplicationStatus::NeedsInfo, AdoptionApplicationStatus::Scheduled])
                     ->get();
 
                 foreach ($competingApplications as $competing) {
@@ -344,6 +356,41 @@ class AdoptionManagementController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Application status updated successfully.',
+        ]);
+
+        return redirect()->route('account.admin.adoption-management');
+    }
+
+    public function storeMessage(
+        Request $request,
+        AdoptionApplication $application,
+        AdoptionApplicationInteractionService $interactionService,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'message' => ['nullable', 'string', 'max:2000', 'required_without:attachments'],
+            'request_info' => ['nullable', 'boolean'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        $admin = $request->user();
+        $requestInfo = (bool) ($validated['request_info'] ?? false);
+
+        $interactionService->postMessage(
+            application: $application,
+            senderType: 'admin',
+            user: $admin,
+            senderName: $admin?->name ?: 'PAWLSE Adoption Coordinator',
+            message: $validated['message'] ?? null,
+            uploadedFiles: $request->file('attachments', []),
+            requestInfo: $requestInfo,
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $requestInfo
+                ? 'Additional info request sent to applicant via email.'
+                : 'Message sent to applicant.',
         ]);
 
         return redirect()->route('account.admin.adoption-management');

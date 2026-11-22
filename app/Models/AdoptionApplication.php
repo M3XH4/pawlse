@@ -87,4 +87,12 @@ class AdoptionApplication extends Model
     {
         return $this->hasMany(PostAdoptionFollowUp::class)->orderByDesc('follow_up_date');
     }
+
+    /**
+     * @return HasMany<AdoptionApplicationMessage, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(AdoptionApplicationMessage::class)->oldest();
+    }
 }

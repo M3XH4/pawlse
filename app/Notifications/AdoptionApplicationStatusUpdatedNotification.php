@@ -27,26 +27,41 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification implemen
             default => 'primary',
         };
 
+        $statusDisplay = match ($status) {
+            'needs_info' => 'ADDITIONAL INFO NEEDED',
+            'cancelled' => 'CANCELLED BY APPLICANT',
+            default => strtoupper($status),
+        };
+
         $summary = [
             ['label' => 'Reference Number', 'value' => $ref],
             ['label' => 'Pet Applied For', 'value' => $petName],
-            ['label' => 'Application Status', 'value' => strtoupper($status)],
+            ['label' => 'Application Status', 'value' => $statusDisplay],
         ];
 
-        if ($this->application->rejection_reason) {
+        if ($status === 'rejected' && $this->application->rejection_reason) {
+            $summary[] = ['label' => 'Rejection Reason', 'value' => $this->application->rejection_reason];
+        } elseif ($status === 'needs_info' && $this->application->notes) {
+            $summary[] = ['label' => 'Coordinator Request', 'value' => $this->application->notes];
+        } elseif ($this->application->rejection_reason) {
             $summary[] = ['label' => 'Coordinator Note', 'value' => $this->application->rejection_reason];
         }
+
+        $actionText = $status === 'needs_info'
+            ? 'Reply & Upload Requirements'
+            : 'Track Application Status';
 
         return $this->buildBrandedMail(
             notifiable: $notifiable,
             summaryItems: $summary,
-            actionText: 'Track Application Status',
+            actionText: $actionText,
             level: $level,
             categoryBadge: "ADOPTION UPDATE ({$ref})",
             actionUrl: route('track', [
                 'reference' => $ref,
                 'email' => $this->application->email,
             ]),
+            recipientNameOverride: $this->application->full_name,
         );
     }
 
@@ -63,6 +78,8 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification implemen
             'approved' => "Adoption Application Approved ({$ref})",
             'rejected' => "Adoption Application Rejected ({$ref})",
             'scheduled' => "Adoption Interview Scheduled ({$ref})",
+            'needs_info' => "Additional Details Needed ({$ref})",
+            'cancelled' => "Adoption Application Cancelled ({$ref})",
             default => "Adoption Application Update ({$ref})",
         };
 
@@ -70,6 +87,8 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification implemen
             'approved' => "Your adoption application for {$petName} (Ref: {$ref}) has been approved.",
             'rejected' => "Your adoption application for {$petName} (Ref: {$ref}) was not approved.".($this->application->rejection_reason ? " Reason: {$this->application->rejection_reason}" : ''),
             'scheduled' => "Your adoption interview for {$petName} (Ref: {$ref}) has been scheduled.",
+            'needs_info' => "Our adoption coordinator requested additional information or requirement photos for {$petName} (Ref: {$ref}).".($this->application->notes ? " Note: {$this->application->notes}" : ''),
+            'cancelled' => "Your adoption application for {$petName} (Ref: {$ref}) has been cancelled.",
             default => "The status of your adoption application for {$petName} (Ref: {$ref}) is {$status}.",
         };
 

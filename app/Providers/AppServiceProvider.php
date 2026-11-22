@@ -6,6 +6,8 @@ use App\Enums\Role;
 use App\Events\NotificationPushed;
 use App\Listeners\DispatchN8nPlatformWebhooks;
 use App\Listeners\DispatchN8nVolunteerWebhook;
+use App\Listeners\LinkGuestRecordsOnLogin;
+use App\Listeners\LinkGuestRecordsOnVerified;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
 use App\Models\User;
@@ -14,6 +16,7 @@ use App\Services\NotificationPayloadFormatter;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +45,16 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             Login::class,
             LogSuccessfulLogin::class
+        );
+
+        Event::listen(
+            Login::class,
+            LinkGuestRecordsOnLogin::class
+        );
+
+        Event::listen(
+            Verified::class,
+            LinkGuestRecordsOnVerified::class
         );
 
         Event::listen(

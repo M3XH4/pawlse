@@ -75,6 +75,8 @@ Route::get('/animals', [AnimalOverviewController::class, 'index'])->name('animal
 Route::get('/animals/{pet}', [AdoptController::class, 'show'])->name('animals.show');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');
 Route::get('/track', [PublicTrackingController::class, 'index'])->name('track');
+Route::post('/track/adoption-applications/{application}/messages', [PublicTrackingController::class, 'replyAdoptionMessage'])->name('track.adoption-applications.messages.store');
+Route::post('/track/adoption-applications/{application}/cancel', [PublicTrackingController::class, 'cancelAdoptionApplication'])->name('track.adoption-applications.cancel');
 Route::get('/adopt/track', [AdoptionApplicationController::class, 'track'])->name('adopt.track');
 Route::get('/adopt/{pet}', [AdoptController::class, 'show'])->name('adopt.show');
 Route::post('/adopt/apply', [AdoptionApplicationController::class, 'store'])->name('adopt.apply');
@@ -151,6 +153,8 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::get('rescue-reports', [PetReportController::class, 'userReports'])->name('rescue-reports');
     Route::get('adoption-applications', [AdoptionApplicationController::class, 'index'])->name('adoption-applications');
+    Route::post('adoption-applications/{application}/cancel', [AdoptionApplicationController::class, 'cancel'])->name('adoption-applications.cancel');
+    Route::post('adoption-applications/{application}/messages', [AdoptionApplicationController::class, 'replyMessage'])->name('adoption-applications.messages.store');
     Route::get('shelter-visits', [ShelterVisitController::class, 'index'])->name('shelter-visits');
     Route::post('shelter-visits/{visit}/cancel', [ShelterVisitController::class, 'cancel'])->name('shelter-visits.cancel');
     Route::get('rehoming-requests', [RehomingRequestController::class, 'index'])->name('rehoming-requests');
@@ -227,6 +231,7 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
 
     Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
     Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
+    Route::post('adoption-management/applications/{application}/messages', [AdoptionManagementController::class, 'storeMessage'])->name('adoption-management.messages.store');
     Route::post('adoption-management/shelter-visits/settings', [AdoptionManagementController::class, 'updateVisitSettings'])->name('adoption-management.shelter-visits.settings');
     Route::post('adoption-management/shelter-visits/{visit}/status', [AdoptionManagementController::class, 'updateVisitStatus'])->name('adoption-management.shelter-visits.update-status');
     Route::post('adoption-management/rehoming-requests/{rehomingRequest}/status', [AdoptionManagementController::class, 'updateRehomingStatus'])->name('adoption-management.rehoming-requests.update-status');

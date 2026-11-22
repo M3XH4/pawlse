@@ -16,6 +16,7 @@ use App\Models\ShelterVisit;
 use App\Models\User;
 use App\Notifications\AdoptionApplicationSubmittedNotification;
 use App\Notifications\SubmissionEReceiptNotification;
+use App\Services\Adoptions\AdoptionApplicationInteractionService;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class AdoptionApplicationController extends Controller
                 $q->where('user_id', $user->id)
                     ->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
             })
-                ->with(['shelterAnimal', 'files', 'followUps'])
+                ->with(['shelterAnimal', 'files', 'followUps', 'messages'])
                 ->latest()
                 ->get(),
 
@@ -518,6 +519,68 @@ class AdoptionApplicationController extends Controller
             'reference' => $ref,
             'email' => $application->email,
         ]);
+    }
+
+    public function cancel(
+        Request $request,
+        AdoptionApplication $application,
+        AdoptionApplicationInteractionService $interactionService,
+    ): RedirectResponse {
+        $user = $request->user();
+
+        $isOwner = $application->user_id === $user->id
+            || strtolower((string) $application->email) === strtolower((string) $user->email);
+
+        if (! $isOwner) {
+            abort(403, 'Unauthorized to cancel this adoption application.');
+        }
+
+        $interactionService->cancelByApplicant($application, "Applicant {$user->name}");
+
+        $ref = 'ADP-'.str_pad((string) $application->id, 5, '0', STR_PAD_LEFT);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Adoption application ({$ref}) has been cancelled.",
+        ]);
+
+        return back();
+    }
+
+    public function replyMessage(
+        Request $request,
+        AdoptionApplication $application,
+        AdoptionApplicationInteractionService $interactionService,
+    ): RedirectResponse {
+        $user = $request->user();
+
+        $isOwner = $application->user_id === $user->id
+            || strtolower((string) $application->email) === strtolower((string) $user->email);
+
+        if (! $isOwner) {
+            abort(403, 'Unauthorized to reply to this adoption application.');
+        }
+
+        $validated = $request->validate([
+            'message' => ['nullable', 'string', 'max:2000', 'required_without:attachments'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        $interactionService->postMessage(
+            application: $application,
+            senderType: 'user',
+            user: $user,
+            senderName: $user->name ?: $application->full_name,
+            message: $validated['message'] ?? null,
+            uploadedFiles: $request->file('attachments', []),
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Your reply has been sent to the adoption coordinator.',
+        ]);
+
+        return back();
     }
 
     /**

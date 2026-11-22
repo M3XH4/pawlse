@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Share2, Users, MapPin } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Share2, Users, MapPin, Ban, MessageCircle } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
 import { AnimatePresence } from 'motion/react';
 import {
     DashboardCard,
@@ -12,7 +12,7 @@ import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption
 
 interface Application {
     id: number;
-    status: 'pending' | 'scheduled' | 'approved' | 'rejected';
+    status: 'pending' | 'needs_info' | 'scheduled' | 'approved' | 'rejected' | 'cancelled';
     full_name?: string;
     address?: string;
     phone?: string;
@@ -152,6 +152,18 @@ export default function UserAdoptionApplications({
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
                         <XCircle size={12} /> Declined
+                    </span>
+                );
+            case 'needs_info':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <MessageCircle size={12} /> Info Requested
+                    </span>
+                );
+            case 'cancelled':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        <Ban size={12} /> Cancelled
                     </span>
                 );
             default:
@@ -331,6 +343,50 @@ export default function UserAdoptionApplications({
                                         <div className="bg-blue-50/50 dark:bg-blue-950/10 p-3.5 rounded-xl border border-blue-100/50 text-xs font-bold text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
                                             <AlertCircle size={16} className="shrink-0 mt-0.5" />
                                             <p>Your shelter adoption interview with our coordinators is set! Please be prepared on <strong>{new Date(app.preferred_date).toLocaleDateString()}</strong> at <strong>{app.preferred_time}</strong>. If you selected remote/phone or cannot visit in person, coordinators will call you.</p>
+                                        </div>
+                                    )}
+
+                                    {app.status === 'needs_info' && (
+                                        <div className="bg-amber-50/70 dark:bg-amber-950/20 p-3.5 rounded-xl border border-amber-200 text-xs font-bold text-amber-900 dark:text-amber-200 space-y-2.5">
+                                            <div className="flex items-start gap-2.5">
+                                                <MessageCircle size={16} className="shrink-0 mt-0.5 text-paw-orange" />
+                                                <p>Our adoption coordinator requested additional information or requirement photos. Please reply on the tracking page so we can continue reviewing your application.</p>
+                                            </div>
+                                            <Link
+                                                href={`/track?reference=${encodeURIComponent(refCode)}&email=${encodeURIComponent(app.email || '')}`}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-paw-orange text-white hover:bg-orange-600 text-xs font-black uppercase tracking-wider transition-all shadow-sm"
+                                            >
+                                                Reply & Upload Requirements <ChevronRight size={13} />
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    {app.status === 'cancelled' && (
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
+                                            <Ban size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                                            <p>You cancelled this adoption application. It is now closed.</p>
+                                        </div>
+                                    )}
+
+                                    {(app.status === 'pending' || app.status === 'needs_info' || app.status === 'scheduled') && (
+                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                            <Link
+                                                href={`/track?reference=${encodeURIComponent(refCode)}&email=${encodeURIComponent(app.email || '')}`}
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 text-xs font-black text-gray-700 dark:text-gray-200 transition-all"
+                                            >
+                                                <MessageCircle size={13} className="text-paw-orange" /> Open Conversation
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (confirm(`Are you sure you want to cancel your adoption application (${refCode})?`)) {
+                                                        router.post(`/account/user/adoption-applications/${app.id}/cancel`, {}, { preserveScroll: true });
+                                                    }
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-black text-red-700 uppercase tracking-wider transition-all cursor-pointer"
+                                            >
+                                                <Ban size={13} /> Cancel Application
+                                            </button>
                                         </div>
                                     )}
 

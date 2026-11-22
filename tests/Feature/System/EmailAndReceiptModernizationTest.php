@@ -166,3 +166,32 @@ test('submitting shelter visit, rehoming request, or rescue report with email di
         fn (SubmissionEReceiptNotification $n, array $c, AnonymousNotifiable $notifiable) => ($notifiable->routes['mail'] ?? null) === 'marco.rescue@example.com'
     );
 });
+
+test('e-receipt email uses lucide svg icons instead of emojis and has working social links', function () {
+    $html = view('emails.e-receipt', [
+        'referenceNumber' => 'DON-2026-8888',
+        'recipientName' => 'Test Supporter',
+    ])->render();
+
+    $appUrl = rtrim((string) config('app.url', 'https://pawlse.test'), '/');
+
+    expect($html)
+        ->toContain('images/email-logo.png')
+        ->toContain('images/email-icons/facebook.png')
+        ->toContain('images/email-icons/instagram.png')
+        ->toContain('images/email-icons/globe.png')
+        ->not->toContain('<svg')
+        ->toContain('href="https://www.facebook.com/IliganStrayFosterandAdoptionCenter"')
+        ->toContain('href="https://www.instagram.com/iliganstrayfeeders?igsh=MTg2OWpqZGJ5MWdudw=="')
+        ->toContain('href="'.$appUrl.'"')
+        ->toContain('href="'.$appUrl.'/donate"')
+        ->toContain('href="'.$appUrl.'/adopt"')
+        ->toContain('href="'.$appUrl.'/volunteer"')
+        ->toContain('href="'.$appUrl.'/about"')
+        ->not->toContain('&#128203;')
+        ->not->toContain('&#128062;')
+        ->not->toContain('&#129309;')
+        ->not->toContain('&#128172;')
+        ->not->toContain('&#9829;')
+        ->not->toContain('&#9733;');
+});
