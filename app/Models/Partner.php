@@ -23,6 +23,8 @@ class Partner extends Model
         'description',
         'address',
         'city',
+        'latitude',
+        'longitude',
         'phone',
         'email',
         'website_url',
@@ -47,6 +49,8 @@ class Partner extends Model
         'provides_daily_food' => 'boolean',
         'is_active' => 'boolean',
         'display_order' => 'integer',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     protected static function boot()

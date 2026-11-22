@@ -120,7 +120,8 @@ Route::get('/missing/track', [PublicTrackingController::class, 'missingTrack'])-
 Route::post('/missing/reports/{report}/reunited', [PetReportController::class, 'markReunited'])->name('missing.reunited');
 Route::post('/pet-reports/missing', [PetReportController::class, 'storeMissing'])->name('pet-reports.store-missing');
 
-Route::inertia('/sos', 'sos')->name('sos');
+Route::get('/sos', [PetReportController::class, 'sos'])->name('sos');
+Route::get('/api/nearby-vets', [PetReportController::class, 'nearbyVets'])->name('api.nearby-vets');
 Route::post('/pet-reports/sos', [PetReportController::class, 'storeSos'])->name('pet-reports.store-sos');
 
 Route::post('/ai/predict', [PetController::class, 'predict'])->middleware('throttle:30,1');

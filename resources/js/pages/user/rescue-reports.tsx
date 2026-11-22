@@ -178,14 +178,26 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                                 {/* Thumbnails */}
                                 {report.photos && report.photos.length > 0 && (
                                     <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
-                                        {report.photos.map((photo) => (
-                                            <ImageWithFallback
-                                                key={photo.id}
-                                                src={formatPhotoUrl(photo.path)}
-                                                alt="Report attachment"
-                                                className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
-                                            />
-                                        ))}
+                                        {report.photos.map((photo) => {
+                                            const isVideo = /\.(mp4|mov|avi|webm|mkv|3gp)(\?.*)?$/i.test(photo.path || '');
+                                            return isVideo ? (
+                                                <video
+                                                    key={photo.id}
+                                                    src={formatPhotoUrl(photo.path)}
+                                                    controls
+                                                    muted
+                                                    playsInline
+                                                    className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0 bg-black"
+                                                />
+                                            ) : (
+                                                <ImageWithFallback
+                                                    key={photo.id}
+                                                    src={formatPhotoUrl(photo.path)}
+                                                    alt="Report attachment"
+                                                    className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 )}
 

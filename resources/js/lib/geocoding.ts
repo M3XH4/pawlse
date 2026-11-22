@@ -93,3 +93,87 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
 
     return defaultCoords;
 }
+
+/**
+ * Forward geocodes an address string into latitude/longitude using OpenStreetMap Nominatim.
+ */
+export async function forwardGeocode(
+    query: string,
+): Promise<{ lat: number; lng: number } | null> {
+    const trimmed = query.trim();
+    if (!trimmed) return null;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(trimmed)}&limit=1`,
+            {
+                headers: {
+                    Accept: 'application/json',
+                    'Accept-Language': 'en',
+                },
+                signal: controller.signal,
+            },
+        );
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const results = await response.json();
+            if (Array.isArray(results) && results.length > 0) {
+                const lat = parseFloat(results[0].lat);
+                const lng = parseFloat(results[0].lon);
+                if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+                    return { lat, lng };
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Nominatim forward geocode error or timeout:', err);
+    }
+
+    return null;
+}
+
+export interface NearbyMapVet {
+    id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    operating_hours: string | null;
+    latitude: number;
+    longitude: number;
+}
+
+/**
+ * Queries the backend `/api/nearby-vets` endpoint for the nearest real veterinary clinics around (lat, lng).
+ */
+export async function fetchNearbyVetClinics(
+    lat: number,
+    lng: number,
+): Promise<NearbyMapVet[]> {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const response = await fetch(
+            `/api/nearby-vets?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`,
+            {
+                headers: {
+                    Accept: 'application/json',
+                },
+                signal: controller.signal,
+            },
+        );
+        clearTimeout(timeoutId);
+
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return Array.isArray(data?.clinics) ? (data.clinics as NearbyMapVet[]) : [];
+    } catch (err) {
+        console.warn('Nearby vet clinics query failed:', err);
+        return [];
+    }
+}

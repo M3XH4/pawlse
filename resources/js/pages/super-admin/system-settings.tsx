@@ -15,7 +15,8 @@ import {
     ShieldCheck,
     CreditCard,
     BookOpen,
-    FlaskConical
+    FlaskConical,
+    MapPin
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
@@ -39,6 +40,7 @@ interface SystemSettingsProps {
         payment_simulation_enabled?: boolean;
         ai_breed_guide_enabled?: boolean;
         sandbox_mode?: boolean;
+        sos_gps_enabled?: boolean;
     };
 }
 
@@ -55,6 +57,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         payment_simulation_enabled: settings.payment_simulation_enabled ?? false,
         ai_breed_guide_enabled: settings.ai_breed_guide_enabled ?? true,
         sandbox_mode: settings.sandbox_mode ?? false,
+        sos_gps_enabled: settings.sos_gps_enabled ?? true,
     });
 
     // Quick toggle modal state
@@ -65,7 +68,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/account/super-admin/system-settings', {
-            onSuccess: () => toast.success('System settings saved successfully.'),
+            preserveScroll: true,
             onError: () => toast.error('Failed to save settings.'),
         });
     };
@@ -305,6 +308,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         When enabled, an interactive dog & cat breed handbook (book icon) is available in the admin AI Validation panel to assist admins with species and breed verification.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-blue-100 bg-blue-50/20 dark:border-blue-950/30 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="sos_gps_enabled"
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+                                    checked={data.sos_gps_enabled}
+                                    onChange={(e) => setData('sos_gps_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="sos_gps_enabled"
+                                        className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"
+                                    >
+                                        <MapPin className="h-4 w-4 text-blue-600" />
+                                        Enable SOS GPS &amp; Live Nearby Vet Lookup
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, the SOS report page uses GPS with OpenStreetMap / Google Maps to find the nearest veterinary clinics. When disabled, it displays the default Iligan City clinic list without live GPS map lookups.
                                     </p>
                                 </div>
                             </div>

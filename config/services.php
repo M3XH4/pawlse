@@ -45,4 +45,8 @@ return [
         'gateway_driver' => env('PAYMENT_GATEWAY_DRIVER', 'manual'),
     ],
 
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

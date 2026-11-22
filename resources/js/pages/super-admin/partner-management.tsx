@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { forwardGeocode } from '@/lib/geocoding';
 
 export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
 
@@ -29,6 +30,8 @@ interface PartnerRecord {
     description?: string | null;
     address?: string | null;
     city?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     phone?: string | null;
     email?: string | null;
     website_url?: string | null;
@@ -103,6 +106,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
         description: '',
         address: '',
         city: 'Iligan City',
+        latitude: '',
+        longitude: '',
         phone: '',
         email: '',
         website_url: '',
@@ -140,6 +145,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             description: partner.description || '',
             address: partner.address || '',
             city: partner.city || 'Iligan City',
+            latitude: partner.latitude != null ? String(partner.latitude) : '',
+            longitude: partner.longitude != null ? String(partner.longitude) : '',
             phone: partner.phone || '',
             email: partner.email || '',
             website_url: partner.website_url || '',
@@ -980,6 +987,92 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                             className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
                                             placeholder="Tambo, Iligan City"
                                         />
+                                    </div>
+                                </div>
+
+                                {/* Map Coordinates (Latitude & Longitude) */}
+                                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                            <MapPin size={13} className="text-paw-orange" />
+                                            Map Coordinates (For Nearest Clinic Distance)
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const query = [data.address, data.city].filter(Boolean).join(', ');
+                                                    if (!query.trim()) {
+                                                        toast.error('Enter an address or city first.');
+                                                        return;
+                                                    }
+                                                    toast.info('Looking up coordinates...', { id: 'partner-geocode' });
+                                                    const coords = await forwardGeocode(query);
+                                                    if (coords) {
+                                                        setData((prev) => ({
+                                                            ...prev,
+                                                            latitude: coords.lat.toFixed(7),
+                                                            longitude: coords.lng.toFixed(7),
+                                                        }));
+                                                        toast.success('Coordinates detected from address!', { id: 'partner-geocode' });
+                                                    } else {
+                                                        toast.error('Could not locate address. Try entering coordinates manually.', { id: 'partner-geocode' });
+                                                    }
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:border-paw-orange cursor-pointer"
+                                            >
+                                                Auto-Detect from Address
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!('geolocation' in navigator)) {
+                                                        toast.error('Geolocation is not supported by your browser.');
+                                                        return;
+                                                    }
+                                                    toast.info('Getting current GPS...', { id: 'partner-gps' });
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (pos) => {
+                                                            setData((prev) => ({
+                                                                ...prev,
+                                                                latitude: pos.coords.latitude.toFixed(7),
+                                                                longitude: pos.coords.longitude.toFixed(7),
+                                                            }));
+                                                            toast.success('GPS coordinates pinned!', { id: 'partner-gps' });
+                                                        },
+                                                        () => toast.error('Unable to access GPS location.', { id: 'partner-gps' }),
+                                                        { enableHighAccuracy: true, timeout: 10000 }
+                                                    );
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:border-paw-orange cursor-pointer"
+                                            >
+                                                Use My GPS
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[11px] text-gray-500 mb-1">Latitude</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                value={data.latitude}
+                                                onChange={(e) => setData('latitude', e.target.value)}
+                                                className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 text-xs"
+                                                placeholder="e.g. 8.2392000"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] text-gray-500 mb-1">Longitude</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                value={data.longitude}
+                                                onChange={(e) => setData('longitude', e.target.value)}
+                                                className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 text-xs"
+                                                placeholder="e.g. 124.2535000"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 

@@ -7,6 +7,7 @@ use App\Events\PetRescueSubmittedEvent;
 use App\Models\AiPredictionLog;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
+use App\Models\Partner;
 use App\Models\PetReport;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -14,10 +15,13 @@ use App\Notifications\RescueReportSubmittedNotification;
 use App\Notifications\RescueStatusUpdatedNotification;
 use App\Notifications\SubmissionEReceiptNotification;
 use App\Support\EReceiptDispatcher;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -249,6 +253,249 @@ class PetReportController extends Controller
     }
 
     /**
+     * Display the public SOS emergency report page with veterinary clinics.
+     */
+    public function sos(): Response
+    {
+        $veterinaryClinics = Partner::active()
+            ->veterinary()
+            ->orderByDesc('is_featured')
+            ->orderBy('display_order')
+            ->get([
+                'id',
+                'name',
+                'slug',
+                'badge_title',
+                'address',
+                'city',
+                'latitude',
+                'longitude',
+                'phone',
+                'operating_hours',
+                'is_emergency',
+                'is_featured',
+                'display_order',
+            ]);
+
+        $systemSettings = SystemSetting::getValue('system_settings', []);
+        $sosGpsEnabled = (bool) ($systemSettings['sos_gps_enabled'] ?? true);
+
+        return Inertia::render('sos', [
+            'veterinaryClinics' => $veterinaryClinics,
+            'sosGpsEnabled' => $sosGpsEnabled,
+        ]);
+    }
+
+    /**
+     * Find the nearest real veterinary clinics around the given coordinates.
+     */
+    public function nearbyVets(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $lat = (float) $validated['lat'];
+        $lng = (float) $validated['lng'];
+        $cacheKey = 'nearby_vets_'.round($lat, 3).'_'.round($lng, 3);
+
+        $clinics = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($lat, $lng): array {
+            $googleKey = config('services.google_maps.api_key');
+
+            if (! empty($googleKey)) {
+                $googleResults = $this->fetchGoogleNearbyVets($lat, $lng, $googleKey);
+                if (! empty($googleResults)) {
+                    return $googleResults;
+                }
+            }
+
+            return $this->fetchNominatimNearbyVets($lat, $lng);
+        });
+
+        return response()->json([
+            'clinics' => $clinics,
+        ]);
+    }
+
+    /**
+     * Query Google Places API (New) for nearest veterinary clinics.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function fetchGoogleNearbyVets(float $lat, float $lng, string $apiKey): array
+    {
+        try {
+            $response = Http::timeout(8)
+                ->withHeaders([
+                    'X-Goog-Api-Key' => $apiKey,
+                    'X-Goog-FieldMask' => 'places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.nationalPhoneNumber,places.internationalPhoneNumber,places.regularOpeningHours',
+                ])
+                ->post('https://places.googleapis.com/v1/places:searchNearby', [
+                    'includedTypes' => ['veterinary_care'],
+                    'maxResultCount' => 8,
+                    'rankPreference' => 'DISTANCE',
+                    'locationRestriction' => [
+                        'circle' => [
+                            'center' => [
+                                'latitude' => $lat,
+                                'longitude' => $lng,
+                            ],
+                            'radius' => 25000.0,
+                        ],
+                    ],
+                ]);
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $places = collect($response->json('places', []))->take(5)->values();
+            if ($places->isEmpty()) {
+                return [];
+            }
+
+            $todayIndex = now()->dayOfWeekIso - 1;
+
+            return $places
+                ->map(function (array $place) use ($lat, $lng, $todayIndex): ?array {
+                    $pLat = $place['location']['latitude'] ?? null;
+                    $pLng = $place['location']['longitude'] ?? null;
+                    if (! is_numeric($pLat) || ! is_numeric($pLng)) {
+                        return null;
+                    }
+
+                    $phone = $place['nationalPhoneNumber']
+                        ?? $place['internationalPhoneNumber']
+                        ?? null;
+
+                    $weekdayDescriptions = $place['regularOpeningHours']['weekdayDescriptions'] ?? null;
+                    $operatingHours = null;
+                    if (is_array($weekdayDescriptions) && isset($weekdayDescriptions[$todayIndex])) {
+                        $operatingHours = $weekdayDescriptions[$todayIndex];
+                    } elseif (isset($place['regularOpeningHours']['openNow'])) {
+                        $operatingHours = $place['regularOpeningHours']['openNow'] ? 'Open Now' : 'Currently Closed';
+                    }
+
+                    return [
+                        'id' => 'gmaps-'.($place['id'] ?? uniqid()),
+                        'name' => $place['displayName']['text'] ?? 'Veterinary Clinic',
+                        'address' => $place['shortFormattedAddress'] ?? $place['formattedAddress'] ?? 'Nearby Veterinary Clinic',
+                        'phone' => $phone,
+                        'operating_hours' => $operatingHours,
+                        'latitude' => (float) $pLat,
+                        'longitude' => (float) $pLng,
+                        'distance_km' => round(PetReport::haversineDistance($lat, $lng, (float) $pLat, (float) $pLng), 2),
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Query OpenStreetMap Nominatim for nearby veterinary clinics.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function fetchNominatimNearbyVets(float $lat, float $lng): array
+    {
+        $delta = 0.35;
+        $viewbox = sprintf(
+            '%.5f,%.5f,%.5f,%.5f',
+            $lng - $delta,
+            $lat + $delta,
+            $lng + $delta,
+            $lat - $delta
+        );
+
+        $collected = collect();
+
+        foreach (['veterinary', 'vet clinic'] as $query) {
+            try {
+                $response = Http::timeout(8)
+                    ->withHeaders(['User-Agent' => 'PawlseRescueApp/1.0'])
+                    ->get('https://nominatim.openstreetmap.org/search', [
+                        'format' => 'jsonv2',
+                        'q' => $query,
+                        'viewbox' => $viewbox,
+                        'bounded' => 1,
+                        'limit' => 15,
+                        'extratags' => 1,
+                        'addressdetails' => 1,
+                    ]);
+
+                if (! $response->successful()) {
+                    continue;
+                }
+
+                $items = $response->json();
+                if (! is_array($items)) {
+                    continue;
+                }
+
+                foreach ($items as $item) {
+                    $name = trim((string) ($item['name'] ?? ''));
+                    if ($name === '' || stripos($name, 'check point') !== false || stripos($name, 'checkpoint') !== false) {
+                        continue;
+                    }
+
+                    $pLat = isset($item['lat']) ? (float) $item['lat'] : null;
+                    $pLng = isset($item['lon']) ? (float) $item['lon'] : null;
+                    if ($pLat === null || $pLng === null) {
+                        continue;
+                    }
+
+                    $addr = $item['address'] ?? [];
+                    $addressParts = array_filter([
+                        $addr['road'] ?? $addr['street'] ?? null,
+                        $addr['suburb'] ?? $addr['neighbourhood'] ?? $addr['village'] ?? $addr['quarter'] ?? null,
+                        $addr['city'] ?? $addr['town'] ?? $addr['municipality'] ?? null,
+                    ]);
+
+                    $extratags = is_array($item['extratags'] ?? null) ? $item['extratags'] : [];
+
+                    $collected->push([
+                        'id' => 'osm-'.($item['place_id'] ?? uniqid()),
+                        'name' => $name,
+                        'address' => ! empty($addressParts)
+                            ? implode(', ', $addressParts)
+                            : ($item['display_name'] ?? 'Nearby Veterinary Clinic'),
+                        'phone' => $extratags['phone']
+                            ?? $extratags['contact:phone']
+                            ?? $extratags['contact:mobile']
+                            ?? $extratags['phone:mobile']
+                            ?? $extratags['telephone']
+                            ?? null,
+                        'operating_hours' => $extratags['opening_hours']
+                            ?? $extratags['opening_hours:covid19']
+                            ?? null,
+                        'latitude' => $pLat,
+                        'longitude' => $pLng,
+                        'distance_km' => round(PetReport::haversineDistance($lat, $lng, $pLat, $pLng), 2),
+                    ]);
+                }
+
+                if ($collected->count() >= 5) {
+                    break;
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        return $collected
+            ->unique(fn (array $c) => strtolower($c['name']))
+            ->sortBy('distance_km')
+            ->take(8)
+            ->values()
+            ->all();
+    }
+
+    /**
      * Store SOS report.
      */
     public function storeSos(Request $request)
@@ -269,7 +516,7 @@ class PetReportController extends Controller
             $request->merge(['contactEmail' => $request->input('contact_email')]);
         }
         $isMultiple = is_array($request->file('images'));
-        $imageRule = ['max:10240', 'mimes:jpeg,png,jpg,gif,svg,webp,heic,heif,bmp'];
+        $evidenceRule = ['max:51200', 'mimes:jpeg,png,jpg,gif,svg,webp,heic,heif,bmp,mp4,mov,avi,webm,mkv,3gp'];
 
         $validated = $request->validate([
             'animalType' => ['required', 'string', 'in:Dog,Cat,Other'],
@@ -280,8 +527,8 @@ class PetReportController extends Controller
             'contactName' => ['nullable', 'string', 'max:255'],
             'contactPhone' => ['nullable', 'string', 'max:255'],
             'contactEmail' => ['nullable', 'email', 'max:255'],
-            'images' => $isMultiple ? ['nullable', 'array'] : ['nullable', ...$imageRule],
-            'images.*' => $imageRule,
+            'images' => $isMultiple ? ['nullable', 'array'] : ['nullable', ...$evidenceRule],
+            'images.*' => $evidenceRule,
             'ai_prediction_log_id' => ['nullable', 'integer', 'exists:ai_prediction_logs,id'],
         ]);
 

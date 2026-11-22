@@ -11,6 +11,8 @@ import {
     Plus,
     X,
     ExternalLink,
+    Star,
+    Video,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ModernSelect } from '@/components/ui/modern-select';
@@ -19,7 +21,12 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { reverseGeocode } from '@/lib/geocoding';
+import {
+    fetchNearbyVetClinics,
+    forwardGeocode,
+    NearbyMapVet,
+    reverseGeocode,
+} from '@/lib/geocoding';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
 import { Spinner } from '@/components/ui/spinner';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
@@ -84,7 +91,57 @@ const NEARBY_VETS = [
     },
 ];
 
-export default function SOS() {
+interface VeterinaryClinic {
+    id: number;
+    name: string;
+    slug: string;
+    badge_title?: string | null;
+    address?: string | null;
+    city?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    phone?: string | null;
+    operating_hours?: string | null;
+    is_emergency: boolean;
+    is_featured: boolean;
+    display_order: number;
+}
+
+const isVideoFile = (file?: File | null): boolean => {
+    if (!file) return false;
+    return (
+        file.type.startsWith('video/') ||
+        /\.(mp4|mov|avi|webm|mkv|3gp)$/i.test(file.name)
+    );
+};
+
+const haversineDistanceKm = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+): number => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
+export default function SOS({
+    veterinaryClinics = [],
+    sosGpsEnabled = true,
+}: {
+    veterinaryClinics?: VeterinaryClinic[];
+    sosGpsEnabled?: boolean;
+}) {
     const { auth, flash } = usePage<{
         auth?: {
             user?: {
@@ -114,6 +171,12 @@ export default function SOS() {
     } | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [detectingLocation, setDetectingLocation] = useState(false);
+    const [userCoords, setUserCoords] = useState<{
+        lat: number;
+        lng: number;
+    } | null>(null);
+    const [mapVets, setMapVets] = useState<NearbyMapVet[]>([]);
+    const [loadingMapVets, setLoadingMapVets] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
@@ -158,6 +221,51 @@ export default function SOS() {
         };
     }, []);
 
+    useEffect(() => {
+        if (!submitted || !sosGpsEnabled) return;
+
+        let cancelled = false;
+
+        const resolveAndFetchNearby = async () => {
+            let coords = userCoords;
+
+            if (!coords && submittedLocation) {
+                const coordMatch = submittedLocation.match(
+                    /^\s*([\d.-]+)\s*,\s*([\d.-]+)\s*$/,
+                );
+                if (coordMatch) {
+                    coords = {
+                        lat: parseFloat(coordMatch[1]),
+                        lng: parseFloat(coordMatch[2]),
+                    };
+                } else {
+                    coords = await forwardGeocode(submittedLocation);
+                }
+                if (!cancelled && coords) {
+                    setUserCoords(coords);
+                }
+            }
+
+            if (coords && !cancelled) {
+                setLoadingMapVets(true);
+                const nearby = await fetchNearbyVetClinics(
+                    coords.lat,
+                    coords.lng,
+                );
+                if (!cancelled) {
+                    setMapVets(nearby);
+                    setLoadingMapVets(false);
+                }
+            }
+        };
+
+        resolveAndFetchNearby();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [submitted, sosGpsEnabled, submittedLocation, userCoords?.lat, userCoords?.lng]);
+
     const handleInputChange = (
         e: React.ChangeEvent<
             HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -179,14 +287,22 @@ export default function SOS() {
             const isImage =
                 file.type.startsWith('image/') ||
                 /\.(jpe?g|png|webp|gif|bmp|heic|heif|svg)$/i.test(file.name);
+            const isVideo = isVideoFile(file);
 
-            if (!isImage) {
-                toast.error(`"${file.name}" is not a supported image file.`);
+            if (!isImage && !isVideo) {
+                toast.error(
+                    `"${file.name}" is not a supported photo or video file.`,
+                );
                 continue;
             }
 
-            if (file.size > 10 * 1024 * 1024) {
-                toast.error(`"${file.name}" exceeds the 10MB limit.`);
+            if (isImage && file.size > 10 * 1024 * 1024) {
+                toast.error(`Photo "${file.name}" exceeds the 10MB limit.`);
+                continue;
+            }
+
+            if (isVideo && file.size > 50 * 1024 * 1024) {
+                toast.error(`Video "${file.name}" exceeds the 50MB limit.`);
                 continue;
             }
 
@@ -255,6 +371,7 @@ export default function SOS() {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const { latitude, longitude } = position.coords;
+                    setUserCoords({ lat: latitude, lng: longitude });
                     try {
                         const address = await reverseGeocode(
                             latitude,
@@ -298,8 +415,16 @@ export default function SOS() {
             toast.error('Please select the type of emergency.');
             return;
         }
-        if (!formData.location) {
+        if (!formData.animalType) {
+            toast.error('Please select the animal type.');
+            return;
+        }
+        if (!formData.location.trim()) {
             toast.error('Location is required.');
+            return;
+        }
+        if (!formData.description.trim()) {
+            toast.error('Detailed description is required.');
             return;
         }
 
@@ -405,7 +530,8 @@ export default function SOS() {
                                     {/* Emergency Type */}
                                     <div>
                                         <label className="mb-4 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                            Type of Emergency
+                                            Type of Emergency{' '}
+                                            <span className="text-red-500">*</span>
                                         </label>
                                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                                             {[
@@ -440,7 +566,8 @@ export default function SOS() {
                                     <div className="grid gap-6 md:grid-cols-2">
                                         <div>
                                             <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                                Animal Type
+                                                Animal Type{' '}
+                                                <span className="text-red-500">*</span>
                                             </label>
                                             <ModernSelect
                                                 searchable={false}
@@ -462,7 +589,8 @@ export default function SOS() {
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                                Current Location
+                                                Current Location{' '}
+                                                <span className="text-red-500">*</span>
                                             </label>
                                             <div className="flex flex-col gap-3 sm:flex-row">
                                                 <input
@@ -472,46 +600,55 @@ export default function SOS() {
                                                     value={formData.location}
                                                     onChange={handleInputChange}
                                                     className="flex-1 rounded-2xl border-2 border-transparent bg-gray-50 p-4 text-lg font-bold transition-all outline-none focus:border-red-500"
-                                                    placeholder="Type manually or pin your location"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    disabled={detectingLocation}
-                                                    onClick={
-                                                        handleDetectLocation
+                                                    placeholder={
+                                                        sosGpsEnabled
+                                                            ? 'Type manually or pin your location'
+                                                            : 'Enter street, barangay, or landmark'
                                                     }
-                                                    className="flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-6 py-4 font-black whitespace-nowrap text-white transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:py-0"
-                                                >
-                                                    {detectingLocation ? (
-                                                        <Spinner
-                                                            showProgress
-                                                            label="Detecting..."
-                                                            size="xs"
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            <MapPin size={18} />
-                                                            <span className="hidden sm:inline">
-                                                                Pin Location
-                                                            </span>
-                                                            <span className="sm:hidden">
-                                                                Pin My Location
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </button>
+                                                />
+                                                {sosGpsEnabled && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={detectingLocation}
+                                                        onClick={
+                                                            handleDetectLocation
+                                                        }
+                                                        className="flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-6 py-4 font-black whitespace-nowrap text-white transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:py-0"
+                                                    >
+                                                        {detectingLocation ? (
+                                                            <Spinner
+                                                                showProgress
+                                                                label="Detecting..."
+                                                                size="xs"
+                                                            />
+                                                        ) : (
+                                                            <>
+                                                                <MapPin size={18} />
+                                                                <span className="hidden sm:inline">
+                                                                    Pin Location
+                                                                </span>
+                                                                <span className="sm:hidden">
+                                                                    Pin My Location
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
-                                            <p className="mt-2 ml-1 text-xs font-bold text-gray-400">
-                                                Click "Pin Location" to detect
-                                                your address
-                                            </p>
+                                            {sosGpsEnabled && (
+                                                <p className="mt-2 ml-1 text-xs font-bold text-gray-400">
+                                                    Click &quot;Pin Location&quot; to detect
+                                                    your address
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
                                     {/* Urgency Level */}
                                     <div>
                                         <label className="mb-4 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                            Urgency Level
+                                            Urgency Level{' '}
+                                            <span className="text-red-500">*</span>
                                         </label>
                                         <div className="grid grid-cols-3 gap-4">
                                             {[
@@ -573,7 +710,8 @@ export default function SOS() {
                                     {/* Description */}
                                     <div>
                                         <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                            Detailed Description
+                                            Detailed Description{' '}
+                                            <span className="text-red-500">*</span>
                                         </label>
                                         <textarea
                                             required
@@ -585,12 +723,11 @@ export default function SOS() {
                                         />
                                     </div>
 
-                                    {/* Photo Upload */}
+                                    {/* Evidence Upload (Photo or Video) */}
                                     <div>
                                         <div className="mb-2 flex items-center justify-between">
                                             <label className="block text-sm font-black tracking-widest text-gray-400 uppercase">
-                                                Upload Photo Evidence (if safe
-                                                to do so)
+                                                Upload Evidence (Photo or Video, if safe to do so)
                                             </label>
                                             {uploadedFiles.length > 0 && (
                                                 <span className="text-xs font-bold text-red-600">
@@ -606,7 +743,7 @@ export default function SOS() {
                                             ref={fileInputRef}
                                             type="file"
                                             id="file-upload"
-                                            accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
+                                            accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp4,.mov,.webm,.avi,.mkv,.3gp"
                                             multiple
                                             onChange={handleFileChange}
                                             className="hidden"
@@ -626,18 +763,16 @@ export default function SOS() {
                                                         : 'border-gray-200 bg-gray-50 hover:border-red-300'
                                                 }`}
                                             >
-                                                <Camera
-                                                    size={40}
-                                                    className="mx-auto mb-3 text-gray-400"
-                                                />
+                                                <div className="mx-auto mb-3 flex items-center justify-center gap-3 text-gray-400">
+                                                    <Camera size={36} />
+                                                    <Video size={36} />
+                                                </div>
                                                 <p className="mb-1 font-black text-gray-900">
                                                     Click to upload or drag
-                                                    photos here
+                                                    photos or videos here
                                                 </p>
                                                 <p className="text-sm font-bold text-gray-500">
-                                                    Photo of the situation (PNG,
-                                                    JPG, WEBP, HEIC up to 10MB,
-                                                    multiple allowed)
+                                                    Photos (PNG, JPG, WEBP, HEIC up to 10MB) or Videos (MP4, MOV, WEBM up to 50MB)
                                                 </p>
                                             </div>
                                         ) : (
@@ -653,39 +788,64 @@ export default function SOS() {
                                             >
                                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                                     {filePreviews.map(
-                                                        (preview, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="relative aspect-video overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 shadow-sm sm:aspect-square"
-                                                            >
-                                                                <img
-                                                                    src={
-                                                                        preview
-                                                                    }
-                                                                    alt="Upload preview"
-                                                                    className="h-full w-full object-cover"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(
-                                                                        e,
-                                                                    ) => {
-                                                                        e.stopPropagation();
-                                                                        handleRemoveFile(
-                                                                            idx,
-                                                                        );
-                                                                    }}
-                                                                    className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-colors hover:bg-red-600"
-                                                                    title="Remove photo"
+                                                        (preview, idx) => {
+                                                            const fileIsVideo = isVideoFile(
+                                                                uploadedFiles[idx],
+                                                            );
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className="relative aspect-video overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 shadow-sm sm:aspect-square"
                                                                 >
-                                                                    <X
-                                                                        size={
-                                                                            14
+                                                                    {fileIsVideo ? (
+                                                                        <>
+                                                                            <video
+                                                                                src={preview}
+                                                                                controls
+                                                                                muted
+                                                                                playsInline
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                            <span className="pointer-events-none absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-black tracking-wider text-white uppercase">
+                                                                                <Video size={10} />
+                                                                                Video
+                                                                            </span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <img
+                                                                            src={
+                                                                                preview
+                                                                            }
+                                                                            alt="Upload preview"
+                                                                            className="h-full w-full object-cover"
+                                                                        />
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.stopPropagation();
+                                                                            handleRemoveFile(
+                                                                                idx,
+                                                                            );
+                                                                        }}
+                                                                        className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-colors hover:bg-red-600"
+                                                                        title={
+                                                                            fileIsVideo
+                                                                                ? 'Remove video'
+                                                                                : 'Remove photo'
                                                                         }
-                                                                    />
-                                                                </button>
-                                                            </div>
-                                                        ),
+                                                                    >
+                                                                        <X
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        },
                                                     )}
                                                     <button
                                                         type="button"
@@ -888,8 +1048,17 @@ export default function SOS() {
                                         </div>
                                     )}
 
-                                    {(submittedReportInfo?.reference ||
-                                        flash?.submitted_report?.reference) &&
+                                    {authUser ? (
+                                        <Link
+                                            href="/dashboard"
+                                            className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-gray-800"
+                                        >
+                                            <span>Go to Dashboard</span>
+                                            <ExternalLink size={16} />
+                                        </Link>
+                                    ) : (
+                                        (submittedReportInfo?.reference ||
+                                            flash?.submitted_report?.reference) &&
                                         (submittedReportInfo?.email ||
                                             flash?.submitted_report?.email) && (
                                             <Link
@@ -909,7 +1078,8 @@ export default function SOS() {
                                                 <span>Track SOS Status</span>
                                                 <ExternalLink size={16} />
                                             </Link>
-                                        )}
+                                        )
+                                    )}
                                 </div>
                             </div>
 
@@ -970,84 +1140,329 @@ export default function SOS() {
 
                             {/* Nearby Vets */}
                             <div className="rounded-[40px] bg-white p-8 shadow-2xl md:p-12">
-                                <div className="mb-8 flex items-center gap-3">
-                                    <Hospital
-                                        size={32}
-                                        className="text-blue-600"
-                                    />
-                                    <h3 className="text-3xl font-black tracking-tight text-gray-900 uppercase">
-                                        Nearest Veterinary Clinics
-                                    </h3>
-                                </div>
-                                <div className="grid gap-6 md:grid-cols-2">
-                                    {NEARBY_VETS.map((vet, index) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{
-                                                delay: 0.4 + index * 0.1,
-                                            }}
-                                            className="group rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-6 transition-all hover:border-blue-300 hover:shadow-xl"
+                                <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <Hospital
+                                            size={32}
+                                            className="text-blue-600"
+                                        />
+                                        <div>
+                                            <h3 className="text-3xl font-black tracking-tight text-gray-900 uppercase">
+                                                Nearest Veterinary Clinics
+                                            </h3>
+                                            <p className="text-xs font-bold text-gray-500">
+                                                {!sosGpsEnabled
+                                                    ? 'Veterinary clinics in Iligan City'
+                                                    : loadingMapVets
+                                                      ? 'Searching for the nearest veterinary clinics...'
+                                                      : userCoords
+                                                        ? 'Showing our featured partner vet and the 3 nearest clinics to your location'
+                                                        : 'Pin your location to find the 3 nearest clinics'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {sosGpsEnabled && (
+                                        <button
+                                            type="button"
+                                            disabled={detectingLocation}
+                                            onClick={handleDetectLocation}
+                                            className="inline-flex items-center gap-2 rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black tracking-widest text-blue-700 uppercase transition-all hover:border-blue-400 hover:bg-blue-100 disabled:opacity-60"
                                         >
-                                            <div className="mb-4 flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <p className="mb-2 text-lg leading-tight font-black text-gray-900">
-                                                        {vet.name}
-                                                    </p>
-                                                    <div className="mb-2 flex items-center gap-2 text-gray-600">
-                                                        <MapPin
-                                                            size={14}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <p className="text-sm font-bold">
-                                                            {vet.address}
+                                            <MapPin size={14} />
+                                            <span>
+                                                {detectingLocation
+                                                    ? 'Detecting...'
+                                                    : userCoords
+                                                      ? 'Refresh GPS'
+                                                      : 'Detect Nearest Clinics'}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    {!sosGpsEnabled
+                                        ? NEARBY_VETS.map((vet, index) => (
+                                              <motion.div
+                                                  key={index}
+                                                  initial={{ opacity: 0, y: 20 }}
+                                                  animate={{ opacity: 1, y: 0 }}
+                                                  transition={{
+                                                      delay: 0.4 + index * 0.1,
+                                                  }}
+                                                  className="group rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-6 transition-all hover:border-blue-300 hover:shadow-xl"
+                                              >
+                                                  <div className="mb-4 flex items-start justify-between">
+                                                      <div className="flex-1">
+                                                          <p className="mb-2 text-lg leading-tight font-black text-gray-900">
+                                                              {vet.name}
+                                                          </p>
+                                                          <div className="mb-2 flex items-center gap-2 text-gray-600">
+                                                              <MapPin
+                                                                  size={14}
+                                                                  className="text-blue-600"
+                                                              />
+                                                              <p className="text-sm font-bold">
+                                                                  {vet.address}
+                                                              </p>
+                                                          </div>
+                                                          <div className="flex items-center gap-2 text-gray-600">
+                                                              <Clock
+                                                                  size={14}
+                                                                  className="text-blue-600"
+                                                              />
+                                                              <p className="text-sm font-bold">
+                                                                  {vet.hours}
+                                                              </p>
+                                                          </div>
+                                                      </div>
+                                                      <div className="text-right">
+                                                          <p className="mb-1 text-xs font-bold tracking-widest text-gray-500 uppercase">
+                                                              Distance
+                                                          </p>
+                                                          <p className="text-xl font-black text-blue-600">
+                                                              {vet.distance}
+                                                          </p>
+                                                      </div>
+                                                  </div>
+                                                  <div className="flex gap-3">
+                                                      <a
+                                                          href={`tel:${vet.contact}`}
+                                                          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-blue-700"
+                                                      >
+                                                          <Phone size={16} />
+                                                          Call
+                                                      </a>
+                                                      <a
+                                                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vet.name} ${vet.address} Iligan City`)}`}
+                                                          target="_blank"
+                                                          rel="noopener noreferrer"
+                                                          title={`Get directions to ${vet.name}`}
+                                                          className="flex items-center justify-center rounded-xl border-2 border-blue-600 bg-white px-4 font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white"
+                                                      >
+                                                          <Navigation
+                                                              size={16}
+                                                          />
+                                                      </a>
+                                                  </div>
+                                              </motion.div>
+                                          ))
+                                        : (() => {
+                                        const partnerItems =
+                                            veterinaryClinics.map((clinic) => ({
+                                                key: `partner-${clinic.id}`,
+                                                name: clinic.name,
+                                                address: clinic.address
+                                                    ? clinic.city &&
+                                                      !clinic.address
+                                                          .toLowerCase()
+                                                          .includes(
+                                                              clinic.city
+                                                                  .toLowerCase()
+                                                                  .split(',')[0],
+                                                          )
+                                                        ? `${clinic.address}, ${clinic.city}`
+                                                        : clinic.address
+                                                    : clinic.city ||
+                                                      'Iligan City',
+                                                phone: clinic.phone || null,
+                                                operating_hours:
+                                                    clinic.operating_hours ||
+                                                    null,
+                                                latitude: clinic.latitude ?? null,
+                                                longitude:
+                                                    clinic.longitude ?? null,
+                                                is_featured: clinic.is_featured,
+                                                is_partner: true,
+                                                display_order:
+                                                    clinic.display_order,
+                                            }));
+
+                                        const seenNames = new Set(
+                                            partnerItems.map((p) =>
+                                                p.name.trim().toLowerCase(),
+                                            ),
+                                        );
+
+                                        const discoveredItems = mapVets
+                                            .filter(
+                                                (m) =>
+                                                    !seenNames.has(
+                                                        m.name
+                                                            .trim()
+                                                            .toLowerCase(),
+                                                    ),
+                                            )
+                                            .map((m) => ({
+                                                key: m.id,
+                                                name: m.name,
+                                                address: m.address,
+                                                phone: m.phone,
+                                                operating_hours:
+                                                    m.operating_hours,
+                                                latitude: m.latitude,
+                                                longitude: m.longitude,
+                                                is_featured: false,
+                                                is_partner: false,
+                                                display_order: 999,
+                                            }));
+
+                                        return [
+                                            ...partnerItems,
+                                            ...discoveredItems,
+                                        ]
+                                            .map((clinic) => ({
+                                                ...clinic,
+                                                distanceKm:
+                                                    sosGpsEnabled &&
+                                                    userCoords &&
+                                                    clinic.latitude != null &&
+                                                    clinic.longitude != null
+                                                        ? haversineDistanceKm(
+                                                              userCoords.lat,
+                                                              userCoords.lng,
+                                                              clinic.latitude,
+                                                              clinic.longitude,
+                                                          )
+                                                        : null,
+                                            }))
+                                            .sort((a, b) => {
+                                                if (
+                                                    a.is_featured !==
+                                                    b.is_featured
+                                                ) {
+                                                    return a.is_featured
+                                                        ? -1
+                                                        : 1;
+                                                }
+                                                if (
+                                                    a.distanceKm !== null &&
+                                                    b.distanceKm !== null
+                                                ) {
+                                                    return (
+                                                        a.distanceKm -
+                                                        b.distanceKm
+                                                    );
+                                                }
+                                                if (a.distanceKm !== null)
+                                                    return -1;
+                                                if (b.distanceKm !== null)
+                                                    return 1;
+                                                return (
+                                                    a.display_order -
+                                                    b.display_order
+                                                );
+                                            })
+                                            .slice(0, 4);
+                                    })().map((vet, index) => {
+                                        const mapsHref =
+                                            vet.latitude != null &&
+                                            vet.longitude != null
+                                                ? `https://www.google.com/maps/dir/?api=1&destination=${vet.latitude},${vet.longitude}`
+                                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vet.name} ${vet.address}`)}`;
+
+                                        return (
+                                            <motion.div
+                                                key={vet.key}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{
+                                                    delay: 0.15 + index * 0.08,
+                                                }}
+                                                className={`group flex flex-col justify-between rounded-2xl border-2 p-6 transition-all hover:shadow-xl ${
+                                                    vet.is_featured
+                                                        ? 'border-blue-400 bg-gradient-to-br from-blue-50 via-cyan-50 to-amber-50/40 ring-2 ring-blue-200/60 hover:border-blue-500'
+                                                        : 'border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 hover:border-blue-300'
+                                                }`}
+                                            >
+                                                <div className="mb-4 flex items-start justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        {vet.is_featured ? (
+                                                            <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-black tracking-widest text-white uppercase">
+                                                                <Star
+                                                                    size={10}
+                                                                    className="fill-amber-300 text-amber-300"
+                                                                />
+                                                                Featured Vet
+                                                            </span>
+                                                        ) : !vet.is_partner ? (
+                                                            <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black tracking-widest text-emerald-800 uppercase">
+                                                                <MapPin
+                                                                    size={10}
+                                                                />
+                                                                Nearby on Map
+                                                            </span>
+                                                        ) : null}
+                                                        <p className="mb-2 text-lg leading-tight font-black text-gray-900">
+                                                            {vet.name}
                                                         </p>
+                                                        <div className="mb-2 flex items-start gap-2 text-gray-600">
+                                                            <MapPin
+                                                                size={14}
+                                                                className="mt-0.5 shrink-0 text-blue-600"
+                                                            />
+                                                            <p className="text-sm font-bold">
+                                                                {vet.address}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-start gap-2 text-gray-600">
+                                                            <Clock
+                                                                size={14}
+                                                                className="mt-0.5 shrink-0 text-blue-600"
+                                                            />
+                                                            <p className="text-sm font-bold">
+                                                                {vet.operating_hours ||
+                                                                    'Call for clinic hours'}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-gray-600">
-                                                        <Clock
-                                                            size={14}
-                                                            className="text-blue-600"
-                                                        />
-                                                        <p className="text-sm font-bold">
-                                                            {vet.hours}
+                                                    <div className="shrink-0 text-right">
+                                                        <p className="mb-1 text-xs font-bold tracking-widest text-gray-500 uppercase">
+                                                            Distance
+                                                        </p>
+                                                        <p className="text-xl font-black text-blue-600">
+                                                            {vet.distanceKm !==
+                                                            null
+                                                                ? `${vet.distanceKm.toFixed(1)} km`
+                                                                : vet.is_featured
+                                                                  ? 'Primary'
+                                                                  : 'Iligan'}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="mb-1 text-xs font-bold tracking-widest text-gray-500 uppercase">
-                                                        Distance
-                                                    </p>
-                                                    <p className="text-xl font-black text-blue-600">
-                                                        {vet.distance}
-                                                    </p>
+                                                <div className="flex gap-3">
+                                                    {vet.phone ? (
+                                                        <a
+                                                            href={`tel:${vet.phone}`}
+                                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-blue-700"
+                                                        >
+                                                            <Phone size={16} />
+                                                            Call
+                                                        </a>
+                                                    ) : (
+                                                        <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-gray-200 py-3 text-sm font-black tracking-widest text-gray-500 uppercase">
+                                                            <Phone size={16} />
+                                                            No Phone
+                                                        </span>
+                                                    )}
+                                                    <a
+                                                        href={mapsHref}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={`Get directions to ${vet.name}`}
+                                                        className="flex items-center justify-center rounded-xl border-2 border-blue-600 bg-white px-4 font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white"
+                                                    >
+                                                        <Navigation size={16} />
+                                                    </a>
                                                 </div>
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <a
-                                                    href={`tel:${vet.contact}`}
-                                                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-blue-700"
-                                                >
-                                                    <Phone size={16} />
-                                                    Call
-                                                </a>
-                                                <a
-                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vet.name} ${vet.address} Iligan City`)}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    title={`Get directions to ${vet.name}`}
-                                                    className="flex items-center justify-center rounded-xl border-2 border-blue-600 bg-white px-4 font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white"
-                                                >
-                                                    <Navigation size={16} />
-                                                </a>
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
                             {/* Action Button */}
-                            <div className="text-center">
+                            <div>
                                 <button
                                     onClick={() => {
                                         setSubmitted(false);
@@ -1080,7 +1495,7 @@ export default function SOS() {
                                             behavior: 'smooth',
                                         });
                                     }}
-                                    className="rounded-[24px] border-2 border-white bg-white px-12 py-5 text-xl font-black text-red-600 shadow-xl transition-all hover:bg-gray-100"
+                                    className="w-full rounded-[24px] border-2 border-white bg-white px-12 py-5 text-xl font-black text-red-600 shadow-xl transition-all hover:bg-gray-100"
                                 >
                                     REPORT ANOTHER EMERGENCY
                                 </button>

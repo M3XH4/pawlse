@@ -642,22 +642,38 @@ export default function RescueManagement({
                         <div className="flex items-center justify-between mb-2.5">
                           <span className="font-black text-[10px] text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                             <Camera size={13} className="text-paw-orange" />
-                            Submitted Evidence Photos ({selectedReport.photos.length})
+                            Submitted Evidence ({selectedReport.photos.length})
                           </span>
                           <span className="text-[10px] font-bold text-gray-400">Click image to enlarge</span>
                         </div>
                         <div className={`grid gap-2.5 ${selectedReport.photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3'}`}>
                           {selectedReport.photos.map((photo, idx) => {
                             const photoUrl = formatPhotoUrl(photo.path, selectedReport.animal_type);
+                            const isVideo = /\.(mp4|mov|avi|webm|mkv|3gp)(\?.*)?$/i.test(photo.path || '') ||
+                              Boolean((photo as { mime_type?: string | null }).mime_type?.startsWith('video/'));
+                            const spanClass = selectedReport.photos?.length === 1 ? 'h-52' : idx === 0 ? 'h-36 sm:col-span-2' : 'h-36';
+                            if (isVideo) {
+                              return (
+                                <div
+                                  key={photo.id}
+                                  className={`relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-black flex items-center justify-center ${spanClass}`}
+                                >
+                                  <video
+                                    src={photoUrl}
+                                    controls
+                                    playsInline
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              );
+                            }
                             return (
                               <a
                                 key={photo.id}
                                 href={photoUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`group relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:opacity-95 transition-all cursor-pointer ${
-                                  selectedReport.photos?.length === 1 ? 'h-52' : idx === 0 ? 'h-36 sm:col-span-2' : 'h-36'
-                                }`}
+                                className={`group relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:opacity-95 transition-all cursor-pointer ${spanClass}`}
                                 title="Click to view full size in new tab"
                               >
                                 <ImageWithFallback

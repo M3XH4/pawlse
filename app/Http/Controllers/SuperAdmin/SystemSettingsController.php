@@ -27,6 +27,7 @@ class SystemSettingsController extends Controller
             'payment_simulation_enabled' => (bool) config('services.payment.simulation_enabled', false),
             'ai_breed_guide_enabled' => true,
             'sandbox_mode' => false,
+            'sos_gps_enabled' => true,
         ]);
 
         if (! isset($settings['maintenance_message'])) {
@@ -43,6 +44,10 @@ class SystemSettingsController extends Controller
 
         if (! isset($settings['sandbox_mode'])) {
             $settings['sandbox_mode'] = false;
+        }
+
+        if (! isset($settings['sos_gps_enabled'])) {
+            $settings['sos_gps_enabled'] = true;
         }
 
         return Inertia::render('super-admin/system-settings', [
@@ -65,6 +70,7 @@ class SystemSettingsController extends Controller
             'payment_simulation_enabled' => ['nullable', 'boolean'],
             'ai_breed_guide_enabled' => ['nullable', 'boolean'],
             'sandbox_mode' => ['nullable', 'boolean'],
+            'sos_gps_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = $request->only([
@@ -79,6 +85,7 @@ class SystemSettingsController extends Controller
         $settings['payment_simulation_enabled'] = (bool) $request->input('payment_simulation_enabled', false);
         $settings['ai_breed_guide_enabled'] = (bool) $request->input('ai_breed_guide_enabled', false);
         $settings['sandbox_mode'] = (bool) $request->input('sandbox_mode', false);
+        $settings['sos_gps_enabled'] = (bool) $request->input('sos_gps_enabled', false);
 
         if (empty($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';

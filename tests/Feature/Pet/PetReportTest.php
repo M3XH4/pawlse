@@ -3,11 +3,14 @@
 use App\Enums\Role;
 use App\Models\AiPredictionLog;
 use App\Models\AssignedTask;
+use App\Models\Partner;
 use App\Models\PetReport;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -155,6 +158,141 @@ test('authenticated user reports are linked to their account', function () {
         'contact_name' => $user->name,
         'contact_email' => $user->email,
     ]);
+});
+
+test('sos page loads active veterinary clinics with featured vet first', function () {
+    Partner::factory()->veterinary()->create([
+        'name' => 'Secondary Vet Clinic',
+        'is_featured' => false,
+        'is_active' => true,
+        'display_order' => 1,
+    ]);
+    Partner::factory()->veterinary()->create([
+        'name' => 'Dr. E Veterinary Clinic',
+        'is_featured' => true,
+        'is_active' => true,
+        'display_order' => 2,
+    ]);
+    Partner::factory()->veterinary()->create([
+        'name' => 'Inactive Vet Clinic',
+        'is_featured' => false,
+        'is_active' => false,
+        'display_order' => 0,
+    ]);
+
+    $response = $this->get('/sos');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('sos')
+        ->where('sosGpsEnabled', true)
+        ->has('veterinaryClinics', 2)
+        ->where('veterinaryClinics.0.name', 'Dr. E Veterinary Clinic')
+        ->where('veterinaryClinics.0.is_featured', true)
+        ->where('veterinaryClinics.1.name', 'Secondary Vet Clinic')
+    );
+});
+
+test('sos page respects sos_gps_enabled system setting when disabled', function () {
+    SystemSetting::setValue('system_settings', [
+        'sos_gps_enabled' => false,
+    ]);
+
+    $response = $this->get('/sos');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('sos')
+        ->where('sosGpsEnabled', false)
+    );
+});
+
+test('sos report accepts video evidence alongside photo evidence', function () {
+    $response = $this->post('/pet-reports/sos', [
+        'situationType' => 'Injured',
+        'animalType' => 'Dog',
+        'location' => '8.239000, 124.253000',
+        'urgency' => 'high',
+        'description' => 'Injured dog near highway, video attached.',
+        'images' => [
+            UploadedFile::fake()->image('evidence.jpg'),
+            UploadedFile::fake()->create('evidence.mp4', 2048, 'video/mp4'),
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $report = PetReport::where('type', 'sos')->first();
+    expect($report->photos)->toHaveCount(2);
+    expect($report->photos->pluck('original_filename')->all())->toContain('evidence.jpg', 'evidence.mp4');
+});
+
+test('nearby vets endpoint returns nearest veterinary clinics sorted by distance', function () {
+    Http::fake([
+        'nominatim.openstreetmap.org/*' => Http::response([
+            [
+                'place_id' => 101,
+                'name' => 'Farther Vet Clinic',
+                'lat' => '8.5200',
+                'lon' => '124.6500',
+                'display_name' => 'Farther Vet Clinic, Cagayan de Oro',
+                'address' => ['road' => 'Main St', 'city' => 'Cagayan de Oro'],
+                'extratags' => ['opening_hours' => 'Mo-Sa 08:00-18:00'],
+            ],
+            [
+                'place_id' => 102,
+                'name' => 'Closest Vet Clinic',
+                'lat' => '8.4550',
+                'lon' => '124.6320',
+                'display_name' => 'Closest Vet Clinic, Cagayan de Oro',
+                'address' => ['road' => 'Near St', 'city' => 'Cagayan de Oro'],
+                'extratags' => ['phone' => '+63 917 000 1111'],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->getJson('/api/nearby-vets?lat=8.4542&lng=124.6319');
+
+    $response->assertOk()
+        ->assertJsonCount(2, 'clinics')
+        ->assertJsonPath('clinics.0.name', 'Closest Vet Clinic')
+        ->assertJsonPath('clinics.0.phone', '+63 917 000 1111')
+        ->assertJsonPath('clinics.1.name', 'Farther Vet Clinic')
+        ->assertJsonPath('clinics.1.operating_hours', 'Mo-Sa 08:00-18:00');
+});
+
+test('nearby vets endpoint fetches phone and opening hours from google places when api key is configured', function () {
+    config()->set('services.google_maps.api_key', 'test-google-key');
+
+    $todayIndex = now()->dayOfWeekIso - 1;
+    $weekdayText = array_fill(0, 7, 'Closed');
+    $weekdayText[$todayIndex] = 'Today: 8:00 AM – 6:00 PM';
+
+    Http::fake([
+        'places.googleapis.com/v1/places:searchNearby' => Http::response([
+            'places' => [
+                [
+                    'id' => 'place-1',
+                    'displayName' => ['text' => 'Google Vet Clinic'],
+                    'shortFormattedAddress' => 'Poblacion, Iligan City',
+                    'nationalPhoneNumber' => '(063) 221-9999',
+                    'location' => ['latitude' => 8.2285, 'longitude' => 124.2455],
+                    'regularOpeningHours' => [
+                        'weekdayDescriptions' => $weekdayText,
+                    ],
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->getJson('/api/nearby-vets?lat=8.2280&lng=124.2450');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'clinics')
+        ->assertJsonPath('clinics.0.name', 'Google Vet Clinic')
+        ->assertJsonPath('clinics.0.phone', '(063) 221-9999')
+        ->assertJsonPath('clinics.0.operating_hours', 'Today: 8:00 AM – 6:00 PM');
 });
 
 test('duplicate reports are automatically flagged based on coordinates and location matching', function () {
