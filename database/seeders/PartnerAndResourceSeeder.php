@@ -89,6 +89,8 @@ class PartnerAndResourceSeeder extends Seeder
                 'logo_url' => 'GW',
                 'is_emergency' => false,
                 'is_featured' => true,
+                'provides_daily_food' => true,
+                'daily_food_notes' => 'Daily prepared food for shelter animals (1-day shelf life — must be fetched same day).',
                 'is_active' => true,
                 'display_order' => 5,
             ],

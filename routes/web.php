@@ -185,6 +185,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('profile', [VolunteerDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('status', [VolunteerDashboardController::class, 'status'])->name('status');
     Route::get('assigned-tasks', [VolunteerDashboardController::class, 'assignedTasks'])->name('assigned-tasks');
+    Route::post('assigned-tasks/{task}/confirm-fetched', [VolunteerDashboardController::class, 'confirmFoodPickupFetched'])->name('assigned-tasks.confirm-fetched');
     Route::delete('assigned-tasks/{task}', [VolunteerDashboardController::class, 'cancelTask'])->name('assigned-tasks.cancel');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
@@ -254,6 +255,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('volunteer-management/assign', [VolunteerManagementController::class, 'assignTask'])->name('volunteer-management.assign');
     Route::post('volunteer-management/tasks/{task}/status', [VolunteerManagementController::class, 'updateTaskStatus'])->name('volunteer-management.update-task-status');
     Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate');
+    Route::post('volunteer-management/food-pickups', [VolunteerManagementController::class, 'storeFoodPickup'])->name('volunteer-management.food-pickups.store');
+    Route::post('volunteer-management/food-pickups/{pickup}/assign', [VolunteerManagementController::class, 'assignFoodPickupVolunteer'])->name('volunteer-management.food-pickups.assign');
+    Route::post('volunteer-management/food-pickups/{pickup}/status', [VolunteerManagementController::class, 'updateFoodPickupStatus'])->name('volunteer-management.food-pickups.status');
 
     Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
     Route::post('donation-monitoring/donations/{donation}/verify-cash', [DonationMonitoringController::class, 'verifyCash'])->name('donation-monitoring.verify-cash');

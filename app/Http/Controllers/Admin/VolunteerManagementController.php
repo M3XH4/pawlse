@@ -12,6 +12,8 @@ use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
 use App\Models\FosterParent;
+use App\Models\Partner;
+use App\Models\PartnerFoodPickup;
 use App\Models\User;
 use App\Models\VolunteerApplication;
 use App\Notifications\VolunteerApplicationReviewedNotification;
@@ -58,7 +60,7 @@ class VolunteerManagementController extends Controller
             });
 
         // 3. Assigned Tasks
-        $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule', 'petReport'])
+        $tasksQuery = AssignedTask::with(['user', 'event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($outer) use ($search) {
                     $outer->where('guest_name', 'like', "%{$search}%")
@@ -77,6 +79,44 @@ class VolunteerManagementController extends Controller
                             $q->where('name', 'like', "%{$search}%")
                                 ->orWhere('animal_type', 'like', "%{$search}%")
                                 ->orWhere('location', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('partnerFoodPickup.partner', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        });
+                });
+            });
+
+        // 4. Daily Partner Food Pickups (auto-ensure today's pickup exists for active daily food partners)
+        $dailyFoodPartners = Partner::query()
+            ->active()
+            ->dailyFood()
+            ->orderBy('name')
+            ->get(['id', 'name', 'address', 'operating_hours', 'daily_food_notes']);
+
+        $todayDate = now()->toDateString();
+        foreach ($dailyFoodPartners as $dailyPartner) {
+            PartnerFoodPickup::query()->firstOrCreate(
+                [
+                    'partner_id' => $dailyPartner->id,
+                    'pickup_date' => $todayDate,
+                ],
+                [
+                    'status' => PartnerFoodPickup::StatusPending,
+                    'food_summary' => $dailyPartner->daily_food_notes ?? 'Daily shelter food (1-day shelf life)',
+                ]
+            );
+        }
+
+        $foodPickupsQuery = PartnerFoodPickup::with(['partner', 'assignedVolunteer', 'assignedBy'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($outer) use ($search) {
+                    $outer->where('food_summary', 'like', "%{$search}%")
+                        ->orWhereHas('partner', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('assignedVolunteer', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
                         });
                 });
             });
@@ -98,6 +138,18 @@ class VolunteerManagementController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'email', 'role']),
             'tasks' => fn () => $tasksQuery->latest()->paginate(10, ['*'], 'tasks_page')->withQueryString(),
+            'foodPickups' => fn () => $foodPickupsQuery->latest('pickup_date')->latest('id')->paginate(10, ['*'], 'pickups_page')->withQueryString(),
+            'todayFoodPickups' => fn () => PartnerFoodPickup::with(['partner', 'assignedVolunteer'])
+                ->whereDate('pickup_date', $todayDate)
+                ->orderBy('id')
+                ->get(),
+            'dailyFoodPartners' => $dailyFoodPartners,
+            'foodPickupStats' => fn () => [
+                'today_total' => PartnerFoodPickup::query()->whereDate('pickup_date', now()->toDateString())->count(),
+                'awaiting_verification' => PartnerFoodPickup::query()->where('status', PartnerFoodPickup::StatusFetched)->count(),
+                'completed' => PartnerFoodPickup::query()->where('status', PartnerFoodPickup::StatusCompleted)->count(),
+                'missed' => PartnerFoodPickup::query()->where('status', PartnerFoodPickup::StatusMissed)->count(),
+            ],
             'events' => fn () => Event::query()->where('approval_status', 'approved')->latest()->get(),
             'feedingSchedules' => fn () => FeedingSchedule::query()->where('status', 'active')->latest()->get(),
             'filters' => [
@@ -406,5 +458,195 @@ class VolunteerManagementController extends Controller
         ]);
 
         return redirect()->back();
+    }
+
+    /**
+     * Create a daily partner food pickup entry and optionally assign a volunteer.
+     */
+    public function storeFoodPickup(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'partner_id' => ['required', 'exists:partners,id'],
+            'pickup_date' => ['required', 'date'],
+            'assigned_volunteer_id' => ['nullable', 'exists:users,id'],
+            'food_summary' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $partner = Partner::query()
+            ->active()
+            ->dailyFood()
+            ->find($validated['partner_id']);
+
+        if (! $partner) {
+            return redirect()->back()->withErrors([
+                'partner_id' => 'Selected partner is not an active daily food partner.',
+            ]);
+        }
+
+        $existingPickup = PartnerFoodPickup::query()
+            ->where('partner_id', $partner->id)
+            ->whereDate('pickup_date', $validated['pickup_date'])
+            ->first();
+
+        if ($existingPickup) {
+            if (
+                $existingPickup->status === PartnerFoodPickup::StatusPending
+                && $existingPickup->assigned_volunteer_id === null
+                && ! empty($validated['assigned_volunteer_id'])
+            ) {
+                if (! empty($validated['food_summary'])) {
+                    $existingPickup->update(['food_summary' => $validated['food_summary']]);
+                }
+
+                $this->assignPickupToVolunteer($existingPickup, (int) $validated['assigned_volunteer_id'], (int) $request->user()->id);
+
+                Inertia::flash('toast', [
+                    'type' => 'success',
+                    'message' => 'Volunteer assigned to existing daily pickup.',
+                ]);
+
+                return redirect()->back();
+            }
+
+            return redirect()->back()->withErrors([
+                'pickup_date' => 'A daily food pickup for this partner and date already exists.',
+            ]);
+        }
+
+        $pickup = PartnerFoodPickup::query()->create([
+            'partner_id' => $partner->id,
+            'pickup_date' => $validated['pickup_date'],
+            'status' => PartnerFoodPickup::StatusPending,
+            'food_summary' => $validated['food_summary'] ?: ($partner->daily_food_notes ?? 'Daily shelter food (1-day shelf life)'),
+        ]);
+
+        if (! empty($validated['assigned_volunteer_id'])) {
+            $this->assignPickupToVolunteer($pickup, (int) $validated['assigned_volunteer_id'], (int) $request->user()->id);
+        } else {
+            AuditLog::log('partner_food_pickup_create', "Created daily food pickup for {$partner->name} on {$validated['pickup_date']}");
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => ! empty($validated['assigned_volunteer_id'])
+                ? 'Daily food pickup scheduled and volunteer assigned.'
+                : 'Daily food pickup scheduled successfully.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Manually assign or reassign a volunteer to a daily partner food pickup.
+     */
+    public function assignFoodPickupVolunteer(Request $request, PartnerFoodPickup $pickup): RedirectResponse
+    {
+        $validated = $request->validate([
+            'assigned_volunteer_id' => ['required', 'exists:users,id'],
+        ]);
+
+        if (in_array($pickup->status, [PartnerFoodPickup::StatusCompleted, PartnerFoodPickup::StatusMissed], true)) {
+            return redirect()->back()->withErrors([
+                'assigned_volunteer_id' => 'Cannot assign a volunteer to a pickup that is already completed or missed.',
+            ]);
+        }
+
+        $this->assignPickupToVolunteer($pickup, (int) $validated['assigned_volunteer_id'], (int) $request->user()->id);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Volunteer assigned to daily food pickup.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Mark a daily partner food pickup as completed or missed.
+     */
+    public function updateFoodPickupStatus(Request $request, PartnerFoodPickup $pickup): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:completed,missed'],
+            'hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $hours = $validated['hours_logged'] ?? 1.00;
+
+        if ($validated['status'] === PartnerFoodPickup::StatusCompleted) {
+            $pickup->update([
+                'status' => PartnerFoodPickup::StatusCompleted,
+                'completed_at' => now(),
+                'missed_at' => null,
+                'admin_notes' => $validated['admin_notes'] ?? $pickup->admin_notes,
+            ]);
+
+            AssignedTask::query()
+                ->where('partner_food_pickup_id', $pickup->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'completed',
+                    'hours_logged' => $hours,
+                ]);
+
+            AuditLog::log('partner_food_pickup_complete', "Marked food pickup ID {$pickup->id} as completed");
+        } else {
+            $pickup->update([
+                'status' => PartnerFoodPickup::StatusMissed,
+                'missed_at' => now(),
+                'completed_at' => null,
+                'admin_notes' => $validated['admin_notes'] ?? $pickup->admin_notes,
+            ]);
+
+            AssignedTask::query()
+                ->where('partner_food_pickup_id', $pickup->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'cancelled',
+                ]);
+
+            AuditLog::log('partner_food_pickup_missed', "Marked food pickup ID {$pickup->id} as missed");
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $validated['status'] === PartnerFoodPickup::StatusCompleted
+                ? 'Food pickup verified as completed.'
+                : 'Food pickup marked as missed.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Assign a pickup to a volunteer, create an AssignedTask, and send notification.
+     */
+    private function assignPickupToVolunteer(PartnerFoodPickup $pickup, int $volunteerId, int $adminId): void
+    {
+        AssignedTask::query()
+            ->where('partner_food_pickup_id', $pickup->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'cancelled']);
+
+        $pickup->update([
+            'assigned_volunteer_id' => $volunteerId,
+            'assigned_by' => $adminId,
+            'status' => PartnerFoodPickup::StatusAssigned,
+        ]);
+
+        $task = AssignedTask::query()->create([
+            'user_id' => $volunteerId,
+            'partner_food_pickup_id' => $pickup->id,
+            'role' => 'Daily Food Pickup Carrier',
+            'status' => 'pending',
+            'hours_logged' => 0.00,
+        ]);
+
+        $volunteer = User::query()->find($volunteerId);
+        $volunteer?->notify(new VolunteerTaskAssignedNotification($task));
+
+        $pickup->loadMissing('partner');
+        AuditLog::log('partner_food_pickup_assign', "Assigned volunteer {$volunteer?->name} to daily food pickup for {$pickup->partner?->name}");
     }
 }

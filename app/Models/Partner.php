@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -32,6 +33,8 @@ class Partner extends Model
         'logo_url',
         'is_emergency',
         'is_featured',
+        'provides_daily_food',
+        'daily_food_notes',
         'is_active',
         'display_order',
     ];
@@ -41,6 +44,7 @@ class Partner extends Model
         'services' => 'array',
         'is_emergency' => 'boolean',
         'is_featured' => 'boolean',
+        'provides_daily_food' => 'boolean',
         'is_active' => 'boolean',
         'display_order' => 'integer',
     ];
@@ -79,5 +83,19 @@ class Partner extends Model
     public function scopeFeatured(Builder $query): Builder
     {
         return $query->where('is_featured', true);
+    }
+
+    public function scopeDailyFood(Builder $query): Builder
+    {
+        return $query->where('category', 'food_supply')
+            ->where('provides_daily_food', true);
+    }
+
+    /**
+     * @return HasMany<PartnerFoodPickup, $this>
+     */
+    public function foodPickups(): HasMany
+    {
+        return $this->hasMany(PartnerFoodPickup::class);
     }
 }

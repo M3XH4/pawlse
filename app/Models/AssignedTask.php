@@ -49,4 +49,12 @@ class AssignedTask extends Model
     {
         return $this->belongsTo(PetReport::class);
     }
+
+    /**
+     * @return BelongsTo<PartnerFoodPickup, $this>
+     */
+    public function partnerFoodPickup(): BelongsTo
+    {
+        return $this->belongsTo(PartnerFoodPickup::class);
+    }
 }

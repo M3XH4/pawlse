@@ -93,9 +93,16 @@ class PartnerManagementController extends Controller
             'logo_url' => ['nullable', 'string', 'max:100'],
             'is_emergency' => ['boolean'],
             'is_featured' => ['boolean'],
+            'provides_daily_food' => ['boolean'],
+            'daily_food_notes' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
             'display_order' => ['integer', 'min:0'],
         ]);
+
+        if ($validated['category'] !== 'food_supply') {
+            $validated['provides_daily_food'] = false;
+            $validated['daily_food_notes'] = null;
+        }
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('partners', 'public');
@@ -139,9 +146,16 @@ class PartnerManagementController extends Controller
             'logo_url' => ['nullable', 'string', 'max:100'],
             'is_emergency' => ['boolean'],
             'is_featured' => ['boolean'],
+            'provides_daily_food' => ['boolean'],
+            'daily_food_notes' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
             'display_order' => ['integer', 'min:0'],
         ]);
+
+        if ($validated['category'] !== 'food_supply') {
+            $validated['provides_daily_food'] = false;
+            $validated['daily_food_notes'] = null;
+        }
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('partners', 'public');

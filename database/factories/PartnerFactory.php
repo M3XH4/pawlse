@@ -56,4 +56,14 @@ class PartnerFactory extends Factory
             'is_emergency' => false,
         ]);
     }
+
+    public function dailyFood(): static
+    {
+        return $this->state(fn () => [
+            'category' => 'food_supply',
+            'is_emergency' => false,
+            'provides_daily_food' => true,
+            'daily_food_notes' => 'Daily prepared food for shelter animals (1-day shelf life — must be fetched same day).',
+        ]);
+    }
 }

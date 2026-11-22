@@ -3,7 +3,9 @@ import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { toast } from 'sonner';
-import { User, ClipboardList, CheckCircle2, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus } from 'lucide-react';
+import { User, ClipboardList, CheckCircle2, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface PaginatedData<T> {
     data: T[];
@@ -62,6 +64,41 @@ interface TaskModel {
         animal_type?: string | null;
         species?: string | null;
     } | null;
+    partner_food_pickup?: {
+        id: number;
+        pickup_date: string;
+        partner?: {
+            name: string;
+        } | null;
+    } | null;
+}
+
+interface DailyFoodPartnerModel {
+    id: number;
+    name: string;
+    address?: string | null;
+    operating_hours?: string | null;
+    daily_food_notes?: string | null;
+}
+
+interface FoodPickupModel {
+    id: number;
+    partner_id: number;
+    pickup_date: string;
+    assigned_volunteer_id?: number | null;
+    status: 'pending' | 'assigned' | 'fetched' | 'completed' | 'missed';
+    food_summary?: string | null;
+    volunteer_notes?: string | null;
+    admin_notes?: string | null;
+    fetched_at?: string | null;
+    completed_at?: string | null;
+    missed_at?: string | null;
+    partner?: DailyFoodPartnerModel | null;
+    assigned_volunteer?: {
+        id: number;
+        name: string;
+        email: string;
+    } | null;
 }
 
 interface EventDropdownModel {
@@ -78,6 +115,15 @@ interface VolunteerManagementProps {
     applications: PaginatedData<VolunteerApplicationModel>;
     volunteers: PaginatedData<UserModel>;
     tasks: PaginatedData<TaskModel>;
+    foodPickups?: PaginatedData<FoodPickupModel>;
+    todayFoodPickups?: FoodPickupModel[];
+    dailyFoodPartners?: DailyFoodPartnerModel[];
+    foodPickupStats?: {
+        today_total: number;
+        awaiting_verification: number;
+        completed: number;
+        missed: number;
+    };
     events: EventDropdownModel[];
     feedingSchedules: ScheduleDropdownModel[];
     allVolunteers?: { id: number; name: string; email: string }[];
@@ -92,13 +138,17 @@ export default function VolunteerManagement({
     applications,
     volunteers,
     tasks,
+    foodPickups = { data: [], links: [], total: 0 },
+    todayFoodPickups = [],
+    dailyFoodPartners = [],
+    foodPickupStats = { today_total: 0, awaiting_verification: 0, completed: 0, missed: 0 },
     events,
     feedingSchedules,
     allVolunteers = [],
     allRecipients = [],
     filters
 }: VolunteerManagementProps) {
-    const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks'>('applications');
+    const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'food_pickups'>('applications');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
 
@@ -120,6 +170,79 @@ export default function VolunteerManagement({
     // Complete Task modal state
     const [completingTask, setCompletingTask] = useState<TaskModel | null>(null);
     const [hoursLogged, setHoursLogged] = useState('2.0');
+
+    // Daily Food Pickup modals state
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const [isCreatePickupOpen, setIsCreatePickupOpen] = useState(false);
+    const [pickupPartnerId, setPickupPartnerId] = useState(dailyFoodPartners[0]?.id?.toString() || '');
+    const [pickupDate, setPickupDate] = useState(todayIso);
+    const [pickupVolunteerId, setPickupVolunteerId] = useState('');
+    const [pickupSummary, setPickupSummary] = useState('');
+
+    const [assigningPickup, setAssigningPickup] = useState<FoodPickupModel | null>(null);
+    const [assignPickupVolunteerId, setAssignPickupVolunteerId] = useState(volunteerList[0]?.id?.toString() || '');
+
+    const [updatingPickup, setUpdatingPickup] = useState<FoodPickupModel | null>(null);
+    const [pickupTargetStatus, setPickupTargetStatus] = useState<'completed' | 'missed'>('completed');
+    const [pickupHoursLogged, setPickupHoursLogged] = useState('1.0');
+    const [pickupAdminNotes, setPickupAdminNotes] = useState('');
+
+    const handleCreatePickupSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.post('/account/admin/volunteer-management/food-pickups', {
+            partner_id: pickupPartnerId,
+            pickup_date: pickupDate,
+            assigned_volunteer_id: pickupVolunteerId || null,
+            food_summary: pickupSummary || null,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsCreatePickupOpen(false);
+                setPickupVolunteerId('');
+                setPickupSummary('');
+            },
+            onError: (errors) => {
+                toast.error(Object.values(errors)[0] || 'Failed to schedule pickup.');
+            },
+        });
+    };
+
+    const handleAssignPickupSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!assigningPickup) return;
+
+        router.post(`/account/admin/volunteer-management/food-pickups/${assigningPickup.id}/assign`, {
+            assigned_volunteer_id: assignPickupVolunteerId,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setAssigningPickup(null);
+            },
+            onError: (errors) => {
+                toast.error(Object.values(errors)[0] || 'Failed to assign volunteer.');
+            },
+        });
+    };
+
+    const handleUpdatePickupStatusSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!updatingPickup) return;
+
+        router.post(`/account/admin/volunteer-management/food-pickups/${updatingPickup.id}/status`, {
+            status: pickupTargetStatus,
+            hours_logged: pickupTargetStatus === 'completed' ? pickupHoursLogged : undefined,
+            admin_notes: pickupAdminNotes || null,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setUpdatingPickup(null);
+                setPickupAdminNotes('');
+            },
+            onError: (errors) => {
+                toast.error(Object.values(errors)[0] || 'Failed to update pickup status.');
+            },
+        });
+    };
 
     // Issue Certificate modal state
     const [isCertOpen, setIsCertOpen] = useState(false);
@@ -278,17 +401,20 @@ export default function VolunteerManagement({
                             />
                         </div>
                         <div className="flex items-center gap-3">
-                            <Filter size={16} className="text-gray-400" />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => handleStatusFilterChange(e.target.value)}
-                                className="px-3 py-2.5 bg-gray-50 dark:bg-slate-850 border dark:border-gray-800 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
-                            >
-                                <option value="All">All Applications</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
+                            <Filter size={16} className="text-gray-400 shrink-0" />
+                            <div className="min-w-[175px]">
+                                <ModernSelect
+                                    value={statusFilter}
+                                    onChange={(val) => handleStatusFilterChange(val)}
+                                    searchable={false}
+                                    options={[
+                                        { value: 'All', label: 'All Applications' },
+                                        { value: 'pending', label: 'Pending' },
+                                        { value: 'approved', label: 'Approved' },
+                                        { value: 'rejected', label: 'Rejected' },
+                                    ]}
+                                />
+                            </div>
                             <button
                                 type="submit"
                                 className="px-5 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition-colors"
@@ -324,6 +450,14 @@ export default function VolunteerManagement({
                         }`}
                     >
                         Assigned Tasks ({tasks.total})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('food_pickups')}
+                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
+                            activeTab === 'food_pickups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                        }`}
+                    >
+                        Daily Food Pickups ({foodPickups.total})
                     </button>
                 </div>
 
@@ -528,7 +662,9 @@ export default function VolunteerManagement({
                                                                 ? task.feeding_schedule.zone
                                                                 : task.pet_report
                                                                     ? `Rescue: ${task.pet_report.name || task.pet_report.animal_type || `Report #${task.pet_report.id}`}`
-                                                                    : 'General Assignment'}
+                                                                    : task.partner_food_pickup
+                                                                        ? `Food Pickup: ${task.partner_food_pickup.partner?.name || 'Partner'}`
+                                                                        : 'General Assignment'}
                                                     </p>
                                                     <p className="text-xs text-gray-400 font-bold">
                                                         {task.event
@@ -537,7 +673,9 @@ export default function VolunteerManagement({
                                                                 ? 'Feeding Zone Route'
                                                                 : task.pet_report
                                                                     ? 'Emergency Rescue'
-                                                                    : 'Task'}
+                                                                    : task.partner_food_pickup
+                                                                        ? `Daily Food Pickup (${task.partner_food_pickup.pickup_date})`
+                                                                        : 'Task'}
                                                     </p>
                                                 </td>
                                                 <td className="py-4 px-4">{task.role}</td>
@@ -579,6 +717,238 @@ export default function VolunteerManagement({
                             </div>
                         )}
                     </AdminCard>
+                )}
+
+                {/* Daily Food Pickups Tab */}
+                {activeTab === 'food_pickups' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">Today&apos;s Pickups</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-[#0B2340] dark:text-white">{foodPickupStats.today_total}</p>
+                            </AdminCard>
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-amber-500">Fetched (Verify)</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-amber-600">{foodPickupStats.awaiting_verification}</p>
+                            </AdminCard>
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-emerald-500">Completed</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-emerald-600">{foodPickupStats.completed}</p>
+                            </AdminCard>
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-red-500">Missed</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-red-600">{foodPickupStats.missed}</p>
+                            </AdminCard>
+                        </div>
+
+                        <AdminCard className="p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white flex items-center gap-2">
+                                        <Store className="text-emerald-600" size={20} /> Daily Partner Food Pickups
+                                    </h3>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                        Assign volunteers to fetch 1-day shelf-life food from daily food partners (e.g., Greenwich) and verify completion or mark missed.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPickupPartnerId(dailyFoodPartners[0]?.id?.toString() || '');
+                                        setPickupDate(todayIso);
+                                        setPickupVolunteerId('');
+                                        setPickupSummary('');
+                                        setIsCreatePickupOpen(true);
+                                    }}
+                                    disabled={dailyFoodPartners.length === 0}
+                                    className="px-4 py-2.5 bg-paw-orange hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shrink-0"
+                                >
+                                    <Plus size={16} /> Schedule Pickup
+                                </button>
+                            </div>
+
+                            {todayFoodPickups.length > 0 && (
+                                <div className="mb-6 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <p className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                                            Today&apos;s Daily Pickups ({todayIso})
+                                        </p>
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                            Auto-ready for volunteer assignment
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {todayFoodPickups.map((todayItem) => (
+                                            <div
+                                                key={todayItem.id}
+                                                className="flex items-center justify-between gap-3 rounded-xl bg-white dark:bg-slate-900 p-3.5 border border-emerald-100 dark:border-slate-800 shadow-xs"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-sm text-[#0B2340] dark:text-white truncate">
+                                                        {todayItem.partner?.name || 'Food Partner'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                        {todayItem.assigned_volunteer
+                                                            ? `Assigned to ${todayItem.assigned_volunteer.name}`
+                                                            : 'Needs a volunteer to fetch today'}
+                                                    </p>
+                                                </div>
+                                                {todayItem.status === 'pending' && !todayItem.assigned_volunteer_id ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAssigningPickup(todayItem);
+                                                            setAssignPickupVolunteerId(volunteerList[0]?.id?.toString() || '');
+                                                        }}
+                                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1 shrink-0"
+                                                    >
+                                                        <UserPlus size={13} />
+                                                        Select Volunteer
+                                                    </button>
+                                                ) : (
+                                                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full shrink-0 ${
+                                                        todayItem.status === 'completed'
+                                                            ? 'bg-emerald-100 text-emerald-700'
+                                                            : todayItem.status === 'fetched'
+                                                                ? 'bg-amber-100 text-amber-800'
+                                                                : todayItem.status === 'missed'
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-blue-100 text-blue-700'
+                                                    }`}>
+                                                        {todayItem.status === 'fetched' ? 'Fetched (Verify)' : todayItem.status}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {dailyFoodPartners.length === 0 && (
+                                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+                                    No active food partners are flagged for daily shelter food yet. Enable &ldquo;Provides Daily Shelter Food&rdquo; in SuperAdmin Partner Management.
+                                </div>
+                            )}
+
+                            {foodPickups.data.length === 0 ? (
+                                <p className="text-center text-gray-500 font-bold py-8">No daily food pickups scheduled yet.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm font-semibold border-collapse">
+                                        <thead>
+                                            <tr className="border-b dark:border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
+                                                <th className="py-3.5 px-4 min-w-[180px]">Partner</th>
+                                                <th className="py-3.5 px-4 min-w-[130px] whitespace-nowrap">Pickup Date</th>
+                                                <th className="py-3.5 px-4 min-w-[170px]">Assigned Volunteer</th>
+                                                <th className="py-3.5 px-4 min-w-[130px] whitespace-nowrap">Status</th>
+                                                <th className="py-3.5 px-4 min-w-[180px]">Notes</th>
+                                                <th className="py-3.5 px-4 text-right min-w-[230px] whitespace-nowrap">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y dark:divide-gray-850">
+                                            {foodPickups.data.map((pickup) => {
+                                                const isFinal = pickup.status === 'completed' || pickup.status === 'missed';
+                                                return (
+                                                    <tr key={pickup.id} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                                                        <td className="py-4 px-4">
+                                                            <p className="font-bold text-[#0B2340] dark:text-white">{pickup.partner?.name || 'Food Partner'}</p>
+                                                            <span className="inline-block mt-1 px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 text-[9px] font-black uppercase">
+                                                                1-Day Shelf Life
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 px-4 whitespace-nowrap font-bold">{pickup.pickup_date}</td>
+                                                        <td className="py-4 px-4">
+                                                            {pickup.assigned_volunteer ? (
+                                                                <div>
+                                                                    <p className="font-bold text-[#0B2340] dark:text-white">{pickup.assigned_volunteer.name}</p>
+                                                                    <p className="text-xs text-gray-400">{pickup.assigned_volunteer.email}</p>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-amber-600 font-bold italic">Unassigned</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-4 px-4 whitespace-nowrap">
+                                                            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                                                                pickup.status === 'completed'
+                                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                                    : pickup.status === 'fetched'
+                                                                        ? 'bg-amber-100 text-amber-800'
+                                                                        : pickup.status === 'missed'
+                                                                            ? 'bg-red-100 text-red-700'
+                                                                            : pickup.status === 'assigned'
+                                                                                ? 'bg-blue-100 text-blue-700'
+                                                                                : 'bg-gray-100 text-gray-600'
+                                                            }`}>
+                                                                {pickup.status === 'fetched' ? 'Fetched (Verify)' : pickup.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-xs text-gray-500 max-w-xs">
+                                                            {pickup.volunteer_notes && (
+                                                                <p className="text-emerald-700 dark:text-emerald-300 font-semibold">Volunteer: {pickup.volunteer_notes}</p>
+                                                            )}
+                                                            {pickup.admin_notes && (
+                                                                <p className="text-gray-600 dark:text-gray-400">Admin: {pickup.admin_notes}</p>
+                                                            )}
+                                                            {!pickup.volunteer_notes && !pickup.admin_notes && (
+                                                                <span>{pickup.food_summary || '—'}</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right whitespace-nowrap">
+                                                            {!isFinal && (
+                                                                <div className="flex justify-end gap-1.5 flex-wrap">
+                                                                    {pickup.status !== 'fetched' && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setAssigningPickup(pickup);
+                                                                                setAssignPickupVolunteerId(
+                                                                                    pickup.assigned_volunteer_id?.toString() || volunteerList[0]?.id?.toString() || ''
+                                                                                );
+                                                                            }}
+                                                                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                        >
+                                                                            <UserPlus size={12} />
+                                                                            {pickup.assigned_volunteer_id ? 'Reassign' : 'Select Volunteer'}
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setUpdatingPickup(pickup);
+                                                                            setPickupTargetStatus('completed');
+                                                                            setPickupHoursLogged('1.0');
+                                                                            setPickupAdminNotes('');
+                                                                        }}
+                                                                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                    >
+                                                                        <PackageCheck size={12} />
+                                                                        Completed
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setUpdatingPickup(pickup);
+                                                                            setPickupTargetStatus('missed');
+                                                                            setPickupAdminNotes('');
+                                                                        }}
+                                                                        className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                    >
+                                                                        <AlertTriangle size={12} />
+                                                                        Missed
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                    <Pagination links={foodPickups.links} />
+                                </div>
+                            )}
+                        </AdminCard>
+                    </div>
                 )}
 
             </AdminPageShell>
@@ -628,17 +998,18 @@ export default function VolunteerManagement({
                     <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
                         <h3 className="font-fredoka text-xl font-bold mb-4 text-[#0B2340] dark:text-white">Assign Task manually</h3>
                         <form onSubmit={handleAssignSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Volunteer *</label>
-                                <select
-                                    required
-                                    value={assignTargetUserId}
-                                    onChange={(e) => setAssignTargetUserId(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
-                                >
-                                    {volunteerList.map(v => <option key={v.id} value={v.id}>{v.name} ({v.email})</option>)}
-                                </select>
-                            </div>
+                            <ModernSelect
+                                label="Volunteer"
+                                required
+                                value={assignTargetUserId}
+                                onChange={(val) => setAssignTargetUserId(val)}
+                                placeholder="Select volunteer..."
+                                options={volunteerList.map(v => ({
+                                    value: String(v.id),
+                                    label: v.name,
+                                    description: v.email,
+                                }))}
+                            />
 
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Activity Type</label>
@@ -665,27 +1036,29 @@ export default function VolunteerManagement({
                             </div>
 
                             {assignActivityType === 'event' ? (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Select Event *</label>
-                                    <select
-                                        value={assignEventId}
-                                        onChange={(e) => setAssignEventId(e.target.value)}
-                                        className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
-                                    >
-                                        {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-                                    </select>
-                                </div>
+                                <ModernSelect
+                                    label="Select Event"
+                                    required
+                                    value={assignEventId}
+                                    onChange={(val) => setAssignEventId(val)}
+                                    placeholder="Select event..."
+                                    options={events.map(e => ({
+                                        value: String(e.id),
+                                        label: e.title,
+                                    }))}
+                                />
                             ) : (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Select Feeding route *</label>
-                                    <select
-                                        value={assignScheduleId}
-                                        onChange={(e) => setAssignScheduleId(e.target.value)}
-                                        className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
-                                    >
-                                        {feedingSchedules.map(s => <option key={s.id} value={s.id}>{s.zone}</option>)}
-                                    </select>
-                                </div>
+                                <ModernSelect
+                                    label="Select Feeding Route"
+                                    required
+                                    value={assignScheduleId}
+                                    onChange={(val) => setAssignScheduleId(val)}
+                                    placeholder="Select feeding route..."
+                                    options={feedingSchedules.map(s => ({
+                                        value: String(s.id),
+                                        label: s.zone,
+                                    }))}
+                                />
                             )}
 
                             <div>
@@ -763,33 +1136,29 @@ export default function VolunteerManagement({
                         <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">Issue Recognition Certificate</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-4">Generates an official certificate using the ISF Certificate of Participation template with a unique ID and verification code.</p>
                         <form onSubmit={handleCertSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Recipient (Volunteer or User) *</label>
-                                <select
-                                    required
-                                    value={certTargetUserId}
-                                    onChange={(e) => setCertTargetUserId(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
-                                >
-                                    {recipientList.map(v => (
-                                        <option key={v.id} value={v.id}>
-                                            {v.name} ({v.email}){'role' in v && v.role ? ` - ${String(v.role).toUpperCase()}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            <ModernSelect
+                                label="Recipient (Volunteer or User)"
+                                required
+                                value={certTargetUserId}
+                                onChange={(val) => setCertTargetUserId(val)}
+                                placeholder="Select recipient..."
+                                options={recipientList.map(v => ({
+                                    value: String(v.id),
+                                    label: `${v.name}${'role' in v && v.role ? ` (${String(v.role).toUpperCase()})` : ''}`,
+                                    description: v.email,
+                                }))}
+                            />
 
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Associated Event (Optional)</label>
-                                <select
-                                    value={certTargetEventId}
-                                    onChange={(e) => setCertTargetEventId(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
-                                >
-                                    <option value="">None / Manual Issuance</option>
-                                    {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-                                </select>
-                            </div>
+                            <ModernSelect
+                                label="Associated Event (Optional)"
+                                value={certTargetEventId}
+                                onChange={(val) => setCertTargetEventId(val)}
+                                placeholder="None / Manual Issuance"
+                                options={[
+                                    { value: '', label: 'None / Manual Issuance' },
+                                    ...events.map(e => ({ value: String(e.id), label: e.title })),
+                                ]}
+                            />
 
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Certificate Title *</label>
@@ -826,6 +1195,185 @@ export default function VolunteerManagement({
                                     className="px-4 py-2 bg-paw-navy text-white hover:bg-slate-800 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                                 >
                                     Issue Certificate
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Schedule Pickup Modal */}
+            {isCreatePickupOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-4 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <Store className="text-emerald-600" /> Schedule Pickup
+                        </h3>
+                        <form onSubmit={handleCreatePickupSubmit} className="space-y-4">
+                            <ModernSelect
+                                label="Daily Food Partner"
+                                required
+                                value={pickupPartnerId}
+                                onChange={(val) => setPickupPartnerId(val)}
+                                placeholder="Select daily food partner..."
+                                options={dailyFoodPartners.map(p => ({
+                                    value: String(p.id),
+                                    label: p.name,
+                                    description: p.address || undefined,
+                                }))}
+                            />
+                            <ModernDatePicker
+                                label="Pickup Date (1-Day Shelf Life)"
+                                required
+                                allowPast
+                                showPresets
+                                value={pickupDate}
+                                onChange={(date) => setPickupDate(date)}
+                                placeholder="Select pickup date..."
+                            />
+                            <ModernSelect
+                                label="Assign Volunteer (Optional)"
+                                value={pickupVolunteerId}
+                                onChange={(val) => setPickupVolunteerId(val)}
+                                placeholder="-- Assign later --"
+                                options={[
+                                    { value: '', label: '-- Assign later --' },
+                                    ...volunteerList.map(v => ({
+                                        value: String(v.id),
+                                        label: v.name,
+                                        description: v.email,
+                                    })),
+                                ]}
+                            />
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Food Batch Notes (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={pickupSummary}
+                                    onChange={(e) => setPickupSummary(e.target.value)}
+                                    placeholder="e.g., Daily prepared shelter food (use same day)"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreatePickupOpen(false)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-paw-orange text-white hover:bg-orange-600 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                                >
+                                    Schedule Pickup
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Select / Reassign Volunteer for Food Pickup Modal */}
+            {assigningPickup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <UserPlus className="text-blue-600" /> Select Volunteer
+                        </h3>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">
+                            Assign a volunteer to fetch daily food from <span className="font-bold text-[#0B2340] dark:text-white">{assigningPickup.partner?.name}</span> on <span className="font-bold">{assigningPickup.pickup_date}</span>.
+                        </p>
+                        <form onSubmit={handleAssignPickupSubmit} className="space-y-4">
+                            <ModernSelect
+                                label="Volunteer"
+                                required
+                                value={assignPickupVolunteerId}
+                                onChange={(val) => setAssignPickupVolunteerId(val)}
+                                placeholder="Select volunteer..."
+                                options={volunteerList.map(v => ({
+                                    value: String(v.id),
+                                    label: v.name,
+                                    description: v.email,
+                                }))}
+                            />
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setAssigningPickup(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                                >
+                                    Assign Volunteer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Mark Food Pickup Completed / Missed Modal */}
+            {updatingPickup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            {pickupTargetStatus === 'completed' ? (
+                                <><PackageCheck className="text-emerald-600" /> Verify Food Pickup Completed</>
+                            ) : (
+                                <><AlertTriangle className="text-red-600" /> Mark Food Pickup Missed</>
+                            )}
+                        </h3>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">
+                            {updatingPickup.partner?.name} — {updatingPickup.pickup_date}
+                        </p>
+                        <form onSubmit={handleUpdatePickupStatusSubmit} className="space-y-4">
+                            {pickupTargetStatus === 'completed' && (
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Volunteer Hours Logged</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        max="24"
+                                        value={pickupHoursLogged}
+                                        onChange={(e) => setPickupHoursLogged(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    {pickupTargetStatus === 'completed' ? 'Verification Notes (Optional)' : 'Reason / Notes (Optional)'}
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    placeholder={pickupTargetStatus === 'completed' ? 'Food delivered to shelter kitchen...' : 'Store closed early / no volunteer available...'}
+                                    value={pickupAdminNotes}
+                                    onChange={(e) => setPickupAdminNotes(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setUpdatingPickup(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={`px-4 py-2 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer ${
+                                        pickupTargetStatus === 'completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                                    }`}
+                                >
+                                    {pickupTargetStatus === 'completed' ? 'Confirm Completed' : 'Mark as Missed'}
                                 </button>
                             </div>
                         </form>

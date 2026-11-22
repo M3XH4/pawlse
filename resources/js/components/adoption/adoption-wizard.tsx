@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { ModernTimePicker } from '@/components/ui/modern-time-picker';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
@@ -774,35 +775,33 @@ export function AdoptionWizard({
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-xl font-black text-gray-900 dark:text-white mb-4">Basic Info</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Marital Status *</label>
-                      <select
-                        required
-                        value={data.status}
-                        onChange={(e) => setData('status', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select status</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Others">Others</option>
-                      </select>
-                    </div>
+                    <ModernSelect
+                      label="Marital Status"
+                      required
+                      searchable={false}
+                      value={data.status}
+                      onChange={(val) => setData('status', val)}
+                      placeholder="Select status"
+                      options={[
+                        { value: 'Single', label: 'Single' },
+                        { value: 'Married', label: 'Married' },
+                        { value: 'Others', label: 'Others' },
+                      ]}
+                    />
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Pronouns *</label>
-                      <select
-                        required
-                        value={data.pronouns}
-                        onChange={(e) => setData('pronouns', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select pronouns</option>
-                        <option value="She/Her">She/Her</option>
-                        <option value="He/Him">He/Him</option>
-                        <option value="They/Them">They/Them</option>
-                      </select>
-                    </div>
+                    <ModernSelect
+                      label="Pronouns"
+                      required
+                      searchable={false}
+                      value={data.pronouns}
+                      onChange={(val) => setData('pronouns', val)}
+                      placeholder="Select pronouns"
+                      options={[
+                        { value: 'She/Her', label: 'She/Her' },
+                        { value: 'He/Him', label: 'He/Him' },
+                        { value: 'They/Them', label: 'They/Them' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -916,56 +915,53 @@ export function AdoptionWizard({
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">What would you like to adopt? *</label>
-                      <select
-                        required
-                        value={data.adoptionPreference}
-                        onChange={(e) => setData('adoptionPreference', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select preference</option>
-                        <option value="Cat">Cat</option>
-                        <option value="Dog">Dog</option>
-                        <option value="Both">Both</option>
-                        <option value="Not decided">Not decided</option>
-                      </select>
-                    </div>
+                    <ModernSelect
+                      label="What would you like to adopt?"
+                      required
+                      searchable={false}
+                      value={data.adoptionPreference}
+                      onChange={(val) => setData('adoptionPreference', val)}
+                      placeholder="Select preference"
+                      options={[
+                        { value: 'Cat', label: 'Cat' },
+                        { value: 'Dog', label: 'Dog' },
+                        { value: 'Both', label: 'Both' },
+                        { value: 'Not decided', label: 'Not decided' },
+                      ]}
+                    />
                   </div>
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-xl font-black text-gray-900 dark:text-white mb-4">Living Situation</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Residence Type *</label>
-                      <select
-                        required
-                        value={data.residenceType}
-                        onChange={(e) => setData('residenceType', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select type</option>
-                        <option value="House">House</option>
-                        <option value="Apartment">Apartment</option>
-                        <option value="Condo">Condo</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
+                    <ModernSelect
+                      label="Residence Type"
+                      required
+                      searchable={false}
+                      value={data.residenceType}
+                      onChange={(val) => setData('residenceType', val)}
+                      placeholder="Select type"
+                      options={[
+                        { value: 'House', label: 'House' },
+                        { value: 'Apartment', label: 'Apartment' },
+                        { value: 'Condo', label: 'Condo' },
+                        { value: 'Other', label: 'Other' },
+                      ]}
+                    />
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Do you rent? *</label>
-                      <select
-                        required
-                        value={data.isRenting}
-                        onChange={(e) => setData('isRenting', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-transparent focus:border-paw-orange outline-none transition-all font-bold text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select option</option>
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
+                    <ModernSelect
+                      label="Do you rent?"
+                      required
+                      searchable={false}
+                      value={data.isRenting}
+                      onChange={(val) => setData('isRenting', val)}
+                      placeholder="Select option"
+                      options={[
+                        { value: 'Yes', label: 'Yes' },
+                        { value: 'No', label: 'No' },
+                      ]}
+                    />
 
                     <div className="space-y-2 md:col-span-2">
                       <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">If you move, what will happen to the pet? *</label>

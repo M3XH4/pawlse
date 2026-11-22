@@ -6,6 +6,7 @@ use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\FosterParent;
+use App\Models\PartnerFoodPickup;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,7 +81,7 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $tasks = AssignedTask::with(['event', 'feedingSchedule', 'petReport'])
+        $tasks = AssignedTask::with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
             ->where('user_id', $user->id)
             ->where('status', 'pending')
             ->latest()
@@ -128,7 +129,29 @@ class VolunteerDashboardController extends Controller
             }
         }
 
-        $taskTitle = $task->event?->title ?? $task->feedingSchedule?->zone ?? ($task->petReport ? 'Rescue #'.$task->petReport->id : 'Assignment');
+        if ($task->partner_food_pickup_id !== null) {
+            $pickup = $task->partnerFoodPickup;
+            if ($pickup !== null && $pickup->status === PartnerFoodPickup::StatusFetched) {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => 'Cannot cancel a food pickup that has already been marked as fetched.',
+                ]);
+
+                return redirect()->back();
+            }
+
+            if ($pickup !== null && $pickup->assigned_volunteer_id === $user->id) {
+                $pickup->update([
+                    'assigned_volunteer_id' => null,
+                    'status' => PartnerFoodPickup::StatusPending,
+                ]);
+            }
+        }
+
+        $taskTitle = $task->event?->title
+            ?? $task->feedingSchedule?->zone
+            ?? ($task->partnerFoodPickup?->partner ? 'Food Pickup: '.$task->partnerFoodPickup->partner->name : null)
+            ?? ($task->petReport ? 'Rescue #'.$task->petReport->id : 'Assignment');
         $task->delete();
 
         AuditLog::log('volunteer_cancel_task', "Cancelled volunteer task assignment for '{$taskTitle}'");
@@ -142,13 +165,75 @@ class VolunteerDashboardController extends Controller
     }
 
     /**
+     * Confirm that an assigned daily partner food pickup has been fetched by the volunteer.
+     */
+    public function confirmFoodPickupFetched(Request $request, AssignedTask $task): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($task->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $task->loadMissing('partnerFoodPickup.partner');
+        $pickup = $task->partnerFoodPickup;
+
+        if ($pickup === null || $task->status !== 'pending') {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'This task is not an active food pickup assignment.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        if ($pickup->status === PartnerFoodPickup::StatusFetched) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => 'This food pickup has already been confirmed as fetched.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        if (in_array($pickup->status, [PartnerFoodPickup::StatusCompleted, PartnerFoodPickup::StatusMissed], true)) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'This food pickup has already been finalized by an administrator.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $validated = $request->validate([
+            'volunteer_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $pickup->update([
+            'status' => PartnerFoodPickup::StatusFetched,
+            'fetched_at' => now(),
+            'volunteer_notes' => $validated['volunteer_notes'] ?? $pickup->volunteer_notes,
+        ]);
+
+        $partnerName = $pickup->partner?->name ?? 'Partner';
+        AuditLog::log('partner_food_pickup_fetched', "Volunteer {$user->name} confirmed food pickup fetched from {$partnerName} (Pickup ID {$pickup->id})");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Confirmed! Food pickup from {$partnerName} marked as fetched.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
      * Show participation history.
      */
     public function participationHistory(Request $request): Response
     {
         $user = $request->user();
 
-        $history = AssignedTask::with(['event', 'feedingSchedule', 'petReport'])
+        $history = AssignedTask::with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
             ->where('user_id', $user->id)
             ->where('status', 'completed')
             ->latest()

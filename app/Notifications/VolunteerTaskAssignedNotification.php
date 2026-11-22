@@ -18,8 +18,7 @@ class VolunteerTaskAssignedNotification extends Notification implements ShouldQu
 
     public function toMail(object $notifiable): MailMessage
     {
-        $targetName = $this->task->event?->title
-            ?? ($this->task->feedingSchedule ? 'Feeding Route Zone '.$this->task->feedingSchedule->zone : 'Activity');
+        $targetName = $this->resolveTargetName();
 
         return $this->buildBrandedMail(
             notifiable: $notifiable,
@@ -38,8 +37,7 @@ class VolunteerTaskAssignedNotification extends Notification implements ShouldQu
      */
     public function toArray(object $notifiable): array
     {
-        $targetName = $this->task->event?->title
-            ?? ($this->task->feedingSchedule ? 'Feeding Route Zone '.$this->task->feedingSchedule->zone : 'Activity');
+        $targetName = $this->resolveTargetName();
 
         return [
             'title' => 'Volunteer Task Assigned',
@@ -50,5 +48,27 @@ class VolunteerTaskAssignedNotification extends Notification implements ShouldQu
             'category' => 'task',
             'task_id' => $this->task->id,
         ];
+    }
+
+    protected function resolveTargetName(): string
+    {
+        $this->task->loadMissing(['event', 'feedingSchedule', 'partnerFoodPickup.partner']);
+
+        if ($this->task->event !== null) {
+            return $this->task->event->title;
+        }
+
+        if ($this->task->feedingSchedule !== null) {
+            return 'Feeding Route Zone '.$this->task->feedingSchedule->zone;
+        }
+
+        if ($this->task->partnerFoodPickup !== null) {
+            $partnerName = $this->task->partnerFoodPickup->partner?->name ?? 'Partner';
+            $pickupDate = $this->task->partnerFoodPickup->pickup_date?->format('M d, Y') ?? 'Today';
+
+            return "Daily Food Pickup — {$partnerName} ({$pickupDate})";
+        }
+
+        return 'Activity';
     }
 }

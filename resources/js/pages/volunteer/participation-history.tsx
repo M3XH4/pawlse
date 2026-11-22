@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Calendar, Utensils, Heart } from 'lucide-react';
+import { CheckCircle2, Clock, Calendar, Utensils, Heart, Store } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import {
     DashboardCard,
@@ -33,6 +33,20 @@ interface HistoryItem {
         species?: string | null;
         landmark?: string | null;
     } | null;
+    partner_food_pickup?: {
+        id: number;
+        pickup_date: string;
+        partner?: {
+            name: string;
+        } | null;
+    } | null;
+    partnerFoodPickup?: {
+        id: number;
+        pickup_date: string;
+        partner?: {
+            name: string;
+        } | null;
+    } | null;
 }
 
 interface ParticipationHistoryProps {
@@ -62,6 +76,7 @@ export default function VolunteerParticipationHistory({ history }: Participation
                 <div className="flex flex-col gap-3">
                     {historyData.map((item) => {
                         const rescueReport = item.pet_report || item.petReport;
+                        const foodPickup = item.partner_food_pickup || item.partnerFoodPickup;
                         const hours = parseFloat(String(item.hours_logged || '0'));
                         return (
                             <DashboardCard key={item.id} className="p-5">
@@ -72,6 +87,8 @@ export default function VolunteerParticipationHistory({ history }: Participation
                                                 <CheckCircle2 className="h-7 w-7" />
                                             ) : rescueReport ? (
                                                 <Heart className="h-7 w-7 text-rose-500" />
+                                            ) : foodPickup ? (
+                                                <Store className="h-7 w-7 text-emerald-600" />
                                             ) : (
                                                 <Utensils className="h-7 w-7" />
                                             )}
@@ -82,7 +99,9 @@ export default function VolunteerParticipationHistory({ history }: Participation
                                                     ? item.event.title
                                                     : rescueReport
                                                         ? `Rescue: ${rescueReport.pet_name || rescueReport.species || `Case #${rescueReport.id}`}`
-                                                        : (item.feeding_schedule?.zone || 'Volunteer Mission')}
+                                                        : foodPickup
+                                                            ? `Daily Food Pickup: ${foodPickup.partner?.name || 'Partner'}`
+                                                            : (item.feeding_schedule?.zone || 'Volunteer Mission')}
                                             </h3>
                                             <div className="flex items-center gap-3 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
                                                 <span>Role: {item.role}</span>

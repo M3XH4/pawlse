@@ -37,6 +37,8 @@ interface PartnerRecord {
     logo_url?: string | null;
     is_emergency: boolean;
     is_featured: boolean;
+    provides_daily_food?: boolean;
+    daily_food_notes?: string | null;
     is_active: boolean;
     display_order: number;
     deleted_at?: string | null;
@@ -109,6 +111,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
         logo_url: '',
         is_emergency: false,
         is_featured: false,
+        provides_daily_food: false,
+        daily_food_notes: '',
         is_active: true,
         display_order: 0,
     });
@@ -144,6 +148,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             logo_url: partner.logo_url || '',
             is_emergency: partner.is_emergency,
             is_featured: partner.is_featured,
+            provides_daily_food: Boolean(partner.provides_daily_food),
+            daily_food_notes: partner.daily_food_notes || '',
             is_active: partner.is_active,
             display_order: partner.display_order,
         });
@@ -251,6 +257,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             badges,
             services,
             is_emergency: data.category === 'veterinary' ? data.is_emergency : false,
+            provides_daily_food: data.category === 'food_supply' ? data.provides_daily_food : false,
+            daily_food_notes: data.category === 'food_supply' && data.provides_daily_food ? data.daily_food_notes : '',
         };
 
         if (editingPartner) {
@@ -615,6 +623,11 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                                     {partner.is_featured && (
                                                         <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[9px] font-black uppercase">
                                                             Featured
+                                                        </span>
+                                                    )}
+                                                    {partner.provides_daily_food && (
+                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase">
+                                                            Daily Food
                                                         </span>
                                                     )}
                                                     {partner.badge_title && (
@@ -1069,6 +1082,36 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Active Listing</span>
                                     </label>
                                 </div>
+
+                                {data.category === 'food_supply' && (
+                                    <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 space-y-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.provides_daily_food}
+                                                onChange={(e) => setData('provides_daily_food', e.target.checked)}
+                                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                                            />
+                                            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                                                Provides Daily Shelter Food (1-Day Shelf Life — Needs Daily Volunteer Pickup)
+                                            </span>
+                                        </label>
+                                        {data.provides_daily_food && (
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase tracking-wider text-emerald-700/80 dark:text-emerald-300/80 mb-1">
+                                                    Daily Pickup Instructions / Notes
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={data.daily_food_notes}
+                                                    onChange={(e) => setData('daily_food_notes', e.target.value)}
+                                                    placeholder="e.g., Daily prepared food for shelter animals (1-day shelf life)"
+                                                    className="w-full px-3 py-2 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs bg-white dark:bg-slate-800 dark:text-white"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {!isVet && (
                                     <p className="text-[10px] text-gray-400 italic flex items-center gap-1">

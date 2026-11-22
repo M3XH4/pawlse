@@ -1,10 +1,27 @@
-import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2 } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+
+interface PartnerFoodPickupModel {
+    id: number;
+    pickup_date: string;
+    status: 'pending' | 'assigned' | 'fetched' | 'completed' | 'missed';
+    food_summary?: string | null;
+    volunteer_notes?: string | null;
+    fetched_at?: string | null;
+    partner?: {
+        id: number;
+        name: string;
+        address?: string | null;
+        operating_hours?: string | null;
+        daily_food_notes?: string | null;
+    } | null;
+}
 
 interface TaskModel {
     id: number;
@@ -47,6 +64,8 @@ interface TaskModel {
         location?: string | null;
         created_at?: string | null;
     } | null;
+    partner_food_pickup?: PartnerFoodPickupModel | null;
+    partnerFoodPickup?: PartnerFoodPickupModel | null;
 }
 
 interface AssignedTasksProps {
@@ -59,6 +78,9 @@ interface AssignedTasksProps {
 
 export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
     const activeTasks = tasks?.data || [];
+    const [confirmingTask, setConfirmingTask] = useState<TaskModel | null>(null);
+    const [volunteerNotes, setVolunteerNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleCancelTask = (taskId: number) => {
         if (!confirm('Are you sure you want to cancel this task assignment?')) {
@@ -68,6 +90,25 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
         router.delete(`/account/volunteer/assigned-tasks/${taskId}`, {
             preserveScroll: true,
         });
+    };
+
+    const handleConfirmFetched = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!confirmingTask) return;
+
+        setIsSubmitting(true);
+        router.post(
+            `/account/volunteer/assigned-tasks/${confirmingTask.id}/confirm-fetched`,
+            { volunteer_notes: volunteerNotes || null },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setConfirmingTask(null);
+                    setVolunteerNotes('');
+                },
+                onFinish: () => setIsSubmitting(false),
+            }
+        );
     };
 
     return (
@@ -86,6 +127,9 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                 <div className="flex flex-col gap-4">
                     {activeTasks.map((task) => {
                         const rescueReport = task.pet_report || task.petReport;
+                        const foodPickup = task.partner_food_pickup || task.partnerFoodPickup;
+                        const isFetched = foodPickup?.status === 'fetched';
+
                         return (
                             <DashboardCard key={task.id} className="p-6">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -95,6 +139,8 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                                 <Calendar size={24} />
                                             ) : rescueReport ? (
                                                 <Heart size={24} className="text-rose-500" />
+                                            ) : foodPickup ? (
+                                                <Store size={24} className="text-emerald-600" />
                                             ) : (
                                                 <Utensils size={24} />
                                             )}
@@ -110,14 +156,18 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                                                 : rescueReport.type === 'missing'
                                                                     ? `Missing Pet: ${rescueReport.name || rescueReport.pet_name || rescueReport.animal_type || `Case #${rescueReport.id}`}`
                                                                     : `Rescue: ${rescueReport.name || rescueReport.pet_name || rescueReport.animal_type || rescueReport.species || `Case #${rescueReport.id}`}`
-                                                            : (task.feeding_schedule?.zone || 'Assigned Task')}
+                                                            : foodPickup
+                                                                ? `Daily Food Pickup: ${foodPickup.partner?.name || 'Food Partner'}`
+                                                                : (task.feeding_schedule?.zone || 'Assigned Task')}
                                                 </h3>
                                                 <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${
                                                     task.event
                                                         ? 'bg-paw-orange/10 text-paw-orange'
                                                         : rescueReport
                                                             ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
-                                                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                            : foodPickup
+                                                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
                                                 }`}>
                                                     {task.event
                                                         ? 'Event'
@@ -127,10 +177,22 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                                                 : rescueReport.type === 'missing'
                                                                     ? 'Missing Search'
                                                                     : 'Emergency Rescue'
-                                                            : 'Feeding Route'}
+                                                            : foodPickup
+                                                                ? 'Daily Food Pickup'
+                                                                : 'Feeding Route'}
                                                 </span>
+                                                {foodPickup && (
+                                                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                                                        1-Day Shelf Life — Fetch Same Day
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="text-sm font-semibold text-gray-400 mb-3">Role: <span className="text-[#0B2340] dark:text-white">{task.role}</span></p>
+                                            {foodPickup?.food_summary && (
+                                                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+                                                    {foodPickup.food_summary}
+                                                </p>
+                                            )}
                                             
                                             <div className="flex gap-4 flex-wrap text-xs text-gray-500 font-bold">
                                                 {rescueReport ? (
@@ -143,6 +205,25 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                                             <div className="flex items-center gap-1">
                                                                 <MapPin size={14} />
                                                                 <span>{rescueReport.landmark || rescueReport.location}</span>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : foodPickup ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar size={14} />
+                                                            <span>{foodPickup.pickup_date}</span>
+                                                        </div>
+                                                        {foodPickup.partner?.operating_hours && (
+                                                            <div className="flex items-center gap-1">
+                                                                <Clock size={14} />
+                                                                <span>{foodPickup.partner.operating_hours}</span>
+                                                            </div>
+                                                        )}
+                                                        {foodPickup.partner?.address && (
+                                                            <div className="flex items-center gap-1">
+                                                                <MapPin size={14} />
+                                                                <span>{foodPickup.partner.address}</span>
                                                             </div>
                                                         )}
                                                     </>
@@ -167,21 +248,55 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 self-start sm:self-center">
-                                    <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1 rounded-full">
-                                        {task.status}
-                                    </span>
-                                    {task.status === 'pending' && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCancelTask(task.id)}
-                                            className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
-                                            title="Cancel this assignment"
-                                        >
-                                            <Trash2 size={12} />
-                                            <span>Leave</span>
-                                        </button>
-                                    )}
+                                    <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                                        {foodPickup ? (
+                                            isFetched ? (
+                                                <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-black uppercase px-3 py-1.5 rounded-full">
+                                                    <CheckCircle2 size={14} />
+                                                    Fetched — Awaiting Admin Verification
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setConfirmingTask(task);
+                                                            setVolunteerNotes('');
+                                                        }}
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-emerald-700"
+                                                    >
+                                                        <PackageCheck size={14} />
+                                                        Confirm Fetched
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancelTask(task.id)}
+                                                        className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                                        title="Cancel this assignment"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                        <span>Leave</span>
+                                                    </button>
+                                                </>
+                                            )
+                                        ) : (
+                                            <>
+                                                <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1 rounded-full">
+                                                    {task.status}
+                                                </span>
+                                                {task.status === 'pending' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancelTask(task.id)}
+                                                        className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                                        title="Cancel this assignment"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                        <span>Leave</span>
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </DashboardCard>
@@ -208,6 +323,54 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                             })}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Confirm Food Pickup Fetched Modal */}
+            {confirmingTask && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <PackageCheck className="text-emerald-600" /> Confirm Food Fetched
+                        </h3>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">
+                            Confirm that you have picked up today's food batch from{' '}
+                            <span className="font-bold text-[#0B2340] dark:text-white">
+                                {(confirmingTask.partner_food_pickup || confirmingTask.partnerFoodPickup)?.partner?.name || 'the partner'}
+                            </span>{' '}
+                            and are delivering it to the shelter.
+                        </p>
+                        <form onSubmit={handleConfirmFetched} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    Pickup Notes (Optional)
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="e.g., Picked up 2 containers of prepared food at 11:30 AM..."
+                                    value={volunteerNotes}
+                                    onChange={(e) => setVolunteerNotes(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-transparent focus:border-emerald-500 outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmingTask(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                                >
+                                    {isSubmitting ? 'Confirming...' : 'Yes, Confirm Fetched'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </DashboardSectionPage>
