@@ -111,8 +111,8 @@ export function DashboardSidebar({
                 if (theme === 'volunteer') {
                     return {
                         title: 'Apply to Foster',
-                        href: '/account/volunteer/status?tab=foster',
-                        match: '/account/volunteer/status?tab=foster',
+                        href: '/account/volunteer/apply-foster',
+                        match: '/account/volunteer/apply-foster',
                         icon: item.icon,
                     };
                 }

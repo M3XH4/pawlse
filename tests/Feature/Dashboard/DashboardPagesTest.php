@@ -38,6 +38,7 @@ test('all volunteer dashboard pages are reachable for volunteers', function (str
     ['account.volunteer.index', 'volunteer/profile-information'],
     ['account.volunteer.profile', 'volunteer/profile-information'],
     ['account.volunteer.status', 'volunteer/volunteer-status'],
+    ['account.volunteer.apply-foster.show', 'volunteer/apply-foster'],
     ['account.volunteer.assigned-tasks', 'volunteer/assigned-tasks'],
     ['account.volunteer.participation-history', 'volunteer/participation-history'],
     ['account.volunteer.certificates', 'volunteer/certificates'],

@@ -17,6 +17,8 @@ class FeedingSchedule extends Model
     protected $casts = [
         'volunteers' => 'integer',
         'strays' => 'integer',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     /**

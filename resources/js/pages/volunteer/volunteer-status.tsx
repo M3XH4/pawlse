@@ -1,21 +1,13 @@
-import { useState, useEffect } from 'react';
-import { router, Link } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { toast } from 'sonner';
+import { Link } from '@inertiajs/react';
 import {
     Zap,
     Clock,
     CheckCircle2,
     ClipboardList,
-    Award,
     HeartHandshake,
     MapPin,
     Heart,
-    Home,
-    AlertCircle,
     Sparkles,
-    X,
-    ChevronRight,
 } from 'lucide-react';
 import {
     DashboardCard,
@@ -51,49 +43,6 @@ interface VolunteerStatusProps {
 }
 
 export default function VolunteerStatus({ application, fosterParent, stats }: VolunteerStatusProps) {
-    const [showApplyModal, setShowApplyModal] = useState(false);
-    const [capacity, setCapacity] = useState(fosterParent?.capacity || 2);
-    const [location, setLocation] = useState(fosterParent?.location || '');
-    const [petPreference, setPetPreference] = useState(fosterParent?.pet_preference || 'both');
-    const [housingType, setHousingType] = useState(fosterParent?.housing_type || 'Single Family Home with Yard');
-    const [notes, setNotes] = useState(fosterParent?.notes || '');
-    const [submitting, setSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') === 'foster' && fosterParent?.status !== 'approved') {
-                setShowApplyModal(true);
-            }
-        }
-    }, [fosterParent]);
-
-    const handleApplySubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitting(true);
-        router.post(
-            '/account/volunteer/apply-foster',
-            {
-                capacity,
-                location,
-                pet_preference: petPreference,
-                housing_type: housingType,
-                notes: notes || null,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setShowApplyModal(false);
-                    toast.success('Foster caretaker application submitted successfully!');
-                },
-                onError: (errors) => {
-                    toast.error(Object.values(errors)[0] as string || 'Failed to submit foster application.');
-                },
-                onFinish: () => setSubmitting(false),
-            },
-        );
-    };
-
     return (
         <DashboardSectionPage
             title="Volunteer Status"
@@ -259,160 +208,23 @@ export default function VolunteerStatus({ application, fosterParent, stats }: Vo
                                 <Heart size={14} /> Open My Foster Pets Dashboard
                             </Link>
                         ) : fosterParent?.status === 'pending' ? (
-                            <button
-                                type="button"
-                                onClick={() => setShowApplyModal(true)}
+                            <Link
+                                href="/account/volunteer/apply-foster"
                                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border border-gray-300 dark:border-gray-700 text-[#0B2340] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                             >
                                 Edit Application Details
-                            </button>
+                            </Link>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={() => setShowApplyModal(true)}
+                            <Link
+                                href="/account/volunteer/apply-foster"
                                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-paw-orange text-white hover:bg-paw-orange/90 shadow-xs transition-colors"
                             >
                                 <HeartHandshake size={15} /> Apply to Become a Foster Parent
-                            </button>
+                            </Link>
                         )}
                     </div>
                 </DashboardCard>
             </div>
-
-            {/* APPLY TO FOSTER MODAL */}
-            {showApplyModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-                    <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 bg-orange-100 dark:bg-orange-950 text-paw-orange rounded-xl">
-                                    <HeartHandshake size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
-                                        Foster Parent Application
-                                    </h3>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                        Apply to temporarily foster animals in your home
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowApplyModal(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold p-1"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleApplySubmit} className="mt-4 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
-                                    <MapPin size={13} className="text-paw-orange" /> Foster Home Location / Address *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={location}
-                                    onChange={(e) => setLocation(e.target.value)}
-                                    placeholder="e.g. Barangay San Antonio, Pasig City / 123 Maple St."
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-gray-900 dark:text-white"
-                                />
-                                <p className="text-[10px] text-gray-400 mt-1">
-                                    Where the pet will reside during foster care. Helps shelter team coordinate transport & veterinary visits.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Caretaker Capacity *
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={10}
-                                        required
-                                        value={capacity}
-                                        onChange={(e) => setCapacity(parseInt(e.target.value, 10))}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-gray-900 dark:text-white"
-                                    />
-                                    <p className="text-[10px] text-gray-400 mt-1">
-                                        Max pets you can foster at once
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Pet Preference *
-                                    </label>
-                                    <ModernSelect
-                                        size="sm"
-                                        searchable={false}
-                                        value={petPreference}
-                                        onChange={(val) => setPetPreference(val)}
-                                        options={[
-                                            { value: 'both', label: 'Any / Both Dogs & Cats' },
-                                            { value: 'dogs', label: 'Dogs Only' },
-                                            { value: 'cats', label: 'Cats Only' },
-                                        ]}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                    Housing Environment & Setup *
-                                </label>
-                                <ModernSelect
-                                    size="sm"
-                                    searchable={false}
-                                    value={housingType}
-                                    onChange={(val) => setHousingType(val)}
-                                    options={[
-                                        { value: 'Single Family Home with Yard', label: 'Single Family Home with Fenced Yard' },
-                                        { value: 'Townhouse with Courtyard', label: 'Townhouse with Courtyard' },
-                                        { value: 'Pet-Friendly Apartment / Condo', label: 'Pet-Friendly Apartment / Condo' },
-                                        { value: 'Rural / Farm Setting', label: 'Rural / Farm Setting' },
-                                        { value: 'Other Residential', label: 'Other Residential Setup' },
-                                    ]}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                    Experience, Other Pets & Daily Routine Notes
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Tell us about previous pet experience, existing pets at home, daily schedule, or willingness to nurse sick/post-surgery rescues..."
-                                    className="w-full text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-gray-900 dark:text-white"
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowApplyModal(false)}
-                                    className="px-4 py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting || !location.trim()}
-                                    className="px-5 py-2.5 text-xs font-bold rounded-xl bg-paw-orange text-white hover:bg-paw-orange/90 transition-colors shadow-xs"
-                                >
-                                    {submitting ? 'Submitting Application...' : 'Submit Foster Application'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </DashboardSectionPage>
     );
 }

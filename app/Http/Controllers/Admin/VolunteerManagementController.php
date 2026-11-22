@@ -319,9 +319,14 @@ class VolunteerManagementController extends Controller
 
         $previousStatus = $task->status;
 
+        $hoursLogged = $validated['hours_logged'] ?? null;
+        if ($validated['status'] === 'completed' && $hoursLogged === null) {
+            $hoursLogged = $task->resolveAutomaticHours();
+        }
+
         $task->update([
             'status' => $validated['status'],
-            'hours_logged' => $validated['hours_logged'] ?? $task->hours_logged,
+            'hours_logged' => $hoursLogged ?? $task->hours_logged,
         ]);
 
         AuditLog::log('volunteer_task_status_update', "Updated status of assigned task ID {$task->id} to {$validated['status']}");

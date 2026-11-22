@@ -186,6 +186,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('profile', [VolunteerDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('status', [VolunteerDashboardController::class, 'status'])->name('status');
     Route::get('assigned-tasks', [VolunteerDashboardController::class, 'assignedTasks'])->name('assigned-tasks');
+    Route::get('map-pins', [VolunteerDashboardController::class, 'mapPins'])->name('map-pins');
     Route::post('assigned-tasks/{task}/confirm-fetched', [VolunteerDashboardController::class, 'confirmFoodPickupFetched'])->name('assigned-tasks.confirm-fetched');
     Route::delete('assigned-tasks/{task}', [VolunteerDashboardController::class, 'cancelTask'])->name('assigned-tasks.cancel');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
@@ -196,6 +197,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('rescue-reports/{report}/status', [PetReportController::class, 'updateStatus'])->name('rescue-reports.update-status');
     Route::get('foster-care', [FosterCareController::class, 'index'])->name('foster-care');
     Route::post('foster-care/{placement}/updates', [FosterCareController::class, 'storeUpdate'])->name('foster-care.updates.store');
+    Route::get('apply-foster', [FosterCareController::class, 'showApplyFoster'])->name('apply-foster.show');
     Route::post('apply-foster', [FosterCareController::class, 'applyFoster'])->name('apply-foster');
     Route::inertia('notifications', 'volunteer/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');

@@ -173,6 +173,7 @@ export default function VolunteerManagement({
     // Complete Task modal state
     const [completingTask, setCompletingTask] = useState<TaskModel | null>(null);
     const [hoursLogged, setHoursLogged] = useState('2.0');
+    const [autoLogHours, setAutoLogHours] = useState(true);
 
     // Daily Food Pickup modals state
     const todayIso = new Date().toISOString().slice(0, 10);
@@ -322,7 +323,7 @@ export default function VolunteerManagement({
 
         router.post(`${basePath}/tasks/${completingTask.id}/status`, {
             status: 'completed',
-            hours_logged: parseFloat(hoursLogged)
+            hours_logged: autoLogHours ? null : parseFloat(hoursLogged)
         }, {
             onSuccess: () => {
                 toast.success('Task marked as completed.');
@@ -684,6 +685,7 @@ export default function VolunteerManagement({
                                                             <button
                                                                 onClick={() => {
                                                                     setCompletingTask(task);
+                                                                    setAutoLogHours(true);
                                                                     setHoursLogged('2.0');
                                                                 }}
                                                                 className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
@@ -1090,17 +1092,37 @@ export default function VolunteerManagement({
                     <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
                         <h3 className="font-fredoka text-xl font-bold mb-4 text-[#0B2340] dark:text-white">Verify Task Completion</h3>
                         <form onSubmit={handleCompleteSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Hours Logged *</label>
+                            <label className="flex items-start gap-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-slate-800/60 p-3 cursor-pointer">
                                 <input
-                                    required
-                                    type="number"
-                                    step="0.5"
-                                    value={hoursLogged}
-                                    onChange={(e) => setHoursLogged(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    type="checkbox"
+                                    checked={autoLogHours}
+                                    onChange={(e) => setAutoLogHours(e.target.checked)}
+                                    className="mt-0.5 rounded border-gray-300 text-paw-orange focus:ring-paw-orange"
                                 />
-                            </div>
+                                <div className="text-xs">
+                                    <span className="font-bold text-[#0B2340] dark:text-white block">
+                                        Automatically calculate hours
+                                    </span>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        Uses task type &amp; elapsed time (4 hrs events, 1.5 hrs feeding, 1 hr pickup, 0.5–8 hrs rescue).
+                                    </span>
+                                </div>
+                            </label>
+                            {!autoLogHours && (
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Hours Logged *</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        max="999"
+                                        value={hoursLogged}
+                                        onChange={(e) => setHoursLogged(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    />
+                                </div>
+                            )}
                             <div className="flex justify-end gap-2">
                                 <button
                                     type="button"

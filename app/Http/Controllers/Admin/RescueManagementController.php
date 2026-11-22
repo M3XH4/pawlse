@@ -159,7 +159,13 @@ class RescueManagementController extends Controller
             AssignedTask::query()
                 ->where('pet_report_id', $report->id)
                 ->where('status', 'pending')
-                ->update(['status' => 'completed']);
+                ->get()
+                ->each(function (AssignedTask $task): void {
+                    $task->update([
+                        'status' => 'completed',
+                        'hours_logged' => $task->resolveAutomaticHours(),
+                    ]);
+                });
         } elseif ($validated['status'] === 'cancelled') {
             AssignedTask::query()
                 ->where('pet_report_id', $report->id)

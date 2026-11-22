@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\Certificate;
+use App\Models\FeedingSchedule;
 use App\Models\FosterParent;
 use App\Models\PartnerFoodPickup;
+use App\Models\PetReport;
+use App\Models\SystemSetting;
 use App\Models\VolunteerApplication;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -89,7 +93,96 @@ class VolunteerDashboardController extends Controller
 
         return Inertia::render('volunteer/assigned-tasks', [
             'tasks' => $tasks,
+            'volunteerMapEnabled' => $this->isVolunteerMapEnabled(),
         ]);
+    }
+
+    /**
+     * Return active feeding routes and rescue/SOS report pins for the volunteer Leaflet map.
+     */
+    public function mapPins(Request $request): JsonResponse
+    {
+        if (! $this->isVolunteerMapEnabled()) {
+            return response()->json([
+                'message' => 'Volunteer operations map is currently disabled by the administrator.',
+            ], 403);
+        }
+
+        $user = $request->user();
+
+        $feedingRoutes = FeedingSchedule::query()
+            ->where('status', 'active')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->orderBy('zone')
+            ->get()
+            ->map(fn (FeedingSchedule $schedule): array => [
+                'id' => 'feeding-'.$schedule->id,
+                'record_id' => $schedule->id,
+                'category' => 'feeding_route',
+                'title' => $schedule->zone,
+                'latitude' => (float) $schedule->latitude,
+                'longitude' => (float) $schedule->longitude,
+                'day' => $schedule->day,
+                'time' => $schedule->time,
+                'volunteers' => $schedule->volunteers,
+                'strays' => $schedule->strays,
+                'status' => $schedule->status,
+            ])
+            ->values();
+
+        $reports = PetReport::with(['photos'])
+            ->whereIn('type', ['rescue', 'sos'])
+            ->whereIn('status', ['pending', 'assigned', 'in_progress'])
+            ->where('is_duplicate', false)
+            ->latest()
+            ->get()
+            ->map(function (PetReport $report) use ($user): ?array {
+                $coords = $report->getCoordinates();
+                if ($coords === null) {
+                    return null;
+                }
+
+                $firstPhoto = $report->photos->first();
+
+                return [
+                    'id' => 'report-'.$report->id,
+                    'record_id' => $report->id,
+                    'category' => $report->type === 'sos' ? 'sos' : 'rescue',
+                    'title' => $report->name ?: ucfirst((string) $report->animal_type).' '.($report->type === 'sos' ? 'SOS Alert' : 'Rescue Report'),
+                    'latitude' => $coords['lat'],
+                    'longitude' => $coords['lng'],
+                    'type' => $report->type,
+                    'status' => $report->status,
+                    'urgency' => $report->urgency,
+                    'situation_type' => $report->situation_type,
+                    'animal_type' => $report->animal_type,
+                    'breed' => $report->breed,
+                    'color' => $report->color,
+                    'location' => $report->location,
+                    'description' => $report->description,
+                    'is_assigned_to_me' => $report->assigned_volunteer_id === $user->id,
+                    'photo_path' => $firstPhoto?->path,
+                    'created_at' => $report->created_at?->diffForHumans(),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'feeding_routes' => $feedingRoutes,
+            'reports' => $reports,
+        ]);
+    }
+
+    /**
+     * Check whether the volunteer operations map feature is enabled in system settings.
+     */
+    protected function isVolunteerMapEnabled(): bool
+    {
+        $settings = SystemSetting::getValue('system_settings', []);
+
+        return (bool) ($settings['volunteer_map_enabled'] ?? true);
     }
 
     /**

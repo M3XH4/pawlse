@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2, Map as MapIcon } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 
 interface PartnerFoodPickupModel {
     id: number;
@@ -74,13 +75,15 @@ interface AssignedTasksProps {
         links: any[];
         total: number;
     };
+    volunteerMapEnabled?: boolean;
 }
 
-export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
+export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = true }: AssignedTasksProps) {
     const activeTasks = tasks?.data || [];
     const [confirmingTask, setConfirmingTask] = useState<TaskModel | null>(null);
     const [volunteerNotes, setVolunteerNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
 
     const handleCancelTask = (taskId: number) => {
         if (!confirm('Are you sure you want to cancel this task assignment?')) {
@@ -115,7 +118,21 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
         <DashboardSectionPage
             title="Assigned Tasks"
             description="View and manage your active rescue assignments, feeding routes, and outreach tasks."
-            badge={<DashboardMetricBadge icon={<ClipboardList className="h-4 w-4" />} label={`${tasks?.total || 0} Tasks`} />}
+            badge={
+                <div className="flex flex-wrap items-center gap-2">
+                    {volunteerMapEnabled && (
+                        <button
+                            type="button"
+                            onClick={() => setIsMapOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-paw-orange px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer"
+                        >
+                            <MapIcon className="h-3.5 w-3.5" />
+                            Open Operations Map
+                        </button>
+                    )}
+                    <DashboardMetricBadge icon={<ClipboardList className="h-4 w-4" />} label={`${tasks?.total || 0} Tasks`} />
+                </div>
+            }
         >
             {activeTasks.length === 0 ? (
                 <DashboardCard className="p-8 text-center text-gray-500 font-bold">
@@ -372,6 +389,13 @@ export default function VolunteerAssignedTasks({ tasks }: AssignedTasksProps) {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {volunteerMapEnabled && (
+                <VolunteerMapModal
+                    open={isMapOpen}
+                    onClose={() => setIsMapOpen(false)}
+                />
             )}
         </DashboardSectionPage>
     );

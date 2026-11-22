@@ -16,7 +16,8 @@ import {
     CreditCard,
     BookOpen,
     FlaskConical,
-    MapPin
+    MapPin,
+    Map as MapIcon
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
@@ -41,6 +42,7 @@ interface SystemSettingsProps {
         ai_breed_guide_enabled?: boolean;
         sandbox_mode?: boolean;
         sos_gps_enabled?: boolean;
+        volunteer_map_enabled?: boolean;
     };
 }
 
@@ -58,6 +60,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         ai_breed_guide_enabled: settings.ai_breed_guide_enabled ?? true,
         sandbox_mode: settings.sandbox_mode ?? false,
         sos_gps_enabled: settings.sos_gps_enabled ?? true,
+        volunteer_map_enabled: settings.volunteer_map_enabled ?? true,
     });
 
     // Quick toggle modal state
@@ -330,6 +333,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         When enabled, the SOS report page uses GPS with OpenStreetMap / Google Maps to find the nearest veterinary clinics. When disabled, it displays the default Iligan City clinic list without live GPS map lookups.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-emerald-200 bg-emerald-50/20 dark:border-emerald-950/40 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="volunteer_map_enabled"
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 mt-1"
+                                    checked={data.volunteer_map_enabled}
+                                    onChange={(e) => setData('volunteer_map_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="volunteer_map_enabled"
+                                        className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"
+                                    >
+                                        <MapIcon className="h-4 w-4 text-emerald-600" />
+                                        Enable Volunteer Operations Map (Leaflet)
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, volunteers can open an interactive Leaflet map modal from their dashboard to view feeding routes, rescue reports, and SOS pins with side-by-side details.
                                     </p>
                                 </div>
                             </div>

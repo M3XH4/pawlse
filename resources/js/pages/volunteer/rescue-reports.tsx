@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, MapPin, Calendar, Search, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
+import { FileText, MapPin, Calendar, Search, CheckCircle2, Clock, XCircle, AlertCircle, Map as MapIcon } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import {
     DashboardCard,
@@ -8,6 +8,7 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
+import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 
 interface PetReport {
     id: number;
@@ -45,11 +46,13 @@ interface VolunteerRescueReportsProps {
         search: string;
         status: string;
     };
+    volunteerMapEnabled?: boolean;
 }
 
-export default function VolunteerRescueReports({ reports, filters }: VolunteerRescueReportsProps) {
+export default function VolunteerRescueReports({ reports, filters, volunteerMapEnabled = true }: VolunteerRescueReportsProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'assigned');
+    const [isMapOpen, setIsMapOpen] = useState(false);
 
     const handleSearch = () => {
         router.get(
@@ -115,7 +118,21 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
         <DashboardSectionPage
             title="Assigned Rescue Reports"
             description="Track and handle stray animal and emergency rescue missions assigned to you."
-            badge={<DashboardMetricBadge icon={<FileText className="h-4 w-4" />} label={`${reports?.total || 0} Assignments`} />}
+            badge={
+                <div className="flex flex-wrap items-center gap-2">
+                    {volunteerMapEnabled && (
+                        <button
+                            type="button"
+                            onClick={() => setIsMapOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-paw-orange px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer"
+                        >
+                            <MapIcon className="h-3.5 w-3.5" />
+                            Open Operations Map
+                        </button>
+                    )}
+                    <DashboardMetricBadge icon={<FileText className="h-4 w-4" />} label={`${reports?.total || 0} Assignments`} />
+                </div>
+            }
         >
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -271,6 +288,13 @@ export default function VolunteerRescueReports({ reports, filters }: VolunteerRe
                         </div>
                     )}
                 </div>
+            )}
+
+            {volunteerMapEnabled && (
+                <VolunteerMapModal
+                    open={isMapOpen}
+                    onClose={() => setIsMapOpen(false)}
+                />
             )}
         </DashboardSectionPage>
     );

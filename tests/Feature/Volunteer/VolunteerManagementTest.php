@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Models\AssignedTask;
 use App\Models\Event;
+use App\Models\FeedingSchedule;
 use App\Models\FosterParent;
 use App\Models\PetReport;
 use App\Models\User;
@@ -670,4 +671,54 @@ test('volunteer profile information endpoint returns role-specific credentials',
         ->where('profile.foster_preference', 'dogs')
         ->where('profile.foster_needs', 'Fenced yard')
     );
+});
+
+test('completing a volunteer task without hours_logged automatically calculates hours', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $schedule = FeedingSchedule::factory()->create();
+
+    $task = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'feeding_schedule_id' => $schedule->id,
+        'role' => 'Feeder',
+        'status' => 'pending',
+        'hours_logged' => 0,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.update-task-status', $task), [
+            'status' => 'completed',
+            'hours_logged' => null,
+        ])
+        ->assertRedirect();
+
+    $task->refresh();
+    expect($task->status)->toBe('completed')
+        ->and((float) $task->hours_logged)->toBe(1.5);
+});
+
+test('resolving a rescue report automatically logs hours on the volunteer task', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $report = PetReport::factory()->create(['status' => 'in_progress']);
+
+    $task = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'pet_report_id' => $report->id,
+        'role' => 'Rescuer',
+        'status' => 'pending',
+        'hours_logged' => 0,
+        'created_at' => now()->subHours(2),
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('account.admin.rescue-management.update-status', $report), [
+            'status' => 'resolved',
+        ])
+        ->assertRedirect();
+
+    $task->refresh();
+    expect($task->status)->toBe('completed')
+        ->and((float) $task->hours_logged)->toBe(2.0);
 });

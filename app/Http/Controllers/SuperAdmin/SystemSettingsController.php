@@ -28,6 +28,7 @@ class SystemSettingsController extends Controller
             'ai_breed_guide_enabled' => true,
             'sandbox_mode' => false,
             'sos_gps_enabled' => true,
+            'volunteer_map_enabled' => true,
         ]);
 
         if (! isset($settings['maintenance_message'])) {
@@ -48,6 +49,10 @@ class SystemSettingsController extends Controller
 
         if (! isset($settings['sos_gps_enabled'])) {
             $settings['sos_gps_enabled'] = true;
+        }
+
+        if (! isset($settings['volunteer_map_enabled'])) {
+            $settings['volunteer_map_enabled'] = true;
         }
 
         return Inertia::render('super-admin/system-settings', [
@@ -71,6 +76,7 @@ class SystemSettingsController extends Controller
             'ai_breed_guide_enabled' => ['nullable', 'boolean'],
             'sandbox_mode' => ['nullable', 'boolean'],
             'sos_gps_enabled' => ['nullable', 'boolean'],
+            'volunteer_map_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = $request->only([
@@ -86,6 +92,7 @@ class SystemSettingsController extends Controller
         $settings['ai_breed_guide_enabled'] = (bool) $request->input('ai_breed_guide_enabled', false);
         $settings['sandbox_mode'] = (bool) $request->input('sandbox_mode', false);
         $settings['sos_gps_enabled'] = (bool) $request->input('sos_gps_enabled', false);
+        $settings['volunteer_map_enabled'] = (bool) $request->input('volunteer_map_enabled', false);
 
         if (empty($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';

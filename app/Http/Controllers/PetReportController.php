@@ -812,12 +812,15 @@ class PetReportController extends Controller
 
         $reports = $reportsQuery->latest()->paginate(10)->withQueryString();
 
+        $systemSettings = SystemSetting::getValue('system_settings', []);
+
         return Inertia::render('volunteer/rescue-reports', [
             'reports' => $reports,
             'filters' => [
                 'search' => $search,
                 'status' => $statusFilter,
             ],
+            'volunteerMapEnabled' => (bool) ($systemSettings['volunteer_map_enabled'] ?? true),
         ]);
     }
 
@@ -848,7 +851,13 @@ class PetReportController extends Controller
                 ->where('pet_report_id', $report->id)
                 ->where('user_id', $user->id)
                 ->where('status', 'pending')
-                ->update(['status' => 'completed']);
+                ->get()
+                ->each(function (AssignedTask $task): void {
+                    $task->update([
+                        'status' => 'completed',
+                        'hours_logged' => $task->resolveAutomaticHours(),
+                    ]);
+                });
         } elseif ($validated['status'] === 'cancelled') {
             AssignedTask::query()
                 ->where('pet_report_id', $report->id)

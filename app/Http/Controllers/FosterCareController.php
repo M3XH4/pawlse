@@ -216,6 +216,33 @@ class FosterCareController extends Controller
     }
 
     /**
+     * Show the Apply to Foster page in the volunteer dashboard.
+     */
+    public function showApplyFoster(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->isApprovedFosterParent()) {
+            return redirect()->route('account.volunteer.foster-care');
+        }
+
+        $fosterParent = FosterParent::where('user_id', $user->id)->first();
+
+        return Inertia::render('volunteer/apply-foster', [
+            'fosterParent' => $fosterParent ? [
+                'id' => $fosterParent->id,
+                'status' => $fosterParent->status,
+                'capacity' => $fosterParent->capacity,
+                'location' => $fosterParent->location,
+                'pet_preference' => $fosterParent->pet_preference,
+                'housing_type' => $fosterParent->housing_type,
+                'notes' => $fosterParent->notes,
+                'created_at' => $fosterParent->created_at ? $fosterParent->created_at->toDateString() : null,
+            ] : null,
+        ]);
+    }
+
+    /**
      * Submit an application to become a Foster Parent from the volunteer dashboard.
      */
     public function applyFoster(Request $request): RedirectResponse

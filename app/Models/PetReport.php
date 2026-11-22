@@ -17,6 +17,8 @@ class PetReport extends Model
     protected $casts = [
         'is_duplicate' => 'boolean',
         'last_seen_date' => 'datetime',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     protected static function booted()
@@ -83,11 +85,20 @@ class PetReport extends Model
     }
 
     /**
-     * Parse coordinates from location string
+     * Resolve coordinates from explicit lat/lng columns or location string.
+     *
+     * @return array{lat: float, lng: float}|null
      */
     public function getCoordinates(): ?array
     {
-        if (preg_match('/^\s*([\d\.-]+)\s*,\s*([\d\.-]+)/', $this->location, $matches)) {
+        if ($this->latitude !== null && $this->longitude !== null) {
+            return [
+                'lat' => (float) $this->latitude,
+                'lng' => (float) $this->longitude,
+            ];
+        }
+
+        if (preg_match('/^\s*([\d\.-]+)\s*,\s*([\d\.-]+)/', (string) $this->location, $matches)) {
             return [
                 'lat' => (float) $matches[1],
                 'lng' => (float) $matches[2],

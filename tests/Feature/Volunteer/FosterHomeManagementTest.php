@@ -13,6 +13,7 @@ use App\Notifications\FosterPlacementAssignedNotification;
 use App\Notifications\FosterPlacementEndedNotification;
 use App\Notifications\FosterPlacementTransferredNotification;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('admins can view foster management page', function () {
     $admin = User::factory()->admin()->create();
@@ -568,6 +569,27 @@ test('admin can authorize foster parent with location and preferences', function
         ->and($fosterParent->pet_preference)->toBe('dogs')
         ->and($fosterParent->housing_type)->toBe('House with fenced yard')
         ->and($fosterParent->status)->toBe('approved');
+});
+
+test('volunteer can view the apply to foster page', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.apply-foster.show'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('volunteer/apply-foster'));
+});
+
+test('approved foster parent visiting apply to foster page is redirected to foster care dashboard', function () {
+    $volunteer = User::factory()->volunteer()->create();
+    FosterParent::factory()->create([
+        'user_id' => $volunteer->id,
+        'status' => 'approved',
+    ]);
+
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.apply-foster.show'))
+        ->assertRedirect(route('account.volunteer.foster-care'));
 });
 
 test('volunteer can apply to become foster parent with location and preferences', function () {
