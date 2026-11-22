@@ -33,7 +33,13 @@ class AdoptionManagementController extends Controller
 {
     public function index(Request $request): Response
     {
-        return Inertia::render('admin/adoption-management', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/adoption-management' : 'admin/adoption-management';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/adoption-management' : '/account/admin/adoption-management';
+
+        return Inertia::render($view, [
             'applications' => fn () => AdoptionApplication::with(['user', 'shelterAnimal', 'files', 'messages'])
                 ->latest()
                 ->get()
@@ -256,6 +262,8 @@ class AdoptionManagementController extends Controller
                 'blackout_dates' => [],
                 'is_accepting_visits' => true,
             ]),
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

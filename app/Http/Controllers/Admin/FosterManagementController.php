@@ -78,7 +78,13 @@ class FosterManagementController extends Controller
             ];
         };
 
-        return Inertia::render('admin/foster-management', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/foster-management' : 'admin/foster-management';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/foster-management' : '/account/admin/foster-management';
+
+        return Inertia::render($view, [
             'metrics' => fn () => [
                 'active_placements_count' => FosterPlacement::where('status', 'active')->count(),
                 'available_pets_count' => ShelterAnimal::where('status', ShelterAnimalStatus::Available)->count(),
@@ -245,6 +251,8 @@ class FosterManagementController extends Controller
                 'search' => $search,
                 'status' => $statusFilter,
             ],
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LogOut, Menu, User, Zap } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, User, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
@@ -75,6 +75,36 @@ export function DashboardSidebar({
         };
     }, []);
 
+    const isNavItemActive = (match: string) =>
+        currentUrl === match || currentUrl.startsWith(`${match}/`);
+
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+        const initial: Record<string, boolean> = {};
+        for (const item of navItems) {
+            if (item.children?.some((child) => isNavItemActive(child.match))) {
+                initial[item.title] = true;
+            }
+        }
+        return initial;
+    });
+
+    useEffect(() => {
+        for (const item of navItems) {
+            if (item.children?.some((child) => isNavItemActive(child.match))) {
+                setOpenGroups((prev) => (prev[item.title] ? prev : { ...prev, [item.title]: true }));
+            }
+        }
+    }, [currentUrl, navItems]);
+
+    const toggleGroup = (title: string) => {
+        if (collapsed) {
+            onToggleCollapsed();
+            setOpenGroups((prev) => ({ ...prev, [title]: true }));
+            return;
+        }
+        setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+    };
+
     const displayedNavItems = navItems
         .map((item) => {
             if (item.title === 'My Foster Pets' && !isFosterParent) {
@@ -125,7 +155,7 @@ export function DashboardSidebar({
             id="dashboard-sidebar"
             data-collapsed={collapsed ? 'true' : 'false'}
             className={cn(
-                'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen w-[280px] shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white shadow-[4px_0_24px_rgba(15,23,42,0.06)] transition-[width,transform] duration-300 ease-out dark:border-[#1E293B] dark:bg-[#0F172A] dark:shadow-[4px_0_24px_rgba(0,0,0,0.35)] lg:sticky lg:top-0 lg:z-40 lg:h-screen lg:max-h-screen lg:self-start lg:translate-x-0 lg:shadow-[4px_0_24px_rgba(15,23,42,0.04)]',
+                'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen w-[320px] shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white shadow-[4px_0_24px_rgba(15,23,42,0.06)] transition-[width,transform] duration-300 ease-out dark:border-[#1E293B] dark:bg-[#0F172A] dark:shadow-[4px_0_24px_rgba(0,0,0,0.35)] lg:sticky lg:top-0 lg:z-40 lg:h-screen lg:max-h-screen lg:self-start lg:translate-x-0 lg:shadow-[4px_0_24px_rgba(15,23,42,0.04)]',
                 open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
                 collapsed && 'lg:w-[5.5rem]',
             )}
@@ -133,7 +163,7 @@ export function DashboardSidebar({
         >
             <div
                 className={cn(
-                    'flex w-[280px] items-center gap-3 px-5 py-6 transition-[padding,gap] duration-300 ease-out',
+                    'flex w-[320px] items-center gap-3 px-5 py-6 transition-[padding,gap] duration-300 ease-out',
                     collapsed && 'lg:gap-0 lg:px-[calc((5.5rem-2.75rem)/2)]',
                 )}
             >
@@ -160,7 +190,7 @@ export function DashboardSidebar({
                 <div
                     className={cn(
                         'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out',
-                        collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[180px] opacity-100',
+                        collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[220px] opacity-100',
                     )}
                 >
                     <p className="truncate font-fredoka text-lg font-bold leading-none tracking-wide text-[#0B2340] dark:text-[#F8FAFC]">
@@ -174,7 +204,7 @@ export function DashboardSidebar({
 
             <nav
                 className={cn(
-                    'w-[280px] flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4 transition-[padding] duration-300 ease-out',
+                    'w-[320px] flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4 transition-[padding] duration-300 ease-out',
                     collapsed && 'lg:px-0',
                 )}
                 aria-label={`${brandLabel} sections`}
@@ -183,16 +213,139 @@ export function DashboardSidebar({
                     const Icon = item.icon;
                     const badgeCount = getTabNotificationCount(item, notifications, isRead);
 
+                    if (item.children && item.children.length > 0) {
+                        const isGroupActive = item.children.some((child) =>
+                            isNavItemActive(child.match),
+                        );
+                        const isOpen = Boolean(openGroups[item.title]);
+                        const showGroupBadge =
+                            badgeCount > 0 && badgeStyle !== 'none' && (!isOpen || collapsed);
+
+                        return (
+                            <div key={item.title} className="space-y-1">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleGroup(item.title)}
+                                    aria-expanded={isOpen && !collapsed}
+                                    title={item.title}
+                                    className={cn(
+                                        'group relative flex min-h-[44px] w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-[padding,gap,color,background-color,box-shadow] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#0F172A]',
+                                        isGroupActive && (!isOpen || collapsed)
+                                            ? 'bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] text-white shadow-[0_8px_24px_var(--dashboard-primary-shadow)]'
+                                            : isGroupActive
+                                              ? 'bg-[#F1F5F9] text-[#0B2340] dark:bg-[#1E293B] dark:text-[#F8FAFC]'
+                                              : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0B2340] dark:text-[#94A3B8] dark:hover:bg-[#1E293B] dark:hover:text-[#F8FAFC]',
+                                        collapsed && 'lg:gap-0 lg:px-[calc((5.5rem-1.25rem)/2)]',
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            'flex h-5 w-5 shrink-0 items-center justify-center',
+                                            isGroupActive && (!isOpen || collapsed)
+                                                ? 'text-white'
+                                                : isGroupActive
+                                                  ? 'text-[var(--dashboard-primary)]'
+                                                  : 'text-[#94A3B8] group-hover:text-[#0B2340] dark:group-hover:text-[#F8FAFC]',
+                                        )}
+                                    >
+                                        <Icon className="h-5 w-5" strokeWidth={1.75} />
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'flex-1 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out',
+                                            collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[190px] opacity-100',
+                                            showGroupBadge && !collapsed && 'pr-6',
+                                        )}
+                                    >
+                                        {item.title}
+                                    </span>
+                                    {!collapsed && (
+                                        <ChevronDown
+                                            className={cn(
+                                                'h-4 w-4 shrink-0 transition-transform duration-200',
+                                                isOpen ? 'rotate-180' : 'rotate-0',
+                                                isGroupActive && !isOpen
+                                                    ? 'text-white'
+                                                    : 'text-[#94A3B8]',
+                                            )}
+                                            strokeWidth={2}
+                                        />
+                                    )}
+                                    {showGroupBadge && (
+                                        badgeStyle === 'count' ? (
+                                            <span
+                                                className={cn(
+                                                    'absolute flex items-center justify-center rounded-full font-bold shadow-xs transition-all duration-200',
+                                                    collapsed
+                                                        ? 'top-1.5 right-3.5 h-4 min-w-4 px-1 text-[9px]'
+                                                        : 'top-2.5 right-9 h-5 min-w-5 px-1.5 text-[10px]',
+                                                    isGroupActive && (!isOpen || collapsed)
+                                                        ? 'bg-white font-extrabold text-rose-600 ring-1 ring-white/40'
+                                                        : 'bg-rose-500 text-white ring-2 ring-white dark:ring-[#0F172A]',
+                                                )}
+                                                title={`${badgeCount} unread notification${badgeCount > 1 ? 's' : ''}`}
+                                                aria-label={`${badgeCount} unread notification${badgeCount > 1 ? 's' : ''}`}
+                                            >
+                                                {badgeCount > 99 ? '99+' : badgeCount}
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={cn(
+                                                    'absolute animate-pulse rounded-full ring-2 transition-all duration-200',
+                                                    collapsed
+                                                        ? 'top-2 right-4 h-2 w-2'
+                                                        : 'top-3 right-10 h-2.5 w-2.5',
+                                                    isGroupActive && (!isOpen || collapsed)
+                                                        ? 'bg-white ring-white/50'
+                                                        : 'bg-rose-500 ring-white dark:ring-[#0F172A]',
+                                                )}
+                                                title={`${badgeCount} unread notification${badgeCount > 1 ? 's' : ''}`}
+                                                aria-label="New notifications available"
+                                            />
+                                        )
+                                    )}
+                                </button>
+
+                                {isOpen && !collapsed && (
+                                    <div className="ml-6 space-y-1 border-l-2 border-[#E5E7EB] pl-2.5 py-1 dark:border-[#1E293B]">
+                                        {item.children.map((child) => {
+                                            const ChildIcon = child.icon;
+                                            const childBadgeCount = getTabNotificationCount(
+                                                child,
+                                                notifications,
+                                                isRead,
+                                            );
+
+                                            return (
+                                                <span key={child.href} onClick={onClose} className="block">
+                                                    <DashboardNavLink
+                                                        href={child.href}
+                                                        method={child.method}
+                                                        as={child.as}
+                                                        active={isNavItemActive(child.match)}
+                                                        icon={<ChildIcon className="h-4 w-4" strokeWidth={1.75} />}
+                                                        collapsed={false}
+                                                        badgeStyle={badgeStyle}
+                                                        badgeCount={childBadgeCount}
+                                                    >
+                                                        {child.title}
+                                                    </DashboardNavLink>
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
                     return (
                         <span key={item.href} onClick={onClose}>
                             <DashboardNavLink
                                 href={item.href}
                                 method={item.method}
                                 as={item.as}
-                                active={
-                                    currentUrl === item.match ||
-                                    currentUrl.startsWith(`${item.match}/`)
-                                }
+                                active={isNavItemActive(item.match)}
                                 icon={<Icon className="h-5 w-5" strokeWidth={1.75} />}
                                 collapsed={collapsed}
                                 badgeStyle={badgeStyle}
@@ -207,7 +360,7 @@ export function DashboardSidebar({
 
             <div
                 className={cn(
-                    'w-[280px] border-t border-[#E5E7EB] px-5 py-5 transition-[padding] duration-300 ease-out dark:border-[#1E293B]',
+                    'w-[320px] border-t border-[#E5E7EB] px-5 py-5 transition-[padding] duration-300 ease-out dark:border-[#1E293B]',
                     collapsed && 'lg:px-0',
                 )}
             >
@@ -223,7 +376,7 @@ export function DashboardSidebar({
                     <div
                         className={cn(
                             'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out',
-                            collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[160px] opacity-100',
+                            collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[200px] opacity-100',
                         )}
                     >
                         <p className="truncate text-sm font-bold text-[#0B2340] dark:text-[#F8FAFC]">

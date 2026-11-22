@@ -133,6 +133,7 @@ interface VolunteerManagementProps {
         search: string;
         status: string;
     };
+    basePath?: string;
 }
 
 export default function VolunteerManagement({
@@ -147,7 +148,8 @@ export default function VolunteerManagement({
     feedingSchedules,
     allVolunteers = [],
     allRecipients = [],
-    filters
+    filters,
+    basePath = '/account/admin/volunteer-management',
 }: VolunteerManagementProps) {
     const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'food_pickups'>('applications');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -190,7 +192,7 @@ export default function VolunteerManagement({
 
     const handleCreatePickupSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/account/admin/volunteer-management/food-pickups', {
+        router.post(`${basePath}/food-pickups`, {
             partner_id: pickupPartnerId,
             pickup_date: pickupDate,
             assigned_volunteer_id: pickupVolunteerId || null,
@@ -212,7 +214,7 @@ export default function VolunteerManagement({
         e.preventDefault();
         if (!assigningPickup) return;
 
-        router.post(`/account/admin/volunteer-management/food-pickups/${assigningPickup.id}/assign`, {
+        router.post(`${basePath}/food-pickups/${assigningPickup.id}/assign`, {
             assigned_volunteer_id: assignPickupVolunteerId,
         }, {
             preserveScroll: true,
@@ -229,7 +231,7 @@ export default function VolunteerManagement({
         e.preventDefault();
         if (!updatingPickup) return;
 
-        router.post(`/account/admin/volunteer-management/food-pickups/${updatingPickup.id}/status`, {
+        router.post(`${basePath}/food-pickups/${updatingPickup.id}/status`, {
             status: pickupTargetStatus,
             hours_logged: pickupTargetStatus === 'completed' ? pickupHoursLogged : undefined,
             admin_notes: pickupAdminNotes || null,
@@ -254,7 +256,7 @@ export default function VolunteerManagement({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/account/admin/volunteer-management', {
+        router.get(basePath, {
             search: searchQuery,
             status: statusFilter
         }, { preserveState: true });
@@ -262,14 +264,14 @@ export default function VolunteerManagement({
 
     const handleStatusFilterChange = (status: string) => {
         setStatusFilter(status);
-        router.get('/account/admin/volunteer-management', {
+        router.get(basePath, {
             search: searchQuery,
             status: status
         }, { preserveState: true });
     };
 
     const handleApprove = (appId: number) => {
-        router.post(`/account/admin/volunteer-management/applications/${appId}/approve`, {}, {
+        router.post(`${basePath}/applications/${appId}/approve`, {}, {
             onSuccess: () => toast.success('Application approved!')
         });
     };
@@ -278,7 +280,7 @@ export default function VolunteerManagement({
         e.preventDefault();
         if (!rejectionReason.trim()) return;
 
-        router.post(`/account/admin/volunteer-management/applications/${rejectingApp?.id}/reject`, {
+        router.post(`${basePath}/applications/${rejectingApp?.id}/reject`, {
             rejection_reason: rejectionReason
         }, {
             onSuccess: () => {
@@ -291,7 +293,7 @@ export default function VolunteerManagement({
 
     const handleAssignSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/account/admin/volunteer-management/assign', {
+        router.post(`${basePath}/assign`, {
             user_id: assignTargetUserId,
             event_id: assignActivityType === 'event' ? assignEventId : null,
             feeding_schedule_id: assignActivityType === 'feeding' ? assignScheduleId : null,
@@ -318,7 +320,7 @@ export default function VolunteerManagement({
         e.preventDefault();
         if (!completingTask) return;
 
-        router.post(`/account/admin/volunteer-management/tasks/${completingTask.id}/status`, {
+        router.post(`${basePath}/tasks/${completingTask.id}/status`, {
             status: 'completed',
             hours_logged: parseFloat(hoursLogged)
         }, {
@@ -331,7 +333,7 @@ export default function VolunteerManagement({
 
     const handleCancelTask = (taskId: number) => {
         if (!confirm('Are you sure you want to cancel this assignment?')) return;
-        router.post(`/account/admin/volunteer-management/tasks/${taskId}/status`, {
+        router.post(`${basePath}/tasks/${taskId}/status`, {
             status: 'cancelled'
         }, {
             onSuccess: () => toast.success('Task assignment cancelled.')
@@ -340,7 +342,7 @@ export default function VolunteerManagement({
 
     const handleCertSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/account/admin/volunteer-management/issue-certificate', {
+        router.post(`${basePath}/issue-certificate`, {
             user_id: certTargetUserId,
             event_id: certTargetEventId || null,
             title: certTitle,

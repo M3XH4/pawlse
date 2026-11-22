@@ -121,7 +121,13 @@ class VolunteerManagementController extends Controller
                 });
             });
 
-        return Inertia::render('admin/volunteer-management', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/volunteer-management' : 'admin/volunteer-management';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/volunteer-management' : '/account/admin/volunteer-management';
+
+        return Inertia::render($view, [
             'applications' => fn () => $applicationsQuery->latest()->paginate(10, ['*'], 'apps_page')->withQueryString(),
             'volunteers' => fn () => $volunteersQuery->latest()->paginate(10, ['*'], 'vols_page')->withQueryString(),
             'allVolunteers' => fn () => User::query()
@@ -156,6 +162,8 @@ class VolunteerManagementController extends Controller
                 'search' => $search,
                 'status' => $statusFilter,
             ],
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

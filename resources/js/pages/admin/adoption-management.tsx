@@ -142,6 +142,7 @@ interface AdoptionManagementProps {
   shelterVisits?: ShelterVisitData[];
   rehomingRequests?: RehomingRequestData[];
   shelterVisitSettings?: ShelterVisitSettings;
+  basePath?: string;
 }
 
 function normalizePriority(priority?: string): 'Urgent' | 'High' | 'Medium' | 'Low' {
@@ -161,6 +162,7 @@ export default function AdoptionManagement({
   shelterVisits = [],
   rehomingRequests = [],
   shelterVisitSettings,
+  basePath = '/account/admin/adoption-management',
 }: AdoptionManagementProps) {
   const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
   const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-adoption-view');
@@ -220,7 +222,7 @@ export default function AdoptionManagement({
     if (!activeSelectedApp || !adminMessageText.trim()) return;
     setIsSendingAdminMessage(true);
     router.post(
-      `/account/admin/adoption-management/applications/${activeSelectedApp.id}/messages`,
+      `${basePath}/applications/${activeSelectedApp.id}/messages`,
       {
         message: adminMessageText.trim(),
         request_info: requestInfo,
@@ -268,7 +270,7 @@ export default function AdoptionManagement({
 
     statusData.status = status;
 
-    postStatus(`/account/admin/adoption-management/applications/${selectedApp.id}/status`, {
+    postStatus(`${basePath}/applications/${selectedApp.id}/status`, {
       preserveScroll: true,
       only: ['applications', 'pets', 'adoptedPets'],
       onSuccess: () => {
@@ -1154,7 +1156,7 @@ export default function AdoptionManagement({
                                 const nextStatus = isFulfilled ? 'open' : 'fulfilled';
                                 setTogglingNeedId(need.id);
                                 router.put(
-                                  `/account/admin/adoption-management/needs/${need.id}`,
+                                  `${basePath}/needs/${need.id}`,
                                   {
                                     item: need.item,
                                     quantity: need.quantity,
@@ -1244,7 +1246,7 @@ export default function AdoptionManagement({
                               onClick={() => {
                                 if (confirm(`Remove "${need.item}" from wishlist?`)) {
                                   setDeletingNeedId(need.id);
-                                  router.delete(`/account/admin/adoption-management/needs/${need.id}`, {
+                                  router.delete(`${basePath}/needs/${need.id}`, {
                                     preserveScroll: true,
                                     only: ['pets'],
                                     onSuccess: () => {
@@ -1318,7 +1320,7 @@ export default function AdoptionManagement({
 
                     if (editingNeed) {
                       router.put(
-                        `/account/admin/adoption-management/needs/${editingNeed.id}`,
+                        `${basePath}/needs/${editingNeed.id}`,
                         payload,
                         {
                           preserveScroll: true,
@@ -1343,7 +1345,7 @@ export default function AdoptionManagement({
                       );
                     } else {
                       router.post(
-                        `/account/admin/adoption-management/pets/${selectedPetForNeeds.id}/needs`,
+                        `${basePath}/pets/${selectedPetForNeeds.id}/needs`,
                         payload,
                         {
                           preserveScroll: true,

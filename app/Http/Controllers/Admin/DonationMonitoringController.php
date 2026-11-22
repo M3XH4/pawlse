@@ -261,7 +261,13 @@ class DonationMonitoringController extends Controller
                 });
         };
 
-        return Inertia::render('admin/donation-monitoring', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/donation-monitoring' : 'admin/donation-monitoring';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/donation-monitoring' : '/account/admin/donation-monitoring';
+
+        return Inertia::render($view, [
             'donations' => $getDonations,
             'inventory' => $getInventory,
             'inventoryLogs' => $getInventoryLogs,
@@ -270,6 +276,8 @@ class DonationMonitoringController extends Controller
             'sustainabilityHistory' => $getSustainabilityHistory,
             'filters' => $request->all(),
             'stats' => $getStats,
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

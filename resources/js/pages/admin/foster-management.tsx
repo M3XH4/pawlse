@@ -175,6 +175,7 @@ interface FosterManagementProps {
         search: string;
         status: string;
     };
+    basePath?: string;
 }
 
 export default function FosterManagement({
@@ -187,6 +188,7 @@ export default function FosterManagement({
     careUpdates,
     auditLogs,
     filters,
+    basePath = '/account/admin/foster-management',
 }: FosterManagementProps) {
     const [currentTab, setCurrentTab] = useState<'placements' | 'available_pets' | 'foster_parents' | 'care_updates' | 'history' | 'audit'>('placements');
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -260,7 +262,7 @@ export default function FosterManagement({
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
-            '/account/admin/foster-management',
+            basePath,
             { search: searchTerm, status: statusFilter },
             { preserveState: true, preserveScroll: true },
         );
@@ -319,7 +321,7 @@ export default function FosterManagement({
         e.preventDefault();
         setSubmitting(true);
         router.post(
-            '/account/admin/foster-management/assign',
+            `${basePath}/assign`,
             {
                 shelter_animal_id: assignPetId,
                 foster_parent_id: assignParentId,
@@ -350,7 +352,7 @@ export default function FosterManagement({
         if (!selectedPlacement) return;
         setSubmitting(true);
         router.post(
-            `/account/admin/foster-management/placements/${selectedPlacement.id}/transfer`,
+            `${basePath}/placements/${selectedPlacement.id}/transfer`,
             {
                 destination_foster_parent_id: transferDestinationId,
                 transfer_reason: transferReason,
@@ -376,7 +378,7 @@ export default function FosterManagement({
         if (!selectedPlacement) return;
         setSubmitting(true);
         router.post(
-            `/account/admin/foster-management/placements/${selectedPlacement.id}/end`,
+            `${basePath}/placements/${selectedPlacement.id}/end`,
             {
                 end_reason: endReason,
                 target_status: endTargetStatus,
@@ -399,7 +401,7 @@ export default function FosterManagement({
         e.preventDefault();
         setSubmitting(true);
         router.post(
-            '/account/admin/foster-management/foster-parents',
+            `${basePath}/foster-parents`,
             {
                 user_id: authUserId,
                 capacity: authCapacity,
@@ -430,7 +432,7 @@ export default function FosterManagement({
         if (!selectedParent) return;
         setSubmitting(true);
         router.put(
-            `/account/admin/foster-management/foster-parents/${selectedParent.id}`,
+            `${basePath}/foster-parents/${selectedParent.id}`,
             {
                 capacity: editCapacity,
                 location: editLocation || null,
@@ -458,7 +460,7 @@ export default function FosterManagement({
         if (!selectedPlacement) return;
         setSubmitting(true);
         router.post(
-            `/account/admin/foster-management/placements/${selectedPlacement.id}/instructions`,
+            `${basePath}/placements/${selectedPlacement.id}/instructions`,
             {
                 care_instructions: instCare || null,
                 medical_notes: instMedical || null,
@@ -485,7 +487,7 @@ export default function FosterManagement({
         if (!selectedUpdate) return;
         setSubmitting(true);
         router.post(
-            `/account/admin/foster-management/updates/${selectedUpdate.id}/acknowledge`,
+            `${basePath}/updates/${selectedUpdate.id}/acknowledge`,
             {
                 admin_notes: adminResponseNotes,
             },
@@ -607,7 +609,7 @@ export default function FosterManagement({
                             onChange={(val) => {
                                 setStatusFilter(val);
                                 router.get(
-                                    '/account/admin/foster-management',
+                                    basePath,
                                     { search: searchTerm, status: val },
                                     { preserveState: true, preserveScroll: true },
                                 );
@@ -961,7 +963,7 @@ export default function FosterManagement({
                                                 type="button"
                                                 onClick={() => {
                                                     router.put(
-                                                        `/account/admin/foster-management/foster-parents/${parent.id}`,
+                                                        `${basePath}/foster-parents/${parent.id}`,
                                                         {
                                                             capacity: parent.capacity,
                                                             status: 'approved',

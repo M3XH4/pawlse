@@ -12,6 +12,8 @@ import {
     ChevronRight,
     Calendar,
     AlertCircle,
+    Gift,
+    Heart,
 } from 'lucide-react';
 import {
     DashboardCard,
@@ -47,6 +49,64 @@ type RecentActivity = {
     time: string;
     ip_address: string;
 };
+
+function getActivityVisual(action: string, description: string) {
+    const text = `${action} ${description}`.toLowerCase();
+
+    if (text.includes('alarm') || text.includes('suspicious') || text.includes('failed') || text.includes('block') || text.includes('reject') || text.includes('delete')) {
+        return {
+            icon: ShieldAlert,
+            badgeClass: 'bg-rose-50 text-rose-600 ring-1 ring-rose-200/70 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-800/50',
+        };
+    }
+
+    if (text.includes('donation') || text.includes('cash') || text.includes('in-kind') || text.includes('inventory')) {
+        return {
+            icon: Gift,
+            badgeClass: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-800/50',
+        };
+    }
+
+    if (text.includes('adoption') || text.includes('foster') || text.includes('rescue') || text.includes('pet') || text.includes('animal')) {
+        return {
+            icon: Heart,
+            badgeClass: 'bg-orange-50 text-orange-600 ring-1 ring-orange-200/70 dark:bg-orange-950/40 dark:text-orange-400 dark:ring-orange-800/50',
+        };
+    }
+
+    if (text.includes('role') || text.includes('volunteer') || text.includes('user') || text.includes('login')) {
+        return {
+            icon: Users,
+            badgeClass: 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200/70 dark:bg-indigo-950/40 dark:text-indigo-400 dark:ring-indigo-800/50',
+        };
+    }
+
+    if (text.includes('backup') || text.includes('restore') || text.includes('archive')) {
+        return {
+            icon: DatabaseBackup,
+            badgeClass: 'bg-violet-50 text-violet-600 ring-1 ring-violet-200/70 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-800/50',
+        };
+    }
+
+    if (text.includes('system') || text.includes('setting') || text.includes('config') || text.includes('ai')) {
+        return {
+            icon: ServerCog,
+            badgeClass: 'bg-cyan-50 text-cyan-600 ring-1 ring-cyan-200/70 dark:bg-cyan-950/40 dark:text-cyan-400 dark:ring-cyan-800/50',
+        };
+    }
+
+    if (text.includes('event') || text.includes('blog') || text.includes('story')) {
+        return {
+            icon: Calendar,
+            badgeClass: 'bg-amber-50 text-amber-600 ring-1 ring-amber-200/70 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-800/50',
+        };
+    }
+
+    return {
+        icon: Activity,
+        badgeClass: 'bg-sky-50 text-sky-600 ring-1 ring-sky-200/70 dark:bg-sky-950/40 dark:text-sky-400 dark:ring-sky-800/50',
+    };
+}
 
 type DashboardProps = {
     stats: Stats;
@@ -236,10 +296,10 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                 </div>
 
                 {/* Grid layout */}
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
                     {/* Left Column: Quick Operations */}
-                    <div className="space-y-6 lg:col-span-2">
-                        <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col lg:col-span-2">
+                        <div className="flex h-full flex-col rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div>
                                 <h2 className="font-fredoka text-xl font-bold tracking-wide text-slate-800 dark:text-white">
                                     Administration Console
@@ -249,12 +309,12 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                                 </p>
                             </div>
                             <hr className="my-4 border-gray-100 dark:border-slate-800" />
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid flex-1 gap-4 sm:grid-cols-2 sm:auto-rows-fr">
                                 {quickActions.map((action, i) => (
                                     <Link
                                         key={i}
                                         href={action.href}
-                                        className="group flex items-center justify-between rounded-2xl border border-gray-150 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-55/50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/40"
+                                        className="group flex h-full items-center justify-between rounded-2xl border border-gray-150 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-55/50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/40"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={cn('rounded-xl p-3', action.color)}>
@@ -282,8 +342,8 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                     </div>
 
                     {/* Right Column: Audit Timeline */}
-                    <div className="space-y-6">
-                        <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col">
+                        <div className="flex h-full flex-col rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h2 className="font-fredoka text-xl font-bold tracking-wide text-slate-800 dark:text-white">
@@ -293,51 +353,57 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                                         Chronological trail of admin actions
                                     </p>
                                 </div>
-                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                                     Live Logs
                                 </span>
                             </div>
                             <hr className="my-4 border-gray-100 dark:border-slate-800" />
                             
                             {recentActivities.length === 0 ? (
-                                <div className="py-12 text-center text-sm text-gray-500">
+                                <div className="flex flex-1 items-center justify-center py-12 text-center text-sm text-gray-500">
                                     No administrative actions logged yet.
                                 </div>
                             ) : (
-                                <div className="flow-root">
+                                <div className="flow-root flex-1">
                                     <ul className="-mb-8">
-                                        {recentActivities.map((activity, idx) => (
-                                            <li key={activity.id}>
-                                                <div className="relative pb-8">
-                                                    {idx !== recentActivities.length - 1 ? (
-                                                        <span
-                                                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-100 dark:bg-slate-900"
-                                                            aria-hidden="true"
-                                                        />
-                                                    ) : null}
-                                                    <div className="relative flex space-x-3">
-                                                        <div>
-                                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50 text-slate-600 shadow-xs dark:bg-slate-800 dark:text-slate-400">
-                                                                <Activity className="h-4 w-4" />
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                        {recentActivities.map((activity, idx) => {
+                                            const visual = getActivityVisual(activity.action, activity.description);
+                                            const ActivityIcon = visual.icon;
+
+                                            return (
+                                                <li key={activity.id}>
+                                                    <div className="relative pb-8">
+                                                        {idx !== recentActivities.length - 1 ? (
+                                                            <span
+                                                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200/80 dark:bg-slate-800"
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : null}
+                                                        <div className="relative flex space-x-3">
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-800 dark:text-white">
-                                                                    {activity.user_name}
-                                                                </p>
-                                                                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-0.5">
-                                                                    {activity.description}
-                                                                </p>
+                                                                <span className={cn('flex h-8 w-8 items-center justify-center rounded-xl shadow-xs', visual.badgeClass)}>
+                                                                    <ActivityIcon className="h-4 w-4" />
+                                                                </span>
                                                             </div>
-                                                            <div className="whitespace-nowrap text-right text-[10px] text-gray-400 dark:text-gray-500">
-                                                                <time>{activity.time}</time>
+                                                            <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-slate-800 dark:text-white">
+                                                                        {activity.user_name}
+                                                                    </p>
+                                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-0.5">
+                                                                        {activity.description}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="whitespace-nowrap text-right text-[10px] text-gray-400 dark:text-gray-500">
+                                                                    <time>{activity.time}</time>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        ))}
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 </div>
                             )}

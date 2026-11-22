@@ -71,7 +71,13 @@ class RescueManagementController extends Controller
             'duplicate' => PetReport::where('is_duplicate', true)->count(),
         ];
 
-        return Inertia::render('admin/rescue-management', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/rescue-management' : 'admin/rescue-management';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/rescue-management' : '/account/admin/rescue-management';
+
+        return Inertia::render($view, [
             'reports' => $reports,
             'volunteers' => $volunteers,
             'duplicateCandidates' => $duplicateCandidates,
@@ -82,6 +88,8 @@ class RescueManagementController extends Controller
                 'type' => $typeFilter,
                 'duplicate' => $duplicateFilter,
             ],
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

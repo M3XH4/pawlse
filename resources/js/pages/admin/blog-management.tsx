@@ -80,6 +80,7 @@ interface BlogManagementProps {
         category: string;
         status: string;
     };
+    basePath?: string;
 }
 
 const CATEGORY_STYLES: Record<string, {
@@ -138,6 +139,7 @@ export default function BlogManagement({
     metrics,
     categories,
     filters,
+    basePath = '/account/admin/blog-management',
 }: BlogManagementProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
@@ -187,7 +189,7 @@ export default function BlogManagement({
     const handleConfirmApprove = () => {
         if (!postToApprove) return;
         setIsApproving(true);
-        router.post(`/account/admin/blog-management/${postToApprove.id}/approve`, {}, {
+        router.post(`${basePath}/${postToApprove.id}/approve`, {}, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(`"${postToApprove.title}" approved and published to the blog!`);
@@ -211,7 +213,7 @@ export default function BlogManagement({
     const handleConfirmReject = () => {
         if (!postToReject) return;
         setIsRejecting(true);
-        router.post(`/account/admin/blog-management/${postToReject.id}/reject`, {
+        router.post(`${basePath}/${postToReject.id}/reject`, {
             rejection_reason: rejectionReason,
         }, {
             preserveScroll: true,
@@ -240,7 +242,7 @@ export default function BlogManagement({
     const handleConfirmDelete = () => {
         if (!postToDelete) return;
         setIsDeleting(true);
-        router.delete(`/account/admin/blog-management/${postToDelete.id}`, {
+        router.delete(`${basePath}/${postToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Article deleted successfully.');
@@ -264,7 +266,7 @@ export default function BlogManagement({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/account/admin/blog-management', {
+        router.get(basePath, {
             search: search.trim() || undefined,
             category: categoryFilter !== 'all' ? categoryFilter : undefined,
             status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -274,7 +276,7 @@ export default function BlogManagement({
     const handleFilterChange = (newCategory: string, newStatus: string) => {
         setCategoryFilter(newCategory);
         setStatusFilter(newStatus);
-        router.get('/account/admin/blog-management', {
+        router.get(basePath, {
             search: search.trim() || undefined,
             category: newCategory !== 'all' ? newCategory : undefined,
             status: newStatus !== 'all' ? newStatus : undefined,
@@ -331,7 +333,7 @@ export default function BlogManagement({
         };
 
         if (editingPost) {
-            router.put(`/account/admin/blog-management/${editingPost.id}`, payload, {
+            router.put(`${basePath}/${editingPost.id}`, payload, {
                 onSuccess: () => {
                     toast.success('Article updated successfully.');
                     setIsModalOpen(false);
@@ -343,7 +345,7 @@ export default function BlogManagement({
                 },
             });
         } else {
-            router.post('/account/admin/blog-management', payload, {
+            router.post(basePath, payload, {
                 onSuccess: () => {
                     toast.success('Article created and published successfully!');
                     setIsModalOpen(false);
@@ -358,7 +360,7 @@ export default function BlogManagement({
     };
 
     const handleToggleStatus = (post: BlogPostModel) => {
-        router.patch(`/account/admin/blog-management/${post.id}/toggle-status`, {}, {
+        router.patch(`${basePath}/${post.id}/toggle-status`, {}, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(`Article status updated.`);

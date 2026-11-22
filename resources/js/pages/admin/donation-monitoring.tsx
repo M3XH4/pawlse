@@ -162,6 +162,7 @@ interface DonationMonitoringProps {
         pendingCashCount: number;
         pendingInKindCount: number;
     };
+    basePath?: string;
 }
 
 function TablePagination({
@@ -193,7 +194,8 @@ export default function DonationMonitoring({
     sustainability,
     sustainabilityHistory,
     filters,
-    stats
+    stats,
+    basePath = '/account/admin/donation-monitoring',
 }: DonationMonitoringProps) {
     const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs' | 'sustainability'>('donations');
     
@@ -312,7 +314,7 @@ export default function DonationMonitoring({
 
     const applyFilters = (typeVal?: string, statusVal?: string, invCat?: string) => {
         router.get(
-            '/account/admin/donation-monitoring',
+            basePath,
             {
                 search: searchTerm || undefined,
                 type: typeVal !== undefined ? typeVal : selectedType || undefined,
@@ -347,7 +349,7 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!verifyingInKind) return;
 
-        router.post(`/account/admin/donation-monitoring/in-kind/${verifyingInKind.id}/verify`, {
+        router.post(`${basePath}/in-kind/${verifyingInKind.id}/verify`, {
             ...verifyForm,
             estimated_value: verifyForm.estimated_value ? parseFloat(verifyForm.estimated_value) : null,
             extend_care_timer: verifyForm.extend_care_timer,
@@ -363,7 +365,7 @@ export default function DonationMonitoring({
     };
 
     const submitVerifyCash = (donation: DonationRecord) => {
-        router.post(`/account/admin/donation-monitoring/donations/${donation.id}/verify-cash`, {}, {
+        router.post(`${basePath}/donations/${donation.id}/verify-cash`, {}, {
             onSuccess: () => {
                 setVerifyingCashDonation(null);
                 setSelectedDonationDetails(null);
@@ -379,7 +381,7 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!rejectingDonation) return;
 
-        router.post(`/account/admin/donation-monitoring/donations/${rejectingDonation.id}/reject`, {
+        router.post(`${basePath}/donations/${rejectingDonation.id}/reject`, {
             reason: rejectReason || 'Payment/Drop-off rejected by administrator.'
         }, {
             onSuccess: () => {
@@ -396,7 +398,7 @@ export default function DonationMonitoring({
 
     const submitAddItem = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/account/admin/donation-monitoring/inventory', {
+        router.post(`${basePath}/inventory`, {
             ...addItemForm,
             daily_usage_rate: addItemForm.daily_usage_rate ? parseFloat(addItemForm.daily_usage_rate) : null,
         }, {
@@ -427,7 +429,7 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!editingItem) return;
 
-        router.put(`/account/admin/donation-monitoring/inventory/${editingItem.id}`, {
+        router.put(`${basePath}/inventory/${editingItem.id}`, {
             ...editItemForm,
             daily_usage_rate: editItemForm.daily_usage_rate ? parseFloat(editItemForm.daily_usage_rate) : null,
         }, {
@@ -445,7 +447,7 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!addingBatchToItem) return;
 
-        router.post(`/account/admin/donation-monitoring/inventory/${addingBatchToItem.id}/batches`, addBatchForm, {
+        router.post(`${basePath}/inventory/${addingBatchToItem.id}/batches`, addBatchForm, {
             onSuccess: () => {
                 setAddingBatchToItem(null);
                 setAddBatchForm({
@@ -468,7 +470,7 @@ export default function DonationMonitoring({
         e.preventDefault();
         if (!adjustingBatchData) return;
 
-        router.post(`/account/admin/donation-monitoring/inventory/batches/${adjustingBatchData.batch.id}/adjust`, adjustBatchForm, {
+        router.post(`${basePath}/inventory/batches/${adjustingBatchData.batch.id}/adjust`, adjustBatchForm, {
             onSuccess: () => {
                 setAdjustingBatchData(null);
                 setViewingBatchesItem(null);
@@ -491,7 +493,7 @@ export default function DonationMonitoring({
 
         const change = adjustForm.direction === 'add' ? adjustForm.quantity : -adjustForm.quantity;
 
-        router.post(`/account/admin/donation-monitoring/inventory/${adjustingItem.id}/adjust`, {
+        router.post(`${basePath}/inventory/${adjustingItem.id}/adjust`, {
             quantity_changed: change,
             reason: adjustForm.reason || (change > 0 ? 'Manual Stock Increase' : 'Manual Stock Reduction')
         }, {
@@ -508,7 +510,7 @@ export default function DonationMonitoring({
 
     const deleteInventoryItem = (item: InventoryItemData) => {
         if (confirm(`Are you sure you want to delete "${item.name}" and all its batch history?`)) {
-            router.delete(`/account/admin/donation-monitoring/inventory/${item.id}`, {
+            router.delete(`${basePath}/inventory/${item.id}`, {
                 onSuccess: () => {
                     toast.success(`"${item.name}" removed from inventory.`);
                 }

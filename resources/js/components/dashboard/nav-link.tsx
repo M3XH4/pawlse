@@ -53,7 +53,7 @@ export function DashboardNavLink({
             <span
                 className={cn(
                     'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out',
-                    collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[170px] opacity-100',
+                    collapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[220px] opacity-100',
                     hasBadge && !collapsed && 'pr-4',
                 )}
             >

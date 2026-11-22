@@ -96,7 +96,13 @@ class AiValidationController extends Controller
         $systemSettings = SystemSetting::getValue('system_settings', []);
         $breedGuideEnabled = (bool) ($systemSettings['ai_breed_guide_enabled'] ?? true);
 
-        return Inertia::render('admin/ai-validation', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/ai-validation' : 'admin/ai-validation';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/ai-validation' : '/account/admin/ai-validation';
+
+        return Inertia::render($view, [
             'reports' => $reports,
             'volunteers' => $volunteers,
             'breed_guide_enabled' => $breedGuideEnabled,
@@ -113,6 +119,8 @@ class AiValidationController extends Controller
                 'confidence_level' => $confidenceFilter,
                 'type' => $typeFilter,
             ],
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

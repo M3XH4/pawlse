@@ -393,6 +393,78 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::post('feeding-schedules', [EventManagementController::class, 'storeFeedingSchedule'])->name('feeding-schedules.store');
     Route::put('feeding-schedules/{schedule}', [EventManagementController::class, 'updateFeedingSchedule'])->name('feeding-schedules.update');
     Route::delete('feeding-schedules/{schedule}', [EventManagementController::class, 'destroyFeedingSchedule'])->name('feeding-schedules.destroy');
+
+    // Admin Controls (Elevated Super Admin Access to Core Admin Modules)
+    Route::get('animal-records', [AnimalMasterRecordController::class, 'index'])->name('animal-records');
+    Route::post('animal-records', [AnimalMasterRecordController::class, 'store'])->name('animal-records.store');
+    Route::put('animal-records/{animal}', [AnimalMasterRecordController::class, 'update'])->name('animal-records.update');
+    Route::delete('animal-records/{animal}', [AnimalMasterRecordController::class, 'destroy'])->name('animal-records.destroy');
+    Route::post('animal-records/{animal}/medical', [AnimalMasterRecordController::class, 'storeMedicalRecord'])->name('animal-records.medical.store');
+    Route::put('animal-records/medical/{medicalRecord}', [AnimalMasterRecordController::class, 'updateMedicalRecord'])->name('animal-records.medical.update');
+    Route::delete('animal-records/medical/{medicalRecord}', [AnimalMasterRecordController::class, 'deleteMedicalRecord'])->name('animal-records.medical.destroy');
+
+    Route::get('rescue-management', [RescueManagementController::class, 'index'])->name('rescue-management');
+    Route::post('rescue-management/{report}/assign', [RescueManagementController::class, 'assignVolunteer'])->name('rescue-management.assign');
+    Route::post('rescue-management/{report}/status', [RescueManagementController::class, 'updateStatus'])->name('rescue-management.update-status');
+    Route::post('rescue-management/{report}/duplicate', [RescueManagementController::class, 'resolveDuplicate'])->name('rescue-management.resolve-duplicate');
+
+    Route::get('ai-validation', [AiValidationController::class, 'index'])->name('ai-validation');
+    Route::post('ai-validation/{report}/approve', [AiValidationController::class, 'approve'])->name('ai-validation.approve');
+    Route::post('ai-validation/{report}/reject', [AiValidationController::class, 'reject'])->name('ai-validation.reject');
+
+    Route::get('adoption-management', [AdoptionManagementController::class, 'index'])->name('adoption-management');
+    Route::post('adoption-management/applications/{application}/status', [AdoptionManagementController::class, 'updateStatus'])->name('adoption-management.update-status');
+    Route::post('adoption-management/applications/{application}/messages', [AdoptionManagementController::class, 'storeMessage'])->name('adoption-management.messages.store');
+    Route::post('adoption-management/shelter-visits/settings', [AdoptionManagementController::class, 'updateVisitSettings'])->name('adoption-management.shelter-visits.settings');
+    Route::post('adoption-management/shelter-visits/{visit}/status', [AdoptionManagementController::class, 'updateVisitStatus'])->name('adoption-management.shelter-visits.update-status');
+    Route::post('adoption-management/rehoming-requests/{rehomingRequest}/status', [AdoptionManagementController::class, 'updateRehomingStatus'])->name('adoption-management.rehoming-requests.update-status');
+    Route::post('adoption-management/rehoming-requests/{rehomingRequest}/intake', [AdoptionManagementController::class, 'intakeRehomingRequest'])->name('adoption-management.rehoming-requests.intake');
+    Route::post('adoption-management/post-adoption-follow-ups', [AdoptionManagementController::class, 'storeFollowUp'])->name('adoption-management.post-adoption-follow-ups.store');
+    Route::post('adoption-management/pets', [AdoptablePetController::class, 'store'])->name('adoption-management.pets.store');
+    Route::post('adoption-management/pets/{pet}/needs', [AdoptablePetController::class, 'storeNeed'])->name('adoption-management.pets.needs.store');
+    Route::put('adoption-management/needs/{need}', [AdoptablePetController::class, 'updateNeed'])->name('adoption-management.needs.update');
+    Route::delete('adoption-management/needs/{need}', [AdoptablePetController::class, 'destroyNeed'])->name('adoption-management.needs.destroy');
+
+    Route::get('foster-management', [FosterManagementController::class, 'index'])->name('foster-management');
+    Route::post('foster-management/assign', [FosterManagementController::class, 'assign'])->name('foster-management.assign');
+    Route::post('foster-management/placements/{placement}/transfer', [FosterManagementController::class, 'transfer'])->name('foster-management.transfer');
+    Route::post('foster-management/placements/{placement}/end', [FosterManagementController::class, 'endPlacement'])->name('foster-management.end');
+    Route::post('foster-management/placements/{placement}/instructions', [FosterManagementController::class, 'updateInstructions'])->name('foster-management.instructions');
+    Route::post('foster-management/foster-parents', [FosterManagementController::class, 'storeFosterParent'])->name('foster-management.foster-parents.store');
+    Route::put('foster-management/foster-parents/{fosterParent}', [FosterManagementController::class, 'updateFosterParent'])->name('foster-management.foster-parents.update');
+    Route::post('foster-management/updates/{update}/acknowledge', [FosterManagementController::class, 'acknowledgeUpdate'])->name('foster-management.updates.acknowledge');
+
+    Route::get('volunteer-management', [VolunteerManagementController::class, 'index'])->name('volunteer-management');
+    Route::post('volunteer-management/applications/{application}/approve', [VolunteerManagementController::class, 'approve'])->name('volunteer-management.approve');
+    Route::post('volunteer-management/applications/{application}/reject', [VolunteerManagementController::class, 'reject'])->name('volunteer-management.reject');
+    Route::post('volunteer-management/assign', [VolunteerManagementController::class, 'assignTask'])->name('volunteer-management.assign');
+    Route::post('volunteer-management/tasks/{task}/status', [VolunteerManagementController::class, 'updateTaskStatus'])->name('volunteer-management.update-task-status');
+    Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate');
+    Route::post('volunteer-management/food-pickups', [VolunteerManagementController::class, 'storeFoodPickup'])->name('volunteer-management.food-pickups.store');
+    Route::post('volunteer-management/food-pickups/{pickup}/assign', [VolunteerManagementController::class, 'assignFoodPickupVolunteer'])->name('volunteer-management.food-pickups.assign');
+    Route::post('volunteer-management/food-pickups/{pickup}/status', [VolunteerManagementController::class, 'updateFoodPickupStatus'])->name('volunteer-management.food-pickups.status');
+
+    Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
+    Route::post('donation-monitoring/donations/{donation}/verify-cash', [DonationMonitoringController::class, 'verifyCash'])->name('donation-monitoring.verify-cash');
+    Route::post('donation-monitoring/donations/{donation}/reject', [DonationMonitoringController::class, 'rejectDonation'])->name('donation-monitoring.reject');
+    Route::post('donation-monitoring/in-kind/{donation}/verify', [DonationMonitoringController::class, 'verifyInKind'])->name('donation-monitoring.in-kind.verify');
+    Route::post('donation-monitoring/inventory', [DonationMonitoringController::class, 'storeInventoryItem'])->name('donation-monitoring.inventory.store');
+    Route::put('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'updateInventoryItem'])->name('donation-monitoring.inventory.update');
+    Route::delete('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'destroyInventoryItem'])->name('donation-monitoring.inventory.destroy');
+    Route::post('donation-monitoring/inventory/{item}/batches', [DonationMonitoringController::class, 'storeBatch'])->name('donation-monitoring.inventory.batches.store');
+    Route::post('donation-monitoring/inventory/batches/{batch}/adjust', [DonationMonitoringController::class, 'adjustBatchStock'])->name('donation-monitoring.inventory.batches.adjust');
+    Route::post('donation-monitoring/inventory/{item}/adjust', [DonationMonitoringController::class, 'adjustStock'])->name('donation-monitoring.inventory.adjust');
+    Route::post('donation-monitoring/sustainability/recalculate', [DonationMonitoringController::class, 'recalculateSustainability'])->name('donation-monitoring.sustainability.recalculate');
+    Route::post('donation-monitoring/sustainability/config', [DonationMonitoringController::class, 'updateSustainabilityConfig'])->name('donation-monitoring.sustainability.config');
+    Route::post('donation-monitoring/sustainability/extend', [DonationMonitoringController::class, 'extendSustainabilityTimer'])->name('donation-monitoring.sustainability.extend');
+
+    Route::get('blog-management', [BlogManagementController::class, 'index'])->name('blog-management');
+    Route::post('blog-management', [BlogManagementController::class, 'store'])->name('blog-management.store');
+    Route::put('blog-management/{post}', [BlogManagementController::class, 'update'])->name('blog-management.update');
+    Route::delete('blog-management/{post}', [BlogManagementController::class, 'destroy'])->name('blog-management.destroy');
+    Route::patch('blog-management/{post}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('blog-management.toggle-status');
+    Route::post('blog-management/{post}/approve', [BlogManagementController::class, 'approve'])->name('blog-management.approve');
+    Route::post('blog-management/{post}/reject', [BlogManagementController::class, 'reject'])->name('blog-management.reject');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

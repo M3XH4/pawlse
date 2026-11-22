@@ -91,6 +91,7 @@ interface RescueManagementProps {
     type: string;
     duplicate: string;
   };
+  basePath?: string;
 }
 
 export default function RescueManagement({
@@ -98,7 +99,8 @@ export default function RescueManagement({
   volunteers,
   duplicateCandidates,
   stats,
-  filters
+  filters,
+  basePath = '/account/admin/rescue-management',
 }: RescueManagementProps) {
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
@@ -113,7 +115,7 @@ export default function RescueManagement({
   const [linkDuplicateOfId, setLinkDuplicateOfId] = useState('');
 
   const handleFilterSearch = () => {
-    router.get('/account/admin/rescue-management', {
+    router.get(basePath, {
       search: searchQuery,
       status: statusFilter,
       type: typeFilter,
@@ -126,14 +128,14 @@ export default function RescueManagement({
     setStatusFilter('All');
     setTypeFilter('All');
     setDuplicateFilter('All');
-    router.get('/account/admin/rescue-management', {}, { preserveState: true });
+    router.get(basePath, {}, { preserveState: true });
   };
 
   const handleAssignSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReport || !assignVolunteerId) return;
 
-    router.post(`/account/admin/rescue-management/${selectedReport.id}/assign`, {
+    router.post(`${basePath}/${selectedReport.id}/assign`, {
       volunteer_id: assignVolunteerId
     }, {
       onSuccess: () => {
@@ -155,7 +157,7 @@ export default function RescueManagement({
     e.preventDefault();
     if (!selectedReport || !updateStatusVal) return;
 
-    router.post(`/account/admin/rescue-management/${selectedReport.id}/status`, {
+    router.post(`${basePath}/${selectedReport.id}/status`, {
       status: updateStatusVal
     }, {
       onSuccess: () => {
@@ -175,7 +177,7 @@ export default function RescueManagement({
     e.preventDefault();
     if (!selectedReport || !linkDuplicateOfId) return;
 
-    router.post(`/account/admin/rescue-management/${selectedReport.id}/duplicate`, {
+    router.post(`${basePath}/${selectedReport.id}/duplicate`, {
       is_duplicate: true,
       duplicate_of_id: linkDuplicateOfId
     }, {
@@ -196,7 +198,7 @@ export default function RescueManagement({
   const handleMarkNotDuplicate = () => {
     if (!selectedReport) return;
 
-    router.post(`/account/admin/rescue-management/${selectedReport.id}/duplicate`, {
+    router.post(`${basePath}/${selectedReport.id}/duplicate`, {
       is_duplicate: false,
       duplicate_of_id: null
     }, {
@@ -320,8 +322,8 @@ export default function RescueManagement({
 
       {/* Filter and Search Card */}
       <AdminCard className="p-6 mb-6">
-        <div className="grid md:grid-cols-5 gap-4 items-end">
-          <div className="md:col-span-2">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[220px] flex-[2_1_240px]">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Search Keyword</label>
             <div className="relative">
               <input
@@ -335,7 +337,7 @@ export default function RescueManagement({
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             </div>
           </div>
-          <div>
+          <div className="min-w-[150px] flex-1">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Report Type</label>
             <ModernSelect
               size="sm"
@@ -350,7 +352,7 @@ export default function RescueManagement({
               ]}
             />
           </div>
-          <div>
+          <div className="min-w-[150px] flex-1">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Status</label>
             <ModernSelect
               size="sm"
@@ -367,10 +369,10 @@ export default function RescueManagement({
               ]}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={handleFilterSearch}
-              className="flex-1 bg-paw-orange text-white py-3 rounded-xl font-bold text-sm hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-md shadow-paw-orange/20"
+              className="bg-paw-orange text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-md shadow-paw-orange/20"
             >
               <Filter size={16} /> APPLY
             </button>

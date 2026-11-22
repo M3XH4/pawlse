@@ -178,7 +178,7 @@ export function notificationMatchesTab(
  * Returns the number of unread notifications matching the specified nav item / tab.
  */
 export function getTabNotificationCount(
-    item: { href: string; match?: string; title?: string },
+    item: { href: string; match?: string; title?: string; children?: { href: string; match?: string; title?: string }[] },
     notifications: DashboardNotification[],
     isRead: (notification: DashboardNotification) => boolean,
 ): number {
@@ -188,7 +188,14 @@ export function getTabNotificationCount(
 
     let count = 0;
     for (const notif of notifications) {
-        if (!isRead(notif) && notificationMatchesTab(item, notif)) {
+        if (isRead(notif)) {
+            continue;
+        }
+        if (item.children && item.children.length > 0) {
+            if (item.children.some((child) => notificationMatchesTab(child, notif))) {
+                count++;
+            }
+        } else if (notificationMatchesTab(item, notif)) {
             count++;
         }
     }

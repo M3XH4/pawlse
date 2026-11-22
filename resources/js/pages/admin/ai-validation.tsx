@@ -93,6 +93,7 @@ interface AiValidationProps {
     confidence_level: string;
     type: string;
   };
+  basePath?: string;
 }
 
 export default function AiValidation({
@@ -100,7 +101,8 @@ export default function AiValidation({
   volunteers = [],
   breed_guide_enabled = true,
   stats,
-  filters
+  filters,
+  basePath = '/account/admin/ai-validation',
 }: AiValidationProps) {
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
@@ -172,7 +174,7 @@ export default function AiValidation({
   };
 
   const handleFilterSearch = () => {
-    router.get('/account/admin/ai-validation', {
+    router.get(basePath, {
       search: searchQuery,
       status: statusFilter,
       animal_type: animalTypeFilter,
@@ -187,7 +189,7 @@ export default function AiValidation({
     setAnimalTypeFilter('All');
     setConfidenceFilter('All');
     setTypeFilter('All');
-    router.get('/account/admin/ai-validation', { status: 'All' }, { preserveState: true });
+    router.get(basePath, { status: 'All' }, { preserveState: true });
   };
 
   const openValidationModal = (report: PetReport) => {
@@ -212,7 +214,7 @@ export default function AiValidation({
       payload.volunteer_id = dispatchVolunteerId;
     }
 
-    router.post(`/account/admin/ai-validation/${selectedReport.id}/approve`, payload, {
+    router.post(`${basePath}/${selectedReport.id}/approve`, payload, {
       onSuccess: () => {
         setSelectedReport(null);
       },
@@ -234,7 +236,7 @@ export default function AiValidation({
       name: correctName
     } : {};
 
-    router.post(`/account/admin/ai-validation/${selectedReport.id}/reject`, payload, {
+    router.post(`${basePath}/${selectedReport.id}/reject`, payload, {
       onSuccess: () => {
         toast.warning(isCorrecting ? 'AI details rejected and corrected!' : 'AI details flagged as incorrect!');
         setSelectedReport(null);

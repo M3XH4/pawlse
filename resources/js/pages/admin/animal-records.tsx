@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { DashboardPagination } from '@/components/dashboard/pagination';
@@ -216,9 +216,10 @@ interface Props {
         per_page: number;
     };
     locationsList: string[];
+    basePath?: string;
 }
 
-export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList }: Props) {
+export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList, basePath = '/account/admin/animal-records' }: Props) {
     // Search and filter state
     const [search, setSearch] = useState(filters.search || '');
     const [speciesFilter, setSpeciesFilter] = useState(filters.species || 'all');
@@ -266,7 +267,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
             ...overrides,
         };
 
-        router.get('/account/admin/animal-records', queryParams, {
+        router.get(basePath, queryParams, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -286,7 +287,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
         setLocationFilter('all');
         setVaccinatedFilter('all');
         setSortBy('latest');
-        router.get('/account/admin/animal-records', {}, {
+        router.get(basePath, {}, {
             preserveState: true,
             replace: true,
         });
@@ -350,7 +351,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     // Handle delete animal
     const confirmDelete = () => {
         if (!animalToDelete) return;
-        router.delete(`/account/admin/animal-records/${animalToDelete.id}`, {
+        router.delete(`${basePath}/${animalToDelete.id}`, {
             onSuccess: () => {
                 toast.success(`Animal #${animalToDelete.code} archived successfully.`);
                 setAnimalToDelete(null);
@@ -1471,7 +1472,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                                             <button
                                                                                 onClick={() => {
                                                                                     if (confirm(`Mark "${cond.title}" as resolved?`)) {
-                                                                                        router.put(`/account/admin/animal-records/medical/${cond.id}`, {
+                                                                                        router.put(`${basePath}/medical/${cond.id}`, {
                                                                                             status: 'resolved',
                                                                                             update_animal_status: selectedAnimal.status === 'treatment' ? 'available' : undefined,
                                                                                         }, {
@@ -1490,7 +1491,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                                         <button
                                                                             onClick={() => {
                                                                                 if (confirm(`Remove this record "${cond.title}"?`)) {
-                                                                                    router.delete(`/account/admin/animal-records/medical/${cond.id}`, {
+                                                                                    router.delete(`${basePath}/medical/${cond.id}`, {
                                                                                         onSuccess: () => toast.success('Record removed'),
                                                                                     });
                                                                                 }
@@ -1556,7 +1557,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                             <button
                                                                 onClick={() => {
                                                                     if (confirm(`Remove vaccine record "${vac.title}"?`)) {
-                                                                        router.delete(`/account/admin/animal-records/medical/${vac.id}`, {
+                                                                        router.delete(`${basePath}/medical/${vac.id}`, {
                                                                             onSuccess: () => toast.success('Medical record removed'),
                                                                         });
                                                                     }
@@ -1607,7 +1608,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                             <button
                                                                 onClick={() => {
                                                                     if (confirm(`Remove medical record "${med.title}"?`)) {
-                                                                        router.delete(`/account/admin/animal-records/medical/${med.id}`, {
+                                                                        router.delete(`${basePath}/medical/${med.id}`, {
                                                                             onSuccess: () => toast.success('Medical record removed'),
                                                                         });
                                                                     }
@@ -2043,6 +2044,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
 /* SUBCOMPONENT: REGISTER NEW ANIMAL MODAL */
 function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locationsList: string[] }) {
+    const basePath = usePage<{ basePath?: string }>().props.basePath || '/account/admin/animal-records';
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         type: 'dog',
@@ -2091,7 +2093,7 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/account/admin/animal-records', {
+        post(basePath, {
             onSuccess: () => {
                 toast.success('Animal master record registered successfully!');
                 onClose();
@@ -2423,6 +2425,7 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
 /* SUBCOMPONENT: EDIT ANIMAL MODAL */
 function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRecord; onClose: () => void; locationsList: string[] }) {
+    const basePath = usePage<{ basePath?: string }>().props.basePath || '/account/admin/animal-records';
     const { data, setData, post, processing } = useForm({
         _method: 'PUT',
         name: animal.name,
@@ -2482,7 +2485,7 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/account/admin/animal-records/${animal.id}`, {
+        post(`${basePath}/${animal.id}`, {
             onSuccess: () => {
                 toast.success('Animal master record updated!');
                 onClose();
@@ -2876,6 +2879,7 @@ function AddMedicalModal({
     onClose: () => void;
 }) {
     const isInitialCondition = initialType === 'injury' || initialType === 'disease';
+    const basePath = usePage<{ basePath?: string }>().props.basePath || '/account/admin/animal-records';
     const { data, setData, post, processing } = useForm({
         record_type: initialType,
         title: '',
@@ -2895,7 +2899,7 @@ function AddMedicalModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/account/admin/animal-records/${animal.id}/medical`, {
+        post(`${basePath}/${animal.id}/medical`, {
             onSuccess: () => {
                 toast.success(
                     isCurrentCondition

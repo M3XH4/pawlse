@@ -61,7 +61,13 @@ class BlogManagementController extends Controller
             'awareness_campaigns_count' => BlogPost::whereIn('category', ['advocacy_campaign', 'community_awareness'])->count(),
         ];
 
-        return Inertia::render('admin/blog-management', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/blog-management' : 'admin/blog-management';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/blog-management' : '/account/admin/blog-management';
+
+        return Inertia::render($view, [
             'posts' => $posts,
             'metrics' => $metrics,
             'categories' => BlogPost::CATEGORIES,
@@ -70,6 +76,8 @@ class BlogManagementController extends Controller
                 'category' => $category,
                 'status' => $status,
             ],
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 

@@ -313,7 +313,13 @@ class AnimalMasterRecordController extends Controller
             ->values()
             ->all();
 
-        return Inertia::render('admin/animal-records', [
+        $currentUser = $request->user();
+        $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
+        $isSuperAdminPath = $request->is('account/super-admin/*');
+        $view = $isSuperAdminPath ? 'super-admin/animal-records' : 'admin/animal-records';
+        $basePath = $isSuperAdminPath ? '/account/super-admin/animal-records' : '/account/admin/animal-records';
+
+        return Inertia::render($view, [
             'animals' => fn () => $transformedAnimals,
             'statusBar' => fn () => $statusBar,
             'filters' => [
@@ -327,6 +333,8 @@ class AnimalMasterRecordController extends Controller
                 'per_page' => $perPage,
             ],
             'locationsList' => fn () => $locationsList,
+            'isSuperAdmin' => $isSuperAdmin,
+            'basePath' => $basePath,
         ]);
     }
 
