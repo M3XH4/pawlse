@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useState, useMemo } from 'react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
     ShieldCheck,
     X,
@@ -321,62 +322,53 @@ export function TransparencyAuditModal({
                             {/* Dropdowns and Export Action */}
                             <div className="flex flex-wrap items-center gap-2 ml-auto">
                                 {/* Year Picker */}
-                                <div className="relative">
-                                    <select
-                                        value={selectedYear}
-                                        onChange={(e) => {
-                                            setSelectedYear(Number(e.target.value));
+                                <div className="min-w-[100px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
+                                        value={String(selectedYear)}
+                                        onChange={(val) => {
+                                            setSelectedYear(Number(val));
                                             setPeriodFilter('this_year');
                                         }}
-                                        className="appearance-none bg-white border border-gray-200/90 rounded-2xl pl-8 pr-7 py-2 text-xs md:text-sm font-bold text-gray-700 outline-none focus:border-[#F97316] cursor-pointer hover:bg-gray-50 transition-colors"
-                                    >
-                                        {availableYears.map((yr) => (
-                                            <option key={yr} value={yr}>
-                                                {yr}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <Calendar
-                                        size={14}
-                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                        options={availableYears.map((yr) => ({
+                                            value: String(yr),
+                                            label: String(yr),
+                                        }))}
                                     />
                                 </div>
 
                                 {/* Month Picker */}
-                                <div className="relative">
-                                    <select
-                                        value={selectedMonth}
-                                        onChange={(e) => {
-                                            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
-                                            setSelectedMonth(val);
+                                <div className="min-w-[140px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
+                                        value={String(selectedMonth)}
+                                        onChange={(val) => {
+                                            setSelectedMonth(val === 'all' ? 'all' : Number(val));
                                             setPeriodFilter('this_year');
                                         }}
-                                        className="appearance-none bg-white border border-gray-200/90 rounded-2xl pl-8 pr-7 py-2 text-xs md:text-sm font-bold text-gray-700 outline-none focus:border-[#F97316] cursor-pointer hover:bg-gray-50 transition-colors"
-                                    >
-                                        {monthsList.map((m) => (
-                                            <option key={m.value} value={m.value}>
-                                                {m.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <Filter
-                                        size={14}
-                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                        options={monthsList.map((m) => ({
+                                            value: String(m.value),
+                                            label: m.label,
+                                        }))}
                                     />
                                 </div>
 
                                 {/* Type Picker */}
-                                <div className="relative">
-                                    <select
+                                <div className="min-w-[140px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={selectedType}
-                                        onChange={(e) => setSelectedType(e.target.value)}
-                                        className="appearance-none bg-white border border-gray-200/90 rounded-2xl pl-4 pr-7 py-2 text-xs md:text-sm font-bold text-gray-700 outline-none focus:border-[#F97316] cursor-pointer hover:bg-gray-50 transition-colors"
-                                    >
-                                        <option value="all">All Types</option>
-                                        <option value="cash">Cash Only</option>
-                                        <option value="in_kind">In-Kind Only</option>
-                                        <option value="feeding_sponsorship">Sponsor Feeding</option>
-                                    </select>
+                                        onChange={(val) => setSelectedType(val)}
+                                        options={[
+                                            { value: 'all', label: 'All Types' },
+                                            { value: 'cash', label: 'Cash Only' },
+                                            { value: 'in_kind', label: 'In-Kind Only' },
+                                            { value: 'feeding_sponsorship', label: 'Sponsor Feeding' },
+                                        ]}
+                                    />
                                 </div>
 
                                 {/* Export Button */}

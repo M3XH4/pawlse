@@ -22,7 +22,9 @@ export interface ModernSelectProps {
     searchable?: boolean;
     helperText?: string;
     error?: string;
+    size?: 'sm' | 'md';
     className?: string;
+    triggerClassName?: string;
     id?: string;
 }
 
@@ -37,7 +39,9 @@ export function ModernSelect({
     searchable,
     helperText,
     error,
+    size = 'md',
     className = '',
+    triggerClassName = '',
     id,
 }: ModernSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -97,13 +101,15 @@ export function ModernSelect({
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen((prev) => !prev)}
-                className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full flex items-center justify-between gap-2 ${
+                    size === 'sm' ? 'px-3 py-2 text-xs sm:text-sm' : 'px-4 py-3 text-sm'
+                } rounded-xl border text-left font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     error
                         ? 'border-red-400 bg-red-50/40 dark:bg-red-950/20 text-red-700 dark:text-red-300'
                         : isOpen
                           ? 'border-paw-orange bg-white dark:bg-slate-800 ring-2 ring-paw-orange/20 text-[#0B2340] dark:text-white'
                           : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-850 hover:border-paw-orange/60 text-[#0B2340] dark:text-white'
-                }`}
+                } ${triggerClassName}`}
             >
                 <span className={`truncate ${selectedOption ? '' : 'text-gray-400 dark:text-gray-500 font-medium'}`}>
                     {selectedOption ? selectedOption.label : placeholder}
@@ -134,9 +140,10 @@ export function ModernSelect({
                                 style={{
                                     position: 'fixed',
                                     top: coords.top,
+                                    bottom: coords.bottom,
                                     left: coords.left,
-                                    minWidth: Math.max(coords.width, 220),
-                                    maxWidth: Math.max(coords.width, 340),
+                                    minWidth: Math.max(coords.width ?? 0, 220),
+                                    maxWidth: Math.max(coords.width ?? 0, 340),
                                     zIndex: 9999,
                                 }}
                                 className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"

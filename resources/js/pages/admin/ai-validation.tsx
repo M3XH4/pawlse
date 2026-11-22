@@ -12,6 +12,7 @@ import {
   ArrowRight, ShieldAlert, Cpu, BookOpen
 } from 'lucide-react';
 import { BreedGuideModal } from '@/components/admin/breed-guide-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { PetBreed } from '@/data/pet-breeds';
 
 interface PaginatedData<T> {
@@ -412,16 +413,18 @@ export default function AiValidation({
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
               Validation Status
             </label>
-            <select
+            <ModernSelect
+              size="sm"
+              searchable={false}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Statuses</option>
-              <option value="pending">Pending Review</option>
-              <option value="approved">Approved / Verified</option>
-              <option value="rejected">Rejected / Incorrect</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'pending', label: 'Pending Review' },
+                { value: 'approved', label: 'Approved / Verified' },
+                { value: 'rejected', label: 'Rejected / Incorrect' },
+              ]}
+            />
           </div>
 
           {/* Animal Species - 2 cols */}
@@ -429,16 +432,18 @@ export default function AiValidation({
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
               Animal Species
             </label>
-            <select
+            <ModernSelect
+              size="sm"
+              searchable={false}
               value={animalTypeFilter}
-              onChange={(e) => setAnimalTypeFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Species</option>
-              <option value="Dog">🐶 Dog</option>
-              <option value="Cat">🐱 Cat</option>
-              <option value="Other">🐾 Other</option>
-            </select>
+              onChange={(val) => setAnimalTypeFilter(val)}
+              options={[
+                { value: 'All', label: 'All Species' },
+                { value: 'Dog', label: 'Dog' },
+                { value: 'Cat', label: 'Cat' },
+                { value: 'Other', label: 'Other' },
+              ]}
+            />
           </div>
 
           {/* Confidence Level - 2 cols */}
@@ -446,16 +451,18 @@ export default function AiValidation({
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 block">
               Confidence Level
             </label>
-            <select
+            <ModernSelect
+              size="sm"
+              searchable={false}
               value={confidenceFilter}
-              onChange={(e) => setConfidenceFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl outline-none focus:border-paw-orange font-bold text-xs text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Confidences</option>
-              <option value="High">High (≥80%)</option>
-              <option value="Medium">Medium (50%-79%)</option>
-              <option value="Low">Low (&lt;50%)</option>
-            </select>
+              onChange={(val) => setConfidenceFilter(val)}
+              options={[
+                { value: 'All', label: 'All Confidences' },
+                { value: 'High', label: 'High (≥80%)' },
+                { value: 'Medium', label: 'Medium (50%-79%)' },
+                { value: 'Low', label: 'Low (<50%)' },
+              ]}
+            />
           </div>
 
           {/* Action Buttons - 2 cols */}
@@ -871,16 +878,18 @@ export default function AiValidation({
                               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">
                                 Optional: Dispatch Responder Volunteer on Approval
                               </label>
-                              <select
+                              <ModernSelect
+                                size="sm"
                                 value={dispatchVolunteerId}
-                                onChange={(e) => setDispatchVolunteerId(e.target.value)}
-                                className="w-full p-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg outline-none font-bold text-xs text-[#0B2340] dark:text-white"
-                              >
-                                <option value="">Approve only (assign volunteer later)</option>
-                                {volunteers.map((v) => (
-                                  <option key={v.id} value={v.id}>{v.name} ({v.email})</option>
-                                ))}
-                              </select>
+                                onChange={(val) => setDispatchVolunteerId(val)}
+                                options={[
+                                  { value: '', label: 'Approve only (assign volunteer later)' },
+                                  ...volunteers.map((v) => ({
+                                    value: String(v.id),
+                                    label: `${v.name} (${v.email})`,
+                                  })),
+                                ]}
+                              />
                             </div>
                           )}
                           <div className="flex gap-2">
@@ -913,15 +922,17 @@ export default function AiValidation({
                             <div className="grid grid-cols-2 gap-3 text-xs">
                               <div>
                                 <label className="font-bold text-gray-400 mb-1 block">Species / Animal Type</label>
-                                <select
+                                <ModernSelect
+                                  size="sm"
+                                  searchable={false}
                                   value={correctAnimalType}
-                                  onChange={(e) => setCorrectAnimalType(e.target.value)}
-                                  className="w-full p-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg outline-none font-bold"
-                                >
-                                  <option value="Dog">Dog</option>
-                                  <option value="Cat">Cat</option>
-                                  <option value="Other">Other</option>
-                                </select>
+                                  onChange={(val) => setCorrectAnimalType(val)}
+                                  options={[
+                                    { value: 'Dog', label: 'Dog' },
+                                    { value: 'Cat', label: 'Cat' },
+                                    { value: 'Other', label: 'Other' },
+                                  ]}
+                                />
                               </div>
                               
                               <div>

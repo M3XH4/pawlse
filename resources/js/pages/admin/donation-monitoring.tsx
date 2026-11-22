@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { SustainabilityAdminTab } from '@/components/care-sustainability/sustainability-admin-tab';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface DonationRecord {
@@ -645,44 +646,44 @@ export default function DonationMonitoring({
                                 />
                             </div>
 
-                            <div className="flex gap-4 w-full md:w-auto shrink-0">
-                                <div className="relative flex-1 md:flex-none">
-                                    <select
+                            <div className="flex flex-wrap gap-3 w-full md:w-auto shrink-0">
+                                <div className="flex-1 md:flex-none min-w-[155px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={selectedType}
-                                        onChange={(e) => {
-                                             const val = e.target.value;
-                                             setSelectedType(val);
-                                             applyFilters(val, undefined);
+                                        onChange={(val) => {
+                                            setSelectedType(val);
+                                            applyFilters(val, undefined);
                                         }}
-                                        className="w-full pl-3 pr-8 py-2 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-sm text-paw-navy dark:text-white appearance-none min-w-[140px]"
-                                    >
-                                        <option value="">All Types</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="in_kind">In-Kind</option>
-                                        <option value="feeding_sponsorship">Sponsor Feeding</option>
-                                    </select>
-                                    <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-450 pointer-events-none" />
+                                        options={[
+                                            { value: '', label: 'All Types' },
+                                            { value: 'cash', label: 'Cash' },
+                                            { value: 'in_kind', label: 'In-Kind' },
+                                            { value: 'feeding_sponsorship', label: 'Sponsor Feeding' },
+                                        ]}
+                                    />
                                 </div>
 
-                                <div className="relative flex-1 md:flex-none">
-                                    <select
+                                <div className="flex-1 md:flex-none min-w-[165px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={selectedStatus}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
+                                        onChange={(val) => {
                                             setSelectedStatus(val);
                                             applyFilters(undefined, val);
                                         }}
-                                        className="w-full pl-3 pr-8 py-2 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-sm text-paw-navy dark:text-white appearance-none min-w-[140px]"
-                                    >
-                                        <option value="">All Statuses</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="verified">Verified</option>
-                                        <option value="pending_payment">Pending Payment</option>
-                                        <option value="pending_verification">Pending Verify</option>
-                                        <option value="scheduled">Scheduled</option>
-                                        <option value="rejected">Rejected</option>
-                                    </select>
-                                    <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-450 pointer-events-none" />
+                                        options={[
+                                            { value: '', label: 'All Statuses' },
+                                            { value: 'completed', label: 'Completed' },
+                                            { value: 'verified', label: 'Verified' },
+                                            { value: 'pending_payment', label: 'Pending Payment' },
+                                            { value: 'pending_verification', label: 'Pending Verify' },
+                                            { value: 'scheduled', label: 'Scheduled' },
+                                            { value: 'rejected', label: 'Rejected' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1012,35 +1013,42 @@ export default function DonationMonitoring({
                                     />
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <select
-                                        value={invCategoryFilter}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setInvCategoryFilter(val);
-                                            applyFilters(undefined, undefined, val);
-                                        }}
-                                        className="px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-xs text-paw-navy dark:text-white"
-                                    >
-                                        <option value="">All Categories</option>
-                                        <option value="Food">Food</option>
-                                        <option value="Medicine">Medicine</option>
-                                        <option value="Supplies">Supplies</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                <div className="flex flex-wrap gap-2">
+                                    <div className="min-w-[155px]">
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
+                                            value={invCategoryFilter}
+                                            onChange={(val) => {
+                                                setInvCategoryFilter(val);
+                                                applyFilters(undefined, undefined, val);
+                                            }}
+                                            options={[
+                                                { value: '', label: 'All Categories' },
+                                                { value: 'Food', label: 'Food' },
+                                                { value: 'Medicine', label: 'Medicine' },
+                                                { value: 'Supplies', label: 'Supplies' },
+                                                { value: 'Other', label: 'Other' },
+                                            ]}
+                                        />
+                                    </div>
 
-                                    <select
-                                        value={invStatusFilter}
-                                        onChange={(e) => setInvStatusFilter(e.target.value)}
-                                        className="px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-paw-orange rounded-2xl outline-none font-bold text-xs text-paw-navy dark:text-white"
-                                    >
-                                        <option value="all">All Stock Statuses</option>
-                                        <option value="in_stock">In Stock (Good)</option>
-                                        <option value="expiring_soon">Expiring Soon (30d)</option>
-                                        <option value="expired">Expired</option>
-                                        <option value="low_stock">Low Stock</option>
-                                        <option value="out_of_stock">Out of Stock</option>
-                                    </select>
+                                    <div className="min-w-[180px]">
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
+                                            value={invStatusFilter}
+                                            onChange={(val) => setInvStatusFilter(val)}
+                                            options={[
+                                                { value: 'all', label: 'All Stock Statuses' },
+                                                { value: 'in_stock', label: 'In Stock (Good)' },
+                                                { value: 'expiring_soon', label: 'Expiring Soon (30d)' },
+                                                { value: 'expired', label: 'Expired' },
+                                                { value: 'low_stock', label: 'Low Stock' },
+                                                { value: 'out_of_stock', label: 'Out of Stock' },
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -2007,16 +2015,18 @@ export default function DonationMonitoring({
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Category *</label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={verifyForm.category}
-                                        onChange={(e) => setVerifyForm({ ...verifyForm, category: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
-                                    >
-                                        <option value="Food">Food / Feed</option>
-                                        <option value="Medicine">Medicine / Healthcare</option>
-                                        <option value="Supplies">Supplies / Bedding</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                        onChange={(val) => setVerifyForm({ ...verifyForm, category: val })}
+                                        options={[
+                                            { value: 'Food', label: 'Food / Feed' },
+                                            { value: 'Medicine', label: 'Medicine / Healthcare' },
+                                            { value: 'Supplies', label: 'Supplies / Bedding' },
+                                            { value: 'Other', label: 'Other' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Storage Location</label>
@@ -2154,16 +2164,18 @@ export default function DonationMonitoring({
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Category *</label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={addItemForm.category}
-                                        onChange={(e) => setAddItemForm({ ...addItemForm, category: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
-                                    >
-                                        <option value="Food">Food / Feed</option>
-                                        <option value="Medicine">Medicine / Healthcare</option>
-                                        <option value="Supplies">Supplies / Bedding</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                        onChange={(val) => setAddItemForm({ ...addItemForm, category: val })}
+                                        options={[
+                                            { value: 'Food', label: 'Food / Feed' },
+                                            { value: 'Medicine', label: 'Medicine / Healthcare' },
+                                            { value: 'Supplies', label: 'Supplies / Bedding' },
+                                            { value: 'Other', label: 'Other' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Unit of Measure *</label>
@@ -2294,16 +2306,18 @@ export default function DonationMonitoring({
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Category</label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={editItemForm.category}
-                                        onChange={(e) => setEditItemForm({ ...editItemForm, category: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
-                                    >
-                                        <option value="Food">Food</option>
-                                        <option value="Medicine">Medicine</option>
-                                        <option value="Supplies">Supplies</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                        onChange={(val) => setEditItemForm({ ...editItemForm, category: val })}
+                                        options={[
+                                            { value: 'Food', label: 'Food' },
+                                            { value: 'Medicine', label: 'Medicine' },
+                                            { value: 'Supplies', label: 'Supplies' },
+                                            { value: 'Other', label: 'Other' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Unit</label>
@@ -2629,16 +2643,18 @@ export default function DonationMonitoring({
                         <form onSubmit={submitAdjustBatch} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Action Type</label>
-                                <select
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={adjustBatchForm.action_type}
-                                    onChange={(e) => setAdjustBatchForm({ ...adjustBatchForm, action_type: e.target.value })}
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm outline-none focus:border-paw-orange text-paw-navy dark:text-white"
-                                >
-                                    <option value="dispensed">Dispensed / Used for Shelter Care</option>
-                                    <option value="expired_writeoff">Expired Stock Write-Off / Disposal</option>
-                                    <option value="damaged_writeoff">Damaged / Spoiled Disposal</option>
-                                    <option value="adjustment">Audit Count Correction</option>
-                                </select>
+                                    onChange={(val) => setAdjustBatchForm({ ...adjustBatchForm, action_type: val })}
+                                    options={[
+                                        { value: 'dispensed', label: 'Dispensed / Used for Shelter Care' },
+                                        { value: 'expired_writeoff', label: 'Expired Stock Write-Off / Disposal' },
+                                        { value: 'damaged_writeoff', label: 'Damaged / Spoiled Disposal' },
+                                        { value: 'adjustment', label: 'Audit Count Correction' },
+                                    ]}
+                                />
                             </div>
 
                             <div>

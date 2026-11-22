@@ -7,6 +7,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface DonationRecord {
     id: number;
@@ -84,14 +85,12 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
         );
     };
 
-    const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
+    const handleTypeChange = (val: string) => {
         setSelectedType(val);
         applyFilters(val, undefined);
     };
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
+    const handleStatusChange = (val: string) => {
         setSelectedStatus(val);
         applyFilters(undefined, val);
     };
@@ -188,37 +187,39 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
 
                     {/* Filter Type & Status */}
                     <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 sm:flex-none">
-                            <select
+                        <div className="flex-1 sm:flex-none min-w-[150px]">
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={selectedType}
                                 onChange={handleTypeChange}
-                                className="w-full pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[130px]"
-                            >
-                                <option value="">All Types</option>
-                                <option value="cash">Cash</option>
-                                <option value="in_kind">In-Kind</option>
-                                <option value="feeding_sponsorship">Sponsor Feeding</option>
-                            </select>
-                            <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                options={[
+                                    { value: '', label: 'All Types' },
+                                    { value: 'cash', label: 'Cash' },
+                                    { value: 'in_kind', label: 'In-Kind' },
+                                    { value: 'feeding_sponsorship', label: 'Sponsor Feeding' },
+                                ]}
+                            />
                         </div>
 
                         {/* Filter Status */}
-                        <div className="relative flex-1 sm:flex-none">
-                            <select
+                        <div className="flex-1 sm:flex-none min-w-[165px]">
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={selectedStatus}
                                 onChange={handleStatusChange}
-                                className="w-full pl-3 pr-8 py-2 border border-gray-255 dark:border-gray-800 bg-white dark:bg-[#111827] rounded-xl text-sm font-bold outline-none focus:border-paw-orange appearance-none text-[#0B2340] dark:text-white min-w-[130px]"
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="completed">Completed</option>
-                                <option value="verified">Verified</option>
-                                <option value="pending_payment">Pending Payment</option>
-                                <option value="pending_verification">Pending Verify</option>
-                                <option value="scheduled">Scheduled</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="failed">Failed</option>
-                            </select>
-                            <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                options={[
+                                    { value: '', label: 'All Statuses' },
+                                    { value: 'completed', label: 'Completed' },
+                                    { value: 'verified', label: 'Verified' },
+                                    { value: 'pending_payment', label: 'Pending Payment' },
+                                    { value: 'pending_verification', label: 'Pending Verify' },
+                                    { value: 'scheduled', label: 'Scheduled' },
+                                    { value: 'rejected', label: 'Rejected' },
+                                    { value: 'failed', label: 'Failed' },
+                                ]}
+                            />
                         </div>
                     </div>
                 </div>

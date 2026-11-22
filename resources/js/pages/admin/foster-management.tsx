@@ -4,6 +4,7 @@ import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
     Heart,
     HeartHandshake,
@@ -575,23 +576,27 @@ export default function FosterManagement({
                             className="pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0B2340] dark:text-white w-64"
                         />
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            router.get(
-                                '/account/admin/foster-management',
-                                { search: searchTerm, status: e.target.value },
-                                { preserveState: true, preserveScroll: true },
-                            );
-                        }}
-                        className="py-2 px-3 text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0B2340] dark:text-white"
-                    >
-                        <option value="all">All Placement Statuses</option>
-                        <option value="active">Active Placements</option>
-                        <option value="transferred">Transferred</option>
-                        <option value="ended">Ended / Concluded</option>
-                    </select>
+                    <div className="min-w-[190px]">
+                        <ModernSelect
+                            size="sm"
+                            searchable={false}
+                            value={statusFilter}
+                            onChange={(val) => {
+                                setStatusFilter(val);
+                                router.get(
+                                    '/account/admin/foster-management',
+                                    { search: searchTerm, status: val },
+                                    { preserveState: true, preserveScroll: true },
+                                );
+                            }}
+                            options={[
+                                { value: 'all', label: 'All Placement Statuses' },
+                                { value: 'active', label: 'Active Placements' },
+                                { value: 'transferred', label: 'Transferred' },
+                                { value: 'ended', label: 'Ended / Concluded' },
+                            ]}
+                        />
+                    </div>
                 </form>
             </div>
 
@@ -1226,46 +1231,39 @@ export default function FosterManagement({
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Select Available Shelter Pet *
                                 </label>
-                                <select
-                                    required
-                                    value={assignPetId}
-                                    onChange={(e) => setAssignPetId(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                >
-                                    {availablePets.length === 0 ? (
-                                        <option value="">No available pets</option>
-                                    ) : (
-                                        availablePets.map((pet) => (
-                                            <option key={pet.id} value={pet.id}>
-                                                {pet.name} ({pet.breed} • {pet.age})
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
+                                <ModernSelect
+                                    size="sm"
+                                    value={String(assignPetId)}
+                                    onChange={(val) => setAssignPetId(val)}
+                                    options={
+                                        availablePets.length === 0
+                                            ? [{ value: '', label: 'No available pets', disabled: true }]
+                                            : availablePets.map((pet) => ({
+                                                  value: String(pet.id),
+                                                  label: `${pet.name} (${pet.breed} • ${pet.age})`,
+                                              }))
+                                    }
+                                />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Select Approved Foster Parent *
                                 </label>
-                                <select
-                                    required
-                                    value={assignParentId}
-                                    onChange={(e) => setAssignParentId(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">-- Choose Foster Caretaker --</option>
-                                    {fosterParents.map((parent) => (
-                                        <option
-                                            key={parent.id}
-                                            value={parent.id}
-                                            disabled={parent.status !== 'approved' || parent.is_at_capacity}
-                                        >
-                                            {parent.name}{parent.location ? ` [📍 ${parent.location}]` : ''} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
-                                            {parent.is_at_capacity ? ' [AT CAPACITY]' : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                <ModernSelect
+                                    size="sm"
+                                    value={String(assignParentId)}
+                                    onChange={(val) => setAssignParentId(val)}
+                                    placeholder="-- Choose Foster Caretaker --"
+                                    options={[
+                                        { value: '', label: '-- Choose Foster Caretaker --' },
+                                        ...fosterParents.map((parent) => ({
+                                            value: String(parent.id),
+                                            label: `${parent.name}${parent.location ? ` [${parent.location}]` : ''} (${parent.active_count}/${parent.capacity} pets) - ${parent.status.toUpperCase()}${parent.is_at_capacity ? ' [AT CAPACITY]' : ''}`,
+                                            disabled: parent.status !== 'approved' || parent.is_at_capacity,
+                                        })),
+                                    ]}
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -1366,26 +1364,22 @@ export default function FosterManagement({
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Destination Foster Parent *
                                 </label>
-                                <select
-                                    required
-                                    value={transferDestinationId}
-                                    onChange={(e) => setTransferDestinationId(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">-- Choose New Foster Parent --</option>
-                                    {fosterParents
-                                        .filter((p) => p.user_id !== selectedPlacement.foster_parent?.id)
-                                        .map((parent) => (
-                                            <option
-                                                key={parent.id}
-                                                value={parent.id}
-                                                disabled={parent.status !== 'approved' || parent.is_at_capacity}
-                                            >
-                                                {parent.name}{parent.location ? ` [📍 ${parent.location}]` : ''} ({parent.active_count}/{parent.capacity} pets) - {parent.status.toUpperCase()}
-                                                {parent.is_at_capacity ? ' [AT CAPACITY]' : ''}
-                                            </option>
-                                        ))}
-                                </select>
+                                <ModernSelect
+                                    size="sm"
+                                    value={String(transferDestinationId)}
+                                    onChange={(val) => setTransferDestinationId(val)}
+                                    placeholder="-- Choose New Foster Parent --"
+                                    options={[
+                                        { value: '', label: '-- Choose New Foster Parent --' },
+                                        ...fosterParents
+                                            .filter((p) => p.user_id !== selectedPlacement.foster_parent?.id)
+                                            .map((parent) => ({
+                                                value: String(parent.id),
+                                                label: `${parent.name}${parent.location ? ` [${parent.location}]` : ''} (${parent.active_count}/${parent.capacity} pets) - ${parent.status.toUpperCase()}${parent.is_at_capacity ? ' [AT CAPACITY]' : ''}`,
+                                                disabled: parent.status !== 'approved' || parent.is_at_capacity,
+                                            })),
+                                    ]}
+                                />
                             </div>
 
                             <div>
@@ -1471,16 +1465,17 @@ export default function FosterManagement({
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Return Status for Shelter Animal *
                                 </label>
-                                <select
-                                    required
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={endTargetStatus}
-                                    onChange={(e) => setEndTargetStatus(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                >
-                                    <option value="available">Available (Returned to shelter for adoption)</option>
-                                    <option value="adopted">Adopted (Adopted directly by foster or approved applicant)</option>
-                                    <option value="pending">Pending (Under evaluation or scheduled review)</option>
-                                </select>
+                                    onChange={(val) => setEndTargetStatus(val)}
+                                    options={[
+                                        { value: 'available', label: 'Available (Returned to shelter for adoption)' },
+                                        { value: 'adopted', label: 'Adopted (Adopted directly by foster or approved applicant)' },
+                                        { value: 'pending', label: 'Pending (Under evaluation or scheduled review)' },
+                                    ]}
+                                />
                             </div>
 
                             <div>
@@ -1540,22 +1535,19 @@ export default function FosterManagement({
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Select Eligible User (Volunteer or Admin) *
                                 </label>
-                                <select
-                                    required
-                                    value={authUserId}
-                                    onChange={(e) => setAuthUserId(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                >
-                                    {eligibleUsers.length === 0 ? (
-                                        <option value="">All active volunteers & admins already authorized</option>
-                                    ) : (
-                                        eligibleUsers.map((u) => (
-                                            <option key={u.id} value={u.id}>
-                                                {u.name} ({u.email} • {u.role})
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
+                                <ModernSelect
+                                    size="sm"
+                                    value={String(authUserId)}
+                                    onChange={(val) => setAuthUserId(val)}
+                                    options={
+                                        eligibleUsers.length === 0
+                                            ? [{ value: '', label: 'All active volunteers & admins already authorized', disabled: true }]
+                                            : eligibleUsers.map((u) => ({
+                                                  value: String(u.id),
+                                                  label: `${u.name} (${u.email} • ${u.role})`,
+                                              }))
+                                    }
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -1577,14 +1569,16 @@ export default function FosterManagement({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Initial Status
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={authStatus}
-                                        onChange={(e) => setAuthStatus(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="approved">Approved</option>
-                                        <option value="pending">Pending</option>
-                                    </select>
+                                        onChange={(val) => setAuthStatus(val)}
+                                        options={[
+                                            { value: 'approved', label: 'Approved' },
+                                            { value: 'pending', label: 'Pending' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -1607,31 +1601,35 @@ export default function FosterManagement({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Pet Preference
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={authPetPreference}
-                                        onChange={(e) => setAuthPetPreference(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="both">Any / Both Dogs & Cats</option>
-                                        <option value="dogs">Dogs Only</option>
-                                        <option value="cats">Cats Only</option>
-                                    </select>
+                                        onChange={(val) => setAuthPetPreference(val)}
+                                        options={[
+                                            { value: 'both', label: 'Any / Both Dogs & Cats' },
+                                            { value: 'dogs', label: 'Dogs Only' },
+                                            { value: 'cats', label: 'Cats Only' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Housing Environment
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={authHousingType}
-                                        onChange={(e) => setAuthHousingType(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="Single Family Home with Yard">House with Fenced Yard</option>
-                                        <option value="Townhouse">Townhouse</option>
-                                        <option value="Apartment / Condo">Pet-Friendly Apartment / Condo</option>
-                                        <option value="Rural / Farm">Rural / Farm Setting</option>
-                                        <option value="Other">Other Residential</option>
-                                    </select>
+                                        onChange={(val) => setAuthHousingType(val)}
+                                        options={[
+                                            { value: 'Single Family Home with Yard', label: 'House with Fenced Yard' },
+                                            { value: 'Townhouse', label: 'Townhouse' },
+                                            { value: 'Apartment / Condo', label: 'Pet-Friendly Apartment / Condo' },
+                                            { value: 'Rural / Farm', label: 'Rural / Farm Setting' },
+                                            { value: 'Other', label: 'Other Residential' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -1713,16 +1711,18 @@ export default function FosterManagement({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Status *
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={editStatus}
-                                        onChange={(e) => setEditStatus(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="approved">Approved</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="suspended">Suspended</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                        onChange={(val) => setEditStatus(val)}
+                                        options={[
+                                            { value: 'approved', label: 'Approved' },
+                                            { value: 'pending', label: 'Pending' },
+                                            { value: 'suspended', label: 'Suspended' },
+                                            { value: 'inactive', label: 'Inactive' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -1744,15 +1744,17 @@ export default function FosterManagement({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Pet Preference
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={editPetPreference}
-                                        onChange={(e) => setEditPetPreference(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="both">Any / Both Dogs & Cats</option>
-                                        <option value="dogs">Dogs Only</option>
-                                        <option value="cats">Cats Only</option>
-                                    </select>
+                                        onChange={(val) => setEditPetPreference(val)}
+                                        options={[
+                                            { value: 'both', label: 'Any / Both Dogs & Cats' },
+                                            { value: 'dogs', label: 'Dogs Only' },
+                                            { value: 'cats', label: 'Cats Only' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">

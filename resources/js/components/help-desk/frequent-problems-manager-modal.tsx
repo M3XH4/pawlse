@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/react';
 import { BookOpen, Check, Sparkles, X } from 'lucide-react';
 import type { FrequentProblem } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface FrequentProblemsManagerModalProps {
     isOpen: boolean;
@@ -138,46 +139,38 @@ export function FrequentProblemsManagerModal({
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                 Category *
                             </label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.category}
-                                onChange={(e) => setData('category', e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-xs focus:border-paw-orange focus:outline-none focus:ring-2 focus:ring-paw-orange/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                            >
-                                {categories.map((c) => (
-                                    <option key={c} value={c}>
-                                        {c}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.category && (
-                                <p className="mt-1 text-xs text-red-500">{errors.category}</p>
-                            )}
+                                onChange={(val) => setData('category', val)}
+                                options={categories.map((c) => ({ value: c, label: c }))}
+                                error={errors.category}
+                            />
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                 Target Audience *
                             </label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.target_audience}
-                                onChange={(e) =>
+                                onChange={(val) =>
                                     setData(
                                         'target_audience',
-                                        e.target.value as 'all' | 'user' | 'volunteer' | 'admin'
+                                        val as 'all' | 'user' | 'volunteer' | 'admin'
                                     )
                                 }
-                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-xs focus:border-paw-orange focus:outline-none focus:ring-2 focus:ring-paw-orange/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                            >
-                                <option value="all">Everyone (All Dashboards)</option>
-                                <option value="user">Users only</option>
-                                <option value="volunteer">Volunteers only</option>
-                                <option value="admin">Admins only</option>
-                            </select>
-                            {errors.target_audience && (
-                                <p className="mt-1 text-xs text-red-500">
-                                    {errors.target_audience}
-                                </p>
-                            )}
+                                options={[
+                                    { value: 'all', label: 'Everyone (All Dashboards)' },
+                                    { value: 'user', label: 'Users only' },
+                                    { value: 'volunteer', label: 'Volunteers only' },
+                                    { value: 'admin', label: 'Admins only' },
+                                ]}
+                                error={errors.target_audience}
+                            />
                         </div>
                     </div>
 

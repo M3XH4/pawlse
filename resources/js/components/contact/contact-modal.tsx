@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
   X,
   Mail,
@@ -280,19 +281,21 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
                     <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy mb-1">
                       Inquiry Category <span className="text-paw-orange">*</span>
                     </label>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      searchable={false}
                       value={data.category}
-                      onChange={(e) => setData('category', e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-paw-orange focus:ring-2 focus:ring-paw-orange/20 transition-all font-medium text-paw-navy text-xs cursor-pointer"
-                    >
-                      <option value="general">General Inquiry</option>
-                      <option value="adoption">Adoption & Meeting Pets</option>
-                      <option value="volunteer">Volunteering & Hours</option>
-                      <option value="donation">Donations & Supplies</option>
-                      <option value="shelter_visit">Shelter Visit / Tour</option>
-                      <option value="partnership">Partnership & Vet Collab</option>
-                      <option value="other">Other / Feedback</option>
-                    </select>
+                      onChange={(val) => setData('category', val)}
+                      options={[
+                        { value: 'general', label: 'General Inquiry' },
+                        { value: 'adoption', label: 'Adoption & Meeting Pets' },
+                        { value: 'volunteer', label: 'Volunteering & Hours' },
+                        { value: 'donation', label: 'Donations & Supplies' },
+                        { value: 'shelter_visit', label: 'Shelter Visit / Tour' },
+                        { value: 'partnership', label: 'Partnership & Vet Collab' },
+                        { value: 'other', label: 'Other / Feedback' },
+                      ]}
+                    />
                     <InputError message={errors.category} className="mt-1 text-xs" />
                   </div>
 

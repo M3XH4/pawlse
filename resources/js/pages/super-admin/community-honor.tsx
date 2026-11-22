@@ -9,6 +9,7 @@ import {
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface CommunityHonorRecord {
     id: number;
@@ -285,17 +286,21 @@ export default function CommunityHonorManagement({
                         </form>
 
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => handleCategoryChange(e.target.value)}
-                                className="px-3 py-2 text-xs border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold"
-                            >
-                                <option value="all">All Categories</option>
-                                <option value="donor">Donors</option>
-                                <option value="volunteer">Volunteers</option>
-                                <option value="community_supporter">Community Supporters</option>
-                                <option value="sponsor">Sponsors</option>
-                            </select>
+                            <div className="min-w-[180px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={categoryFilter}
+                                    onChange={(val) => handleCategoryChange(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Categories' },
+                                        { value: 'donor', label: 'Donors' },
+                                        { value: 'volunteer', label: 'Volunteers' },
+                                        { value: 'community_supporter', label: 'Community Supporters' },
+                                        { value: 'sponsor', label: 'Sponsors' },
+                                    ]}
+                                />
+                            </div>
 
                             <button
                                 onClick={() => setIsMetricsModalOpen(true)}
@@ -472,16 +477,18 @@ export default function CommunityHonorManagement({
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-gray-500 mb-1">Category *</label>
-                                        <select
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
                                             value={data.category}
-                                            onChange={(e) => setData('category', e.target.value as any)}
-                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 font-bold"
-                                        >
-                                            <option value="donor">Donor</option>
-                                            <option value="volunteer">Volunteer</option>
-                                            <option value="community_supporter">Community Supporter</option>
-                                            <option value="sponsor">Sponsor</option>
-                                        </select>
+                                            onChange={(val) => setData('category', val as any)}
+                                            options={[
+                                                { value: 'donor', label: 'Donor' },
+                                                { value: 'volunteer', label: 'Volunteer' },
+                                                { value: 'community_supporter', label: 'Community Supporter' },
+                                                { value: 'sponsor', label: 'Sponsor' },
+                                            ]}
+                                        />
                                     </div>
 
                                     <div>

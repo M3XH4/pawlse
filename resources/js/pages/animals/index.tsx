@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
   Search,
   Heart,
@@ -388,17 +389,18 @@ export default function AnimalOverview({
               </div>
 
               {/* Sort By Dropdown */}
-              <div className="relative shrink-0 flex items-center">
-                <ArrowUpDown size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <select
+              <div className="shrink-0 min-w-[165px]">
+                <ModernSelect
+                  size="sm"
+                  searchable={false}
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="pl-9 pr-8 py-2.5 bg-[#f8fafc] border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-amber-500 transition-all cursor-pointer appearance-none"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="name">Name (A-Z)</option>
-                  <option value="longest">Longest in Care</option>
-                </select>
+                  onChange={(val) => setSortBy(val)}
+                  options={[
+                    { value: 'newest', label: 'Newest First' },
+                    { value: 'name', label: 'Name (A-Z)' },
+                    { value: 'longest', label: 'Longest in Care' },
+                  ]}
+                />
               </div>
             </div>
 

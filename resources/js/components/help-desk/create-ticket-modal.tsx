@@ -9,6 +9,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -128,39 +129,33 @@ export function CreateTicketModal({
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                 Category *
                             </label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.category}
-                                onChange={(e) => setData('category', e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-xs focus:border-paw-orange focus:outline-none focus:ring-2 focus:ring-paw-orange/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                            >
-                                {categories.map((c) => (
-                                    <option key={c} value={c}>
-                                        {c}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.category && (
-                                <p className="mt-1 text-xs text-red-500">{errors.category}</p>
-                            )}
+                                onChange={(val) => setData('category', val)}
+                                options={categories.map((c) => ({ value: c, label: c }))}
+                                error={errors.category}
+                            />
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                 Priority Level *
                             </label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.priority}
-                                onChange={(e) => setData('priority', e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-xs focus:border-paw-orange focus:outline-none focus:ring-2 focus:ring-paw-orange/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                            >
-                                <option value="low">Low (General question)</option>
-                                <option value="medium">Medium (Standard request)</option>
-                                <option value="high">High (Time-sensitive)</option>
-                                <option value="urgent">Urgent (Immediate attention)</option>
-                            </select>
-                            {errors.priority && (
-                                <p className="mt-1 text-xs text-red-500">{errors.priority}</p>
-                            )}
+                                onChange={(val) => setData('priority', val)}
+                                options={[
+                                    { value: 'low', label: 'Low (General question)' },
+                                    { value: 'medium', label: 'Medium (Standard request)' },
+                                    { value: 'high', label: 'High (Time-sensitive)' },
+                                    { value: 'urgent', label: 'Urgent (Immediate attention)' },
+                                ]}
+                                error={errors.priority}
+                            />
                         </div>
                     </div>
 

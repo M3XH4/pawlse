@@ -28,6 +28,7 @@ import { Head, Link } from '@inertiajs/react';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { PetDetailModal, AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
 import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
@@ -443,85 +444,85 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                   {/* Animal Type */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Animal Type</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      searchable={false}
                       value={filters.type}
-                      onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      <option value="All">All Types</option>
-                      <option value="Dog">Dogs</option>
-                      <option value="Cat">Cats</option>
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, type: val })}
+                      options={[
+                        { value: 'All', label: 'All Types' },
+                        { value: 'Dog', label: 'Dogs' },
+                        { value: 'Cat', label: 'Cats' },
+                      ]}
+                    />
                   </div>
 
                   {/* Color */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Color</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
                       value={filters.color}
-                      onChange={(e) => setFilters({ ...filters, color: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      {uniqueColors.map((color) => (
-                        <option key={color}>{color}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, color: val })}
+                      options={uniqueColors
+                        .filter((color): color is string => Boolean(color))
+                        .map((color) => ({ value: color, label: color }))}
+                    />
                   </div>
 
                   {/* Breed */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Breed</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
                       value={filters.breed}
-                      onChange={(e) => setFilters({ ...filters, breed: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      {uniqueBreeds.map((breed) => (
-                        <option key={breed}>{breed}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, breed: val })}
+                      options={uniqueBreeds.map((breed) => ({ value: breed, label: breed }))}
+                    />
                   </div>
 
                   {/* Gender */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Gender</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      searchable={false}
                       value={filters.gender}
-                      onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      <option>All</option>
-                      <option>Male</option>
-                      <option>Female</option>
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, gender: val })}
+                      options={[
+                        { value: 'All', label: 'All' },
+                        { value: 'Male', label: 'Male' },
+                        { value: 'Female', label: 'Female' },
+                      ]}
+                    />
                   </div>
 
                   {/* Age */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Age</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      searchable={false}
                       value={filters.ageCategory}
-                      onChange={(e) => setFilters({ ...filters, ageCategory: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      {uniqueAgeCategories.map((age) => (
-                        <option key={age}>{age}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, ageCategory: val })}
+                      options={uniqueAgeCategories.map((age) => ({ value: age, label: age }))}
+                    />
                   </div>
 
                   {/* Sort */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Sort By</label>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      searchable={false}
                       value={filters.sortBy}
-                      onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold text-xs transition-colors bg-white"
-                    >
-                      <option value="newest">Newest in Shelter</option>
-                      <option value="longest">Longest in Shelter</option>
-                      <option value="name">Name (A-Z)</option>
-                    </select>
+                      onChange={(val) => setFilters({ ...filters, sortBy: val })}
+                      options={[
+                        { value: 'newest', label: 'Newest in Shelter' },
+                        { value: 'longest', label: 'Longest in Shelter' },
+                        { value: 'name', label: 'Name (A-Z)' },
+                      ]}
+                    />
                   </div>
                 </div>
 

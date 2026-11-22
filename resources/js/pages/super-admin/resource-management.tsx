@@ -10,6 +10,7 @@ import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/sect
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface ResourceRecord {
     id: number;
@@ -276,33 +277,40 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                         </form>
 
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => handleCategoryChange(e.target.value)}
-                                className="px-3 py-2 text-xs border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold"
-                            >
-                                <option value="all">All Categories</option>
-                                <option value="boarding">Boarding Lists</option>
-                                <option value="insurance">Pet Insurance</option>
-                                <option value="training">Pet Training</option>
-                                <option value="memorial">Pet Memorial</option>
-                                <option value="portrait">Pet Portraits</option>
-                                <option value="emergency_protocol">Emergency Protocols</option>
-                                <option value="care_guide">Care Guides</option>
-                                <option value="audit_report">Audit Reports</option>
-                                <option value="financial_audit">Financial Documents</option>
-                            </select>
+                            <div className="min-w-[180px]">
+                                <ModernSelect
+                                    size="sm"
+                                    value={categoryFilter}
+                                    onChange={(val) => handleCategoryChange(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Categories' },
+                                        { value: 'boarding', label: 'Boarding Lists' },
+                                        { value: 'insurance', label: 'Pet Insurance' },
+                                        { value: 'training', label: 'Pet Training' },
+                                        { value: 'memorial', label: 'Pet Memorial' },
+                                        { value: 'portrait', label: 'Pet Portraits' },
+                                        { value: 'emergency_protocol', label: 'Emergency Protocols' },
+                                        { value: 'care_guide', label: 'Care Guides' },
+                                        { value: 'audit_report', label: 'Audit Reports' },
+                                        { value: 'financial_audit', label: 'Financial Documents' },
+                                    ]}
+                                />
+                            </div>
 
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => handleStatusChange(e.target.value)}
-                                className="px-3 py-2 text-xs border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="active">Active Only</option>
-                                <option value="inactive">Inactive Only</option>
-                                <option value="archived">Archived</option>
-                            </select>
+                            <div className="min-w-[140px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={statusFilter}
+                                    onChange={(val) => handleStatusChange(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Status' },
+                                        { value: 'active', label: 'Active Only' },
+                                        { value: 'inactive', label: 'Inactive Only' },
+                                        { value: 'archived', label: 'Archived' },
+                                    ]}
+                                />
+                            </div>
 
                             {canCreateResource && (
                                 <button
@@ -538,21 +546,22 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-gray-500 mb-1">Category *</label>
-                                        <select
+                                        <ModernSelect
+                                            size="sm"
                                             value={data.category}
-                                            onChange={(e) => setData('category', e.target.value)}
-                                            className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 font-bold"
-                                        >
-                                            <option value="boarding">Boarding Lists</option>
-                                            <option value="insurance">Pet Insurance</option>
-                                            <option value="training">Pet Training</option>
-                                            <option value="memorial">Pet Memorial</option>
-                                            <option value="portrait">Pet Portraits</option>
-                                            <option value="emergency_protocol">Emergency Protocol</option>
-                                            <option value="care_guide">General Care Guide</option>
-                                            <option value="audit_report">Audit Report</option>
-                                            <option value="financial_audit">Financial Document</option>
-                                        </select>
+                                            onChange={(val) => setData('category', val)}
+                                            options={[
+                                                { value: 'boarding', label: 'Boarding Lists' },
+                                                { value: 'insurance', label: 'Pet Insurance' },
+                                                { value: 'training', label: 'Pet Training' },
+                                                { value: 'memorial', label: 'Pet Memorial' },
+                                                { value: 'portrait', label: 'Pet Portraits' },
+                                                { value: 'emergency_protocol', label: 'Emergency Protocol' },
+                                                { value: 'care_guide', label: 'General Care Guide' },
+                                                { value: 'audit_report', label: 'Audit Report' },
+                                                { value: 'financial_audit', label: 'Financial Document' },
+                                            ]}
+                                        />
                                     </div>
 
                                     <div>

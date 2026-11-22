@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useForm } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
@@ -313,31 +314,39 @@ export function PostAdoptionTab({
             />
           </div>
 
-          <div className="flex gap-2">
-            <select
-              value={methodFilter}
-              onChange={(e) => setMethodFilter(e.target.value)}
-              className="px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-xs text-gray-900 dark:text-white"
-            >
-              <option value="All">All Methods</option>
-              <option value="chat">Chat / SMS</option>
-              <option value="call">Phone Call</option>
-              <option value="photo_update">Photo Update</option>
-              <option value="video">Video Call</option>
-              <option value="home_visit">Home Visit</option>
-            </select>
+          <div className="flex flex-wrap gap-2">
+            <div className="min-w-[155px]">
+              <ModernSelect
+                size="sm"
+                searchable={false}
+                value={methodFilter}
+                onChange={(val) => setMethodFilter(val)}
+                options={[
+                  { value: 'All', label: 'All Methods' },
+                  { value: 'chat', label: 'Chat / SMS' },
+                  { value: 'call', label: 'Phone Call' },
+                  { value: 'photo_update', label: 'Photo Update' },
+                  { value: 'video', label: 'Video Call' },
+                  { value: 'home_visit', label: 'Home Visit' },
+                ]}
+              />
+            </div>
 
-            <select
-              value={conditionFilter}
-              onChange={(e) => setConditionFilter(e.target.value)}
-              className="px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-xs text-gray-900 dark:text-white"
-            >
-              <option value="All">All Conditions</option>
-              <option value="Excellent">Excellent</option>
-              <option value="Good">Good</option>
-              <option value="Fair">Fair</option>
-              <option value="Needs Attention">Needs Attention</option>
-            </select>
+            <div className="min-w-[165px]">
+              <ModernSelect
+                size="sm"
+                searchable={false}
+                value={conditionFilter}
+                onChange={(val) => setConditionFilter(val)}
+                options={[
+                  { value: 'All', label: 'All Conditions' },
+                  { value: 'Excellent', label: 'Excellent' },
+                  { value: 'Good', label: 'Good' },
+                  { value: 'Fair', label: 'Fair' },
+                  { value: 'Needs Attention', label: 'Needs Attention' },
+                ]}
+              />
+            </div>
           </div>
         </div>
 
@@ -494,18 +503,14 @@ export function PostAdoptionTab({
                   <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                     Select Adopted Pet <span className="text-paw-orange">*</span>
                   </label>
-                  <select
-                    required
-                    value={data.shelter_animal_id}
-                    onChange={(e) => setData('shelter_animal_id', e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                  >
-                    {adoptedPets.map((pet) => (
-                      <option key={pet.id} value={pet.id}>
-                        {pet.name} ({pet.breed}) — Adopter: {pet.adopter_name || 'Recorded'}
-                      </option>
-                    ))}
-                  </select>
+                  <ModernSelect
+                    value={String(data.shelter_animal_id)}
+                    onChange={(val) => setData('shelter_animal_id', val)}
+                    options={adoptedPets.map((pet) => ({
+                      value: String(pet.id),
+                      label: `${pet.name} (${pet.breed}) — Adopter: ${pet.adopter_name || 'Recorded'}`,
+                    }))}
+                  />
                 </div>
 
                 {/* Follow-up Date & Method */}
@@ -524,17 +529,18 @@ export function PostAdoptionTab({
                     <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                       Follow-up Channel / Method <span className="text-paw-orange">*</span>
                     </label>
-                    <select
+                    <ModernSelect
+                      searchable={false}
                       value={data.method}
-                      onChange={(e) => setData('method', e.target.value as any)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                    >
-                      <option value="chat">Chat / Messenger / SMS</option>
-                      <option value="call">Phone Call</option>
-                      <option value="photo_update">Photo Update</option>
-                      <option value="video">Video Call</option>
-                      <option value="home_visit">In-Person Home Visit</option>
-                    </select>
+                      onChange={(val) => setData('method', val as any)}
+                      options={[
+                        { value: 'chat', label: 'Chat / Messenger / SMS' },
+                        { value: 'call', label: 'Phone Call' },
+                        { value: 'photo_update', label: 'Photo Update' },
+                        { value: 'video', label: 'Video Call' },
+                        { value: 'home_visit', label: 'In-Person Home Visit' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -544,31 +550,33 @@ export function PostAdoptionTab({
                     <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                       Pet Condition & Welfare <span className="text-paw-orange">*</span>
                     </label>
-                    <select
+                    <ModernSelect
+                      searchable={false}
                       value={data.pet_condition}
-                      onChange={(e) => setData('pet_condition', e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                    >
-                      <option value="Excellent">Excellent (Thriving & Healthy)</option>
-                      <option value="Good">Good (Well Adjusted)</option>
-                      <option value="Fair">Fair (Needs Minor Monitoring)</option>
-                      <option value="Needs Attention">Needs Attention / Follow-up Required</option>
-                    </select>
+                      onChange={(val) => setData('pet_condition', val)}
+                      options={[
+                        { value: 'Excellent', label: 'Excellent (Thriving & Healthy)' },
+                        { value: 'Good', label: 'Good (Well Adjusted)' },
+                        { value: 'Fair', label: 'Fair (Needs Minor Monitoring)' },
+                        { value: 'Needs Attention', label: 'Needs Attention / Follow-up Required' },
+                      ]}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                       Interaction Status <span className="text-paw-orange">*</span>
                     </label>
-                    <select
+                    <ModernSelect
+                      searchable={false}
                       value={data.status}
-                      onChange={(e) => setData('status', e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                    >
-                      <option value="completed">Completed</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                      onChange={(val) => setData('status', val)}
+                      options={[
+                        { value: 'completed', label: 'Completed' },
+                        { value: 'scheduled', label: 'Scheduled' },
+                        { value: 'cancelled', label: 'Cancelled' },
+                      ]}
+                    />
                   </div>
                 </div>
 

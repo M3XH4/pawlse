@@ -265,12 +265,6 @@
         transform: scale(0.97);
     }
 
-    /* Secondary/outline buttons */
-    .border-paw-orange:hover {
-        background-color: #f59e0b;
-        color: #0f0f0f;
-    }
-
     /* Cards hover effects */
     .group:has(> .card-hover):hover {
         transform: translateY(-6px);

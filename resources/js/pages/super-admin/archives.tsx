@@ -5,6 +5,7 @@ import {
     FileText, Calendar
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { toast } from 'sonner';
 
 interface TrashedRecord {
@@ -71,9 +72,9 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
         );
     };
 
-    const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedType(e.target.value);
-        applyFilters({ type: e.target.value });
+    const handleTypeChange = (val: string) => {
+        setSelectedType(val);
+        applyFilters({ type: val });
     };
 
     const handleRestore = (item: TrashedRecord) => {
@@ -151,23 +152,24 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                         </div>
 
                         {/* Record Type Filter */}
-                        <div className="relative">
-                            <select
-                                className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white w-full cursor-pointer"
+                        <div className="min-w-[200px]">
+                            <ModernSelect
+                                size="sm"
                                 value={selectedType}
                                 onChange={handleTypeChange}
-                            >
-                                <option value="all">All Record Types</option>
-                                <option value="user">Users</option>
-                                <option value="pet">Shelter Animals</option>
-                                <option value="event">Events</option>
-                                <option value="rescue">Rescue Reports</option>
-                                <option value="adoption">Adoption Applications</option>
-                                <option value="volunteer">Volunteer Applications</option>
-                                <option value="partner">Partners & Clinics</option>
-                                <option value="resource">File & Resources</option>
-                                <option value="honor">Community Honors</option>
-                            </select>
+                                options={[
+                                    { value: 'all', label: 'All Record Types' },
+                                    { value: 'user', label: 'Users' },
+                                    { value: 'pet', label: 'Shelter Animals' },
+                                    { value: 'event', label: 'Events' },
+                                    { value: 'rescue', label: 'Rescue Reports' },
+                                    { value: 'adoption', label: 'Adoption Applications' },
+                                    { value: 'volunteer', label: 'Volunteer Applications' },
+                                    { value: 'partner', label: 'Partners & Clinics' },
+                                    { value: 'resource', label: 'File & Resources' },
+                                    { value: 'honor', label: 'Community Honors' },
+                                ]}
+                            />
                         </div>
                     </div>
                 </div>

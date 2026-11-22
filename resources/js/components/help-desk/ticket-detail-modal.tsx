@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -464,17 +465,21 @@ export function TicketDetailModal({
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Status:</span>
-                                    <select
-                                        value={ticket.status}
-                                        onChange={(e) => handleStatusChange(e.target.value)}
-                                        className="rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-bold text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 cursor-pointer shadow-xs"
-                                    >
-                                        <option value="open">Open</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="waiting_on_user">Waiting on User</option>
-                                        <option value="resolved">Resolved</option>
-                                        <option value="closed">Closed</option>
-                                    </select>
+                                    <div className="min-w-[160px]">
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
+                                            value={ticket.status}
+                                            onChange={(val) => handleStatusChange(val)}
+                                            options={[
+                                                { value: 'open', label: 'Open' },
+                                                { value: 'in_progress', label: 'In Progress' },
+                                                { value: 'waiting_on_user', label: 'Waiting on User' },
+                                                { value: 'resolved', label: 'Resolved' },
+                                                { value: 'closed', label: 'Closed' },
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Escalate to Super Admin button (if role is admin and not yet escalated) */}

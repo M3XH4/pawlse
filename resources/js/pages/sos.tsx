@@ -13,6 +13,7 @@ import {
     ExternalLink,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import React, { useRef, useState, useEffect } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
@@ -441,22 +442,23 @@ export default function SOS() {
                                             <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">
                                                 Animal Type
                                             </label>
-                                            <select
-                                                required
-                                                name="animalType"
+                                            <ModernSelect
+                                                searchable={false}
                                                 value={formData.animalType}
-                                                onChange={handleInputChange}
-                                                className="w-full rounded-2xl border-2 border-transparent bg-gray-50 p-4 text-lg font-bold transition-all outline-none focus:border-red-500"
-                                            >
-                                                <option value="">
-                                                    Select animal type
-                                                </option>
-                                                <option value="Dog">Dog</option>
-                                                <option value="Cat">Cat</option>
-                                                <option value="Other">
-                                                    Other Animal
-                                                </option>
-                                            </select>
+                                                onChange={(val) =>
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        animalType: val,
+                                                    }))
+                                                }
+                                                placeholder="Select animal type"
+                                                options={[
+                                                    { value: '', label: 'Select animal type' },
+                                                    { value: 'Dog', label: 'Dog' },
+                                                    { value: 'Cat', label: 'Cat' },
+                                                    { value: 'Other', label: 'Other Animal' },
+                                                ]}
+                                            />
                                         </div>
                                         <div>
                                             <label className="mb-2 block text-sm font-black tracking-widest text-gray-400 uppercase">

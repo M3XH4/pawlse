@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ChartSkeleton } from '@/components/ui/skeleton-presets';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { useMounted } from '@/hooks/use-mounted';
 import { toast } from 'sonner';
 
@@ -332,15 +333,16 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
 
                 <div>
                   <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Delivery Method</label>
-                  <select
+                  <ModernSelect
+                    searchable={false}
                     value={wishlistForm.delivery}
-                    onChange={(e) => setWishlistForm({ ...wishlistForm, delivery: e.target.value })}
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors"
-                  >
-                    <option>I will drop off at the shelter</option>
-                    <option>Please arrange pickup</option>
-                    <option>I will ship directly</option>
-                  </select>
+                    onChange={(val) => setWishlistForm({ ...wishlistForm, delivery: val })}
+                    options={[
+                      { value: 'I will drop off at the shelter', label: 'I will drop off at the shelter' },
+                      { value: 'Please arrange pickup', label: 'Please arrange pickup' },
+                      { value: 'I will ship directly', label: 'I will ship directly' },
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -486,16 +488,17 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
 
                 <div>
                   <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2">Payment Method</label>
-                  <select
+                  <ModernSelect
+                    searchable={false}
                     value={monthlyNeedForm.payment}
-                    onChange={(e) => setMonthlyNeedForm({ ...monthlyNeedForm, payment: e.target.value })}
-                    className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-paw-orange outline-none font-bold transition-colors"
-                  >
-                    <option>Gcash</option>
-                    <option>PayPal</option>
-                    <option>Maya</option>
-                    <option>Bank Transfer</option>
-                  </select>
+                    onChange={(val) => setMonthlyNeedForm({ ...monthlyNeedForm, payment: val })}
+                    options={[
+                      { value: 'Gcash', label: 'Gcash' },
+                      { value: 'PayPal', label: 'PayPal' },
+                      { value: 'Maya', label: 'Maya' },
+                      { value: 'Bank Transfer', label: 'Bank Transfer' },
+                    ]}
+                  />
                 </div>
 
                 <div>

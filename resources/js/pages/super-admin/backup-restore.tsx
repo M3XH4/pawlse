@@ -7,6 +7,7 @@ import {
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface BackupRecord {
     id: number;
@@ -251,15 +252,17 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                 <>
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-500 mb-1">Backup Frequency</label>
-                                        <select
-                                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
                                             value={data.interval}
-                                            onChange={(e: any) => setData('interval', e.target.value)}
-                                        >
-                                            <option value="daily">Daily</option>
-                                            <option value="weekly">Weekly</option>
-                                            <option value="monthly">Monthly</option>
-                                        </select>
+                                            onChange={(val) => setData('interval', val as 'daily' | 'weekly' | 'monthly')}
+                                            options={[
+                                                { value: 'daily', label: 'Daily' },
+                                                { value: 'weekly', label: 'Weekly' },
+                                                { value: 'monthly', label: 'Monthly' },
+                                            ]}
+                                        />
                                     </div>
 
                                     <div>

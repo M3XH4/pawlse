@@ -8,8 +8,7 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { formatPhotoUrl } from '@/lib/utils';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
-import { CardGridSkeleton } from '@/components/ui/skeleton-presets';
-import { useInertiaNavigating } from '@/hooks/use-inertia-loading';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -60,7 +59,6 @@ interface MissingPetsPageProps {
 }
 
 export default function MissingPetsPage({ reports, filters }: MissingPetsPageProps) {
-  const isFiltering = useInertiaNavigating({ delayMs: 80, ignorePartial: false });
   const { auth, flash } = usePage<{
     auth?: {
       user?: {
@@ -512,9 +510,6 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
           </div>
 
           {/* Grid of pets */}
-          {isFiltering ? (
-            <CardGridSkeleton count={6} columnsClass="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" />
-          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {mappedReports.length === 0 ? (
               <div className="col-span-full bg-white rounded-[40px] p-16 text-center border-2 border-gray-100 shadow-xl">
@@ -534,7 +529,6 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
               ))
             )}
           </div>
-          )}
 
           {/* Pagination */}
           {reports?.last_page > 1 && (
@@ -733,50 +727,50 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
                               Gender
                             </label>
-                            <select
-                              name="gender"
+                            <ModernSelect
+                              searchable={false}
                               value={formData.gender}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
-                            >
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                              <option value="Unknown">Unknown</option>
-                            </select>
+                              onChange={(val) => setFormData((prev) => ({ ...prev, gender: val }))}
+                              options={[
+                                { value: 'Male', label: 'Male' },
+                                { value: 'Female', label: 'Female' },
+                                { value: 'Unknown', label: 'Unknown' },
+                              ]}
+                            />
                           </div>
 
                           <div>
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
                               Age Category
                             </label>
-                            <select
-                              name="ageCategory"
+                            <ModernSelect
+                              searchable={false}
                               value={formData.ageCategory}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
-                            >
-                              <option value="Puppy/Kitten">Puppy / Kitten</option>
-                              <option value="Young">Young</option>
-                              <option value="Adult">Adult</option>
-                              <option value="Senior">Senior</option>
-                            </select>
+                              onChange={(val) => setFormData((prev) => ({ ...prev, ageCategory: val }))}
+                              options={[
+                                { value: 'Puppy/Kitten', label: 'Puppy / Kitten' },
+                                { value: 'Young', label: 'Young' },
+                                { value: 'Adult', label: 'Adult' },
+                                { value: 'Senior', label: 'Senior' },
+                              ]}
+                            />
                           </div>
 
                           <div>
                             <label className="block text-xs font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
                               Size
                             </label>
-                            <select
-                              name="size"
+                            <ModernSelect
+                              searchable={false}
                               value={formData.size}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-200/80 dark:border-gray-700 rounded-2xl outline-hidden focus:border-red-500 dark:focus:border-red-500 transition-all font-bold text-sm text-gray-800 dark:text-gray-100 cursor-pointer"
-                            >
-                              <option value="Small">Small (&lt; 10 kg)</option>
-                              <option value="Medium">Medium (10 - 25 kg)</option>
-                              <option value="Large">Large (25 - 40 kg)</option>
-                              <option value="Extra Large">Extra Large (&gt; 40 kg)</option>
-                            </select>
+                              onChange={(val) => setFormData((prev) => ({ ...prev, size: val }))}
+                              options={[
+                                { value: 'Small', label: 'Small (< 10 kg)' },
+                                { value: 'Medium', label: 'Medium (10 - 25 kg)' },
+                                { value: 'Large', label: 'Large (25 - 40 kg)' },
+                                { value: 'Extra Large', label: 'Extra Large (> 40 kg)' },
+                              ]}
+                            />
                           </div>
                         </div>
 

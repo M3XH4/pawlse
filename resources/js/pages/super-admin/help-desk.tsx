@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -291,32 +292,36 @@ export default function SuperAdminHelpDesk({
                             </div>
 
                             <div>
-                                <select
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs font-semibold text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                                >
-                                    <option value="all">All Statuses</option>
-                                    <option value="open">Open</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="waiting_on_user">Waiting on User</option>
-                                    <option value="resolved">Resolved</option>
-                                    <option value="closed">Closed</option>
-                                </select>
+                                    onChange={(val) => setStatusFilter(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        { value: 'open', label: 'Open' },
+                                        { value: 'in_progress', label: 'In Progress' },
+                                        { value: 'waiting_on_user', label: 'Waiting on User' },
+                                        { value: 'resolved', label: 'Resolved' },
+                                        { value: 'closed', label: 'Closed' },
+                                    ]}
+                                />
                             </div>
 
                             <div>
-                                <select
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={priorityFilter}
-                                    onChange={(e) => setPriorityFilter(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs font-semibold text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                                >
-                                    <option value="all">All Priorities</option>
-                                    <option value="urgent">Urgent</option>
-                                    <option value="high">High</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="low">Low</option>
-                                </select>
+                                    onChange={(val) => setPriorityFilter(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Priorities' },
+                                        { value: 'urgent', label: 'Urgent' },
+                                        { value: 'high', label: 'High' },
+                                        { value: 'medium', label: 'Medium' },
+                                        { value: 'low', label: 'Low' },
+                                    ]}
+                                />
                             </div>
 
                             <button

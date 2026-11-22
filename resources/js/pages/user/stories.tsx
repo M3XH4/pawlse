@@ -13,6 +13,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { toast } from 'sonner';
 
 interface PetOption {
@@ -729,22 +730,24 @@ export default function UserStories({
                                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                                     Select Adopted Companion (Optional)
                                 </label>
-                                <select
+                                <ModernSelect
+                                    size="sm"
                                     value={selectedAnimalId}
-                                    onChange={(e) => handlePetSelect(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-paw-orange focus:outline-none focus:ring-1 focus:ring-paw-orange dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                >
-                                    <option value="">
-                                        {category === 'testimonial'
-                                            ? 'No Companion Linked (General Testimonial)'
-                                            : 'Other / General Adoption Story'}
-                                    </option>
-                                    {availablePets.map((pet) => (
-                                        <option key={pet.id} value={pet.id}>
-                                            🐾 {pet.name} ({pet.type} {pet.breed ? `- ${pet.breed}` : ''})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => handlePetSelect(val)}
+                                    options={[
+                                        {
+                                            value: '',
+                                            label:
+                                                category === 'testimonial'
+                                                    ? 'No Companion Linked (General Testimonial)'
+                                                    : 'Other / General Adoption Story',
+                                        },
+                                        ...availablePets.map((pet) => ({
+                                            value: String(pet.id),
+                                            label: `${pet.name} (${pet.type}${pet.breed ? ` - ${pet.breed}` : ''})`,
+                                        })),
+                                    ]}
+                                />
                             </div>
 
                             {/* Story Title */}
@@ -772,15 +775,17 @@ export default function UserStories({
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                                         Content Type
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-paw-orange focus:outline-none focus:ring-1 focus:ring-paw-orange dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    >
-                                        <option value="testimonial">★ Community & Shelter Testimonial</option>
-                                        <option value="adoption_success">🐾 Adoption Success Story</option>
-                                        <option value="rescue_story">🩹 Rescue & Rehabilitation Story</option>
-                                    </select>
+                                        onChange={(val) => setCategory(val)}
+                                        options={[
+                                            { value: 'testimonial', label: 'Community & Shelter Testimonial' },
+                                            { value: 'adoption_success', label: 'Adoption Success Story' },
+                                            { value: 'rescue_story', label: 'Rescue & Rehabilitation Story' },
+                                        ]}
+                                    />
                                     <p className="mt-1 text-[11px] text-slate-500">
                                         {category === 'testimonial'
                                             ? 'Share your experience, review, and feedback about the PAWLSE team, shelter care, or adoption service.'

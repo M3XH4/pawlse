@@ -5,6 +5,7 @@ import {
     Globe, HelpCircle
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface LoginAttemptRecord {
     id: number;
@@ -70,9 +71,9 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
         );
     };
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedStatus(e.target.value);
-        applyFilters({ status: e.target.value });
+    const handleStatusChange = (val: string) => {
+        setSelectedStatus(val);
+        applyFilters({ status: val });
     };
 
     const handleSuspiciousChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,16 +139,18 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                             </div>
 
                             {/* Status Filter */}
-                            <div className="relative">
-                                <select
-                                    className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white w-full"
+                            <div className="min-w-[150px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={selectedStatus}
                                     onChange={handleStatusChange}
-                                >
-                                    <option value="">All Statuses</option>
-                                    <option value="success">Success</option>
-                                    <option value="failed">Failed</option>
-                                </select>
+                                    options={[
+                                        { value: '', label: 'All Statuses' },
+                                        { value: 'success', label: 'Success' },
+                                        { value: 'failed', label: 'Failed' },
+                                    ]}
+                                />
                             </div>
                         </div>
 

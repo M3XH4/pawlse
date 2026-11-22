@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { PhoneInput } from '@/components/phone-input';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -304,40 +305,36 @@ export function ShelterVisitModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Preferred Time Slot
                 </label>
-                <select
+                <ModernSelect
+                  size="sm"
+                  searchable={false}
                   value={data.preferred_time_slot}
-                  onChange={(e) => setData('preferred_time_slot', e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 transition-all cursor-pointer ${
-                    errors.preferred_time_slot
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
-                      : 'border-slate-200 focus:border-orange-500 focus:ring-orange-500/10'
-                  }`}
-                >
-                  <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
-                  <option value="Afternoon (1:00 PM - 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
-                  <option value="Late Afternoon (4:00 PM - 6:00 PM)">Late Afternoon (4:00 PM – 6:00 PM)</option>
-                </select>
-                {errors.preferred_time_slot && (
-                  <p className="text-xs text-rose-500 mt-1 font-medium">{errors.preferred_time_slot}</p>
-                )}
+                  onChange={(val) => setData('preferred_time_slot', val)}
+                  error={errors.preferred_time_slot}
+                  options={[
+                    { value: 'Morning (9:00 AM - 12:00 PM)', label: 'Morning (9:00 AM – 12:00 PM)' },
+                    { value: 'Afternoon (1:00 PM - 4:00 PM)', label: 'Afternoon (1:00 PM – 4:00 PM)' },
+                    { value: 'Late Afternoon (4:00 PM - 6:00 PM)', label: 'Late Afternoon (4:00 PM – 6:00 PM)' },
+                  ]}
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Specific Animal of Interest
                 </label>
-                <select
-                  value={data.shelter_animal_id}
-                  onChange={(e) => setData('shelter_animal_id', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all cursor-pointer"
-                >
-                  <option value="">General Shelter Visit / Undecided</option>
-                  {pets.map((pet) => (
-                    <option key={pet.id} value={pet.id}>
-                      {pet.name}
-                    </option>
-                  ))}
-                </select>
+                <ModernSelect
+                  size="sm"
+                  value={String(data.shelter_animal_id)}
+                  onChange={(val) => setData('shelter_animal_id', val)}
+                  options={[
+                    { value: '', label: 'General Shelter Visit / Undecided' },
+                    ...pets.map((pet) => ({
+                      value: String(pet.id),
+                      label: pet.name,
+                    })),
+                  ]}
+                />
               </div>
             </div>
 
@@ -346,26 +343,21 @@ export function ShelterVisitModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Purpose of Visit <span className="text-orange-500">*</span>
               </label>
-              <select
-                required
+              <ModernSelect
+                size="sm"
+                searchable={false}
                 value={data.purpose}
-                onChange={(e) => setData('purpose', e.target.value)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 transition-all cursor-pointer ${
-                  errors.purpose
-                    ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
-                    : 'border-slate-200 focus:border-orange-500 focus:ring-orange-500/10'
-                }`}
-              >
-                <option value="Meet Adoptable Animals">Meet Adoptable Animals</option>
-                <option value="Adoption Inquiry">Adoption Inquiry</option>
-                <option value="Volunteer Interest">Volunteer Interest</option>
-                <option value="Donation / In-Kind Support">Donation / In-Kind Support</option>
-                <option value="Organization or School Visit">Organization or School Visit</option>
-                <option value="General Shelter Tour">General Shelter Tour</option>
-              </select>
-              {errors.purpose && (
-                <p className="text-xs text-rose-500 mt-1 font-medium">{errors.purpose}</p>
-              )}
+                onChange={(val) => setData('purpose', val)}
+                error={errors.purpose}
+                options={[
+                  { value: 'Meet Adoptable Animals', label: 'Meet Adoptable Animals' },
+                  { value: 'Adoption Inquiry', label: 'Adoption Inquiry' },
+                  { value: 'Volunteer Interest', label: 'Volunteer Interest' },
+                  { value: 'Donation / In-Kind Support', label: 'Donation / In-Kind Support' },
+                  { value: 'Organization or School Visit', label: 'Organization or School Visit' },
+                  { value: 'General Shelter Tour', label: 'General Shelter Tour' },
+                ]}
+              />
             </div>
 
             {/* Additional Notes */}

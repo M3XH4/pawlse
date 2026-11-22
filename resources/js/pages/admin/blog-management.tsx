@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface BlogPostModel {
     id: number;
@@ -449,29 +450,37 @@ export default function BlogManagement({
                             />
                         </div>
 
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => handleFilterChange(e.target.value, statusFilter)}
-                            className="py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200"
-                        >
-                            <option value="all">All Categories</option>
-                            {Object.entries(categories).map(([k, l]) => (
-                                <option key={k} value={k}>{l}</option>
-                            ))}
-                        </select>
+                        <div className="min-w-[175px]">
+                            <ModernSelect
+                                size="sm"
+                                value={categoryFilter}
+                                onChange={(val) => handleFilterChange(val, statusFilter)}
+                                options={[
+                                    { value: 'all', label: 'All Categories' },
+                                    ...Object.entries(categories).map(([k, l]) => ({
+                                        value: k,
+                                        label: l,
+                                    })),
+                                ]}
+                            />
+                        </div>
 
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => handleFilterChange(categoryFilter, e.target.value)}
-                            className="py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="pending">Pending Review</option>
-                            <option value="published">Published</option>
-                            <option value="draft">Draft</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="archived">Archived</option>
-                        </select>
+                        <div className="min-w-[165px]">
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
+                                value={statusFilter}
+                                onChange={(val) => handleFilterChange(categoryFilter, val)}
+                                options={[
+                                    { value: 'all', label: 'All Statuses' },
+                                    { value: 'pending', label: 'Pending Review' },
+                                    { value: 'published', label: 'Published' },
+                                    { value: 'draft', label: 'Draft' },
+                                    { value: 'rejected', label: 'Rejected' },
+                                    { value: 'archived', label: 'Archived' },
+                                ]}
+                            />
+                        </div>
 
                         <button
                             type="submit"
@@ -819,15 +828,15 @@ export default function BlogManagement({
                                                 <label className="block text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
                                                     Category *
                                                 </label>
-                                                <select
+                                                <ModernSelect
+                                                    size="sm"
                                                     value={category}
-                                                    onChange={(e) => setCategory(e.target.value)}
-                                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-800 dark:text-gray-200"
-                                                >
-                                                    {Object.entries(categories).map(([k, l]) => (
-                                                        <option key={k} value={k}>{l}</option>
-                                                    ))}
-                                                </select>
+                                                    onChange={(val) => setCategory(val)}
+                                                    options={Object.entries(categories).map(([k, l]) => ({
+                                                        value: k,
+                                                        label: l,
+                                                    }))}
+                                                />
                                             </div>
 
                                             {/* Status & Reading Time */}
@@ -836,17 +845,19 @@ export default function BlogManagement({
                                                     <label className="block text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
                                                         Status *
                                                     </label>
-                                                    <select
+                                                    <ModernSelect
+                                                        size="sm"
+                                                        searchable={false}
                                                         value={status}
-                                                        onChange={(e) => setStatus(e.target.value as any)}
-                                                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-800 dark:text-gray-200"
-                                                    >
-                                                        <option value="published">Published</option>
-                                                        <option value="pending">Pending Review</option>
-                                                        <option value="draft">Draft</option>
-                                                        <option value="rejected">Rejected</option>
-                                                        <option value="archived">Archived</option>
-                                                    </select>
+                                                        onChange={(val) => setStatus(val as any)}
+                                                        options={[
+                                                            { value: 'published', label: 'Published' },
+                                                            { value: 'pending', label: 'Pending Review' },
+                                                            { value: 'draft', label: 'Draft' },
+                                                            { value: 'rejected', label: 'Rejected' },
+                                                            { value: 'archived', label: 'Archived' },
+                                                        ]}
+                                                    />
                                                 </div>
 
                                                 <div>

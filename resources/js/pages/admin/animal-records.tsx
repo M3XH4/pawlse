@@ -3,8 +3,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { TableSkeleton } from '@/components/ui/skeleton-presets';
-import { useInertiaNavigating } from '@/hooks/use-inertia-loading';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
@@ -219,7 +218,6 @@ interface Props {
 }
 
 export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList }: Props) {
-    const isFiltering = useInertiaNavigating({ delayMs: 80, ignorePartial: false });
     // Search and filter state
     const [search, setSearch] = useState(filters.search || '');
     const [speciesFilter, setSpeciesFilter] = useState(filters.species || 'all');
@@ -572,105 +570,107 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     {/* Species */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Species</label>
-                        <select
+                        <ModernSelect
+                            size="sm"
+                            searchable={false}
                             value={speciesFilter}
-                            onChange={(e) => {
-                                setSpeciesFilter(e.target.value);
-                                applyFilters({ species: e.target.value !== 'all' ? e.target.value : undefined });
+                            onChange={(val) => {
+                                setSpeciesFilter(val);
+                                applyFilters({ species: val !== 'all' ? val : undefined });
                             }}
-                            className="w-full py-1.5 px-3 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:border-paw-orange dark:text-white"
-                        >
-                            <option value="all">All Species</option>
-                            <option value="dog">Dogs (Canine)</option>
-                            <option value="cat">Cats (Feline)</option>
-                            <option value="other">Other Species</option>
-                        </select>
+                            options={[
+                                { value: 'all', label: 'All Species' },
+                                { value: 'dog', label: 'Dogs (Canine)' },
+                                { value: 'cat', label: 'Cats (Feline)' },
+                                { value: 'other', label: 'Other Species' },
+                            ]}
+                        />
                     </div>
 
                     {/* Status */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
-                        <select
+                        <ModernSelect
+                            size="sm"
+                            searchable={false}
                             value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                applyFilters({ status: e.target.value !== 'all' ? e.target.value : undefined });
+                            onChange={(val) => {
+                                setStatusFilter(val);
+                                applyFilters({ status: val !== 'all' ? val : undefined });
                             }}
-                            className="w-full py-1.5 px-3 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:border-paw-orange dark:text-white"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="available">Available</option>
-                            <option value="foster">In Foster Care</option>
-                            <option value="pending">Pending Adoption</option>
-                            <option value="adopted">Adopted</option>
-                            <option value="treatment">Under Treatment</option>
-                            <option value="quarantine">Quarantine</option>
-                            <option value="deceased">Deceased</option>
-                        </select>
+                            options={[
+                                { value: 'all', label: 'All Statuses' },
+                                { value: 'available', label: 'Available' },
+                                { value: 'foster', label: 'In Foster Care' },
+                                { value: 'pending', label: 'Pending Adoption' },
+                                { value: 'adopted', label: 'Adopted' },
+                                { value: 'treatment', label: 'Under Treatment' },
+                                { value: 'quarantine', label: 'Quarantine' },
+                                { value: 'deceased', label: 'Deceased' },
+                            ]}
+                        />
                     </div>
 
                     {/* Gender */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Gender</label>
-                        <select
+                        <ModernSelect
+                            size="sm"
+                            searchable={false}
                             value={genderFilter}
-                            onChange={(e) => {
-                                setGenderFilter(e.target.value);
-                                applyFilters({ gender: e.target.value !== 'all' ? e.target.value : undefined });
+                            onChange={(val) => {
+                                setGenderFilter(val);
+                                applyFilters({ gender: val !== 'all' ? val : undefined });
                             }}
-                            className="w-full py-1.5 px-3 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:border-paw-orange dark:text-white"
-                        >
-                            <option value="all">All Genders</option>
-                            <option value="male">Male (♂)</option>
-                            <option value="female">Female (♀)</option>
-                        </select>
+                            options={[
+                                { value: 'all', label: 'All Genders' },
+                                { value: 'male', label: 'Male' },
+                                { value: 'female', label: 'Female' },
+                            ]}
+                        />
                     </div>
 
                     {/* Location */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Current Location</label>
-                        <select
+                        <ModernSelect
+                            size="sm"
                             value={locationFilter}
-                            onChange={(e) => {
-                                setLocationFilter(e.target.value);
-                                applyFilters({ location: e.target.value !== 'all' ? e.target.value : undefined });
+                            onChange={(val) => {
+                                setLocationFilter(val);
+                                applyFilters({ location: val !== 'all' ? val : undefined });
                             }}
-                            className="w-full py-1.5 px-3 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:border-paw-orange dark:text-white"
-                        >
-                            <option value="all">All Locations</option>
-                            <option value="shelter">Shelter Units Only</option>
-                            <option value="foster">Foster Homes Only</option>
-                            {locationsList.map((loc) => (
-                                <option key={loc} value={loc}>
-                                    {loc}
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: 'all', label: 'All Locations' },
+                                { value: 'shelter', label: 'Shelter Units Only' },
+                                { value: 'foster', label: 'Foster Homes Only' },
+                                ...locationsList.map((loc) => ({ value: loc, label: loc })),
+                            ]}
+                        />
                     </div>
 
                     {/* Vaccination */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Vaccinated</label>
-                        <select
+                        <ModernSelect
+                            size="sm"
+                            searchable={false}
                             value={vaccinatedFilter}
-                            onChange={(e) => {
-                                setVaccinatedFilter(e.target.value);
-                                applyFilters({ vaccinated: e.target.value !== 'all' ? e.target.value : undefined });
+                            onChange={(val) => {
+                                setVaccinatedFilter(val);
+                                applyFilters({ vaccinated: val !== 'all' ? val : undefined });
                             }}
-                            className="w-full py-1.5 px-3 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:border-paw-orange dark:text-white"
-                        >
-                            <option value="all">All Vaccination</option>
-                            <option value="yes">Vaccinated Only</option>
-                            <option value="no">Not Vaccinated</option>
-                        </select>
+                            options={[
+                                { value: 'all', label: 'All Vaccination' },
+                                { value: 'yes', label: 'Vaccinated Only' },
+                                { value: 'no', label: 'Not Vaccinated' },
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* MASTER RECORDS TABLE */}
-            {isFiltering ? (
-                <TableSkeleton rows={8} columns={8} />
-            ) : (
             <div className="bg-white dark:bg-[#0B1527] rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
@@ -807,7 +807,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                         ? 'text-blue-600 dark:text-blue-400'
                                                         : 'text-pink-600 dark:text-pink-400'
                                                 }`}>
-                                                    {animal.gender.toLowerCase() === 'male' ? '♂ Male' : '♀ Female'}
+                                                    {animal.gender.toLowerCase() === 'male' ? 'Male' : 'Female'}
                                                 </span>
                                             </td>
 
@@ -954,7 +954,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                         ? 'text-blue-600 dark:text-blue-400'
                                                         : 'text-pink-600 dark:text-pink-400'
                                                 }`}>
-                                                    {animal.gender.toLowerCase() === 'male' ? '♂ Male' : '♀ Female'}
+                                                    {animal.gender.toLowerCase() === 'male' ? 'Male' : 'Female'}
                                                 </span>
                                                 <span>•</span>
                                                 <span>{animal.age} ({animal.age_category})</span>
@@ -1050,7 +1050,6 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     </div>
                 )}
             </div>
-            )}
 
             {/* FULL RECORD SIDE PANEL (SLIDE-OVER SHEET) */}
             {selectedAnimal && (
@@ -2159,15 +2158,17 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Species *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.type}
-                                onChange={(e) => setData('type', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                <option value="dog">Dog (Canine)</option>
-                                <option value="cat">Cat (Feline)</option>
-                                <option value="other">Other Species</option>
-                            </select>
+                                onChange={(val) => setData('type', val)}
+                                options={[
+                                    { value: 'dog', label: 'Dog (Canine)' },
+                                    { value: 'cat', label: 'Cat (Feline)' },
+                                    { value: 'other', label: 'Other Species' },
+                                ]}
+                            />
                         </div>
 
                         <div>
@@ -2199,29 +2200,33 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Life Stage *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.ageCategory}
-                                onChange={(e) => setData('ageCategory', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                <option value="puppy">Puppy</option>
-                                <option value="kitten">Kitten</option>
-                                <option value="young">Young</option>
-                                <option value="adult">Adult</option>
-                                <option value="senior">Senior</option>
-                            </select>
+                                onChange={(val) => setData('ageCategory', val)}
+                                options={[
+                                    { value: 'puppy', label: 'Puppy' },
+                                    { value: 'kitten', label: 'Kitten' },
+                                    { value: 'young', label: 'Young' },
+                                    { value: 'adult', label: 'Adult' },
+                                    { value: 'senior', label: 'Senior' },
+                                ]}
+                            />
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Gender *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.gender}
-                                onChange={(e) => setData('gender', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                <option value="male">Male (♂)</option>
-                                <option value="female">Female (♀)</option>
-                            </select>
+                                onChange={(val) => setData('gender', val)}
+                                options={[
+                                    { value: 'male', label: 'Male' },
+                                    { value: 'female', label: 'Female' },
+                                ]}
+                            />
                         </div>
                     </div>
 
@@ -2240,19 +2245,21 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Status *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.status}
-                                onChange={(e) => setData('status', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                <option value="available">Available for Adoption</option>
-                                <option value="foster">In Foster Care</option>
-                                <option value="pending">Pending Adoption</option>
-                                <option value="treatment">Under Treatment</option>
-                                <option value="quarantine">Quarantine</option>
-                                <option value="adopted">Adopted</option>
-                                <option value="deceased">Deceased</option>
-                            </select>
+                                onChange={(val) => setData('status', val)}
+                                options={[
+                                    { value: 'available', label: 'Available for Adoption' },
+                                    { value: 'foster', label: 'In Foster Care' },
+                                    { value: 'pending', label: 'Pending Adoption' },
+                                    { value: 'treatment', label: 'Under Treatment' },
+                                    { value: 'quarantine', label: 'Quarantine' },
+                                    { value: 'adopted', label: 'Adopted' },
+                                    { value: 'deceased', label: 'Deceased' },
+                                ]}
+                            />
                         </div>
                     </div>
 
@@ -2533,19 +2540,21 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Status *</label>
-                                <select
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={data.status}
-                                    onChange={(e) => setData('status', e.target.value)}
-                                    className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl font-bold"
-                                >
-                                    <option value="available">Available for Adoption</option>
-                                    <option value="foster">In Foster Care</option>
-                                    <option value="pending">Pending Adoption</option>
-                                    <option value="treatment">Under Treatment</option>
-                                    <option value="quarantine">Quarantine</option>
-                                    <option value="adopted">Adopted</option>
-                                    <option value="deceased">Deceased</option>
-                                </select>
+                                    onChange={(val) => setData('status', val)}
+                                    options={[
+                                        { value: 'available', label: 'Available for Adoption' },
+                                        { value: 'foster', label: 'In Foster Care' },
+                                        { value: 'pending', label: 'Pending Adoption' },
+                                        { value: 'treatment', label: 'Under Treatment' },
+                                        { value: 'quarantine', label: 'Quarantine' },
+                                        { value: 'adopted', label: 'Adopted' },
+                                        { value: 'deceased', label: 'Deceased' },
+                                    ]}
+                                />
                             </div>
 
                             <div>
@@ -2598,14 +2607,16 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Gender</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.gender}
-                                onChange={(e) => setData('gender', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
+                                onChange={(val) => setData('gender', val)}
+                                options={[
+                                    { value: 'male', label: 'Male' },
+                                    { value: 'female', label: 'Female' },
+                                ]}
+                            />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Weight</label>
@@ -2953,10 +2964,10 @@ function AddMedicalModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Record Type *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
                                 value={data.record_type}
-                                onChange={(e) => {
-                                    const nextType = e.target.value;
+                                onChange={(nextType) => {
                                     setData((prev) => ({
                                         ...prev,
                                         record_type: nextType,
@@ -2964,49 +2975,45 @@ function AddMedicalModal({
                                         severity: (nextType === 'injury' || nextType === 'disease') ? (prev.severity || 'moderate') : '',
                                     }));
                                 }}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl font-medium"
-                            >
-                                <optgroup label="Health Conditions & Issues">
-                                    <option value="injury">Injury / Trauma / Wound</option>
-                                    <option value="disease">Disease / Illness / Infection</option>
-                                </optgroup>
-                                <optgroup label="Clinical Care & Preventive">
-                                    <option value="vaccination">Vaccination / Immunization</option>
-                                    <option value="medical_checkup">Routine Checkup / Exam</option>
-                                    <option value="surgery">Surgery / Spay-Neuter</option>
-                                    <option value="treatment">Treatment / Wound Care</option>
-                                    <option value="medication">Medication / Prescription</option>
-                                    <option value="dental">Dental Cleaning</option>
-                                    <option value="lab_test">Lab Test / Bloodwork</option>
-                                    <option value="other">Other Clinical Care</option>
-                                </optgroup>
-                            </select>
+                                options={[
+                                    { value: 'injury', label: 'Injury / Trauma / Wound', description: 'Health Conditions & Issues' },
+                                    { value: 'disease', label: 'Disease / Illness / Infection', description: 'Health Conditions & Issues' },
+                                    { value: 'vaccination', label: 'Vaccination / Immunization', description: 'Clinical Care & Preventive' },
+                                    { value: 'medical_checkup', label: 'Routine Checkup / Exam', description: 'Clinical Care & Preventive' },
+                                    { value: 'surgery', label: 'Surgery / Spay-Neuter', description: 'Clinical Care & Preventive' },
+                                    { value: 'treatment', label: 'Treatment / Wound Care', description: 'Clinical Care & Preventive' },
+                                    { value: 'medication', label: 'Medication / Prescription', description: 'Clinical Care & Preventive' },
+                                    { value: 'dental', label: 'Dental Cleaning', description: 'Clinical Care & Preventive' },
+                                    { value: 'lab_test', label: 'Lab Test / Bloodwork', description: 'Clinical Care & Preventive' },
+                                    { value: 'other', label: 'Other Clinical Care', description: 'Clinical Care & Preventive' },
+                                ]}
+                            />
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Status *</label>
-                            <select
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={data.status}
-                                onChange={(e) => setData('status', e.target.value)}
-                                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                            >
-                                {isCurrentCondition ? (
-                                    <>
-                                        <option value="under_treatment">Under Treatment / Active Care</option>
-                                        <option value="active">Active / Needs Attention</option>
-                                        <option value="scheduled">Scheduled for Vet Exam</option>
-                                        <option value="resolved">Resolved / Cured</option>
-                                        <option value="chronic">Chronic / Ongoing Management</option>
-                                        <option value="completed">Completed Assessment</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option value="completed">Completed / Administered</option>
-                                        <option value="scheduled">Scheduled / Pending</option>
-                                        <option value="overdue">Overdue</option>
-                                    </>
-                                )}
-                            </select>
+                                onChange={(val) => setData('status', val)}
+                                options={
+                                    isCurrentCondition
+                                        ? [
+                                              { value: 'under_treatment', label: 'Under Treatment / Active Care' },
+                                              { value: 'active', label: 'Active / Needs Attention' },
+                                              { value: 'scheduled', label: 'Scheduled for Vet Exam' },
+                                              { value: 'resolved', label: 'Resolved / Cured' },
+                                              { value: 'chronic', label: 'Chronic / Ongoing Management' },
+                                              { value: 'completed', label: 'Completed Assessment' },
+                                          ]
+                                        : [
+                                              { value: 'completed', label: 'Completed / Administered' },
+                                              { value: 'scheduled', label: 'Scheduled / Pending' },
+                                              { value: 'overdue', label: 'Overdue' },
+                                          ]
+                                }
+                            />
                         </div>
                     </div>
 
@@ -3042,31 +3049,35 @@ function AddMedicalModal({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Condition Severity
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={data.severity}
-                                        onChange={(e) => setData('severity', e.target.value)}
-                                        className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                                    >
-                                        <option value="mild">Mild (Minor superficial issue)</option>
-                                        <option value="moderate">Moderate (Requires medication/monitoring)</option>
-                                        <option value="severe">Severe (Urgent vet care & restriction)</option>
-                                        <option value="critical">Critical (Life-threatening emergency)</option>
-                                    </select>
+                                        onChange={(val) => setData('severity', val)}
+                                        options={[
+                                            { value: 'mild', label: 'Mild (Minor superficial issue)' },
+                                            { value: 'moderate', label: 'Moderate (Requires medication/monitoring)' },
+                                            { value: 'severe', label: 'Severe (Urgent vet care & restriction)' },
+                                            { value: 'critical', label: 'Critical (Life-threatening emergency)' },
+                                        ]}
+                                    />
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Update Pet Master Status
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={data.update_animal_status}
-                                        onChange={(e) => setData('update_animal_status', e.target.value)}
-                                        className="w-full px-3 py-2 text-xs bg-white dark:bg-[#070e1c] border border-gray-300 dark:border-gray-700 rounded-xl"
-                                    >
-                                        <option value="">Keep current status ({animal.status})</option>
-                                        <option value="treatment">Change to "Under Treatment"</option>
-                                        <option value="quarantine">Change to "Quarantine" (Infectious)</option>
-                                    </select>
+                                        onChange={(val) => setData('update_animal_status', val)}
+                                        options={[
+                                            { value: '', label: `Keep current status (${animal.status})` },
+                                            { value: 'treatment', label: 'Change to "Under Treatment"' },
+                                            { value: 'quarantine', label: 'Change to "Quarantine" (Infectious)' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 

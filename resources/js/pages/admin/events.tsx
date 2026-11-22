@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { toast } from 'sonner';
 import {
     Calendar,
@@ -515,28 +516,36 @@ export default function EventManagement({
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             <Filter size={16} className="text-gray-400" />
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => handleCategoryFilterChange(e.target.value)}
-                                className="px-3 py-2.5 bg-gray-50 dark:bg-slate-850 border dark:border-gray-800 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
-                            >
-                                <option value="All">All Categories</option>
-                                <option value="Feeding">Feeding</option>
-                                <option value="Medical">Medical</option>
-                                <option value="Social">Social</option>
-                                <option value="Adoption">Adoption</option>
-                            </select>
+                            <div className="min-w-[160px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={categoryFilter}
+                                    onChange={(val) => handleCategoryFilterChange(val)}
+                                    options={[
+                                        { value: 'All', label: 'All Categories' },
+                                        { value: 'Feeding', label: 'Feeding' },
+                                        { value: 'Medical', label: 'Medical' },
+                                        { value: 'Social', label: 'Social' },
+                                        { value: 'Adoption', label: 'Adoption' },
+                                    ]}
+                                />
+                            </div>
 
-                            <select
-                                value={approvalFilter}
-                                onChange={(e) => handleApprovalFilterChange(e.target.value)}
-                                className="px-3 py-2.5 bg-gray-50 dark:bg-slate-850 border dark:border-gray-800 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
-                            >
-                                <option value="All">All Approvals</option>
-                                <option value="approved">Approved</option>
-                                <option value="pending">Pending Review</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
+                            <div className="min-w-[165px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={approvalFilter}
+                                    onChange={(val) => handleApprovalFilterChange(val)}
+                                    options={[
+                                        { value: 'All', label: 'All Approvals' },
+                                        { value: 'approved', label: 'Approved' },
+                                        { value: 'pending', label: 'Pending Review' },
+                                        { value: 'rejected', label: 'Rejected' },
+                                    ]}
+                                />
+                            </div>
 
                             <button type="submit" className="px-5 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition cursor-pointer">
                                 Search
@@ -923,17 +932,17 @@ export default function EventManagement({
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                                         Category *
                                     </label>
-                                    <select
-                                        required
+                                    <ModernSelect
+                                        searchable={false}
                                         value={eventCategory}
-                                        onChange={(e) => setEventCategory(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none focus:border-paw-orange transition"
-                                    >
-                                        <option value="Feeding">Feeding Program</option>
-                                        <option value="Medical">Medical & Vaccination</option>
-                                        <option value="Social">Social & Seminar</option>
-                                        <option value="Adoption">Adoption Drive</option>
-                                    </select>
+                                        onChange={(val) => setEventCategory(val)}
+                                        options={[
+                                            { value: 'Feeding', label: 'Feeding Program' },
+                                            { value: 'Medical', label: 'Medical & Vaccination' },
+                                            { value: 'Social', label: 'Social & Seminar' },
+                                            { value: 'Adoption', label: 'Adoption Drive' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
@@ -1160,14 +1169,15 @@ export default function EventManagement({
                             {editingSchedule && (
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Status *</label>
-                                    <select
+                                    <ModernSelect
+                                        searchable={false}
                                         value={feedingStatus}
-                                        onChange={(e) => setFeedingStatus(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none focus:border-paw-orange transition"
-                                    >
-                                        <option value="active">Active</option>
-                                        <option value="closed">Closed / Inactive</option>
-                                    </select>
+                                        onChange={(val) => setFeedingStatus(val)}
+                                        options={[
+                                            { value: 'active', label: 'Active' },
+                                            { value: 'closed', label: 'Closed / Inactive' },
+                                        ]}
+                                    />
                                 </div>
                             )}
 

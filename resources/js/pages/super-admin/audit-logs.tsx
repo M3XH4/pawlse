@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { FileSearch, Search, Activity, Terminal } from 'lucide-react';
 import { DashboardSectionPage } from '@/components/dashboard/section-page';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface AuditLogRecord {
     id: number;
@@ -78,19 +79,19 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
         );
     };
 
-    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedRole(e.target.value);
-        applyFilters({ role: e.target.value });
+    const handleRoleChange = (val: string) => {
+        setSelectedRole(val);
+        applyFilters({ role: val });
     };
 
-    const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedUser(e.target.value);
-        applyFilters({ user_id: e.target.value });
+    const handleUserChange = (val: string) => {
+        setSelectedUser(val);
+        applyFilters({ user_id: val });
     };
 
-    const handleActionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedAction(e.target.value);
-        applyFilters({ action: e.target.value });
+    const handleActionChange = (val: string) => {
+        setSelectedAction(val);
+        applyFilters({ action: val });
     };
 
     const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,51 +171,55 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         {/* Role Filter */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by Role</label>
-                            <select
-                                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                            <ModernSelect
+                                size="sm"
+                                searchable={false}
                                 value={selectedRole}
                                 onChange={handleRoleChange}
-                            >
-                                <option value="">All Roles</option>
-                                <option value="super-admin">Super Admin</option>
-                                <option value="admin">Admin</option>
-                                <option value="volunteer">Volunteer</option>
-                                <option value="user">User</option>
-                                <option value="system">System / Guest</option>
-                            </select>
+                                options={[
+                                    { value: '', label: 'All Roles' },
+                                    { value: 'super-admin', label: 'Super Admin' },
+                                    { value: 'admin', label: 'Admin' },
+                                    { value: 'volunteer', label: 'Volunteer' },
+                                    { value: 'user', label: 'User' },
+                                    { value: 'system', label: 'System / Guest' },
+                                ]}
+                            />
                         </div>
 
                         {/* User Filter */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by User</label>
-                            <select
-                                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                            <ModernSelect
+                                size="sm"
                                 value={selectedUser}
                                 onChange={handleUserChange}
-                            >
-                                <option value="">All Users</option>
-                                <option value="system">System / Guest</option>
-                                {users.map(user => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name} ({user.role})
-                                    </option>
-                                ))}
-                            </select>
+                                options={[
+                                    { value: '', label: 'All Users' },
+                                    { value: 'system', label: 'System / Guest' },
+                                    ...users.map((user) => ({
+                                        value: String(user.id),
+                                        label: `${user.name} (${user.role})`,
+                                    })),
+                                ]}
+                            />
                         </div>
 
                         {/* Action Type Filter */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by Action</label>
-                            <select
-                                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                            <ModernSelect
+                                size="sm"
                                 value={selectedAction}
                                 onChange={handleActionChange}
-                            >
-                                <option value="">All Actions</option>
-                                {actions.map(act => (
-                                    <option key={act} value={act}>{act}</option>
-                                ))}
-                            </select>
+                                options={[
+                                    { value: '', label: 'All Actions' },
+                                    ...actions.map((act) => ({
+                                        value: act,
+                                        label: act,
+                                    })),
+                                ]}
+                            />
                         </div>
 
                         {/* Date From */}

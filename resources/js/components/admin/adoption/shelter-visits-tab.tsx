@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Building2,
@@ -276,17 +277,21 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
             />
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-xs text-gray-900 dark:text-white"
-          >
-            <option value="All">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <div className="min-w-[165px]">
+            <ModernSelect
+              size="sm"
+              searchable={false}
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'confirmed', label: 'Confirmed' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+            />
+          </div>
         </div>
 
         {/* Table / List */}
@@ -438,16 +443,17 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
                   <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                     Update Visit Status <span className="text-paw-orange">*</span>
                   </label>
-                  <select
+                  <ModernSelect
+                    searchable={false}
                     value={data.status}
-                    onChange={(e) => setData('status', e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                  >
-                    <option value="pending">Pending ISF Review</option>
-                    <option value="confirmed">Confirmed Schedule</option>
-                    <option value="completed">Visit Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                    onChange={(val) => setData('status', val as any)}
+                    options={[
+                      { value: 'pending', label: 'Pending ISF Review' },
+                      { value: 'confirmed', label: 'Confirmed Schedule' },
+                      { value: 'completed', label: 'Visit Completed' },
+                      { value: 'cancelled', label: 'Cancelled' },
+                    ]}
+                  />
                 </div>
 
                 {/* Confirmed Date & Time */}
@@ -465,15 +471,16 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
                     <label className="block text-[11px] font-black uppercase tracking-wider text-paw-navy dark:text-white mb-1.5">
                       Confirmed Time Slot
                     </label>
-                    <select
+                    <ModernSelect
+                      searchable={false}
                       value={data.confirmed_time_slot}
-                      onChange={(e) => setData('confirmed_time_slot', e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-paw-navy dark:text-white font-bold text-sm outline-none focus:border-paw-orange"
-                    >
-                      <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
-                      <option value="Afternoon (1:00 PM - 4:00 PM)">Afternoon (1:00 PM - 4:00 PM)</option>
-                      <option value="Late Afternoon (4:00 PM - 6:00 PM)">Late Afternoon (4:00 PM - 6:00 PM)</option>
-                    </select>
+                      onChange={(val) => setData('confirmed_time_slot', val)}
+                      options={[
+                        { value: 'Morning (9:00 AM - 12:00 PM)', label: 'Morning (9:00 AM - 12:00 PM)' },
+                        { value: 'Afternoon (1:00 PM - 4:00 PM)', label: 'Afternoon (1:00 PM - 4:00 PM)' },
+                        { value: 'Late Afternoon (4:00 PM - 6:00 PM)', label: 'Late Afternoon (4:00 PM - 6:00 PM)' },
+                      ]}
+                    />
                   </div>
                 </div>
 

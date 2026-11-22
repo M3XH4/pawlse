@@ -33,6 +33,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 import { compressImageFile } from '@/lib/image-compression';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 type BreedPrediction = {
     name: string;
@@ -1751,89 +1752,38 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                         Age
                                                                         Category
                                                                     </label>
-                                                                    <select
-                                                                        value={
-                                                                            editedResult?.ageCategory ??
-                                                                            ''
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setEditedResult(
-                                                                                (
-                                                                                    prev,
-                                                                                ) =>
-                                                                                    prev
-                                                                                        ? {
-                                                                                              ...prev,
-                                                                                              ageCategory:
-                                                                                                  e
-                                                                                                      .target
-                                                                                                      .value,
-                                                                                          }
-                                                                                        : null,
+                                                                    <ModernSelect
+                                                                        searchable={false}
+                                                                        value={editedResult?.ageCategory ?? ''}
+                                                                        onChange={(val) =>
+                                                                            setEditedResult((prev) =>
+                                                                                prev ? { ...prev, ageCategory: val } : null,
                                                                             )
                                                                         }
-                                                                        className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 text-sm font-bold text-paw-navy outline-none focus:border-paw-orange"
-                                                                    >
-                                                                        {currentAgeCategories.map(
-                                                                            (
-                                                                                cat,
-                                                                            ) => (
-                                                                                <option
-                                                                                    key={
-                                                                                        cat
-                                                                                    }
-                                                                                    value={
-                                                                                        cat
-                                                                                    }
-                                                                                >
-                                                                                    {
-                                                                                        cat
-                                                                                    }
-                                                                                </option>
-                                                                            ),
-                                                                        )}
-                                                                    </select>
+                                                                        options={currentAgeCategories.map((cat) => ({
+                                                                            value: cat,
+                                                                            label: cat,
+                                                                        }))}
+                                                                    />
                                                                 </div>
                                                                 <div>
                                                                     <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                                         Gender
                                                                     </label>
-                                                                    <select
-                                                                        value={
-                                                                            editedResult?.gender ??
-                                                                            ''
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setEditedResult(
-                                                                                (
-                                                                                    prev,
-                                                                                ) =>
-                                                                                    prev
-                                                                                        ? {
-                                                                                              ...prev,
-                                                                                              gender: e
-                                                                                                  .target
-                                                                                                  .value,
-                                                                                          }
-                                                                                        : null,
+                                                                    <ModernSelect
+                                                                        searchable={false}
+                                                                        value={editedResult?.gender ?? ''}
+                                                                        onChange={(val) =>
+                                                                            setEditedResult((prev) =>
+                                                                                prev ? { ...prev, gender: val } : null,
                                                                             )
                                                                         }
-                                                                        className="w-full rounded-2xl border-2 border-paw-orange/30 bg-white p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
-                                                                    >
-                                                                        <option value="Male">
-                                                                            Male
-                                                                        </option>
-                                                                        <option value="Female">
-                                                                            Female
-                                                                        </option>
-                                                                        <option value="Unknown">
-                                                                            Unknown
-                                                                        </option>
-                                                                    </select>
+                                                                        options={[
+                                                                            { value: 'Male', label: 'Male' },
+                                                                            { value: 'Female', label: 'Female' },
+                                                                            { value: 'Unknown', label: 'Unknown' },
+                                                                        ]}
+                                                                    />
                                                                 </div>
                                                             </div>
                                                             <div>
@@ -1895,35 +1845,24 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                             Animal Type
                                                         </label>
-                                                        <select
+                                                        <ModernSelect
+                                                            searchable={false}
                                                             value={animalType}
-                                                            onChange={(e) => {
-                                                                const nextSpecies =
-                                                                    e.target
-                                                                        .value as
-                                                                        | 'Dog'
-                                                                        | 'Cat';
-                                                                updateActiveAnimalField(
-                                                                    {
-                                                                        species:
-                                                                            nextSpecies,
-                                                                        ageCategory:
-                                                                            nextSpecies ===
-                                                                            'Dog'
-                                                                                ? dogAgeCategories[0]
-                                                                                : catAgeCategories[0],
-                                                                    },
-                                                                );
+                                                            onChange={(val) => {
+                                                                const nextSpecies = val as 'Dog' | 'Cat';
+                                                                updateActiveAnimalField({
+                                                                    species: nextSpecies,
+                                                                    ageCategory:
+                                                                        nextSpecies === 'Dog'
+                                                                            ? dogAgeCategories[0]
+                                                                            : catAgeCategories[0],
+                                                                });
                                                             }}
-                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
-                                                        >
-                                                            <option value="Dog">
-                                                                Dog
-                                                            </option>
-                                                            <option value="Cat">
-                                                                Cat
-                                                            </option>
-                                                        </select>
+                                                            options={[
+                                                                { value: 'Dog', label: 'Dog' },
+                                                                { value: 'Cat', label: 'Cat' },
+                                                            ]}
+                                                        />
                                                     </div>
                                                     <div>
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
@@ -1948,63 +1887,34 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                             Age Category
                                                         </label>
-                                                        <select
+                                                        <ModernSelect
+                                                            searchable={false}
                                                             value={ageCategory}
-                                                            onChange={(e) =>
-                                                                updateActiveAnimalField(
-                                                                    {
-                                                                        ageCategory:
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                    },
-                                                                )
+                                                            onChange={(val) =>
+                                                                updateActiveAnimalField({ ageCategory: val })
                                                             }
-                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 text-sm font-bold text-paw-navy outline-none focus:border-paw-orange"
-                                                        >
-                                                            {currentAgeCategories.map(
-                                                                (cat) => (
-                                                                    <option
-                                                                        key={
-                                                                            cat
-                                                                        }
-                                                                        value={
-                                                                            cat
-                                                                        }
-                                                                    >
-                                                                        {cat}
-                                                                    </option>
-                                                                ),
-                                                            )}
-                                                        </select>
+                                                            options={currentAgeCategories.map((cat) => ({
+                                                                value: cat,
+                                                                label: cat,
+                                                            }))}
+                                                        />
                                                     </div>
                                                     <div>
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                             Gender
                                                         </label>
-                                                        <select
+                                                        <ModernSelect
+                                                            searchable={false}
                                                             value={gender}
-                                                            onChange={(e) =>
-                                                                updateActiveAnimalField(
-                                                                    {
-                                                                        gender: e
-                                                                            .target
-                                                                            .value,
-                                                                    },
-                                                                )
+                                                            onChange={(val) =>
+                                                                updateActiveAnimalField({ gender: val })
                                                             }
-                                                            className="w-full rounded-2xl border-2 border-transparent bg-paw-bg p-4 font-bold text-paw-navy outline-none focus:border-paw-orange"
-                                                        >
-                                                            <option value="Male">
-                                                                Male
-                                                            </option>
-                                                            <option value="Female">
-                                                                Female
-                                                            </option>
-                                                            <option value="Unknown">
-                                                                Unknown
-                                                            </option>
-                                                        </select>
+                                                            options={[
+                                                                { value: 'Male', label: 'Male' },
+                                                                { value: 'Female', label: 'Female' },
+                                                                { value: 'Unknown', label: 'Unknown' },
+                                                            ]}
+                                                        />
                                                     </div>
                                                     <div className="col-span-2">
                                                         <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
@@ -3210,39 +3120,22 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                     Animal Type
                                                 </label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={animalType}
-                                                        onChange={(e) => {
-                                                            setAnimalType(
-                                                                e.target
-                                                                    .value as
-                                                                    | 'Dog'
-                                                                    | 'Cat',
-                                                            );
-                                                            // Reset age category to first option when animal type changes
-                                                            setAgeCategory(
-                                                                e.target
-                                                                    .value ===
-                                                                    'Dog'
-                                                                    ? dogAgeCategories[0]
-                                                                    : catAgeCategories[0],
-                                                            );
-                                                        }}
-                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
-                                                    >
-                                                        <option value="Dog">
-                                                            Dog
-                                                        </option>
-                                                        <option value="Cat">
-                                                            Cat
-                                                        </option>
-                                                    </select>
-                                                    <ChevronDown
-                                                        size={16}
-                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
-                                                    />
-                                                </div>
+                                                <ModernSelect
+                                                    searchable={false}
+                                                    value={animalType}
+                                                    onChange={(val) => {
+                                                        setAnimalType(val as 'Dog' | 'Cat');
+                                                        setAgeCategory(
+                                                            val === 'Dog'
+                                                                ? dogAgeCategories[0]
+                                                                : catAgeCategories[0],
+                                                        );
+                                                    }}
+                                                    options={[
+                                                        { value: 'Dog', label: 'Dog' },
+                                                        { value: 'Cat', label: 'Cat' },
+                                                    ]}
+                                                />
                                             </div>
                                             <div>
                                                 <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
@@ -3266,66 +3159,30 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                     Age Category
                                                 </label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={ageCategory}
-                                                        onChange={(e) =>
-                                                            setAgeCategory(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 text-sm font-bold transition-all outline-none focus:border-paw-orange"
-                                                    >
-                                                        {currentAgeCategories.map(
-                                                            (category) => (
-                                                                <option
-                                                                    key={
-                                                                        category
-                                                                    }
-                                                                    value={
-                                                                        category
-                                                                    }
-                                                                >
-                                                                    {category}
-                                                                </option>
-                                                            ),
-                                                        )}
-                                                    </select>
-                                                    <ChevronDown
-                                                        size={16}
-                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
-                                                    />
-                                                </div>
+                                                <ModernSelect
+                                                    searchable={false}
+                                                    value={ageCategory}
+                                                    onChange={(val) => setAgeCategory(val)}
+                                                    options={currentAgeCategories.map((category) => ({
+                                                        value: category,
+                                                        label: category,
+                                                    }))}
+                                                />
                                             </div>
                                             <div>
                                                 <label className="mb-2 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                                                     Gender
                                                 </label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={gender}
-                                                        onChange={(e) =>
-                                                            setGender(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full appearance-none rounded-2xl border-2 border-transparent bg-paw-bg p-5 font-bold transition-all outline-none focus:border-paw-orange"
-                                                    >
-                                                        <option value="Male">
-                                                            Male
-                                                        </option>
-                                                        <option value="Female">
-                                                            Female
-                                                        </option>
-                                                        <option value="Unknown">
-                                                            Unknown
-                                                        </option>
-                                                    </select>
-                                                    <ChevronDown
-                                                        size={16}
-                                                        className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-gray-400"
-                                                    />
-                                                </div>
+                                                <ModernSelect
+                                                    searchable={false}
+                                                    value={gender}
+                                                    onChange={(val) => setGender(val)}
+                                                    options={[
+                                                        { value: 'Male', label: 'Male' },
+                                                        { value: 'Female', label: 'Female' },
+                                                        { value: 'Unknown', label: 'Unknown' },
+                                                    ]}
+                                                />
                                             </div>
                                         </div>
 

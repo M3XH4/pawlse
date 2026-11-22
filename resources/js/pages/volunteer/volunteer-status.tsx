@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router, Link } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { toast } from 'sonner';
 import {
     Zap,
@@ -346,15 +347,17 @@ export default function VolunteerStatus({ application, fosterParent, stats }: Vo
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Pet Preference *
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={petPreference}
-                                        onChange={(e) => setPetPreference(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="both">Any / Both Dogs & Cats</option>
-                                        <option value="dogs">Dogs Only</option>
-                                        <option value="cats">Cats Only</option>
-                                    </select>
+                                        onChange={(val) => setPetPreference(val)}
+                                        options={[
+                                            { value: 'both', label: 'Any / Both Dogs & Cats' },
+                                            { value: 'dogs', label: 'Dogs Only' },
+                                            { value: 'cats', label: 'Cats Only' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -362,17 +365,19 @@ export default function VolunteerStatus({ application, fosterParent, stats }: Vo
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                     Housing Environment & Setup *
                                 </label>
-                                <select
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
                                     value={housingType}
-                                    onChange={(e) => setHousingType(e.target.value)}
-                                    className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-gray-900 dark:text-white"
-                                >
-                                    <option value="Single Family Home with Yard">Single Family Home with Fenced Yard</option>
-                                    <option value="Townhouse with Courtyard">Townhouse with Courtyard</option>
-                                    <option value="Pet-Friendly Apartment / Condo">Pet-Friendly Apartment / Condo</option>
-                                    <option value="Rural / Farm Setting">Rural / Farm Setting</option>
-                                    <option value="Other Residential">Other Residential Setup</option>
-                                </select>
+                                    onChange={(val) => setHousingType(val)}
+                                    options={[
+                                        { value: 'Single Family Home with Yard', label: 'Single Family Home with Fenced Yard' },
+                                        { value: 'Townhouse with Courtyard', label: 'Townhouse with Courtyard' },
+                                        { value: 'Pet-Friendly Apartment / Condo', label: 'Pet-Friendly Apartment / Condo' },
+                                        { value: 'Rural / Farm Setting', label: 'Rural / Farm Setting' },
+                                        { value: 'Other Residential', label: 'Other Residential Setup' },
+                                    ]}
+                                />
                             </div>
 
                             <div>

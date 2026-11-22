@@ -4,6 +4,7 @@ import { AnimatePresence } from 'motion/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
@@ -300,31 +301,35 @@ export default function RescueManagement({
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Report Type</label>
-            <select
+            <ModernSelect
+              size="sm"
+              searchable={false}
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-sm text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Types</option>
-              <option value="Rescue">Stray Rescue</option>
-              <option value="Missing">Missing Pet</option>
-              <option value="SOS">SOS Emergency</option>
-            </select>
+              onChange={(val) => setTypeFilter(val)}
+              options={[
+                { value: 'All', label: 'All Types' },
+                { value: 'Rescue', label: 'Stray Rescue' },
+                { value: 'Missing', label: 'Missing Pet' },
+                { value: 'SOS', label: 'SOS Emergency' },
+              ]}
+            />
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Status</label>
-            <select
+            <ModernSelect
+              size="sm"
+              searchable={false}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl outline-none font-bold text-sm text-[#0B2340] dark:text-white"
-            >
-              <option value="All">All Statuses</option>
-              <option value="pending">Pending Review</option>
-              <option value="assigned">Assigned</option>
-              <option value="resolved">Resolved</option>
-              <option value="duplicate">Duplicate</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'pending', label: 'Pending Review' },
+                { value: 'assigned', label: 'Assigned' },
+                { value: 'resolved', label: 'Resolved' },
+                { value: 'duplicate', label: 'Duplicate' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <button
@@ -812,17 +817,21 @@ export default function RescueManagement({
                         1. Update Report Status
                       </h4>
                       <div className="flex items-stretch gap-2 w-full">
-                        <select
-                          value={updateStatusVal}
-                          onChange={(e) => setUpdateStatusVal(e.target.value)}
-                          className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white focus:border-paw-orange"
-                        >
-                          <option value="pending">Pending Review</option>
-                          <option value="assigned">Assigned</option>
-                          <option value="resolved">Resolved</option>
-                          <option value="duplicate">Duplicate</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
+                        <div className="min-w-0 flex-1">
+                          <ModernSelect
+                            size="sm"
+                            searchable={false}
+                            value={updateStatusVal}
+                            onChange={(val) => setUpdateStatusVal(val)}
+                            options={[
+                              { value: 'pending', label: 'Pending Review' },
+                              { value: 'assigned', label: 'Assigned' },
+                              { value: 'resolved', label: 'Resolved' },
+                              { value: 'duplicate', label: 'Duplicate' },
+                              { value: 'cancelled', label: 'Cancelled' },
+                            ]}
+                          />
+                        </div>
                         <button
                           type="submit"
                           className="shrink-0 bg-paw-navy text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -851,17 +860,21 @@ export default function RescueManagement({
                       )}
                       
                       <div className="flex items-stretch gap-2 w-full">
-                        <select
-                          required
-                          value={assignVolunteerId}
-                          onChange={(e) => setAssignVolunteerId(e.target.value)}
-                          className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate focus:border-paw-orange"
-                        >
-                          <option value="">Select volunteer...</option>
-                          {volunteers.map((vol) => (
-                            <option key={vol.id} value={vol.id}>{vol.name} ({vol.email})</option>
-                          ))}
-                        </select>
+                        <div className="min-w-0 flex-1">
+                          <ModernSelect
+                            size="sm"
+                            value={assignVolunteerId}
+                            onChange={(val) => setAssignVolunteerId(val)}
+                            placeholder="Select volunteer..."
+                            options={[
+                              { value: '', label: 'Select volunteer...' },
+                              ...volunteers.map((vol) => ({
+                                value: String(vol.id),
+                                label: `${vol.name} (${vol.email})`,
+                              })),
+                            ]}
+                          />
+                        </div>
                         <button
                           type="submit"
                           className="shrink-0 bg-paw-orange text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-orange-600 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-paw-orange/20 cursor-pointer"
@@ -900,21 +913,23 @@ export default function RescueManagement({
                             Link to an existing primary report if this is a duplicate sighting:
                           </p>
                           <div className="flex items-stretch gap-2 w-full">
-                            <select
-                              required
-                              value={linkDuplicateOfId}
-                              onChange={(e) => setLinkDuplicateOfId(e.target.value)}
-                              className="min-w-0 flex-1 px-3 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs text-paw-navy dark:text-white truncate focus:border-paw-orange"
-                            >
-                              <option value="">Select primary report...</option>
-                              {duplicateCandidates
-                                .filter(candidate => candidate.id !== selectedReport.id)
-                                .map((candidate) => (
-                                  <option key={candidate.id} value={candidate.id}>
-                                    ID #{candidate.id} - {candidate.animal_type} at {candidate.location.substring(0, 25)}...
-                                  </option>
-                                ))}
-                            </select>
+                            <div className="min-w-0 flex-1">
+                              <ModernSelect
+                                size="sm"
+                                value={linkDuplicateOfId}
+                                onChange={(val) => setLinkDuplicateOfId(val)}
+                                placeholder="Select primary report..."
+                                options={[
+                                  { value: '', label: 'Select primary report...' },
+                                  ...duplicateCandidates
+                                    .filter((candidate) => candidate.id !== selectedReport.id)
+                                    .map((candidate) => ({
+                                      value: String(candidate.id),
+                                      label: `ID #${candidate.id} - ${candidate.animal_type} at ${candidate.location.substring(0, 25)}...`,
+                                    })),
+                                ]}
+                              />
+                            </div>
                             <button
                               type="submit"
                               className="shrink-0 bg-paw-navy text-white px-4 py-2.5 rounded-xl font-black text-xs hover:bg-paw-orange transition-all flex items-center justify-center gap-1.5 cursor-pointer"

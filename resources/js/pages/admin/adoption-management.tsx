@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
 import {
   PostAdoptionTab,
@@ -299,7 +300,7 @@ export default function AdoptionManagement({
         <div className="flex flex-wrap border-b border-gray-200 dark:border-gray-800 gap-1">
           <button
             onClick={() => setActiveTab('applications')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
               activeTab === 'applications'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -309,7 +310,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('follow-ups')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
               activeTab === 'follow-ups'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -319,7 +320,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('shelter-visits')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
               activeTab === 'shelter-visits'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -329,7 +330,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('rehoming')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
               activeTab === 'rehoming'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -339,7 +340,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('pets')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-all cursor-pointer ${
+            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
               activeTab === 'pets'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -364,20 +365,21 @@ export default function AdoptionManagement({
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl transition-colors font-bold text-sm text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="flex gap-2">
-                <select
+              <div className="min-w-[175px]">
+                <ModernSelect
+                  searchable={false}
                   value={appStatusFilter}
-                  onChange={(e) => setAppStatusFilter(e.target.value)}
-                  className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="needs_info">Info Requested</option>
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+                  onChange={(val) => setAppStatusFilter(val)}
+                  options={[
+                    { value: 'All', label: 'All Statuses' },
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'needs_info', label: 'Info Requested' },
+                    { value: 'Scheduled', label: 'Scheduled' },
+                    { value: 'Approved', label: 'Approved' },
+                    { value: 'Rejected', label: 'Rejected' },
+                    { value: 'cancelled', label: 'Cancelled' },
+                  ]}
+                />
               </div>
             </div>
 
@@ -530,27 +532,33 @@ export default function AdoptionManagement({
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl transition-colors font-bold text-sm text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="flex gap-2">
-                <select
-                  value={petTypeFilter}
-                  onChange={(e) => setPetTypeFilter(e.target.value)}
-                  className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Cat">Cat</option>
-                  <option value="Dog">Dog</option>
-                  <option value="Other">Other</option>
-                </select>
-                <select
-                  value={petStatusFilter}
-                  onChange={(e) => setPetStatusFilter(e.target.value)}
-                  className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl font-bold text-sm text-gray-900 dark:text-white"
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Available">Available</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Adopted">Adopted</option>
-                </select>
+              <div className="flex flex-wrap gap-2">
+                <div className="min-w-[140px]">
+                  <ModernSelect
+                    searchable={false}
+                    value={petTypeFilter}
+                    onChange={(val) => setPetTypeFilter(val)}
+                    options={[
+                      { value: 'All', label: 'All Types' },
+                      { value: 'Cat', label: 'Cat' },
+                      { value: 'Dog', label: 'Dog' },
+                      { value: 'Other', label: 'Other' },
+                    ]}
+                  />
+                </div>
+                <div className="min-w-[155px]">
+                  <ModernSelect
+                    searchable={false}
+                    value={petStatusFilter}
+                    onChange={(val) => setPetStatusFilter(val)}
+                    options={[
+                      { value: 'All', label: 'All Statuses' },
+                      { value: 'Available', label: 'Available' },
+                      { value: 'Pending', label: 'Pending' },
+                      { value: 'Adopted', label: 'Adopted' },
+                    ]}
+                  />
+                </div>
               </div>
             </div>
 
@@ -1386,34 +1394,34 @@ export default function AdoptionManagement({
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Priority Level</label>
-                      <select
+                      <ModernSelect
+                        size="sm"
+                        searchable={false}
                         value={needForm.priority}
-                        onChange={(e) => setNeedForm({ ...needForm, priority: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
-                      >
-                        <option value="Urgent">Urgent</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                      {needErrors.priority && (
-                        <p className="text-[10px] text-red-500 font-bold">{needErrors.priority}</p>
-                      )}
+                        onChange={(val) => setNeedForm({ ...needForm, priority: val })}
+                        options={[
+                          { value: 'Urgent', label: 'Urgent' },
+                          { value: 'High', label: 'High' },
+                          { value: 'Medium', label: 'Medium' },
+                          { value: 'Low', label: 'Low' },
+                        ]}
+                        error={needErrors.priority}
+                      />
                     </div>
 
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Status</label>
-                      <select
+                      <ModernSelect
+                        size="sm"
+                        searchable={false}
                         value={needForm.status}
-                        onChange={(e) => setNeedForm({ ...needForm, status: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-900 px-3 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 outline-none focus:border-paw-orange"
-                      >
-                        <option value="open">Open (Accepting Donations)</option>
-                        <option value="fulfilled">Fulfilled</option>
-                      </select>
-                      {needErrors.status && (
-                        <p className="text-[10px] text-red-500 font-bold">{needErrors.status}</p>
-                      )}
+                        onChange={(val) => setNeedForm({ ...needForm, status: val })}
+                        options={[
+                          { value: 'open', label: 'Open (Accepting Donations)' },
+                          { value: 'fulfilled', label: 'Fulfilled' },
+                        ]}
+                        error={needErrors.status}
+                      />
                     </div>
                   </div>
 

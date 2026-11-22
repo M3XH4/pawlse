@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { toast } from 'sonner';
 import {
     Heart,
@@ -573,33 +574,37 @@ export function FosterCareView({
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Update Category
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={updateType}
-                                        onChange={(e) => setUpdateType(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="routine">Routine Check-in</option>
-                                        <option value="medical">Medical / Health</option>
-                                        <option value="behavioral">Behavioral Observation</option>
-                                        <option value="emergency">Emergency / Injury</option>
-                                        <option value="milestone">Milestone / Progress</option>
-                                    </select>
+                                        onChange={(val) => setUpdateType(val)}
+                                        options={[
+                                            { value: 'routine', label: 'Routine Check-in' },
+                                            { value: 'medical', label: 'Medical / Health' },
+                                            { value: 'behavioral', label: 'Behavioral Observation' },
+                                            { value: 'emergency', label: 'Emergency / Injury' },
+                                            { value: 'milestone', label: 'Milestone / Progress' },
+                                        ]}
+                                    />
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                                         Urgency Level
                                     </label>
-                                    <select
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
                                         value={urgency}
-                                        onChange={(e) => setUrgency(e.target.value)}
-                                        className="w-full text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                                    >
-                                        <option value="low">Low (Routine log)</option>
-                                        <option value="medium">Medium (Requires attention)</option>
-                                        <option value="high">High (Urgent coordinator review)</option>
-                                        <option value="critical">Critical (Immediate veterinary triage)</option>
-                                    </select>
+                                        onChange={(val) => setUrgency(val)}
+                                        options={[
+                                            { value: 'low', label: 'Low (Routine log)' },
+                                            { value: 'medium', label: 'Medium (Requires attention)' },
+                                            { value: 'high', label: 'High (Urgent coordinator review)' },
+                                            { value: 'critical', label: 'Critical (Immediate veterinary triage)' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 

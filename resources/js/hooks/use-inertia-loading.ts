@@ -49,6 +49,10 @@ export function useInertiaNavigationState({
             }
 
             const targetPath = visit.url.pathname;
+            const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+            if (currentPath !== null && targetPath === currentPath) {
+                return;
+            }
 
             clearPendingTimer();
             if (delayMs <= 0) {

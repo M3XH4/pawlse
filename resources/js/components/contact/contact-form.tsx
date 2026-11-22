@@ -3,6 +3,7 @@ import { Send, CheckCircle2, AlertCircle, Sparkles, Loader2, HeartHandshake } fr
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface ContactFormProps {
   compact?: boolean;
@@ -100,19 +101,20 @@ export function ContactForm({ compact = false, onSuccess, defaultCategory = 'gen
         <label className="block text-xs font-black uppercase tracking-wider text-paw-navy mb-1.5">
           Inquiry Category <span className="text-paw-orange">*</span>
         </label>
-        <select
+        <ModernSelect
+          searchable={false}
           value={data.category}
-          onChange={(e) => setData('category', e.target.value)}
-          className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-paw-orange focus:ring-2 focus:ring-paw-orange/20 transition-all font-medium text-paw-navy text-sm cursor-pointer"
-        >
-          <option value="general">General Inquiry</option>
-          <option value="adoption">Adoption & Meeting Pets</option>
-          <option value="volunteer">Volunteering & Community Service</option>
-          <option value="donation">Donations & In-Kind Supplies</option>
-          <option value="shelter_visit">Shelter Visit / Tour Request</option>
-          <option value="partnership">Partnership & Vet Collaboration</option>
-          <option value="other">Other / Feedback</option>
-        </select>
+          onChange={(val) => setData('category', val)}
+          options={[
+            { value: 'general', label: 'General Inquiry' },
+            { value: 'adoption', label: 'Adoption & Meeting Pets' },
+            { value: 'volunteer', label: 'Volunteering & Community Service' },
+            { value: 'donation', label: 'Donations & In-Kind Supplies' },
+            { value: 'shelter_visit', label: 'Shelter Visit / Tour Request' },
+            { value: 'partnership', label: 'Partnership & Vet Collaboration' },
+            { value: 'other', label: 'Other / Feedback' },
+          ]}
+        />
         <InputError message={errors.category} className="mt-1" />
       </div>
 

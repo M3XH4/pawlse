@@ -13,6 +13,7 @@ import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
 
@@ -489,31 +490,39 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
 
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
                             {/* Category Filter */}
-                            <select
-                                value={categoryFilter}
-                                onChange={(e) => handleCategoryChange(e.target.value)}
-                                className="px-3 py-2 text-xs border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold"
-                            >
-                                <option value="all">All Categories</option>
-                                <option value="veterinary">Veterinary Partners</option>
-                                <option value="food_supply">Food & Supply Partners</option>
-                                <option value="audit">Audit & Financial</option>
-                                <option value="accounting">Accounting Partners</option>
-                                <option value="collaborator">Collaborators</option>
-                                <option value="sponsor">Sponsors</option>
-                            </select>
+                            <div className="min-w-[190px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={categoryFilter}
+                                    onChange={(val) => handleCategoryChange(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Categories' },
+                                        { value: 'veterinary', label: 'Veterinary Partners' },
+                                        { value: 'food_supply', label: 'Food & Supply Partners' },
+                                        { value: 'audit', label: 'Audit & Financial' },
+                                        { value: 'accounting', label: 'Accounting Partners' },
+                                        { value: 'collaborator', label: 'Collaborators' },
+                                        { value: 'sponsor', label: 'Sponsors' },
+                                    ]}
+                                />
+                            </div>
 
                             {/* Status Filter */}
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => handleStatusChange(e.target.value)}
-                                className="px-3 py-2 text-xs border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="active">Active Only</option>
-                                <option value="inactive">Inactive Only</option>
-                                <option value="archived">Archived</option>
-                            </select>
+                            <div className="min-w-[140px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={statusFilter}
+                                    onChange={(val) => handleStatusChange(val)}
+                                    options={[
+                                        { value: 'all', label: 'All Status' },
+                                        { value: 'active', label: 'Active Only' },
+                                        { value: 'inactive', label: 'Inactive Only' },
+                                        { value: 'archived', label: 'Archived' },
+                                    ]}
+                                />
+                            </div>
 
                             {/* Add Button */}
                             {canCreatePartner && (
@@ -786,18 +795,20 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
 
                                     <div>
                                         <label className="block text-gray-500 mb-1">Partner Category *</label>
-                                        <select
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
                                             value={data.category}
-                                            onChange={(e) => handleCategorySelect(e.target.value as PartnerCategory)}
-                                            className="w-full px-3.5 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700 font-bold focus:ring-2 focus:ring-paw-orange outline-none"
-                                        >
-                                            <option value="veterinary">🩺 Veterinary Partner</option>
-                                            <option value="food_supply">📦 Food & Supply Partner</option>
-                                            <option value="audit">🛡️ Audit & Financial Partner</option>
-                                            <option value="accounting">📊 Accounting Partner</option>
-                                            <option value="collaborator">🤝 Collaborator / LGU Partner</option>
-                                            <option value="sponsor">✨ Benefactor / Sponsor</option>
-                                        </select>
+                                            onChange={(val) => handleCategorySelect(val as PartnerCategory)}
+                                            options={[
+                                                { value: 'veterinary', label: 'Veterinary Partner' },
+                                                { value: 'food_supply', label: 'Food & Supply Partner' },
+                                                { value: 'audit', label: 'Audit & Financial Partner' },
+                                                { value: 'accounting', label: 'Accounting Partner' },
+                                                { value: 'collaborator', label: 'Collaborator / LGU Partner' },
+                                                { value: 'sponsor', label: 'Benefactor / Sponsor' },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
 

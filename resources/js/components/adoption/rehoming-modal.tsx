@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { PhoneInput } from '@/components/phone-input';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
@@ -382,15 +383,17 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Species <span className="text-orange-500">*</span>
                   </label>
-                  <select
+                  <ModernSelect
+                    size="sm"
+                    searchable={false}
                     value={data.species}
-                    onChange={(e) => setData('species', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all cursor-pointer"
-                  >
-                    <option value="Dog">Dog</option>
-                    <option value="Cat">Cat</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    onChange={(val) => setData('species', val)}
+                    options={[
+                      { value: 'Dog', label: 'Dog' },
+                      { value: 'Cat', label: 'Cat' },
+                      { value: 'Other', label: 'Other' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -413,15 +416,17 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Gender
                   </label>
-                  <select
+                  <ModernSelect
+                    size="sm"
+                    searchable={false}
                     value={data.gender}
-                    onChange={(e) => setData('gender', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all cursor-pointer"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Unknown">Unknown</option>
-                  </select>
+                    onChange={(val) => setData('gender', val)}
+                    options={[
+                      { value: 'Male', label: 'Male' },
+                      { value: 'Female', label: 'Female' },
+                      { value: 'Unknown', label: 'Unknown' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -444,19 +449,20 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Reason for Rehoming <span className="text-orange-500">*</span>
                   </label>
-                  <select
-                    required
+                  <ModernSelect
+                    size="sm"
+                    searchable={false}
                     value={data.reason}
-                    onChange={(e) => setData('reason', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all cursor-pointer"
-                  >
-                    <option value="Relocating / Moving">Relocating / Moving</option>
-                    <option value="Financial Hardship">Financial Hardship</option>
-                    <option value="Family Allergies / Health">Family Allergies / Health</option>
-                    <option value="Unable to Provide Care / Time">Unable to Provide Care / Time</option>
-                    <option value="Owner Passed Away">Owner Passed Away</option>
-                    <option value="Other">Other Reasons</option>
-                  </select>
+                    onChange={(val) => setData('reason', val)}
+                    options={[
+                      { value: 'Relocating / Moving', label: 'Relocating / Moving' },
+                      { value: 'Financial Hardship', label: 'Financial Hardship' },
+                      { value: 'Family Allergies / Health', label: 'Family Allergies / Health' },
+                      { value: 'Unable to Provide Care / Time', label: 'Unable to Provide Care / Time' },
+                      { value: 'Owner Passed Away', label: 'Owner Passed Away' },
+                      { value: 'Other', label: 'Other Reasons' },
+                    ]}
+                  />
                 </div>
               </div>
 

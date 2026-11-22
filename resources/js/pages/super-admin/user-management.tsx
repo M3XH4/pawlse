@@ -11,6 +11,7 @@ import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/sect
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface UserRecord {
     id: number;
@@ -168,14 +169,14 @@ export default function UserManagement({
         );
     };
 
-    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedRole(e.target.value);
-        applyFilters({ role: e.target.value });
+    const handleRoleChange = (val: string) => {
+        setSelectedRole(val);
+        applyFilters({ role: val });
     };
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedStatus(e.target.value);
-        applyFilters({ status: e.target.value });
+    const handleStatusChange = (val: string) => {
+        setSelectedStatus(val);
+        applyFilters({ status: val });
     };
 
     const handleTabChange = (tab: 'users' | 'roles-permissions') => {
@@ -514,30 +515,32 @@ export default function UserManagement({
                                     </div>
 
                                     {/* Role Filter */}
-                                    <div className="relative">
-                                        <select
-                                            className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                    <div className="min-w-[140px]">
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
                                             value={selectedRole}
                                             onChange={handleRoleChange}
-                                        >
-                                            <option value="">All Roles</option>
-                                            {roles.map(r => (
-                                                <option key={r} value={r}>{r}</option>
-                                            ))}
-                                        </select>
+                                            options={[
+                                                { value: '', label: 'All Roles' },
+                                                ...roles.map((r) => ({ value: r, label: r })),
+                                            ]}
+                                        />
                                     </div>
 
                                     {/* Verification Status Filter */}
-                                    <div className="relative">
-                                        <select
-                                            className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                    <div className="min-w-[160px]">
+                                        <ModernSelect
+                                            size="sm"
+                                            searchable={false}
                                             value={selectedStatus}
                                             onChange={handleStatusChange}
-                                        >
-                                            <option value="">All Verification</option>
-                                            <option value="verified">Verified Only</option>
-                                            <option value="unverified">Unverified Only</option>
-                                        </select>
+                                            options={[
+                                                { value: '', label: 'All Verification' },
+                                                { value: 'verified', label: 'Verified Only' },
+                                                { value: 'unverified', label: 'Unverified Only' },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
 
