@@ -24,6 +24,7 @@ test('all user dashboard pages are reachable for users', function (string $route
     ['account.user.donations', 'user/donations'],
     ['account.user.missing-found', 'user/missing-found'],
     ['account.user.notifications', 'user/notifications'],
+    ['account.user.achievements', 'user/achievements'],
     ['account.user.account-settings', 'user/account-settings'],
     ['account.user.help-desk', 'user/help-desk'],
 ]);
@@ -40,6 +41,7 @@ test('all volunteer dashboard pages are reachable for volunteers', function (str
     ['account.volunteer.assigned-tasks', 'volunteer/assigned-tasks'],
     ['account.volunteer.participation-history', 'volunteer/participation-history'],
     ['account.volunteer.certificates', 'volunteer/certificates'],
+    ['account.volunteer.achievements', 'volunteer/achievements'],
     ['account.volunteer.rescue-reports', 'volunteer/rescue-reports'],
     ['account.volunteer.notifications', 'volunteer/notifications'],
     ['account.volunteer.account-settings', 'volunteer/account-settings'],

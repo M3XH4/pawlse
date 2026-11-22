@@ -1,14 +1,18 @@
 import {
     AlertCircle,
     Award,
+    BookOpen,
     Calendar,
     Check,
     ClipboardList,
     Gift,
     Heart,
+    HeartHandshake,
+    LifeBuoy,
     Shield,
     Sparkles,
     Trash2,
+    Trophy,
     User,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -48,9 +52,25 @@ const iconStyles: Record<DashboardNotificationIcon, { badge: string; text: strin
         badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-400 border border-yellow-200/60 dark:border-yellow-800/40',
         text: 'text-yellow-700 dark:text-yellow-400',
     },
+    achievement: {
+        badge: 'bg-orange-100 text-[#FF750F] dark:bg-orange-950/60 dark:text-orange-400 border border-orange-200/70 dark:border-orange-800/40',
+        text: 'text-[#FF750F] dark:text-orange-400',
+    },
+    blog: {
+        badge: 'bg-pink-100 text-pink-600 dark:bg-pink-950/60 dark:text-pink-400 border border-pink-200/60 dark:border-pink-800/40',
+        text: 'text-pink-600 dark:text-pink-400',
+    },
+    foster: {
+        badge: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-400 border border-cyan-200/60 dark:border-cyan-800/40',
+        text: 'text-cyan-600 dark:text-cyan-400',
+    },
+    help_desk: {
+        badge: 'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-200/60 dark:border-sky-800/40',
+        text: 'text-sky-600 dark:text-sky-400',
+    },
     system: {
-        badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/50',
-        text: 'text-slate-600 dark:text-slate-300',
+        badge: 'bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 border border-violet-200/60 dark:border-violet-800/40',
+        text: 'text-violet-600 dark:text-violet-400',
     },
 };
 
@@ -63,6 +83,10 @@ const icons: Record<DashboardNotificationIcon, ReactNode> = {
     event: <Calendar className="h-4 w-4" />,
     task: <ClipboardList className="h-4 w-4" />,
     certificate: <Award className="h-4 w-4" />,
+    achievement: <Trophy className="h-4 w-4" />,
+    blog: <BookOpen className="h-4 w-4" />,
+    foster: <HeartHandshake className="h-4 w-4" />,
+    help_desk: <LifeBuoy className="h-4 w-4" />,
     system: <Shield className="h-4 w-4" />,
 };
 
@@ -81,8 +105,15 @@ export function NotificationItem({
     onDelete?: (notification: DashboardNotification) => void;
     compact?: boolean;
 }) {
-    const iconConfig = iconStyles[notification.icon] ?? iconStyles.system;
-    const iconEl = icons[notification.icon] ?? icons.system;
+    const categoryKey = notification.category?.toLowerCase() as DashboardNotificationIcon | undefined;
+    const resolvedKey =
+        notification.icon !== 'system'
+            ? notification.icon
+            : categoryKey && iconStyles[categoryKey]
+              ? categoryKey
+              : 'system';
+    const iconConfig = iconStyles[resolvedKey] ?? iconStyles.system;
+    const iconEl = icons[resolvedKey] ?? icons.system;
 
     return (
         <div

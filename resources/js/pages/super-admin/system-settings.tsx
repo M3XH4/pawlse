@@ -14,7 +14,8 @@ import {
     MessageSquare,
     ShieldCheck,
     CreditCard,
-    BookOpen
+    BookOpen,
+    FlaskConical
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
@@ -37,6 +38,7 @@ interface SystemSettingsProps {
         maintenance_message?: string;
         payment_simulation_enabled?: boolean;
         ai_breed_guide_enabled?: boolean;
+        sandbox_mode?: boolean;
     };
 }
 
@@ -52,6 +54,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         maintenance_message: settings.maintenance_message || defaultMaintenanceMessage,
         payment_simulation_enabled: settings.payment_simulation_enabled ?? false,
         ai_breed_guide_enabled: settings.ai_breed_guide_enabled ?? true,
+        sandbox_mode: settings.sandbox_mode ?? false,
     });
 
     // Quick toggle modal state
@@ -302,6 +305,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         When enabled, an interactive dog & cat breed handbook (book icon) is available in the admin AI Validation panel to assist admins with species and breed verification.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-violet-200 bg-violet-50/30 dark:border-violet-900/40 dark:bg-violet-950/20 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="sandbox_mode"
+                                    className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 mt-1"
+                                    checked={data.sandbox_mode}
+                                    onChange={(e) => setData('sandbox_mode', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="sandbox_mode"
+                                        className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1"
+                                    >
+                                        <FlaskConical className="h-4 w-4 text-violet-600" />
+                                        Sandbox Mode (Demo Presentation)
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        Enables demo-only presentation buttons (such as triggering the level-up confetti burst on Badges &amp; Achievements). Automatically disabled when APP_ENV is production.
                                     </p>
                                 </div>
                             </div>

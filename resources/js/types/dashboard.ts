@@ -11,6 +11,10 @@ export type DashboardNotificationIcon =
     | 'event'
     | 'task'
     | 'certificate'
+    | 'achievement'
+    | 'blog'
+    | 'foster'
+    | 'help_desk'
     | 'system';
 
 export type DashboardNotification = {

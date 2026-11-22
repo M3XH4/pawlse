@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AchievementsController;
 use App\Http\Controllers\Admin\AdoptablePetController;
 use App\Http\Controllers\Admin\AdoptionManagementController;
 use App\Http\Controllers\Admin\AiValidationController;
@@ -163,6 +164,8 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
     Route::get('missing-found', [PetReportController::class, 'userMissingFoundReports'])->name('missing-found');
     Route::get('joined-events', [EventController::class, 'userJoinedEvents'])->name('joined-events');
     Route::get('certificates', [VolunteerDashboardController::class, 'userCertificates'])->name('certificates');
+    Route::get('achievements', [AchievementsController::class, 'userIndex'])->name('achievements');
+    Route::post('achievements/{badge}/pin', [AchievementsController::class, 'togglePin'])->name('achievements.pin');
     Route::get('stories', [UserStoryController::class, 'index'])->name('stories.index');
     Route::post('stories', [UserStoryController::class, 'store'])->name('stories.store');
     Route::match(['put', 'post'], 'stories/{post}', [UserStoryController::class, 'update'])->name('stories.update');
@@ -185,6 +188,8 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::delete('assigned-tasks/{task}', [VolunteerDashboardController::class, 'cancelTask'])->name('assigned-tasks.cancel');
     Route::get('participation-history', [VolunteerDashboardController::class, 'participationHistory'])->name('participation-history');
     Route::get('certificates', [VolunteerDashboardController::class, 'certificates'])->name('certificates');
+    Route::get('achievements', [AchievementsController::class, 'volunteerIndex'])->name('achievements');
+    Route::post('achievements/{badge}/pin', [AchievementsController::class, 'togglePin'])->name('achievements.pin');
     Route::get('rescue-reports', [PetReportController::class, 'volunteerReports'])->name('rescue-reports');
     Route::post('rescue-reports/{report}/status', [PetReportController::class, 'updateStatus'])->name('rescue-reports.update-status');
     Route::get('foster-care', [FosterCareController::class, 'index'])->name('foster-care');

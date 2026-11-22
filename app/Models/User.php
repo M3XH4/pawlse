@@ -11,6 +11,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -209,6 +210,24 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function fosterPlacements(): HasMany
     {
         return $this->hasMany(FosterPlacement::class, 'foster_parent_user_id');
+    }
+
+    /**
+     * @return HasMany<UserBadge, $this>
+     */
+    public function userBadges(): HasMany
+    {
+        return $this->hasMany(UserBadge::class);
+    }
+
+    /**
+     * @return BelongsToMany<Badge, $this>
+     */
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot(['progress_value', 'unlocked_at', 'is_pinned'])
+            ->withTimestamps();
     }
 
     public function isApprovedFosterParent(): bool

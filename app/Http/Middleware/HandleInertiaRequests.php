@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\CareSustainability;
 use App\Models\SystemSetting;
 use App\Services\NotificationPayloadFormatter;
+use App\Support\SandboxMode;
 use App\Support\UserFriendlyErrorResolver;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -65,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'isMaintenanceMode' => fn () => (bool) rescue(fn () => SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false, false, false),
+            'isSandboxMode' => fn () => SandboxMode::isEnabled(),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
                 'user' => $request->user() ? [

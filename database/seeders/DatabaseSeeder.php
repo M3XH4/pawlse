@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             BlogPostSeeder::class,
             UserStoryAndTestimonialSeeder::class,
             HelpDeskSeeder::class,
+            BadgeSeeder::class,
         ]);
     }
 }

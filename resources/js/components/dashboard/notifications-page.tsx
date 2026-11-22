@@ -2,12 +2,14 @@ import { Head } from '@inertiajs/react';
 import {
     AlertCircle,
     BellOff,
+    BookOpen,
     CheckCheck,
     Gift,
     Heart,
     Search,
     Shield,
     Trash2,
+    Trophy,
     Users,
     X,
 } from 'lucide-react';
@@ -24,6 +26,8 @@ type FilterType =
     | 'rescue'
     | 'donation'
     | 'volunteer'
+    | 'achievement'
+    | 'blog'
     | 'system';
 
 export function DashboardNotificationsPage() {
@@ -61,8 +65,17 @@ export function DashboardNotificationsPage() {
                     n.icon === 'certificate' ||
                     n.category === 'volunteer',
             ).length,
+            achievement: notifications.filter(
+                (n) => n.icon === 'achievement' || n.category?.toLowerCase() === 'achievement',
+            ).length,
+            blog: notifications.filter(
+                (n) => n.icon === 'blog' || n.category?.toLowerCase() === 'blog',
+            ).length,
             system: notifications.filter(
-                (n) => n.icon === 'system' || n.icon === 'ai' || n.category === 'system',
+                (n) =>
+                    (n.icon === 'system' || n.icon === 'ai' || n.category === 'system') &&
+                    n.category?.toLowerCase() !== 'achievement' &&
+                    n.category?.toLowerCase() !== 'blog',
             ).length,
         };
     }, [notifications, isRead]);
@@ -105,10 +118,26 @@ export function DashboardNotificationsPage() {
                 return false;
             }
             if (
+                filter === 'achievement' &&
+                notification.icon !== 'achievement' &&
+                notification.category?.toLowerCase() !== 'achievement'
+            ) {
+                return false;
+            }
+            if (
+                filter === 'blog' &&
+                notification.icon !== 'blog' &&
+                notification.category?.toLowerCase() !== 'blog'
+            ) {
+                return false;
+            }
+            if (
                 filter === 'system' &&
-                notification.icon !== 'system' &&
-                notification.icon !== 'ai' &&
-                notification.category !== 'system'
+                ((notification.icon !== 'system' &&
+                    notification.icon !== 'ai' &&
+                    notification.category !== 'system') ||
+                    notification.category?.toLowerCase() === 'achievement' ||
+                    notification.category?.toLowerCase() === 'blog')
             ) {
                 return false;
             }
@@ -139,12 +168,9 @@ export function DashboardNotificationsPage() {
         { id: 'rescue', label: 'Rescues', icon: AlertCircle },
         { id: 'donation', label: 'Donations', icon: Gift },
         { id: 'volunteer', label: 'Volunteers', icon: Users },
-        {
-            id: 'system',
-            label: 'System',
-            icon: Shield,
-            spanClass: 'col-span-2 sm:col-span-2 lg:col-span-1',
-        },
+        { id: 'achievement', label: 'Achievements', icon: Trophy },
+        { id: 'blog', label: 'Blog', icon: BookOpen },
+        { id: 'system', label: 'System', icon: Shield },
     ];
 
     return (
@@ -218,9 +244,9 @@ export function DashboardNotificationsPage() {
                         )}
                     </div>
 
-                    {/* Category Filter Tabs spanning full maximum width */}
+                    {/* Category Filter Tabs in a single horizontal line */}
                     <div
-                        className="grid w-full grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2"
+                        className="flex w-full items-center gap-1.5 overflow-x-auto pb-1"
                         role="group"
                         aria-label="Filter notifications by category"
                     >
@@ -236,8 +262,7 @@ export function DashboardNotificationsPage() {
                                     aria-pressed={active}
                                     onClick={() => setFilter(tab.id)}
                                     className={cn(
-                                        'flex w-full min-w-0 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2.5 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50',
-                                        tab.spanClass,
+                                        'flex shrink-0 lg:flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50',
                                         active
                                             ? 'bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] text-white shadow-[0_4px_16px_var(--dashboard-primary-shadow)]'
                                             : 'border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0B2340] dark:border-[#1E293B] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:bg-[#1E293B] dark:hover:text-[#F8FAFC]',

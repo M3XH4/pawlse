@@ -10,6 +10,7 @@ use App\Models\PetReport;
 use App\Models\User;
 use App\Models\VolunteerApplication;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,9 +68,9 @@ class DashboardController extends Controller
                 'type' => 'rescue',
                 'description' => sprintf(
                     'New %s report submitted at %s (%s)',
-                    ucfirst($report->type),
+                    $this->formatReportType($report->type),
                     $report->location,
-                    ucfirst($report->status)
+                    $this->formatStatusLabel($report->status)
                 ),
                 'time' => $report->created_at?->diffForHumans() ?? 'Just now',
                 'timestamp' => $report->created_at?->timestamp ?? 0,
@@ -90,7 +91,7 @@ class DashboardController extends Controller
                     '%s applied to adopt %s (%s)',
                     $app->full_name,
                     $animalName,
-                    ucfirst($statusVal)
+                    $this->formatStatusLabel($statusVal)
                 ),
                 'time' => $app->created_at?->diffForHumans() ?? 'Just now',
                 'timestamp' => $app->created_at?->timestamp ?? 0,
@@ -103,8 +104,8 @@ class DashboardController extends Controller
         $recentDonations = Donation::latest()->limit(4)->get();
         foreach ($recentDonations as $donation) {
             $desc = $donation->type === 'cash'
-                ? sprintf('%s donated %s %s (%s)', $donation->donor_name, $donation->amount, $donation->currency, ucfirst($donation->status))
-                : sprintf('%s submitted In-Kind donation (%s)', $donation->donor_name, ucfirst($donation->status));
+                ? sprintf('%s donated %s %s (%s)', $donation->donor_name, $donation->amount, $donation->currency, $this->formatStatusLabel($donation->status))
+                : sprintf('%s submitted In-Kind donation (%s)', $donation->donor_name, $this->formatStatusLabel($donation->status));
 
             $recentActivities[] = [
                 'id' => 'donation-'.$donation->id,
@@ -126,7 +127,7 @@ class DashboardController extends Controller
                 'description' => sprintf(
                     '%s submitted volunteer application (%s)',
                     $vol->full_name,
-                    ucfirst($vol->status)
+                    $this->formatStatusLabel($vol->status)
                 ),
                 'time' => $vol->created_at?->diffForHumans() ?? 'Just now',
                 'timestamp' => $vol->created_at?->timestamp ?? 0,
@@ -147,5 +148,20 @@ class DashboardController extends Controller
             'stats' => $stats,
             'recentActivities' => $recentActivities,
         ]);
+    }
+
+    private function formatStatusLabel(?string $status): string
+    {
+        return Str::headline((string) $status);
+    }
+
+    private function formatReportType(?string $type): string
+    {
+        $normalized = strtolower(trim((string) $type));
+        if ($normalized === 'sos') {
+            return 'SOS';
+        }
+
+        return Str::headline((string) $type);
     }
 }
