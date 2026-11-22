@@ -215,7 +215,7 @@ export function BreedGuideModal({
                           {breed.build}
                         </p>
 
-                        <div className="mt-2 text-[10px] text-slate-600 dark:text-slate-300 bg-gray-50 dark:bg-slate-850 p-2 rounded-lg border border-gray-100 dark:border-slate-800/80 line-clamp-2">
+                        <div className="mt-2 text-[10px] text-slate-600 dark:text-slate-300 bg-gray-50 dark:bg-slate-900 p-2 rounded-lg border border-gray-100 dark:border-slate-800/80 line-clamp-2">
                           <span className="font-bold text-[#0B2340] dark:text-white">Tips: </span>
                           {breed.identification_tips}
                         </div>

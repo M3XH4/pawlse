@@ -125,50 +125,50 @@ export default function UserAdoptionApplications({
         switch (status) {
             case 'pending':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
                         <Clock size={12} /> Pending Review
                     </span>
                 );
             case 'scheduled':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60">
                         <Calendar size={12} /> Interview Scheduled
                     </span>
                 );
             case 'approved':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/60">
                         <CheckCircle2 size={12} /> Approved
                     </span>
                 );
             case 'rejected':
                 if (isPetMatched) {
                     return (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                             <Heart size={12} className="text-amber-500" /> Pet Matched / Closed
                         </span>
                     );
                 }
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
                         <XCircle size={12} /> Declined
                     </span>
                 );
             case 'needs_info':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
                         <MessageCircle size={12} /> Info Requested
                     </span>
                 );
             case 'cancelled':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         <Ban size={12} /> Cancelled
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         {status}
                     </span>
                 );
@@ -251,12 +251,12 @@ export default function UserAdoptionApplications({
             ) : (
                 <div className="space-y-6">
                     {/* Informational Banner */}
-                    <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs font-medium text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs font-medium text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 dark:bg-amber-950/25 dark:border-amber-900/50 dark:text-amber-200">
                         <div className="flex items-start gap-3">
-                            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                            <AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                             <div className="space-y-0.5">
-                                <p className="font-bold text-amber-950">Adoption Interview vs. Shelter Visit & Rehoming</p>
-                                <p className="text-amber-800 leading-relaxed">
+                                <p className="font-bold text-amber-950 dark:text-amber-200">Adoption Interview vs. Shelter Visit & Rehoming</p>
+                                <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed">
                                     Your adoption <strong>interview</strong> is coordinated below. Looking for your scheduled sanctuary visits or pet rehoming requests? Access them directly in their dedicated tabs.
                                 </p>
                             </div>
@@ -264,15 +264,15 @@ export default function UserAdoptionApplications({
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
                             <Link
                                 href="/account/user/shelter-visits"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100/50 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100/50 transition-colors dark:border-amber-800/60 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/40"
                             >
                                 <Building2 size={13} className="text-paw-orange" /> My Shelter Visits ({shelterVisits.length})
                             </Link>
                             <Link
                                 href="/account/user/rehoming-requests"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100/50 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100/50 transition-colors dark:border-amber-800/60 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/40"
                             >
-                                <HeartHandshake size={13} className="text-sky-600" /> My Rehoming ({rehomingRequests.length})
+                                <HeartHandshake size={13} className="text-sky-600 dark:text-sky-400" /> My Rehoming ({rehomingRequests.length})
                             </Link>
                         </div>
                     </div>
@@ -305,7 +305,7 @@ export default function UserAdoptionApplications({
                                                 <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
                                                     Adoption Application for {app.shelter_animal?.name || 'Unnamed Pet'}
                                                 </h3>
-                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
+                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                                     {refCode}
                                                 </span>
                                             </div>
@@ -397,20 +397,20 @@ export default function UserAdoptionApplications({
                                                 <p>Your application is approved! You can now visit the shelter to pick up <strong>{app.shelter_animal?.name}</strong> and sign the final adoption agreement. Congratulations on your new family member!</p>
                                             </div>
                                             {app.follow_ups && app.follow_ups.length > 0 && (
-                                                <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/30 p-3.5 space-y-2">
-                                                    <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
-                                                        <Sparkles size={13} className="text-emerald-600" /> Post-Adoption Wellness Check-Ins
+                                                <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/30 p-3.5 space-y-2 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                                                    <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                                                        <Sparkles size={13} className="text-emerald-600 dark:text-emerald-400" /> Post-Adoption Wellness Check-Ins
                                                     </p>
                                                     <div className="space-y-1.5">
                                                         {app.follow_ups.map((fu) => (
-                                                            <div key={fu.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs border border-emerald-100">
+                                                            <div key={fu.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs border border-emerald-100 dark:bg-slate-900 dark:border-emerald-900/40">
                                                                 <div>
-                                                                    <span className="font-bold text-slate-800">
+                                                                    <span className="font-bold text-slate-800 dark:text-slate-200">
                                                                         {new Date(fu.follow_up_date).toLocaleDateString()} ({fu.method})
                                                                     </span>
-                                                                    {fu.notes && <p className="text-slate-600 mt-0.5">{fu.notes}</p>}
+                                                                    {fu.notes && <p className="text-slate-600 dark:text-slate-400 mt-0.5">{fu.notes}</p>}
                                                                 </div>
-                                                                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+                                                                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                                                                     {fu.status}
                                                                 </span>
                                                             </div>

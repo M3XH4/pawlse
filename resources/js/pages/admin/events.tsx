@@ -511,7 +511,7 @@ export default function EventManagement({
                                 placeholder="Search events proper or feeding zones..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-850 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
+                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
                             />
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
@@ -700,18 +700,18 @@ export default function EventManagement({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleApproveEvent(event)}
-                                                                    className="p-1.5 hover:bg-emerald-50 text-emerald-600 dark:hover:bg-emerald-950/50 rounded-lg cursor-pointer transition"
+                                                                    className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
                                                                     title="Approve Event"
                                                                 >
-                                                                    <Check size={16} />
+                                                                    <CheckCircle2 size={15} />
                                                                 </button>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => openRejectModal(event)}
-                                                                    className="p-1.5 hover:bg-rose-50 text-rose-600 dark:hover:bg-rose-950/50 rounded-lg cursor-pointer transition"
+                                                                    className="p-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-500 dark:bg-red-950/30 dark:hover:bg-red-600 dark:hover:text-white dark:text-red-400 rounded-xl transition-colors cursor-pointer"
                                                                     title="Reject Event"
                                                                 >
-                                                                    <X size={16} />
+                                                                    <XCircle size={15} />
                                                                 </button>
                                                             </>
                                                         )}
@@ -922,7 +922,7 @@ export default function EventManagement({
                                     placeholder="E.g., Tibanga Rescue Outreach & Vaccination"
                                     value={eventTitle}
                                     onChange={(e) => setEventTitle(e.target.value)}
-                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                 />
                             </div>
 
@@ -954,7 +954,7 @@ export default function EventManagement({
                                         placeholder="-1 for unlimited spots"
                                         value={eventSpots}
                                         onChange={(e) => setEventSpots(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                     />
                                     <span className="text-[11px] text-gray-400 font-semibold block mt-1">
                                         Use <strong className="text-gray-500">-1</strong> for unlimited participant registrations.
@@ -997,7 +997,7 @@ export default function EventManagement({
                                         placeholder="E.g., Anahaw Amphitheatre, City Hall Grounds, Iligan City"
                                         value={eventLocation}
                                         onChange={(e) => setEventLocation(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                        className="w-full pl-10 pr-4 py-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                     />
                                 </div>
                             </div>
@@ -1015,7 +1015,7 @@ export default function EventManagement({
                                             placeholder="Optional image URL (leave empty for default banner)"
                                             value={eventImg}
                                             onChange={(e) => setEventImg(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                            className="w-full pl-10 pr-4 py-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                         />
                                     </div>
                                     <div className="sm:col-span-1 h-14 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-gray-800 flex items-center justify-center overflow-hidden">
@@ -1048,7 +1048,7 @@ export default function EventManagement({
                                     placeholder="Outline the event objectives, stray targets, volunteer briefing instructions, and what participants should bring..."
                                     value={eventDesc}
                                     onChange={(e) => setEventDesc(e.target.value)}
-                                    className="w-full p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl outline-none focus:border-paw-orange border border-transparent font-semibold text-sm dark:text-white transition leading-relaxed"
+                                    className="w-full p-4 bg-gray-50 dark:bg-slate-900 rounded-2xl outline-none focus:border-paw-orange border border-transparent font-semibold text-sm dark:text-white transition leading-relaxed"
                                 />
                             </div>
 
@@ -1116,7 +1116,7 @@ export default function EventManagement({
                                     placeholder="E.g., Zone 1: Saray Proper"
                                     value={feedingZone}
                                     onChange={(e) => setFeedingZone(e.target.value)}
-                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                 />
                             </div>
 
@@ -1129,7 +1129,7 @@ export default function EventManagement({
                                         placeholder="E.g., Mon & Thurs"
                                         value={feedingDay}
                                         onChange={(e) => setFeedingDay(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                     />
                                 </div>
                                 <div>
@@ -1151,7 +1151,7 @@ export default function EventManagement({
                                         type="number"
                                         value={feedingVolunteers}
                                         onChange={(e) => setFeedingVolunteers(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                     />
                                 </div>
                                 <div>
@@ -1161,7 +1161,7 @@ export default function EventManagement({
                                         type="number"
                                         value={feedingStrays}
                                         onChange={(e) => setFeedingStrays(e.target.value)}
-                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
                                     />
                                 </div>
                             </div>
@@ -1238,7 +1238,7 @@ export default function EventManagement({
                                     placeholder="Provide feedback for the proposing admin (e.g. date conflict, budget constraints)..."
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
-                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-transparent focus:border-rose-500 outline-none text-xs font-semibold dark:text-white leading-relaxed"
+                                    className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-rose-500 outline-none text-xs font-semibold dark:text-white leading-relaxed"
                                 />
                             </div>
 

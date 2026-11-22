@@ -73,37 +73,37 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
         switch (status) {
             case 'pending':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
                         <Clock size={12} /> Pending Review
                     </span>
                 );
             case 'assigned':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60">
                         <User size={12} /> Responder Assigned
                     </span>
                 );
             case 'resolved':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/60">
                         <CheckCircle2 size={12} /> Resolved
                     </span>
                 );
             case 'duplicate':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         <AlertCircle size={12} /> Duplicate Flagged
                     </span>
                 );
             case 'cancelled':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
                         <XCircle size={12} /> Cancelled
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         {status}
                     </span>
                 );
@@ -196,12 +196,12 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                                             <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                                 {getReportTitle(report)}
                                             </h3>
-                                            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
+                                            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                                 {(report.type === 'sos' ? 'SOS-' : 'RES-') + String(report.id).padStart(5, '0')}
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                                                 {report.type}
                                             </span>
                                             {getStatusBadge(report.status)}
@@ -224,7 +224,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                                     </div>
 
                                     {report.assigned_volunteer && (
-                                        <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50 text-xs font-bold text-blue-700 flex items-center gap-2">
+                                        <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50 text-xs font-bold text-blue-700 flex items-center gap-2 dark:bg-blue-950/30 dark:border-blue-900/40 dark:text-blue-300">
                                             <User size={14} />
                                             <span>Assigned volunteer: <strong className="underline">{report.assigned_volunteer.name}</strong> is handling this task.</span>
                                         </div>

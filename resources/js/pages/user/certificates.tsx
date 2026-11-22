@@ -310,7 +310,7 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md print:fixed print:inset-0 print:p-0 print:bg-white print:z-[9999]">
                     <div className="relative bg-white dark:bg-slate-900 w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none flex flex-col max-h-[96vh]">
                         {/* Header bar - hidden in print */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-slate-850/80 print:hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-slate-900/80 print:hidden">
                             <div className="flex items-center gap-2">
                                 <Award className="h-5 w-5 text-paw-orange" />
                                 <span className="font-fredoka text-base font-bold text-[#0B2340] dark:text-white">

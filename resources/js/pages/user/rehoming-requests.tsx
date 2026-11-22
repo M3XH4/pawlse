@@ -103,43 +103,43 @@ export default function UserRehomingRequests({
         switch (status) {
             case 'pending':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300">
                         <Clock size={12} /> Under Shelter Review
                     </span>
                 );
             case 'reviewed':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-800/60 dark:bg-blue-950/40 dark:text-blue-300">
                         <CheckCircle2 size={12} /> Reviewed by Coordinators
                     </span>
                 );
             case 'posted':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-300">
                         <Share2 size={12} /> Cross-Posted to Community
                     </span>
                 );
             case 'shelter_intake':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
                         <Home size={12} /> Admitted to Shelter Sanctuary
                     </span>
                 );
             case 'home_found':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
                         <Heart size={12} /> Permanent Home Found
                     </span>
                 );
             case 'declined':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">
                         <XCircle size={12} /> Declined
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         {status}
                     </span>
                 );
@@ -168,33 +168,33 @@ export default function UserRehomingRequests({
         >
             {/* Summary Metrics */}
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-[#1E293B] dark:bg-[#111827]">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                         Total Requests
                     </p>
-                    <p className="mt-1 text-2xl font-black text-slate-900">
+                    <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
                         {rehomingRequests.length}
                     </p>
                 </div>
-                <div className="rounded-2xl border border-amber-200/70 bg-amber-50/40 p-4 shadow-xs">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                <div className="rounded-2xl border border-amber-200/70 bg-amber-50/40 p-4 shadow-xs dark:border-amber-900/40 dark:bg-amber-950/25">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                         Under Evaluation
                     </p>
-                    <p className="mt-1 text-2xl font-black text-amber-900">{pendingCount}</p>
+                    <p className="mt-1 text-2xl font-black text-amber-900 dark:text-amber-200">{pendingCount}</p>
                 </div>
-                <div className="rounded-2xl border border-blue-200/70 bg-blue-50/40 p-4 shadow-xs">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                <div className="rounded-2xl border border-blue-200/70 bg-blue-50/40 p-4 shadow-xs dark:border-blue-900/40 dark:bg-blue-950/25">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
                         Reviewed / Posted
                     </p>
-                    <p className="mt-1 text-2xl font-black text-blue-900">
+                    <p className="mt-1 text-2xl font-black text-blue-900 dark:text-blue-200">
                         {activeScreeningCount}
                     </p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/40 p-4 shadow-xs">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/40 p-4 shadow-xs dark:border-emerald-900/40 dark:bg-emerald-950/25">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                         Safe Placement / Intake
                     </p>
-                    <p className="mt-1 text-2xl font-black text-emerald-900">{placedCount}</p>
+                    <p className="mt-1 text-2xl font-black text-emerald-900 dark:text-emerald-200">{placedCount}</p>
                 </div>
             </div>
 
@@ -236,8 +236,8 @@ export default function UserRehomingRequests({
                         onClick={() => setStatusFilter(tab.key)}
                         className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                             statusFilter === tab.key
-                                ? 'bg-slate-900 text-white shadow-xs'
-                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                ? 'bg-slate-900 text-white shadow-xs dark:bg-sky-600 dark:text-white'
+                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
                         }`}
                     >
                         {tab.label}
@@ -245,7 +245,7 @@ export default function UserRehomingRequests({
                             className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                                 statusFilter === tab.key
                                     ? 'bg-white/20 text-white'
-                                    : 'bg-slate-100 text-slate-600'
+                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                             }`}
                         >
                             {tab.count}
@@ -257,15 +257,15 @@ export default function UserRehomingRequests({
             {/* Requests List */}
             {filteredRequests.length === 0 ? (
                 <DashboardCard className="py-12 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-sky-600">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-sky-600 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-400">
                         <RefreshCw className="h-8 w-8" />
                     </div>
-                    <h3 className="mb-1 text-lg font-bold text-slate-800">
+                    <h3 className="mb-1 text-lg font-bold text-slate-800 dark:text-white">
                         {rehomingRequests.length === 0
                             ? 'No Rehoming Requests Submitted Yet'
                             : 'No Requests Matching This Filter'}
                     </h3>
-                    <p className="mx-auto mb-6 max-w-md text-sm text-slate-500">
+                    <p className="mx-auto mb-6 max-w-md text-sm text-slate-500 dark:text-slate-400">
                         {rehomingRequests.length === 0
                             ? 'Need help finding a safe, screened adoptive family for a pet in your care? Submit a rehoming assistance request and monitor its progress here.'
                             : 'Try switching to another status filter to view your other rehoming requests.'}
@@ -287,7 +287,7 @@ export default function UserRehomingRequests({
                             <DashboardCard key={req.id} className="p-5 sm:p-6">
                                 <div className="flex flex-col gap-5 sm:flex-row">
                                     {/* Pet Image */}
-                                    <div className="h-36 w-full shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 sm:h-36 sm:w-36">
+                                    <div className="h-36 w-full shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 sm:h-36 sm:w-36 dark:border-slate-800 dark:bg-slate-800">
                                         {req.photo_url ? (
                                             <ImageWithFallback
                                                 src={req.photo_url}
@@ -295,7 +295,7 @@ export default function UserRehomingRequests({
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-slate-300">
+                                            <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
                                                 <Heart size={28} />
                                             </div>
                                         )}
@@ -303,16 +303,16 @@ export default function UserRehomingRequests({
 
                                     {/* Content */}
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-start">
+                                        <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-start dark:border-slate-800">
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="text-lg font-extrabold text-slate-900">
+                                                    <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
                                                         {req.animal_name}
                                                     </h3>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCopyRef(req.id)}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 cursor-pointer"
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
                                                         title="Click to copy reference number"
                                                     >
                                                         {ref}
@@ -342,25 +342,25 @@ export default function UserRehomingRequests({
                                         </div>
 
                                         <div className="mt-3 grid grid-cols-1 gap-2.5 text-xs sm:grid-cols-2">
-                                            <div className="flex items-center gap-2 text-slate-600">
+                                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                                 <MapPin
                                                     size={14}
-                                                    className="shrink-0 text-sky-600"
+                                                    className="shrink-0 text-sky-600 dark:text-sky-400"
                                                 />
                                                 <span>
-                                                    <strong className="text-slate-700">
+                                                    <strong className="text-slate-700 dark:text-slate-200">
                                                         Location:
                                                     </strong>{' '}
                                                     {req.current_location}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-slate-600">
+                                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                                 <Clock
                                                     size={14}
-                                                    className="shrink-0 text-sky-600"
+                                                    className="shrink-0 text-sky-600 dark:text-sky-400"
                                                 />
                                                 <span>
-                                                    <strong className="text-slate-700">
+                                                    <strong className="text-slate-700 dark:text-slate-200">
                                                         Reason:
                                                     </strong>{' '}
                                                     {req.reason}
@@ -369,13 +369,13 @@ export default function UserRehomingRequests({
                                         </div>
 
                                         {req.health_notes && (
-                                            <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-600">
+                                            <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300">
                                                 <Stethoscope
                                                     size={14}
-                                                    className="mt-0.5 shrink-0 text-emerald-600"
+                                                    className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
                                                 />
                                                 <span>
-                                                    <strong className="text-slate-700">
+                                                    <strong className="text-slate-700 dark:text-slate-200">
                                                         Health / Vaccines:
                                                     </strong>{' '}
                                                     {req.health_notes}
@@ -384,23 +384,23 @@ export default function UserRehomingRequests({
                                         )}
 
                                         {req.admin_notes && (
-                                            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-950">
+                                            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-950 dark:border-sky-800/50 dark:bg-sky-950/30 dark:text-sky-200">
                                                 <MessageSquareText
                                                     size={15}
-                                                    className="mt-0.5 shrink-0 text-sky-600"
+                                                    className="mt-0.5 shrink-0 text-sky-600 dark:text-sky-400"
                                                 />
                                                 <div>
-                                                    <p className="font-bold text-sky-900">
+                                                    <p className="font-bold text-sky-900 dark:text-sky-200">
                                                         Shelter Coordinator Update
                                                     </p>
-                                                    <p className="mt-0.5 text-sky-800 leading-relaxed">
+                                                    <p className="mt-0.5 text-sky-800 dark:text-sky-300 leading-relaxed">
                                                         {req.admin_notes}
                                                     </p>
                                                 </div>
                                             </div>
                                         )}
 
-                                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
                                             <span className="text-[11px] font-medium text-slate-400">
                                                 Submitted on{' '}
                                                 {new Date(req.created_at).toLocaleDateString(
@@ -418,7 +418,7 @@ export default function UserRehomingRequests({
                                                     type="button"
                                                     disabled={withdrawingId === req.id}
                                                     onClick={() => handleWithdrawRequest(req)}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50 cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50 cursor-pointer dark:border-rose-800/60 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30"
                                                 >
                                                     <XCircle size={13} />
                                                     {withdrawingId === req.id

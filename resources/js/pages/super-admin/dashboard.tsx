@@ -132,7 +132,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                                 <Calendar className="w-5 h-5" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-sm text-slate-850 dark:text-white">
+                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                                     {stats.pending_events_count} Community {stats.pending_events_count === 1 ? 'Event Requires' : 'Events Require'} Super Admin Approval
                                 </h4>
                                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
@@ -161,7 +161,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                             </div>
                         </div>
                         <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-850 dark:text-white">
+                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
                                 {stats.total_users}
                             </h3>
                             <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
@@ -181,7 +181,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                             </div>
                         </div>
                         <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-850 dark:text-white">
+                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
                                 {stats.database_size}
                             </h3>
                             <div className="mt-2 text-xs text-gray-400 font-medium">
@@ -199,7 +199,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                             </div>
                         </div>
                         <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-850 dark:text-white">
+                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
                                 {stats.backups_count} Completed
                             </h3>
                             <div className="mt-2 text-xs text-gray-400 font-medium">
@@ -224,7 +224,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                         <div className="mt-4">
                             <h3 className={cn(
                                 'font-fredoka text-3xl font-bold',
-                                stats.recent_alarms > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-850 dark:text-white'
+                                stats.recent_alarms > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
                             )}>
                                 {stats.recent_alarms} Suspicious
                             </h3>
@@ -311,7 +311,7 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                                                 <div className="relative pb-8">
                                                     {idx !== recentActivities.length - 1 ? (
                                                         <span
-                                                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-100 dark:bg-slate-850"
+                                                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-100 dark:bg-slate-900"
                                                             aria-hidden="true"
                                                         />
                                                     ) : null}

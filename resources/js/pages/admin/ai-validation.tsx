@@ -245,7 +245,7 @@ export default function AiValidation({
   };
 
   const getConfidenceLevelBadge = (confidence: number | null | undefined) => {
-    if (confidence === null || confidence === undefined) return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-500">N/A</span>;
+    if (confidence === null || confidence === undefined) return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">N/A</span>;
     
     const pct = Math.round(confidence * 100);
     if (pct >= 80) {
@@ -302,7 +302,7 @@ export default function AiValidation({
       case 'sos':
         return <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse">SOS</span>;
       default:
-        return <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-gray-100 text-gray-800">{type}</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300">{type}</span>;
     }
   };
 

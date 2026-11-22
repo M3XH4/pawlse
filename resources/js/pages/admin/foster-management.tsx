@@ -512,36 +512,58 @@ export default function FosterManagement({
             {/* Overview Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <AdminCard className="p-4 border-l-4 border-l-paw-orange">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Active Placements</p>
-                    <p className="mt-2 text-3xl font-black text-[#0B2340] dark:text-white">{metrics.active_placements_count}</p>
-                    <p className="text-xs text-gray-500 mt-1">Shelter pets in foster care</p>
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Placements</p>
+                        <span className="p-1.5 rounded-xl border bg-orange-50 border-orange-200 text-paw-orange dark:bg-orange-950/40 dark:border-orange-900/40 dark:text-orange-400">
+                            <HeartHandshake size={16} />
+                        </span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black text-paw-orange">{metrics.active_placements_count}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Shelter pets in foster care</p>
                 </AdminCard>
 
-                <AdminCard className="p-4 border-l-4 border-l-green-500">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Awaiting Foster</p>
-                    <p className="mt-2 text-3xl font-black text-[#0B2340] dark:text-white">{metrics.available_pets_count}</p>
-                    <p className="text-xs text-gray-500 mt-1">Available shelter animals</p>
+                <AdminCard className="p-4 border-l-4 border-l-emerald-500">
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Awaiting Foster</p>
+                        <span className="p-1.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400">
+                            <Heart size={16} />
+                        </span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{metrics.available_pets_count}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Available shelter animals</p>
                 </AdminCard>
 
                 <AdminCard className="p-4 border-l-4 border-l-blue-500">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Approved Homes</p>
-                    <p className="mt-2 text-3xl font-black text-[#0B2340] dark:text-white">{metrics.approved_foster_parents_count}</p>
-                    <p className="text-xs text-gray-500 mt-1">Verified foster parents</p>
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Approved Homes</p>
+                        <span className="p-1.5 rounded-xl border bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-400">
+                            <Home size={16} />
+                        </span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black text-blue-600 dark:text-blue-400">{metrics.approved_foster_parents_count}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Verified foster parents</p>
                 </AdminCard>
 
                 <AdminCard className="p-4 border-l-4 border-l-purple-500">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">At Capacity</p>
-                    <p className="mt-2 text-3xl font-black text-[#0B2340] dark:text-white">{metrics.parents_at_capacity_count}</p>
-                    <p className="text-xs text-gray-500 mt-1">Homes with full slots</p>
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">At Capacity</p>
+                        <span className="p-1.5 rounded-xl border bg-purple-50 border-purple-200 text-purple-600 dark:bg-purple-950/40 dark:border-purple-900/40 dark:text-purple-400">
+                            <Users size={16} />
+                        </span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black text-purple-600 dark:text-purple-400">{metrics.parents_at_capacity_count}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Homes with full slots</p>
                 </AdminCard>
 
-                <AdminCard className={`p-4 border-l-4 ${metrics.needs_attention_count > 0 ? 'border-l-red-500 bg-red-50/20' : 'border-l-gray-300'}`}>
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                        <AlertTriangle size={14} className={metrics.needs_attention_count > 0 ? 'text-red-500' : 'text-gray-400'} />
-                        Needs Attention
-                    </p>
-                    <p className="mt-2 text-3xl font-black text-[#0B2340] dark:text-white">{metrics.needs_attention_count}</p>
-                    <p className="text-xs text-gray-500 mt-1">Reviews overdue / urgent alerts</p>
+                <AdminCard className={`p-4 border-l-4 ${metrics.needs_attention_count > 0 ? 'border-l-red-500 bg-red-50/20 dark:bg-red-950/20' : 'border-l-amber-500'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Needs Attention</p>
+                        <span className={`p-1.5 rounded-xl border ${metrics.needs_attention_count > 0 ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-950/40 dark:border-red-900/40 dark:text-red-400' : 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-950/40 dark:border-amber-900/40 dark:text-amber-400'}`}>
+                            <AlertTriangle size={16} />
+                        </span>
+                    </div>
+                    <p className={`mt-2 text-3xl font-black ${metrics.needs_attention_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>{metrics.needs_attention_count}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Reviews overdue / urgent alerts</p>
                 </AdminCard>
             </div>
 

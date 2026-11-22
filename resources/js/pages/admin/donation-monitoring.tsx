@@ -773,14 +773,14 @@ export default function DonationMonitoring({
                                                         </td>
 
                                                         <td className="px-6 py-4">
-                                                            <span className={`inline-block text-xs font-black px-2.5 py-1 rounded-full capitalize ${
+                                                            <span className={`inline-block whitespace-nowrap text-xs font-black px-2.5 py-1 rounded-full capitalize ${
                                                                 isCompleted
                                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                                                     : donation.status === 'rejected'
                                                                         ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                                                                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                                             }`}>
-                                                                {donation.status.replace('_', ' ')}
+                                                                {donation.status.replaceAll('_', ' ')}
                                                             </span>
                                                         </td>
 
@@ -885,14 +885,14 @@ export default function DonationMonitoring({
                                                         <div className="text-[11px] text-gray-400 font-medium">{donation.donor_email}</div>
                                                     </div>
 
-                                                    <span className={`inline-block shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full capitalize ${
+                                                    <span className={`inline-block shrink-0 whitespace-nowrap text-[10px] font-black px-2.5 py-1 rounded-full capitalize ${
                                                         isCompleted
                                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                                             : donation.status === 'rejected'
                                                                 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                                                                 : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                                     }`}>
-                                                        {donation.status.replace('_', ' ')}
+                                                        {donation.status.replaceAll('_', ' ')}
                                                     </span>
                                                 </div>
 

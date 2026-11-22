@@ -572,7 +572,7 @@ export default function ErrorPage({
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                 <Link
                                     href="/adopt"
-                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-amber-300 hover:bg-amber-50/50 dark:border-slate-800 dark:bg-slate-850/40 dark:hover:border-amber-800"
+                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-amber-300 hover:bg-amber-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-amber-800"
                                 >
                                     <Heart className="h-4 w-4 text-amber-500" />
                                     <span className="mt-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">Adopt Pets</span>
@@ -581,7 +581,7 @@ export default function ErrorPage({
 
                                 <Link
                                     href="/sos"
-                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-rose-300 hover:bg-rose-50/50 dark:border-slate-800 dark:bg-slate-850/40 dark:hover:border-rose-800"
+                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-rose-300 hover:bg-rose-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-rose-800"
                                 >
                                     <Siren className="h-4 w-4 text-rose-500" />
                                     <span className="mt-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">Report SOS</span>
@@ -590,7 +590,7 @@ export default function ErrorPage({
 
                                 <Link
                                     href="/missing"
-                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-amber-300 hover:bg-amber-50/50 dark:border-slate-800 dark:bg-slate-850/40 dark:hover:border-amber-800"
+                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-amber-300 hover:bg-amber-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-amber-800"
                                 >
                                     <Search className="h-4 w-4 text-amber-500" />
                                     <span className="mt-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">Lost & Found</span>
@@ -599,7 +599,7 @@ export default function ErrorPage({
 
                                 <Link
                                     href="/volunteer"
-                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-sky-300 hover:bg-sky-50/50 dark:border-slate-800 dark:bg-slate-850/40 dark:hover:border-sky-800"
+                                    className="flex flex-col items-center justify-center rounded-2xl border border-slate-150 bg-slate-50/60 p-3 text-center transition hover:border-sky-300 hover:bg-sky-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-sky-800"
                                 >
                                     <HelpCircle className="h-4 w-4 text-sky-500" />
                                     <span className="mt-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">Volunteer</span>

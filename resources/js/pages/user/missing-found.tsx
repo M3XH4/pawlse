@@ -130,37 +130,37 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
         switch (status) {
             case 'pending':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
                         <Clock size={12} /> Pending Review
                     </span>
                 );
             case 'assigned':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60">
                         <Search size={12} /> Searching Active
                     </span>
                 );
             case 'resolved':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/60">
                         <CheckCircle2 size={12} /> Found & Reunited
                     </span>
                 );
             case 'duplicate':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         <AlertCircle size={12} /> Duplicate Flagged
                     </span>
                 );
             case 'cancelled':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
                         <XCircle size={12} /> Cancelled
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         {status}
                     </span>
                 );
@@ -195,7 +195,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                     </button>
                     <Link
                         href="/missing"
-                        className="px-5 py-2.5 border border-gray-200 dark:border-gray-800 text-[#0B2340] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-805 font-black text-xs uppercase tracking-widest rounded-xl flex items-center gap-1.5 transition-all text-center"
+                        className="px-5 py-2.5 border border-gray-200 dark:border-gray-800 text-[#0B2340] dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800 font-black text-xs uppercase tracking-widest rounded-xl flex items-center gap-1.5 transition-all text-center"
                     >
                         File New Report <Plus size={14} />
                     </Link>
@@ -249,7 +249,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                                                 <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                                     Missing Pet Alert: {report.name || 'Unnamed Pet'} ({report.animal_type})
                                                 </h3>
-                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
+                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                                     {`MIS-${String(report.id).padStart(5, '0')}`}
                                                 </span>
                                             </div>

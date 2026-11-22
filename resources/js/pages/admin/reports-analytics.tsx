@@ -266,7 +266,7 @@ export default function ReportsAnalytics({
                                 </h3>
                                 <p className="text-[11px] text-gray-500">Comparative operational volume trends</p>
                             </div>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-850 dark:text-slate-350">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-900 dark:text-slate-350">
                                 Interactive Trend
                             </span>
                         </div>
@@ -313,7 +313,7 @@ export default function ReportsAnalytics({
                                 </h3>
                                 <p className="text-[11px] text-gray-500">Cash donation levels received</p>
                             </div>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-850 dark:text-slate-350">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-900 dark:text-slate-350">
                                 Interactive Bar
                             </span>
                         </div>
@@ -380,7 +380,7 @@ export default function ReportsAnalytics({
                             </div>
                         </div>
 
-                        <div className="mt-6 border-t border-gray-50 dark:border-slate-850 pt-4 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-6 border-t border-gray-50 dark:border-slate-900 pt-4 text-xs text-gray-500 dark:text-gray-400">
                             {currentDonationProgress >= 100 
                                 ? '🎉 Target reached! Platform operations funded for the month.'
                                 : `₱${Math.max(0, donationGoal - currentMonthDonation).toLocaleString()} remaining to fund platform operations.`}
@@ -429,7 +429,7 @@ export default function ReportsAnalytics({
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-gray-50 dark:border-slate-850 pt-4 text-[10px] text-gray-400">
+                        <div className="border-t border-gray-50 dark:border-slate-900 pt-4 text-[10px] text-gray-400">
                             Based on categorized active and resolved reports.
                         </div>
                     </div>
@@ -476,7 +476,7 @@ export default function ReportsAnalytics({
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-gray-50 dark:border-slate-850 pt-4 text-[10px] text-gray-400">
+                        <div className="border-t border-gray-50 dark:border-slate-900 pt-4 text-[10px] text-gray-400">
                             Based on verified cash contributions and item dropoffs.
                         </div>
                     </div>
@@ -556,19 +556,19 @@ export default function ReportsAnalytics({
                                     Donations &amp; Support Summary
                                 </h4>
                                 <div className="grid gap-4 sm:grid-cols-3 text-sm">
-                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-850">
+                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-900">
                                         <div className="text-xs text-gray-400 dark:text-gray-550 font-bold uppercase tracking-wider">Total Cash Raised</div>
                                         <div className="font-fredoka text-xl font-bold text-paw-navy dark:text-white mt-1">
                                             ₱{summary.donations.total_cash.toLocaleString()}
                                         </div>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-850">
+                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-900">
                                         <div className="text-xs text-gray-400 dark:text-gray-550 font-bold uppercase tracking-wider">In-Kind Donations</div>
                                         <div className="font-fredoka text-xl font-bold text-paw-navy dark:text-white mt-1">
                                             {summary.donations.total_inkind_count} Items
                                         </div>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-850">
+                                    <div className="rounded-xl bg-gray-50/50 p-4 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-900">
                                         <div className="text-xs text-gray-400 dark:text-gray-550 font-bold uppercase tracking-wider">Active Force</div>
                                         <div className="font-fredoka text-xl font-bold text-paw-navy dark:text-white mt-1">
                                             {summary.volunteers.total} Responders
@@ -597,7 +597,7 @@ export default function ReportsAnalytics({
                                 {/* Summary Export */}
                                 <a
                                     href={reportsAnalytics.export.url({ query: { type: 'summary' } })}
-                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-850 dark:hover:bg-slate-800/40 transition-colors"
+                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-900 dark:hover:bg-slate-800/40 transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FileText className="h-4.5 w-4.5 text-blue-500" />
@@ -609,7 +609,7 @@ export default function ReportsAnalytics({
                                 {/* Rescues Export */}
                                 <a
                                     href={reportsAnalytics.export.url({ query: { type: 'rescues' } })}
-                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-850 dark:hover:bg-slate-800/40 transition-colors"
+                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-900 dark:hover:bg-slate-800/40 transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FileText className="h-4.5 w-4.5 text-emerald-500" />
@@ -621,7 +621,7 @@ export default function ReportsAnalytics({
                                 {/* Adoptions Export */}
                                 <a
                                     href={reportsAnalytics.export.url({ query: { type: 'adoptions' } })}
-                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-850 dark:hover:bg-slate-800/40 transition-colors"
+                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-900 dark:hover:bg-slate-800/40 transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <Heart className="h-4.5 w-4.5 text-rose-500" />
@@ -633,7 +633,7 @@ export default function ReportsAnalytics({
                                 {/* Donations Export */}
                                 <a
                                     href={reportsAnalytics.export.url({ query: { type: 'donations' } })}
-                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-850 dark:hover:bg-slate-800/40 transition-colors"
+                                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 dark:border-slate-900 dark:hover:bg-slate-800/40 transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <Gift className="h-4.5 w-4.5 text-amber-500" />

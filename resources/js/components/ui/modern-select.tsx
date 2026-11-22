@@ -108,7 +108,7 @@ export function ModernSelect({
                         ? 'border-red-400 bg-red-50/40 dark:bg-red-950/20 text-red-700 dark:text-red-300'
                         : isOpen
                           ? 'border-paw-orange bg-white dark:bg-slate-800 ring-2 ring-paw-orange/20 text-[#0B2340] dark:text-white'
-                          : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-850 hover:border-paw-orange/60 text-[#0B2340] dark:text-white'
+                          : 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 hover:border-paw-orange/60 text-[#0B2340] dark:text-white'
                 } ${triggerClassName}`}
             >
                 <span className={`truncate ${selectedOption ? '' : 'text-gray-400 dark:text-gray-500 font-medium'}`}>

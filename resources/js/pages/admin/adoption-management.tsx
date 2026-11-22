@@ -434,12 +434,12 @@ export default function AdoptionManagement({
                           </td>
                           <td className="py-4 px-4">
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
-                              app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
-                              app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
-                              app.status === 'needs_info' ? 'bg-amber-100 text-amber-700' :
-                              app.status === 'cancelled' ? 'bg-slate-200 text-slate-600' :
-                              'bg-paw-yellow/10 text-paw-navy'
+                              app.status === 'approved' ? 'bg-paw-green/10 text-paw-green dark:bg-emerald-950/50 dark:text-emerald-300' :
+                              app.status === 'rejected' ? 'bg-red-500/10 text-red-500 dark:bg-red-950/50 dark:text-red-300' :
+                              app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue dark:bg-sky-950/50 dark:text-sky-300' :
+                              app.status === 'needs_info' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' :
+                              app.status === 'cancelled' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+                              'bg-paw-yellow/15 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
                             }`}>
                               {app.status === 'needs_info' ? 'Info Requested' : app.status}
                             </span>
@@ -471,12 +471,12 @@ export default function AdoptionManagement({
                           <p className="text-xs text-gray-400 font-bold">{app.email} • {app.phone}</p>
                         </div>
                         <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          app.status === 'approved' ? 'bg-paw-green/10 text-paw-green' :
-                          app.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
-                          app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue' :
-                          app.status === 'needs_info' ? 'bg-amber-100 text-amber-700' :
-                          app.status === 'cancelled' ? 'bg-slate-200 text-slate-600' :
-                          'bg-paw-yellow/10 text-paw-navy'
+                          app.status === 'approved' ? 'bg-paw-green/10 text-paw-green dark:bg-emerald-950/50 dark:text-emerald-300' :
+                          app.status === 'rejected' ? 'bg-red-500/10 text-red-500 dark:bg-red-950/50 dark:text-red-300' :
+                          app.status === 'scheduled' ? 'bg-paw-blue/10 text-paw-blue dark:bg-sky-950/50 dark:text-sky-300' :
+                          app.status === 'needs_info' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' :
+                          app.status === 'cancelled' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+                          'bg-paw-yellow/15 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
                         }`}>
                           {app.status === 'needs_info' ? 'Info Requested' : app.status}
                         </span>

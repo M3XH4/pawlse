@@ -9,7 +9,7 @@ import {
     Calendar, Clock, Check, ExternalLink, Image as ImageIcon,
     FileText, HelpCircle, Megaphone, PawPrint, HeartHandshake,
     GraduationCap, Scale, Layers, Tag, Star, MessageSquareQuote,
-    XCircle
+    XCircle, CheckCircle2
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
@@ -644,17 +644,17 @@ export default function BlogManagement({
                                                         <>
                                                             <button
                                                                 onClick={() => openApproveModal(post)}
-                                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer shadow-xs"
+                                                                className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
                                                                 title="Approve & Publish Story"
                                                             >
-                                                                <Check size={12} /> Approve
+                                                                <CheckCircle2 size={15} />
                                                             </button>
                                                             <button
                                                                 onClick={() => openRejectModal(post)}
-                                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[11px] transition cursor-pointer"
+                                                                className="p-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-500 dark:bg-red-950/30 dark:hover:bg-red-600 dark:hover:text-white dark:text-red-400 rounded-xl transition-colors cursor-pointer"
                                                                 title="Reject Story"
                                                             >
-                                                                <X size={12} /> Reject
+                                                                <XCircle size={15} />
                                                             </button>
                                                         </>
                                                     )}

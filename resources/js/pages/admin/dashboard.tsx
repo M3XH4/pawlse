@@ -277,7 +277,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                     <Link
                                         key={i}
                                         href={action.href}
-                                        className="group flex items-center justify-between rounded-2xl border border-gray-150 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-50/50 dark:border-slate-850 dark:hover:border-slate-750 dark:hover:bg-slate-800/40"
+                                        className="group flex items-center justify-between rounded-2xl border border-gray-150 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-50/50 dark:border-slate-900 dark:hover:border-slate-750 dark:hover:bg-slate-800/40"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={cn('rounded-xl p-3', action.color)}>
@@ -408,7 +408,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                                     {stats.rescues.total - stats.rescues.pending} / {stats.rescues.total}
                                                 </span>
                                             </div>
-                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-900">
                                                 <div
                                                     className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
                                                     style={{
@@ -425,7 +425,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                                     {stats.adoptions.total - stats.adoptions.pending} / {stats.adoptions.total}
                                                 </span>
                                             </div>
-                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-900">
                                                 <div
                                                     className="h-2 rounded-full bg-gradient-to-r from-rose-400 to-rose-600"
                                                     style={{
@@ -442,7 +442,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                                     {stats.volunteers.active} / {stats.volunteers.active + stats.volunteers.pending}
                                                 </span>
                                             </div>
-                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-900">
                                                 <div
                                                     className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
                                                     style={{

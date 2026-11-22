@@ -103,7 +103,7 @@ export default function Maintenance({
                         </div>
 
                         {/* Emergency / Contact Information */}
-                        <div className="mt-8 rounded-2xl border border-slate-150 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-850/60">
+                        <div className="mt-8 rounded-2xl border border-slate-150 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
                             <div className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 <HeartHandshake className="h-4 w-4 text-amber-500" />
                                 <span>Urgent Animal Care & Inquiries</span>

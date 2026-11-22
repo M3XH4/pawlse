@@ -359,7 +359,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                         <th className="px-4 py-3 text-right">Calibrate Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-850 dark:border-slate-850">
+                                <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-900 dark:border-slate-900">
                                     {logs.data.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} className="px-4 py-8 text-center text-xs text-gray-400">
@@ -368,7 +368,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                         </tr>
                                     ) : (
                                         logs.data.map((log) => (
-                                            <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-850/20">
+                                            <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-900/20">
                                                 <td className="px-4 py-3 font-semibold text-xs text-indigo-600 dark:text-indigo-400 uppercase">
                                                     {log.feature.replace('_', ' ')}
                                                 </td>
@@ -443,7 +443,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                             className={`relative inline-flex items-center px-3 py-1.5 text-xs font-semibold ${
                                                 link.active
                                                     ? 'z-10 bg-indigo-600 text-white'
-                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-850'
+                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-900'
                                             } ${idx === 0 ? 'rounded-l-md' : ''} ${
                                                 idx === logs.links.length - 1 ? 'rounded-r-md' : ''
                                             }`}
@@ -488,7 +488,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                     <Skeleton className="h-3.5 w-28" />
                                     <Skeleton className="ml-auto h-3 w-12" />
                                 </div>
-                                <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 dark:border-slate-800 dark:bg-slate-850/40">
+                                <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
                                     <Skeleton className="h-3 w-full" />
                                     <Skeleton className="h-3 w-3/4" />
                                     <Skeleton className="h-3 w-1/2" />
@@ -511,7 +511,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                     )}
                                 </div>
 
-                                <div className="rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-850/40 p-3 space-y-1.5 text-xs">
+                                <div className="rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/40 p-3 space-y-1.5 text-xs">
                                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                         <span>Endpoint:</span>
                                         <span className="font-mono text-gray-800 dark:text-gray-200 truncate max-w-[170px]" title={health.url}>

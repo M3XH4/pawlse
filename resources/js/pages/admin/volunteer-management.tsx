@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { toast } from 'sonner';
-import { User, ClipboardList, CheckCircle2, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
+import { User, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 
@@ -397,7 +397,7 @@ export default function VolunteerManagement({
                                 placeholder="Search applications, volunteers or tasks..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-850 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
+                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
                             />
                         </div>
                         <div className="flex items-center gap-3">
@@ -430,7 +430,7 @@ export default function VolunteerManagement({
                     <button
                         onClick={() => setActiveTab('applications')}
                         className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'applications' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            activeTab === 'applications' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Applications ({applications.total})
@@ -438,7 +438,7 @@ export default function VolunteerManagement({
                     <button
                         onClick={() => setActiveTab('volunteers')}
                         className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'volunteers' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            activeTab === 'volunteers' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Active Volunteers ({volunteers.total})
@@ -446,7 +446,7 @@ export default function VolunteerManagement({
                     <button
                         onClick={() => setActiveTab('tasks')}
                         className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'tasks' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            activeTab === 'tasks' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Assigned Tasks ({tasks.total})
@@ -454,7 +454,7 @@ export default function VolunteerManagement({
                     <button
                         onClick={() => setActiveTab('food_pickups')}
                         className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'food_pickups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy'
+                            activeTab === 'food_pickups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Daily Food Pickups ({foodPickups.total})
@@ -523,29 +523,32 @@ export default function VolunteerManagement({
                                                 </td>
                                                 <td className="py-4 px-4 max-w-xs truncate" title={app.why}>{app.why}</td>
                                                 <td className="py-4 px-4 whitespace-nowrap">
-                                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                                                        app.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                        app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                                                    <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                                                        app.status === 'approved'
+                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                                            : app.status === 'rejected'
+                                                                ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                                                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
                                                     }`}>
                                                         {app.status}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     {app.status === 'pending' && (
-                                                        <div className="flex justify-end gap-2">
+                                                        <div className="flex justify-end gap-1.5">
                                                             <button
                                                                 onClick={() => handleApprove(app.id)}
-                                                                className="p-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg cursor-pointer"
+                                                                className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
                                                                 title="Approve"
                                                             >
-                                                                <Check size={16} />
+                                                                <CheckCircle2 size={15} />
                                                             </button>
                                                             <button
                                                                 onClick={() => setRejectingApp(app)}
-                                                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg cursor-pointer"
+                                                                className="p-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-500 dark:bg-red-950/30 dark:hover:bg-red-600 dark:hover:text-white dark:text-red-400 rounded-xl transition-colors cursor-pointer"
                                                                 title="Reject"
                                                             >
-                                                                <X size={16} />
+                                                                <XCircle size={15} />
                                                             </button>
                                                         </div>
                                                     )}
@@ -681,30 +684,35 @@ export default function VolunteerManagement({
                                                 <td className="py-4 px-4">{task.role}</td>
                                                 <td className="py-4 px-4 font-bold whitespace-nowrap">{parseFloat(task.hours_logged)} hrs</td>
                                                 <td className="py-4 px-4 whitespace-nowrap">
-                                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                                                        task.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                        task.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                                                    <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                                                        task.status === 'completed'
+                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                                            : task.status === 'cancelled'
+                                                                ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                                                                : 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
                                                     }`}>
                                                         {task.status}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     {task.status === 'pending' && (
-                                                        <div className="flex justify-end gap-2">
+                                                        <div className="flex justify-end gap-1.5">
                                                             <button
                                                                 onClick={() => {
                                                                     setCompletingTask(task);
                                                                     setHoursLogged('2.0');
                                                                 }}
-                                                                className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 text-xs font-black uppercase tracking-widest rounded-lg cursor-pointer"
+                                                                className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
+                                                                title="Verify & Complete"
                                                             >
-                                                                Verify & Complete
+                                                                <CheckCircle2 size={15} />
                                                             </button>
                                                             <button
                                                                 onClick={() => handleCancelTask(task.id)}
-                                                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg cursor-pointer"
+                                                                className="p-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-500 dark:bg-red-950/30 dark:hover:bg-red-600 dark:hover:text-white dark:text-red-400 rounded-xl transition-colors cursor-pointer"
+                                                                title="Cancel Assignment"
                                                             >
-                                                                <X size={14} />
+                                                                <XCircle size={15} />
                                                             </button>
                                                         </div>
                                                     )}
@@ -806,14 +814,14 @@ export default function VolunteerManagement({
                                                         Select Volunteer
                                                     </button>
                                                 ) : (
-                                                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full shrink-0 ${
+                                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 ${
                                                         todayItem.status === 'completed'
-                                                            ? 'bg-emerald-100 text-emerald-700'
+                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
                                                             : todayItem.status === 'fetched'
-                                                                ? 'bg-amber-100 text-amber-800'
+                                                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
                                                                 : todayItem.status === 'missed'
-                                                                    ? 'bg-red-100 text-red-700'
-                                                                    : 'bg-blue-100 text-blue-700'
+                                                                    ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
                                                     }`}>
                                                         {todayItem.status === 'fetched' ? 'Fetched (Verify)' : todayItem.status}
                                                     </span>
@@ -868,16 +876,16 @@ export default function VolunteerManagement({
                                                             )}
                                                         </td>
                                                         <td className="py-4 px-4 whitespace-nowrap">
-                                                            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                                                            <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
                                                                 pickup.status === 'completed'
-                                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
                                                                     : pickup.status === 'fetched'
-                                                                        ? 'bg-amber-100 text-amber-800'
+                                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
                                                                         : pickup.status === 'missed'
-                                                                            ? 'bg-red-100 text-red-700'
+                                                                            ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
                                                                             : pickup.status === 'assigned'
-                                                                                ? 'bg-blue-100 text-blue-700'
-                                                                                : 'bg-gray-100 text-gray-600'
+                                                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
+                                                                                : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300'
                                                             }`}>
                                                                 {pickup.status === 'fetched' ? 'Fetched (Verify)' : pickup.status}
                                                             </span>
@@ -905,7 +913,7 @@ export default function VolunteerManagement({
                                                                                     pickup.assigned_volunteer_id?.toString() || volunteerList[0]?.id?.toString() || ''
                                                                                 );
                                                                             }}
-                                                                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 dark:bg-blue-950/30 dark:hover:bg-blue-600 dark:hover:text-white dark:text-blue-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1"
                                                                         >
                                                                             <UserPlus size={12} />
                                                                             {pickup.assigned_volunteer_id ? 'Reassign' : 'Select Volunteer'}
@@ -919,7 +927,7 @@ export default function VolunteerManagement({
                                                                             setPickupHoursLogged('1.0');
                                                                             setPickupAdminNotes('');
                                                                         }}
-                                                                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-600 dark:hover:text-white dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1"
                                                                     >
                                                                         <PackageCheck size={12} />
                                                                         Completed
@@ -931,7 +939,7 @@ export default function VolunteerManagement({
                                                                             setPickupTargetStatus('missed');
                                                                             setPickupAdminNotes('');
                                                                         }}
-                                                                        className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                                                        className="px-2.5 py-1.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-700 dark:bg-red-950/30 dark:hover:bg-red-600 dark:hover:text-white dark:text-red-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1"
                                                                     >
                                                                         <AlertTriangle size={12} />
                                                                         Missed
@@ -969,7 +977,7 @@ export default function VolunteerManagement({
                                     placeholder="Explain to the volunteer why their application is declined..."
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
-                                    className="w-full p-4 bg-gray-50 dark:bg-slate-850 rounded-xl outline-none focus:border-red-500 border border-transparent font-semibold text-sm dark:text-white"
+                                    className="w-full p-4 bg-gray-50 dark:bg-slate-900 rounded-xl outline-none focus:border-red-500 border border-transparent font-semibold text-sm dark:text-white"
                                 />
                             </div>
                             <div className="flex justify-end gap-2">
@@ -1068,7 +1076,7 @@ export default function VolunteerManagement({
                                     type="text"
                                     value={assignRole}
                                     onChange={(e) => setAssignRole(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
                                 />
                             </div>
 
@@ -1106,7 +1114,7 @@ export default function VolunteerManagement({
                                     step="0.5"
                                     value={hoursLogged}
                                     onChange={(e) => setHoursLogged(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
                                 />
                             </div>
                             <div className="flex justify-end gap-2">
@@ -1167,7 +1175,7 @@ export default function VolunteerManagement({
                                     type="text"
                                     value={certTitle}
                                     onChange={(e) => setCertTitle(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
                                 />
                             </div>
 
@@ -1178,7 +1186,7 @@ export default function VolunteerManagement({
                                     placeholder="Add custom text or leave empty for default recognition statement..."
                                     value={certDesc}
                                     onChange={(e) => setCertDesc(e.target.value)}
-                                    className="w-full p-4 bg-gray-50 dark:bg-slate-850 rounded-xl outline-none focus:border-paw-orange border border-transparent font-semibold text-sm dark:text-white"
+                                    className="w-full p-4 bg-gray-50 dark:bg-slate-900 rounded-xl outline-none focus:border-paw-orange border border-transparent font-semibold text-sm dark:text-white"
                                 />
                             </div>
 
@@ -1251,7 +1259,7 @@ export default function VolunteerManagement({
                                     value={pickupSummary}
                                     onChange={(e) => setPickupSummary(e.target.value)}
                                     placeholder="e.g., Daily prepared shelter food (use same day)"
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
@@ -1343,7 +1351,7 @@ export default function VolunteerManagement({
                                         max="24"
                                         value={pickupHoursLogged}
                                         onChange={(e) => setPickupHoursLogged(e.target.value)}
-                                        className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
                                     />
                                 </div>
                             )}
@@ -1356,7 +1364,7 @@ export default function VolunteerManagement({
                                     placeholder={pickupTargetStatus === 'completed' ? 'Food delivered to shelter kitchen...' : 'Store closed early / no volunteer available...'}
                                     value={pickupAdminNotes}
                                     onChange={(e) => setPickupAdminNotes(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-850 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border dark:border-gray-800 text-sm font-semibold dark:text-white outline-none"
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-2">

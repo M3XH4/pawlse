@@ -1133,7 +1133,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             </form>
 
                             {/* Sticky Footer */}
-                            <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/95 dark:bg-slate-850/95 backdrop-blur-xs shrink-0 flex items-center justify-end gap-3">
+                            <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 flex items-center justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={closeModals}

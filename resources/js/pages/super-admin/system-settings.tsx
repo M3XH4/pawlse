@@ -159,7 +159,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                     </div>
 
                     {/* Operational explanation box */}
-                    <div className="mt-4 rounded-xl border border-slate-150 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-850/40">
+                    <div className="mt-4 rounded-xl border border-slate-150 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
                         <div className="flex items-start gap-3">
                             <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
                             <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
@@ -195,7 +195,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                     value={data.app_name}
                                     onChange={(e) => setData('app_name', e.target.value)}
                                 />
@@ -210,7 +210,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     <input
                                         type="email"
                                         required
-                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                         value={data.contact_email}
                                         onChange={(e) => setData('contact_email', e.target.value)}
                                     />
@@ -224,7 +224,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     <input
                                         type="text"
                                         required
-                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                         value={data.contact_phone}
                                         onChange={(e) => setData('contact_phone', e.target.value)}
                                     />
@@ -360,7 +360,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                 </label>
                                 <textarea
                                     rows={3}
-                                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                     placeholder="Enter message displayed to public visitors during maintenance..."
                                     value={data.maintenance_message}
                                     onChange={(e) => setData('maintenance_message', e.target.value)}
@@ -418,7 +418,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                             </label>
                             <textarea
                                 rows={3}
-                                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                 value={modalMessage}
                                 onChange={(e) => setModalMessage(e.target.value)}
                                 placeholder="Explain why the platform is down..."

@@ -125,7 +125,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                 )}
                             </button>
                         </div>
-                        <hr className="my-4 border-gray-100 dark:border-slate-850" />
+                        <hr className="my-4 border-gray-100 dark:border-slate-900" />
 
                         {/* Backups Table */}
                         <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-slate-800">
@@ -139,7 +139,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                         <th className="px-4 py-3 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-850 dark:border-slate-850">
+                                <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-900 dark:border-slate-900">
                                     {backups.data.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-4 py-8 text-center text-xs text-gray-400">
@@ -148,7 +148,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                         </tr>
                                     ) : (
                                         backups.data.map((backup) => (
-                                            <tr key={backup.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-850/20">
+                                            <tr key={backup.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-900/20">
                                                 <td className="px-4 py-3 font-medium text-xs text-slate-800 dark:text-white truncate max-w-xs" title={backup.filename}>
                                                     {backup.filename}
                                                 </td>
@@ -214,7 +214,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                             className={`relative inline-flex items-center px-3 py-1.5 text-xs font-semibold ${
                                                 link.active
                                                     ? 'z-10 bg-indigo-600 text-white'
-                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-850'
+                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-900'
                                             } ${idx === 0 ? 'rounded-l-md' : ''} ${
                                                 idx === backups.links.length - 1 ? 'rounded-r-md' : ''
                                             }`}
@@ -272,7 +272,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                                             required
                                             min="1"
                                             max="365"
-                                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                             value={data.retention_days}
                                             onChange={(e: any) => setData('retention_days', parseInt(e.target.value))}
                                         />

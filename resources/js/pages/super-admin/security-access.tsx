@@ -132,7 +132,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                                 <input
                                     type="text"
                                     placeholder="Search by email or IP address..."
-                                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-850 dark:bg-slate-850 dark:text-white"
+                                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -186,7 +186,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                                     <th className="px-6 py-4">Time</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-850 dark:border-slate-850">
+                            <tbody className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-slate-900 dark:border-slate-900">
                                 {logs.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-400">
@@ -242,7 +242,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
 
                     {/* Pagination */}
                     {logs.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 dark:border-slate-850 dark:bg-slate-900">
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 dark:border-slate-900 dark:bg-slate-900">
                             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                 <div>
                                     <p className="text-xs text-gray-500">

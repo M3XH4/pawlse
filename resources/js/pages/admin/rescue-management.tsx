@@ -213,17 +213,17 @@ export default function RescueManagement({
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300';
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300';
       case 'assigned':
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300';
       case 'resolved':
-        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300';
+        return 'bg-green-100 text-green-800 dark:bg-emerald-950/50 dark:text-emerald-300';
       case 'duplicate':
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300';
+        return 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300';
+        return 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300';
     }
   };
 
@@ -231,25 +231,25 @@ export default function RescueManagement({
     switch (type) {
       case 'rescue':
         return (
-          <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-amber-200">
+          <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
             <Sparkles size={10} /> STRAY RESCUE
           </span>
         );
       case 'missing':
         return (
-          <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-sky-200">
+          <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
             <Calendar size={10} /> MISSING PET
           </span>
         );
       case 'sos':
         return (
-          <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-red-200">
+          <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
             <Siren size={10} className="animate-pulse" /> SOS ALERT
           </span>
         );
       default:
         return (
-          <span className="bg-gray-100 text-gray-800 text-[10px] uppercase font-black px-2 py-0.5 rounded">
+          <span className="bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
             {type}
           </span>
         );
@@ -266,18 +266,51 @@ export default function RescueManagement({
       {/* Aggregate Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {[
-          { label: 'Total Reports', val: stats.total, icon: <Info size={20} />, bg: 'bg-[#0B2340] text-white' },
-          { label: 'Pending Review', val: stats.pending, icon: <Clock size={20} />, bg: 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' },
-          { label: 'Assigned Responder', val: stats.assigned, icon: <User size={20} />, bg: 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' },
-          { label: 'Resolved / Safe', val: stats.resolved, icon: <CheckCircle2 size={20} />, bg: 'bg-green-500 text-white shadow-lg shadow-green-500/20' },
-          { label: 'Duplicates Flagged', val: stats.duplicate, icon: <ShieldAlert size={20} />, bg: 'bg-gray-500 text-white shadow-lg shadow-gray-500/20' },
+          {
+            label: 'Total Reports',
+            val: stats.total,
+            icon: <Info size={18} className="text-[#0B2340] dark:text-slate-300" />,
+            iconBg: 'bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700',
+            valColor: 'text-[#0B2340] dark:text-white',
+          },
+          {
+            label: 'Pending Review',
+            val: stats.pending,
+            icon: <Clock size={18} className="text-amber-600 dark:text-amber-400" />,
+            iconBg: 'bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/40',
+            valColor: 'text-amber-600 dark:text-amber-400',
+          },
+          {
+            label: 'Assigned Responder',
+            val: stats.assigned,
+            icon: <User size={18} className="text-blue-600 dark:text-blue-400" />,
+            iconBg: 'bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/40',
+            valColor: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            label: 'Resolved / Safe',
+            val: stats.resolved,
+            icon: <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />,
+            iconBg: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/40',
+            valColor: 'text-emerald-600 dark:text-emerald-400',
+          },
+          {
+            label: 'Duplicates Flagged',
+            val: stats.duplicate,
+            icon: <ShieldAlert size={18} className="text-slate-500 dark:text-slate-400" />,
+            iconBg: 'bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700',
+            valColor: 'text-slate-700 dark:text-slate-300',
+          },
         ].map((c, idx) => (
-          <div key={idx} className={`${c.bg} rounded-[24px] p-5 flex flex-col justify-between h-28`}>
-            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black uppercase tracking-wider opacity-90">{c.label}</span>
-              <span className="opacity-85">{c.icon}</span>
+          <div
+            key={idx}
+            className="bg-white dark:bg-[#111827] border border-gray-200/80 dark:border-[#1E293B] rounded-2xl p-5 shadow-xs flex flex-col justify-between h-28"
+          >
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{c.label}</span>
+              <span className={`p-1.5 rounded-xl border shrink-0 ${c.iconBg}`}>{c.icon}</span>
             </div>
-            <span className="text-3xl font-fredoka font-bold leading-none">{c.val}</span>
+            <span className={`text-3xl font-fredoka font-bold leading-none ${c.valColor}`}>{c.val}</span>
           </div>
         ))}
       </div>
@@ -412,7 +445,7 @@ export default function RescueManagement({
                       {new Date(report.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${getStatusStyle(report.status)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusStyle(report.status)}`}>
                         {report.status}
                       </span>
                     </td>
@@ -467,7 +500,7 @@ export default function RescueManagement({
                     {getTypeBadge(report.type)}
                   </div>
 
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${getStatusStyle(report.status)}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusStyle(report.status)}`}>
                     {report.status}
                   </span>
                 </div>
@@ -563,7 +596,7 @@ export default function RescueManagement({
               <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/50 flex items-start justify-between gap-4 shrink-0">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border tracking-wider ${getStatusStyle(selectedReport.status)}`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusStyle(selectedReport.status)}`}>
                       {selectedReport.status}
                     </span>
                     {getTypeBadge(selectedReport.type)}

@@ -508,7 +508,7 @@ export default function UserManagement({
                                         <input
                                             type="text"
                                             placeholder="Search users by name or email address..."
-                                            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
@@ -855,7 +855,7 @@ export default function UserManagement({
                                             className={`cursor-pointer rounded-2xl p-5 border transition-all ${
                                                 isSelected
                                                     ? 'border-indigo-600 bg-indigo-50/50 shadow-md ring-2 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/20'
-                                                    : 'border-gray-200 bg-gray-50/40 hover:border-gray-300 dark:border-slate-800 dark:bg-slate-850/40'
+                                                    : 'border-gray-200 bg-gray-50/40 hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/40'
                                             }`}
                                         >
                                             <div className="flex items-center justify-between mb-3">
@@ -961,7 +961,7 @@ export default function UserManagement({
                                     const someChecked = catPermNames.some(p => matrixPermissions.includes(p)) && !allChecked;
 
                                     return (
-                                        <div key={category.category} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 dark:border-slate-800 dark:bg-slate-850/40">
+                                        <div key={category.category} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/40">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-2">
                                                     <Layers className="h-4 w-4 text-indigo-500" />
@@ -1084,7 +1084,7 @@ export default function UserManagement({
                                                     type="text"
                                                     required
                                                     placeholder="e.g. Johnathan Doe"
-                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                                     value={data.name}
                                                     onChange={(e) => setData('name', e.target.value)}
                                                 />
@@ -1099,7 +1099,7 @@ export default function UserManagement({
                                                     type="email"
                                                     required
                                                     placeholder="e.g. user@pawlse.test"
-                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                                     value={data.email}
                                                     onChange={(e) => setData('email', e.target.value)}
                                                 />
@@ -1114,7 +1114,7 @@ export default function UserManagement({
                                                     type="password"
                                                     required={!editingUser}
                                                     placeholder={editingUser ? '••••••••' : 'Enter strong password'}
-                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                                     value={data.password}
                                                     onChange={(e) => setData('password', e.target.value)}
                                                 />
@@ -1122,7 +1122,7 @@ export default function UserManagement({
                                             </div>
 
                                             <div className="sm:col-span-2">
-                                                <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-850/30 cursor-pointer">
+                                                <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/30 cursor-pointer">
                                                     <input
                                                         type="checkbox"
                                                         id="drawer_verified"
@@ -1209,7 +1209,7 @@ export default function UserManagement({
                                             <input
                                                 type="text"
                                                 placeholder="Filter permissions..."
-                                                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                                 value={drawerPermissionSearch}
                                                 onChange={(e) => setDrawerPermissionSearch(e.target.value)}
                                             />
@@ -1230,7 +1230,7 @@ export default function UserManagement({
                                                 const allDirect = catPermNames.every(p => data.permissions?.includes(p));
 
                                                 return (
-                                                    <div key={cat.category} className="rounded-xl border border-gray-100 bg-gray-50/40 dark:border-slate-800 dark:bg-slate-850/30 overflow-hidden">
+                                                    <div key={cat.category} className="rounded-xl border border-gray-100 bg-gray-50/40 dark:border-slate-800 dark:bg-slate-900/30 overflow-hidden">
                                                         <div
                                                             onClick={() => setOpenCategories(prev => ({ ...prev, [cat.category]: !isExpanded }))}
                                                             className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-slate-800/40 transition"
@@ -1384,7 +1384,7 @@ export default function UserManagement({
                                         type="text"
                                         required
                                         placeholder="e.g. coordinator, outreach-manager"
-                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-white"
+                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                         value={newRoleName}
                                         onChange={(e) => setNewRoleName(e.target.value)}
                                     />
