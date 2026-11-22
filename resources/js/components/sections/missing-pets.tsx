@@ -202,7 +202,7 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
 
                 {filteredPets.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-                        <div className="bg-white p-10 rounded-[3rem] shadow-xl">
+                        <div className="bg-white p-6 sm:p-10 rounded-3xl sm:rounded-[3rem] shadow-xl">
                             <Search size={80} className="text-gray-200" />
                         </div>
                         <h3 className="text-2xl font-black text-paw-navy">No results found!</h3>

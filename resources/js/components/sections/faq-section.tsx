@@ -43,7 +43,7 @@ export function FAQSection() {
           >
             <button 
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
-              className="w-full p-10 flex items-center justify-between text-left group transition-all hover:bg-gray-50"
+              className="w-full p-5 sm:p-8 md:p-10 flex items-center justify-between gap-4 text-left group transition-all hover:bg-gray-50"
             >
               <h3 className="text-xl md:text-2xl font-black text-paw-navy uppercase italic tracking-tighter italic group-hover:text-paw-orange transition-colors">{faq.question}</h3>
               <div className={`bg-gray-100 p-3 rounded-2xl text-paw-navy transition-all ${openIndex === i ? 'rotate-180 bg-paw-orange text-white' : ''}`}>

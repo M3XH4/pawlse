@@ -305,7 +305,7 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
             <Sparkles size={18} className="text-paw-orange" />
             <span className="text-xs font-black tracking-widest uppercase text-paw-orange">Adoption Gallery</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-black text-paw-navy leading-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-paw-navy leading-tight mb-6">
             Meet Your Future <span className="text-paw-orange italic">Furry Friend</span>
           </h2>
           <p className="text-lg text-gray-500 font-bold max-w-2xl mx-auto mb-8">
@@ -335,10 +335,10 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
       </div>
 
       {/* Horizontal Scroll Container - Infinite Loop */}
-      <div className="relative h-[650px] flex items-center overflow-hidden">
+      <div className="relative h-[500px] sm:h-[580px] md:h-[650px] flex items-center overflow-hidden">
         <motion.div
           animate={{ x: xPos }}
-          className="flex gap-8 px-4 py-8 will-change-transform"
+          className="flex gap-5 sm:gap-8 px-4 py-8 will-change-transform"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
@@ -346,7 +346,7 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
             <motion.div
               key={`${pet.id}-${index}`}
               whileHover={{ scale: 1.03, y: -8 }}
-              className="relative shrink-0 w-[400px] h-[600px] perspective-1000"
+              className="relative shrink-0 w-[280px] sm:w-[340px] md:w-[400px] h-[450px] sm:h-[530px] md:h-[600px] perspective-1000"
             >
               <motion.div
                 className="relative w-full h-full"
@@ -356,7 +356,7 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
               >
                 {/* Front of Card */}
                 <div
-                  className="absolute inset-0 backface-hidden rounded-[3rem] overflow-hidden shadow-2xl bg-white cursor-pointer hover:shadow-[0_20px_60px_rgba(245,158,11,0.3)] transition-shadow duration-300"
+                  className="absolute inset-0 backface-hidden rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-white cursor-pointer hover:shadow-[0_20px_60px_rgba(245,158,11,0.3)] transition-shadow duration-300"
                   style={{ backfaceVisibility: 'hidden' }}
                   onClick={() => setFlippedCard(pet.id)}
                 >

@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { AnimatePresence } from 'motion/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -610,30 +611,12 @@ export default function AiValidation({
           </table>
         </div>
 
-        {/* Pagination */}
-        {reports.last_page > 1 && (
-          <div className="flex justify-center items-center gap-1.5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
-            {reports.links.map((link, idx) => {
-              let label = link.label;
-              if (label.includes('Previous')) label = '←';
-              if (label.includes('Next')) label = '→';
-
-              return (
-                <button
-                  key={idx}
-                  disabled={!link.url}
-                  onClick={() => router.get(link.url!, {}, { preserveScroll: true, preserveState: true })}
-                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
-                    link.active
-                      ? 'bg-paw-orange text-white shadow-md'
-                      : 'bg-white dark:bg-slate-800 text-[#0B2340] dark:text-gray-300 hover:bg-gray-50 border border-gray-100 dark:border-slate-800'
-                  } ${!link.url ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-                  dangerouslySetInnerHTML={{ __html: label }}
-                />
-              );
-            })}
-          </div>
-        )}
+        <DashboardPagination
+          links={reports.links}
+          total={reports.total}
+          count={reports.data.length}
+          itemName="reports"
+        />
       </AdminCard>
 
       {/* Review & Validation Modal */}

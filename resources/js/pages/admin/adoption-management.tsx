@@ -5,6 +5,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -162,6 +163,7 @@ export default function AdoptionManagement({
   shelterVisitSettings,
 }: AdoptionManagementProps) {
   const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
+  const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-adoption-view');
   
   // Modals & drawers state
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -381,6 +383,7 @@ export default function AdoptionManagement({
                   ]}
                 />
               </div>
+              <ViewModeToggle mode={viewMode} onChange={setViewMode} />
             </div>
 
             {/* List */}
@@ -391,8 +394,9 @@ export default function AdoptionManagement({
               </div>
             ) : (
               <>
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Table View */}
+                {viewMode === 'table' && (
+                <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] uppercase tracking-wider font-black text-gray-400">
@@ -460,9 +464,11 @@ export default function AdoptionManagement({
                     </tbody>
                   </table>
                 </div>
+                )}
 
-                {/* Mobile Cards View */}
-                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                {/* Cards View */}
+                {viewMode === 'cards' && (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {filteredApps.map(app => (
                     <div key={app.id} className="py-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
@@ -512,6 +518,7 @@ export default function AdoptionManagement({
                     </div>
                   ))}
                 </div>
+                )}
               </>
             )}
           </AdminCard>
@@ -752,7 +759,7 @@ export default function AdoptionManagement({
                 <div className="space-y-4">
                   <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><FileText size={14} /> Questionnaire & Living Situation</h4>
                   <div className="space-y-3 text-sm font-bold text-gray-700 dark:text-gray-300">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-gray-50 dark:bg-gray-800/40 p-3 rounded-2xl">
                         <p className="text-[10px] text-gray-400 uppercase">Residence Details</p>
                         <p className="text-paw-navy dark:text-white">{selectedApp.residence_type} ({selectedApp.is_renting ? 'Renting' : 'Owns House'})</p>
@@ -777,7 +784,7 @@ export default function AdoptionManagement({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
                         <p className="text-[8px] text-gray-400 uppercase">Daily Care</p>
                         <p className="text-xs text-paw-navy dark:text-white truncate">{selectedApp.daily_care_handler}</p>
@@ -792,7 +799,7 @@ export default function AdoptionManagement({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-gray-50 dark:bg-gray-800/40 p-3 rounded-2xl">
                         <p className="text-[10px] text-gray-400 uppercase">Family Supportive?</p>
                         <p className="text-paw-navy dark:text-white">{selectedApp.family_support ? 'Yes' : 'No'}</p>
@@ -811,7 +818,7 @@ export default function AdoptionManagement({
                       <p className="text-paw-navy dark:text-white text-xs leading-relaxed">{selectedApp.introduction_plan}</p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl text-center">
                         <p className="text-[8px] text-gray-400 uppercase">Adopted Before?</p>
                         <p className="text-xs text-paw-navy dark:text-white">{selectedApp.adopted_before ? 'Yes' : 'No'}</p>

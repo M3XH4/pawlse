@@ -856,7 +856,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                     PAW-AI · Inside Report Rescue
                                 </span>
                             </div>
-                            <h1 className="mb-6 text-5xl leading-tight font-black text-paw-navy md:text-6xl">
+                            <h1 className="mb-6 text-3xl sm:text-5xl leading-tight font-black text-paw-navy md:text-6xl">
                                 AI-Assisted Animal Identification
                             </h1>
                             <p className="mx-auto max-w-2xl text-lg leading-relaxed font-bold text-gray-500">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import {
     Newspaper, Plus, Search, Filter, Edit, Trash2, Eye,
@@ -697,34 +698,12 @@ export default function BlogManagement({
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {posts.links && posts.links.length > 3 && (
-                        <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-center items-center gap-1.5">
-                            {posts.links.map((link, idx) => {
-                                if (link.url === null) {
-                                    return (
-                                        <span
-                                            key={idx}
-                                            className="px-3 py-1 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`px-3 py-1 text-xs font-bold rounded-lg transition ${
-                                            link.active
-                                                ? 'bg-paw-orange text-white'
-                                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )}
+                    <DashboardPagination
+                        links={posts.links}
+                        total={posts.total}
+                        count={posts.data.length}
+                        itemName="posts"
+                    />
                 </div>
 
                 {/* Create / Edit Article Modal */}

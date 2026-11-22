@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { 
     Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, 
     Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, 
@@ -174,43 +175,13 @@ function TablePagination({
     count: number;
     itemName?: string;
 }) {
-    if (total === 0 || links.length <= 3) return null;
-
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
-            <span className="text-xs font-bold text-gray-450">
-                Showing {count} of {total} {itemName}
-            </span>
-            
-            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5">
-                {links.map((link, idx) => {
-                    const isPrev = link.label.includes('Previous');
-                    const isNext = link.label.includes('Next');
-                    
-                    return (
-                        <Link
-                            key={idx}
-                            href={link.url || '#'}
-                            disabled={!link.url}
-                            preserveState
-                            preserveScroll
-                            onClick={(e) => {
-                                if (!link.url) e.preventDefault();
-                            }}
-                            className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center justify-center border min-w-8 min-h-8 ${
-                                link.active
-                                    ? 'bg-paw-navy text-white border-paw-navy'
-                                    : link.url
-                                        ? 'bg-white dark:bg-[#111827] text-gray-600 dark:text-gray-300 border-gray-250 dark:border-gray-800 hover:border-paw-navy'
-                                        : 'bg-gray-100 dark:bg-gray-900 text-gray-400 border-transparent cursor-not-allowed'
-                            }`}
-                        >
-                            {isPrev ? <ChevronLeft size={14} /> : isNext ? <ChevronRight size={14} /> : link.label}
-                        </Link>
-                    );
-                })}
-            </div>
-        </div>
+        <DashboardPagination
+            links={links}
+            total={total}
+            count={count}
+            itemName={itemName}
+        />
     );
 }
 

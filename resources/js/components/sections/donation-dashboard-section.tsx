@@ -211,7 +211,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-2xl w-full shadow-2xl"
+              className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-8">
@@ -380,7 +380,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-2xl w-full shadow-2xl"
+              className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-8">
@@ -690,7 +690,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl border border-gray-100"
+                className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 shadow-2xl border border-gray-100"
               >
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-xl lg:text-3xl font-black italic uppercase tracking-tighter text-paw-navy">
@@ -761,7 +761,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl border border-gray-100 h-full"
+                className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 shadow-2xl border border-gray-100 h-full"
               >
                 <div className="flex justify-between items-center mb-10">
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-paw-navy">Recent Contributions</h3>
@@ -847,7 +847,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl border border-gray-100 h-full"
+                className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 shadow-2xl border border-gray-100 h-full"
               >
                 <div className="flex justify-between items-center mb-10">
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-paw-navy">Shelter Budget Needs</h3>
@@ -888,7 +888,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
         </div>
 
         <div className="space-y-10">
-          <div className="bg-paw-orange text-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden group">
+          <div className="bg-paw-orange text-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform -z-0">
               <Heart size={200} fill="white" />
             </div>
@@ -971,7 +971,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
             </div>
           </div>
 
-          <div className="bg-paw-navy text-white rounded-[3.5rem] p-10 md:p-12 shadow-2xl group cursor-pointer relative overflow-hidden">
+          <div className="bg-paw-navy text-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 shadow-2xl group cursor-pointer relative overflow-hidden">
              <div className="absolute bottom-0 right-0 p-8 opacity-10 -z-0">
                <FileText size={120} fill="white" />
              </div>

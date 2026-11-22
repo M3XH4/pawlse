@@ -3,6 +3,8 @@ import { Head, router, Link } from '@inertiajs/react';
 import { AnimatePresence } from 'motion/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -102,6 +104,7 @@ export default function RescueManagement({
   const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
   const [typeFilter, setTypeFilter] = useState(filters.type || 'All');
   const [duplicateFilter, setDuplicateFilter] = useState(filters.duplicate || 'All');
+  const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-rescue-view');
 
   // Detail Modal State
   const [selectedReport, setSelectedReport] = useState<PetReport | null>(null);
@@ -378,14 +381,16 @@ export default function RescueManagement({
             >
               <RefreshCw size={16} />
             </button>
+            <ViewModeToggle mode={viewMode} onChange={setViewMode} />
           </div>
         </div>
       </AdminCard>
 
-      {/* Reports Table Card */}
+      {/* Reports Table / Cards */}
       <AdminCard className="overflow-hidden">
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        {/* Table View */}
+        {viewMode === 'table' && (
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-gray-400 font-bold uppercase tracking-wider">
@@ -476,9 +481,11 @@ export default function RescueManagement({
             </tbody>
           </table>
         </div>
+        )}
 
-        {/* Mobile Cards View */}
-        <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+        {/* Cards View */}
+        {viewMode === 'cards' && (
+        <div className="divide-y divide-gray-100 dark:divide-slate-800">
           {reports.data.length === 0 ? (
             <div className="p-8 text-center text-gray-400 font-bold">
               No reports found matching the criteria.
@@ -553,31 +560,14 @@ export default function RescueManagement({
             ))
           )}
         </div>
-
-        {/* Pagination */}
-        {reports.last_page > 1 && (
-          <div className="flex flex-wrap justify-center items-center gap-1.5 py-4 px-2 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
-            {reports.links.map((link, idx) => {
-              let label = link.label;
-              if (label.includes('Previous')) label = '←';
-              if (label.includes('Next')) label = '→';
-
-              return (
-                <button
-                  key={idx}
-                  disabled={!link.url}
-                  onClick={() => router.get(link.url!, {}, { preserveScroll: true, preserveState: true })}
-                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
-                    link.active
-                      ? 'bg-paw-orange text-white shadow-md'
-                      : 'bg-white dark:bg-slate-800 text-paw-navy dark:text-gray-300 hover:bg-gray-50 border border-gray-100 dark:border-slate-800'
-                  } ${!link.url ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-                  dangerouslySetInnerHTML={{ __html: label }}
-                />
-              );
-            })}
-          </div>
         )}
+
+        <DashboardPagination
+          links={reports.links}
+          total={reports.total}
+          count={reports.data.length}
+          itemName="reports"
+        />
       </AdminCard>
 
       {/* Details & Actions Overlay Modal */}

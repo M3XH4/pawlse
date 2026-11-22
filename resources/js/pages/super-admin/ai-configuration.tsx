@@ -5,6 +5,7 @@ import {
     AlertCircle, Activity, Power, RefreshCw, AlertTriangle, ShieldCheck, Check
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -347,7 +348,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                         <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">AI Log Calibration</h3>
                         <p className="text-xs text-gray-500 mb-4">Validate predictions manually to calibrate platform accuracy stats</p>
                         
-                        <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-slate-800">
+                        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-800">
                             <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                                 <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-700 dark:bg-slate-800 dark:text-gray-300">
                                     <tr>
@@ -428,31 +429,13 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                             </table>
                         </div>
 
-                        {/* Pagination */}
-                        {logs.links.length > 3 && (
-                            <div className="flex items-center justify-between mt-4">
-                                <p className="text-[11px] text-gray-500">
-                                    Total AI transactions: <span className="font-medium">{logs.total}</span>
-                                </p>
-                                <nav className="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
-                                    {logs.links.map((link, idx) => (
-                                        <button
-                                            key={idx}
-                                            disabled={!link.url}
-                                            onClick={() => link.url && router.visit(link.url)}
-                                            className={`relative inline-flex items-center px-3 py-1.5 text-xs font-semibold ${
-                                                link.active
-                                                    ? 'z-10 bg-indigo-600 text-white'
-                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-900'
-                                            } ${idx === 0 ? 'rounded-l-md' : ''} ${
-                                                idx === logs.links.length - 1 ? 'rounded-r-md' : ''
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </nav>
-                            </div>
-                        )}
+                        <DashboardPagination
+                            links={logs.links}
+                            total={logs.total}
+                            count={logs.data.length}
+                            itemName="AI transactions"
+                            className="mt-4 rounded-xl border border-gray-100 dark:border-slate-800"
+                        />
                     </div>
                 </div>
 

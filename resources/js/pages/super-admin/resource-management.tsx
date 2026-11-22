@@ -7,6 +7,7 @@ import {
     Upload, Sparkles, BookOpen, AlertCircle
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -467,26 +468,12 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {resources.links && resources.links.length > 3 && (
-                        <div className="p-4 border-t border-gray-100 dark:border-slate-800 flex justify-center gap-1">
-                            {resources.links.map((link, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    disabled={!link.url || link.active}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                        link.active
-                                            ? 'bg-paw-orange text-white'
-                                            : link.url
-                                            ? 'hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300'
-                                            : 'opacity-40 cursor-not-allowed'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    )}
+                    <DashboardPagination
+                        links={resources.links}
+                        total={resources.total}
+                        count={resources.data.length}
+                        itemName="resources"
+                    />
                 </DashboardCard>
             </div>
 

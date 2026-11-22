@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -1014,41 +1015,13 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                 </div>
 
                 {/* PAGINATION BAR */}
-                {animals.total > 0 && (
-                    <div className="py-3.5 px-4 bg-gray-50/75 dark:bg-[#070e1c]/60 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <div>
-                            Showing <span className="font-bold text-gray-700 dark:text-gray-200">{animals.from || 0}</span> to{' '}
-                            <span className="font-bold text-gray-700 dark:text-gray-200">{animals.to || 0}</span> of{' '}
-                            <span className="font-bold text-gray-700 dark:text-gray-200">{animals.total}</span> animals
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1">
-                            {animals.links.map((link, idx) => {
-                                const isLabelNumber = !link.label.includes('Previous') && !link.label.includes('Next');
-
-                                return (
-                                    <button
-                                        key={idx}
-                                        disabled={!link.url}
-                                        onClick={() => {
-                                            if (link.url) {
-                                                router.get(link.url, {}, { preserveState: true, preserveScroll: true });
-                                            }
-                                        }}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs ${
-                                            link.active
-                                                ? 'bg-paw-orange text-white shadow-sm'
-                                                : link.url
-                                                ? 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-                                                : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                        }`}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
+                <DashboardPagination
+                    links={animals.links}
+                    from={animals.from}
+                    to={animals.to}
+                    total={animals.total}
+                    itemName="animals"
+                />
             </div>
 
             {/* FULL RECORD SIDE PANEL (SLIDE-OVER SHEET) */}

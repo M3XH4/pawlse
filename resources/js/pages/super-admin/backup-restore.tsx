@@ -5,6 +5,7 @@ import {
     Calendar, CheckCircle2, Clock
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { ModernSelect } from '@/components/ui/modern-select';
@@ -128,7 +129,7 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                         <hr className="my-4 border-gray-100 dark:border-slate-900" />
 
                         {/* Backups Table */}
-                        <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-slate-800">
+                        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-800">
                             <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                                 <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-700 dark:bg-slate-800 dark:text-gray-300">
                                     <tr>
@@ -199,31 +200,13 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                             </table>
                         </div>
 
-                        {/* Pagination */}
-                        {backups.links.length > 3 && (
-                            <div className="flex items-center justify-between mt-4">
-                                <p className="text-[11px] text-gray-500">
-                                    Total backups: <span className="font-medium">{backups.total}</span>
-                                </p>
-                                <nav className="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
-                                    {backups.links.map((link, idx) => (
-                                        <button
-                                            key={idx}
-                                            disabled={!link.url}
-                                            onClick={() => link.url && router.visit(link.url)}
-                                            className={`relative inline-flex items-center px-3 py-1.5 text-xs font-semibold ${
-                                                link.active
-                                                    ? 'z-10 bg-indigo-600 text-white'
-                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-900'
-                                            } ${idx === 0 ? 'rounded-l-md' : ''} ${
-                                                idx === backups.links.length - 1 ? 'rounded-r-md' : ''
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </nav>
-                            </div>
-                        )}
+                        <DashboardPagination
+                            links={backups.links}
+                            total={backups.total}
+                            count={backups.data.length}
+                            itemName="backups"
+                            className="mt-4 rounded-xl border border-gray-100 dark:border-slate-800"
+                        />
                     </div>
                 </div>
 

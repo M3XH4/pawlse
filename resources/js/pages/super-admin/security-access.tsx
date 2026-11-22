@@ -5,6 +5,7 @@ import {
     Globe, HelpCircle
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ModernSelect } from '@/components/ui/modern-select';
 
 interface LoginAttemptRecord {
@@ -240,37 +241,12 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {logs.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 dark:border-slate-900 dark:bg-slate-900">
-                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-xs text-gray-500">
-                                        Showing <span className="font-medium">{logs.data.length}</span> logs out of <span className="font-medium">{logs.total}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
-                                        {logs.links.map((link, idx) => (
-                                            <button
-                                                key={idx}
-                                                disabled={!link.url}
-                                                onClick={() => link.url && router.visit(link.url)}
-                                                className={`relative inline-flex items-center px-4 py-2 text-xs font-semibold ${
-                                                    link.active
-                                                        ? 'z-10 bg-indigo-600 text-white'
-                                                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-800'
-                                                } ${idx === 0 ? 'rounded-l-md' : ''} ${
-                                                    idx === logs.links.length - 1 ? 'rounded-r-md' : ''
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <DashboardPagination
+                        links={logs.links}
+                        total={logs.total}
+                        count={logs.data.length}
+                        itemName="logs"
+                    />
                 </div>
             </div>
         </DashboardSectionPage>

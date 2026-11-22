@@ -551,7 +551,7 @@ export default function CommunityHonorManagement({
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 grid grid-cols-2 gap-3">
+                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
@@ -627,7 +627,7 @@ export default function CommunityHonorManagement({
                             </p>
 
                             <form onSubmit={handleMetricsSubmit} className="space-y-4 text-xs font-semibold">
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
                                         <label className="block text-gray-500 mb-1">Core Members</label>
                                         <input

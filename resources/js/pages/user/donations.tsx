@@ -6,6 +6,8 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ModernSelect } from '@/components/ui/modern-select';
 
@@ -57,6 +59,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedType, setSelectedType] = useState(filters.type || '');
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
+    const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-user-donations-view');
     const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<DonationRecord | null>(null);
 
     // Debounce search term and submit filter queries
@@ -221,14 +224,17 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                 ]}
                             />
                         </div>
+
+                        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
                     </div>
                 </div>
             </DashboardCard>
 
             {/* Donation List Card */}
             <DashboardCard className="p-0 overflow-hidden">
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Table View */}
+                {viewMode === 'table' && (
+                <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -324,9 +330,11 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                         </tbody>
                     </table>
                 </div>
+                )}
 
-                {/* Mobile Cards View */}
-                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                {/* Cards View */}
+                {viewMode === 'cards' && (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {donations.data.length === 0 ? (
                         <div className="text-center py-12 px-4 text-gray-450 font-bold">
                             No donations matched your search or filters.
@@ -413,43 +421,14 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                         ))
                     )}
                 </div>
-
-                {/* Pagination */}
-                {donations.total > 0 && donations.links.length > 3 && (
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
-                        <span className="text-xs font-bold text-gray-450">
-                            Showing {donations.data.length} of {donations.total} records
-                        </span>
-                        
-                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5">
-                            {donations.links.map((link, idx) => {
-                                // Skip prev/next labels translation details and render icon
-                                const isPrev = link.label.includes('Previous');
-                                const isNext = link.label.includes('Next');
-                                
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url || '#'}
-                                        disabled={!link.url}
-                                        onClick={(e) => {
-                                            if (!link.url) e.preventDefault();
-                                        }}
-                                        className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center justify-center border min-w-8 min-h-8 ${
-                                            link.active
-                                                ? 'bg-paw-orange text-white border-paw-orange shadow-md shadow-paw-orange/10'
-                                                : link.url
-                                                    ? 'bg-white dark:bg-[#111827] text-gray-600 dark:text-gray-300 border-gray-250 dark:border-gray-800 hover:border-paw-orange'
-                                                    : 'bg-gray-100 dark:bg-gray-900 text-gray-400 border-transparent cursor-not-allowed'
-                                        }`}
-                                    >
-                                        {isPrev ? <ChevronLeft size={14} /> : isNext ? <ChevronRight size={14} /> : link.label}
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    </div>
                 )}
+
+                <DashboardPagination
+                    links={donations.links}
+                    total={donations.total}
+                    count={donations.data.length}
+                    itemName="records"
+                />
             </DashboardCard>
 
             {selectedReceiptDonation && (

@@ -219,9 +219,15 @@
         @apply border-border outline-ring/50;
     }
 
+    html,
     body,
     #root {
-        @apply relative min-h-screen bg-background font-quicksand text-foreground;
+        @apply relative overflow-x-clip;
+    }
+
+    body,
+    #root {
+        @apply min-h-screen bg-background font-quicksand text-foreground;
     }
 
     h1,

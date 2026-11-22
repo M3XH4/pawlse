@@ -394,7 +394,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                     Join the Movement
                                 </div>
                             </div>
-                            <h1 className="text-5xl md:text-7xl font-black text-paw-navy tracking-tight leading-tight mb-6">
+                            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-paw-navy tracking-tight leading-tight mb-6">
                                 Help Us Feed the Pack
                             </h1>
                             <p className="text-gray-500 font-bold text-base md:text-lg leading-relaxed max-w-3xl mx-auto">

@@ -27,7 +27,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
   const textY = useTransform(scrollYProgress, [0, 0.3], [0, -5]);
 
   return (
-    <section className="relative overflow-visible bg-[#F59E0B] h-[90vh] max-h-screen font-quicksand flex flex-col">
+    <section className="relative overflow-visible bg-[#F59E0B] min-h-[85vh] lg:h-[90vh] lg:max-h-screen font-quicksand flex flex-col">
       {/* Subtle Background Overlay Image */}
       <div
         className="absolute inset-0 z-0 pointer-events-none opacity-10"
@@ -75,7 +75,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-[1440px] w-full mx-auto relative z-10 flex flex-col lg:flex-row items-center lg:items-start justify-center px-4 sm:px-8 lg:px-[85px] py-20 lg:py-0 lg:justify-between">
+      <div className="flex-1 max-w-[1440px] w-full mx-auto relative z-10 flex flex-col lg:flex-row items-center lg:items-start justify-center px-4 sm:px-8 lg:px-[85px] pt-10 pb-48 sm:pt-16 sm:pb-60 lg:py-0 lg:justify-between">
         <motion.div
           className="lg:w-1/2 text-white mb-4 lg:mb-0 relative z-[60] text-center lg:text-left order-1 max-w-[600px] lg:self-center"
           style={{ y: textY }}
@@ -221,7 +221,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <div className="relative w-[100vw] max-w-[500px]">
+          <div className="relative w-[88vw] max-w-[420px] sm:max-w-[500px]">
             <img
               src="/images/hero-image.png"
               alt="Happy Cat and Dog"

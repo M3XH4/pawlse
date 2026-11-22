@@ -554,7 +554,7 @@ export default function About({
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.2 }}
-                      className="text-6xl md:text-8xl font-black mb-4"
+                      className="text-4xl sm:text-6xl md:text-8xl font-black mb-4"
                     >
                       {currentMilestone.year}
                     </motion.h3>

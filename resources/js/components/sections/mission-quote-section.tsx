@@ -7,7 +7,7 @@ export function MissionQuote() {
     <section className="w-full min-h-screen flex flex-col lg:flex-row font-quicksand">
       {/* Left Half - Quote */}
       <motion.div 
-        className="w-full lg:w-1/2 bg-[#0f0f0f] flex items-center justify-center p-12 lg:p-24"
+        className="w-full lg:w-1/2 bg-[#0f0f0f] flex items-center justify-center p-6 sm:p-12 lg:p-24"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}

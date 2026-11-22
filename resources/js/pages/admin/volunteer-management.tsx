@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { User, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
@@ -355,29 +356,10 @@ export default function VolunteerManagement({
         });
     };
 
-    // Pagination helper component
-    const Pagination = ({ links }: { links: any[] }) => {
-        if (!links || links.length <= 3) return null;
-        return (
-            <div className="flex justify-center items-center gap-1 mt-6">
-                {links.map((link, idx) => {
-                    if (link.url === null) return (
-                        <span key={idx} className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-400 rounded-lg text-xs font-bold" dangerouslySetInnerHTML={{ __html: link.label }} />
-                    );
-                    return (
-                        <Link
-                            key={idx}
-                            href={link.url}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                                link.active ? 'bg-paw-orange text-white' : 'bg-white dark:bg-slate-900 text-paw-navy dark:text-gray-200 border dark:border-gray-800'
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    );
-                })}
-            </div>
-        );
-    };
+    // Unified pagination wrapper
+    const Pagination = ({ links }: { links: any[] }) => (
+        <DashboardPagination links={links} className="mt-4 rounded-xl border border-gray-100 dark:border-slate-800" />
+    );
 
     return (
         <>

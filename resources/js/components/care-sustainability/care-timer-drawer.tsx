@@ -135,7 +135,7 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: -350, opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                            className="relative w-[340px] sm:w-[380px] bg-[#12161a] border border-gray-800/80 rounded-3xl p-6 shadow-2xl shadow-black/60 backdrop-blur-md text-white overflow-hidden"
+                            className="relative w-[calc(100vw-2rem)] max-w-[380px] bg-[#12161a] border border-gray-800/80 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/60 backdrop-blur-md text-white overflow-hidden"
                         >
                             {/* Hide / Collapse Chevron Tab */}
                             <button

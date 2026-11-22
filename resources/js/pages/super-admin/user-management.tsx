@@ -8,6 +8,8 @@ import {
     Sliders, CheckSquare, Square, RefreshCw, AlertTriangle, User as UserIcon
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -112,6 +114,7 @@ export default function UserManagement({
     const [newRoleName, setNewRoleName] = useState('');
     const [newRolePermissions, setNewRolePermissions] = useState<string[]>([]);
     const [isCreatingRole, setIsCreatingRole] = useState(false);
+    const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-sa-users-view');
 
     // Permission enforcement
     const { can } = usePermissions();
@@ -553,13 +556,15 @@ export default function UserManagement({
                                         <span>Add User</span>
                                     </button>
                                 )}
+                                <ViewModeToggle mode={viewMode} onChange={setViewMode} />
                             </div>
                         </div>
 
-                        {/* Users Table */}
+                        {/* Users Table / Cards */}
                         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            {/* Desktop Table View */}
-                            <div className="hidden md:block overflow-x-auto">
+                            {/* Table View */}
+                            {viewMode === 'table' && (
+                            <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                                     <thead className="bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 dark:bg-slate-800 dark:text-gray-300">
                                         <tr>
@@ -654,9 +659,11 @@ export default function UserManagement({
                                     </tbody>
                                 </table>
                             </div>
+                            )}
 
-                            {/* Mobile Cards View */}
-                            <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+                            {/* Cards View */}
+                            {viewMode === 'cards' && (
+                            <div className="divide-y divide-gray-100 dark:divide-slate-800">
                                 {users.data.length === 0 ? (
                                     <div className="px-6 py-12 text-center text-sm text-gray-400">
                                         <Users className="mx-auto h-8 w-8 text-gray-300 mb-2 dark:text-gray-600" />
@@ -734,59 +741,14 @@ export default function UserManagement({
                                     ))
                                 )}
                             </div>
-
-                            {/* Pagination */}
-                            {users.links.length > 3 && (
-                                <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
-                                    <div className="flex flex-1 justify-between sm:hidden">
-                                        <button
-                                            onClick={() => users.links[0].url && router.visit(users.links[0].url)}
-                                            disabled={!users.links[0].url}
-                                            className="relative inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                                        >
-                                            Previous
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                const nextUrl = users.links[users.links.length - 1]?.url;
-                                                if (nextUrl) {
-                                                    router.visit(nextUrl);
-                                                }
-                                            }}
-                                            disabled={!users.links[users.links.length - 1]?.url}
-                                            className="relative ml-3 inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Showing <span className="font-semibold text-gray-900 dark:text-white">{users.data.length}</span> of <span className="font-semibold text-gray-900 dark:text-white">{users.total}</span> users
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
-                                                {users.links.map((link, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        disabled={!link.url}
-                                                        onClick={() => link.url && router.visit(link.url)}
-                                                        className={`relative inline-flex items-center px-3.5 py-1.5 text-xs font-bold ${
-                                                            link.active
-                                                                ? 'z-10 bg-indigo-600 text-white focus-visible:outline-2'
-                                                                : 'text-gray-900 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-800 dark:hover:bg-slate-800'
-                                                        } ${idx === 0 ? 'rounded-l-lg' : ''} ${
-                                                            idx === users.links.length - 1 ? 'rounded-r-lg' : ''
-                                                        }`}
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                                    />
-                                                ))}
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </div>
                             )}
+
+                            <DashboardPagination
+                                links={users.links}
+                                total={users.total}
+                                count={users.data.length}
+                                itemName="users"
+                            />
                         </div>
                     </div>
                 )}

@@ -23,10 +23,10 @@ export function Footer() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white rounded-3xl sm:rounded-[3.5rem] p-5 sm:p-8 md:p-12 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-start mb-8">
+              <div className="flex justify-between items-start gap-3 mb-6 sm:mb-8">
                 <div>
                   <div className="inline-flex items-center gap-2 bg-paw-orange/10 px-4 py-2 rounded-full mb-4 border border-paw-orange/20">
                     {activeModal === 'privacy' && <Shield size={18} className="text-paw-orange" />}
@@ -35,7 +35,7 @@ export function Footer() {
                     {activeModal === 'faq' && <HelpCircle size={18} className="text-paw-orange" />}
                     <span className="text-xs font-black tracking-widest uppercase text-paw-orange">Legal Information</span>
                   </div>
-                  <h3 className="text-4xl font-black italic uppercase tracking-tighter text-paw-navy">
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-paw-navy">
                     {activeModal === 'privacy' && 'Privacy Policy'}
                     {activeModal === 'terms' && 'Terms of Service'}
                     {activeModal === 'safety' && 'Safety Guidelines'}

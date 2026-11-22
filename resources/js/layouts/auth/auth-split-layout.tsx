@@ -11,7 +11,7 @@ export default function AuthSplitLayout({
     subTitle,
 }: AuthLayoutProps) {
     return (
-        <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+        <div className="relative grid min-h-dvh flex-col items-center justify-center px-4 py-8 sm:px-6 lg:max-w-none lg:grid-cols-2 lg:px-0 lg:py-0">
             <div className="relative hidden h-full flex-col bg-paw-navy p-10 text-white lg:flex dark:border-r">
                 <div className="absolute top-0 left-0 p-20 opacity-10 -z-0 rotate-12 scale-150">
                     <PawPrint size={300} fill="currentColor" />
@@ -36,7 +36,7 @@ export default function AuthSplitLayout({
                 </div>
             </div>
             <div className="w-full lg:p-8">
-                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[490px]">
+                <div className="mx-auto flex w-full max-w-[490px] flex-col justify-center space-y-6">
                     <Link
                         href={home()}
                         className="inline-flex items-center gap-2 mb-4 text-gray-500 hover:text-paw-orange transition-colors group"

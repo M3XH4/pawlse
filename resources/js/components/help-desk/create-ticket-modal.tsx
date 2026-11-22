@@ -81,7 +81,7 @@ export function CreateTicketModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="relative w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:p-7">
+            <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-100 bg-white p-5 sm:p-7 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
                 {/* Header */}
                 <div className="flex items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-800">
                     <div className="flex items-center gap-3">

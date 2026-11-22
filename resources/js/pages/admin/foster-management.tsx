@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
@@ -843,28 +844,12 @@ export default function FosterManagement({
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {placements.links && placements.links.length > 3 && (
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-center gap-1">
-                            {placements.links.map((link, idx) => {
-                                if (link.url === null) {
-                                    return (
-                                        <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold" dangerouslySetInnerHTML={{ __html: link.label }} />
-                                    );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                                            link.active ? 'bg-paw-orange text-white' : 'bg-white text-paw-navy hover:bg-paw-orange/10 border'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )}
+                    <DashboardPagination
+                        links={placements.links}
+                        total={placements.total}
+                        count={placements.data.length}
+                        itemName="placements"
+                    />
                 </AdminCard>
             )}
 

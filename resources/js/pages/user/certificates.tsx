@@ -6,6 +6,7 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 
 interface CertificateModel {
     id: number;
@@ -284,26 +285,13 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 </div>
             )}
 
-            {/* Pagination */}
-            {certificates?.links && certificates.links.length > 3 && (
-                <div className="flex justify-center gap-1 mt-6">
-                    {certificates.links.map((link, idx) => {
-                        if (link.url === null) return (
-                            <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold" dangerouslySetInnerHTML={{ __html: link.label }} />
-                        );
-                        return (
-                            <Link
-                                key={idx}
-                                href={link.url}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                                    link.active ? 'bg-paw-orange text-white' : 'bg-white text-paw-navy hover:bg-paw-orange/10 border'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        );
-                    })}
-                </div>
-            )}
+            <DashboardPagination
+                links={certificates?.links}
+                total={certificates?.total}
+                count={certificates?.data?.length}
+                itemName="certificates"
+                className="mt-6 rounded-2xl border border-gray-100 dark:border-slate-800"
+            />
 
             {/* Certificate Print/View Modal Overlay */}
             {viewingCert && (

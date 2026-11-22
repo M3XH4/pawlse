@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { FileSearch, Search, Activity, Terminal } from 'lucide-react';
 import { DashboardSectionPage } from '@/components/dashboard/section-page';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 
@@ -83,6 +85,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
         setSelectedRole(val);
         applyFilters({ role: val });
     };
+
+    const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-sa-audit-logs-view');
 
     const handleUserChange = (val: string) => {
         setSelectedUser(val);
@@ -263,8 +267,16 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                     </div>
                 </div>
 
-                {/* Audit Logs Table */}
+                {/* Audit Logs Table / Cards */}
                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-6 dark:border-slate-800">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                            Audit Trail ({logs.total})
+                        </span>
+                        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+                    </div>
+
+                    {viewMode === 'table' && (
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                             <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-700 dark:bg-slate-800 dark:text-gray-300">
@@ -337,38 +349,43 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Pagination */}
-                    {logs.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 dark:border-slate-900 dark:bg-slate-900">
-                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-xs text-gray-500">
-                                        Showing <span className="font-medium">{logs.data.length}</span> logs out of <span className="font-medium">{logs.total}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
-                                        {logs.links.map((link, idx) => (
-                                            <button
-                                                key={idx}
-                                                disabled={!link.url}
-                                                onClick={() => link.url && router.visit(link.url)}
-                                                className={`relative inline-flex items-center px-4 py-2 text-xs font-semibold cursor-pointer ${
-                                                    link.active
-                                                        ? 'z-10 bg-indigo-600 text-white font-bold'
-                                                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-slate-800'
-                                                } ${idx === 0 ? 'rounded-l-md' : ''} ${
-                                                    idx === logs.links.length - 1 ? 'rounded-r-md' : ''
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
                     )}
+
+                    {viewMode === 'cards' && (
+                    <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                        {logs.data.length === 0 ? (
+                            <div className="px-6 py-10 text-center text-sm text-gray-400">
+                                No audit trail logs recorded yet.
+                            </div>
+                        ) : (
+                            logs.data.map((log) => (
+                                <div key={log.id} className="p-4 space-y-2 hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-sm text-gray-900 dark:text-white">{log.user_name}</span>
+                                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                                {log.action}
+                                            </span>
+                                        </div>
+                                        <span className="text-[11px] text-gray-400">{log.created_at}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 dark:text-slate-300">{log.description}</p>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400 pt-1">
+                                        <span className="font-mono">{log.ip_address}</span>
+                                        <span className="capitalize">{log.user_role || 'system'}</span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    )}
+
+                    <DashboardPagination
+                        links={logs.links}
+                        total={logs.total}
+                        count={logs.data.length}
+                        itemName="logs"
+                    />
                 </div>
             </div>
         </DashboardSectionPage>

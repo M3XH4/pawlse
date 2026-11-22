@@ -478,14 +478,14 @@ export function Header() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-start justify-center pt-32"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-start justify-center pt-16 sm:pt-32 px-4"
             onClick={() => setSearchOpen(false)}
           >
             <motion.div
               initial={{ scale: 0.9, y: -20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: -20 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-2xl w-full mx-4 shadow-2xl"
+              className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-2xl w-full shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6">

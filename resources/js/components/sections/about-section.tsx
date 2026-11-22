@@ -360,7 +360,7 @@ export function AboutSections() {
             <Users size={18} className="text-paw-green" />
             <span className="text-xs font-black tracking-widest uppercase text-paw-green">Meet Our Team</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-black text-paw-navy italic uppercase tracking-tighter italic mb-4">The <span className="text-paw-green not-italic">ISF Family</span></h2>
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-paw-navy italic uppercase tracking-tighter mb-4">The <span className="text-paw-green not-italic">ISF Family</span></h2>
           <p className="text-lg text-gray-500 font-bold italic leading-relaxed">From founders to volunteers, each member brings unique skills and unwavering dedication to Iligan's stray animals. Together, we're building a compassionate community.</p>
         </div>
 
@@ -381,7 +381,7 @@ export function AboutSections() {
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
                 onClick={() => setSelectedMember(member)}
-                className="bg-white p-8 rounded-[3.5rem] shadow-2xl border border-gray-50 group text-center cursor-pointer flex-shrink-0 w-[320px]"
+                className="bg-white p-6 sm:p-8 rounded-3xl sm:rounded-[3.5rem] shadow-2xl border border-gray-50 group text-center cursor-pointer flex-shrink-0 w-[270px] sm:w-[320px]"
               >
                 <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-6 border-8 border-gray-50 group-hover:border-paw-green transition-all shadow-xl">
                   <ImageWithFallback src={member.img} alt={member.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />

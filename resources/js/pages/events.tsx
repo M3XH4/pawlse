@@ -1509,7 +1509,7 @@ export default function Events({
                             initial={{ opacity: 0, scale: 0.95, y: 15 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl border border-paw-navy/10"
+                            className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-paw-navy/10"
                         >
                             <div className="bg-gradient-to-r from-paw-orange to-amber-500 p-6 text-white relative">
                                 <button
