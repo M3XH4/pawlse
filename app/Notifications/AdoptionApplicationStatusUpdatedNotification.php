@@ -51,16 +51,20 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification implemen
             ? 'Reply & Upload Requirements'
             : 'Track Application Status';
 
+        $actionUrl = $this->application->user_id !== null
+            ? route('account.user.adoption-applications', ['open' => $this->application->id])
+            : route('track', [
+                'reference' => $ref,
+                'email' => $this->application->email,
+            ]);
+
         return $this->buildBrandedMail(
             notifiable: $notifiable,
             summaryItems: $summary,
             actionText: $actionText,
             level: $level,
             categoryBadge: "ADOPTION UPDATE ({$ref})",
-            actionUrl: route('track', [
-                'reference' => $ref,
-                'email' => $this->application->email,
-            ]),
+            actionUrl: $actionUrl,
             recipientNameOverride: $this->application->full_name,
         );
     }
@@ -92,8 +96,8 @@ class AdoptionApplicationStatusUpdatedNotification extends Notification implemen
             default => "The status of your adoption application for {$petName} (Ref: {$ref}) is {$status}.",
         };
 
-        $url = $this->application->user_id
-            ? route('account.user.adoption-applications')
+        $url = $this->application->user_id !== null
+            ? route('account.user.adoption-applications', ['open' => $this->application->id])
             : route('track', [
                 'reference' => $ref,
                 'email' => $this->application->email,

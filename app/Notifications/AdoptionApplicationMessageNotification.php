@@ -41,17 +41,24 @@ class AdoptionApplicationMessageNotification extends Notification implements Sho
             $summary[] = ['label' => 'Attachments', 'value' => "{$attachmentCount} file(s) attached"];
         }
 
-        $actionUrl = $this->forAdmin
-            ? route('account.admin.adoption-management')
-            : route('track', [
+        if ($this->forAdmin) {
+            $actionUrl = route('account.admin.adoption-management');
+            $actionText = 'Open Adoption Management';
+        } elseif ($this->application->user_id !== null) {
+            $actionUrl = route('account.user.adoption-applications', ['open' => $this->application->id]);
+            $actionText = 'Open Conversation';
+        } else {
+            $actionUrl = route('track', [
                 'reference' => $ref,
                 'email' => $this->application->email,
             ]);
+            $actionText = 'Reply on Tracking Page';
+        }
 
         return $this->buildBrandedMail(
             notifiable: $notifiable,
             summaryItems: $summary,
-            actionText: $this->forAdmin ? 'Open Adoption Management' : 'Reply on Tracking Page',
+            actionText: $actionText,
             level: 'primary',
             categoryBadge: "ADOPTION MESSAGE ({$ref})",
             actionUrl: $actionUrl,
@@ -76,10 +83,12 @@ class AdoptionApplicationMessageNotification extends Notification implements Sho
             $message = $this->applicationMessage->message
                 ? "Coordinator message on {$ref}: {$this->applicationMessage->message}"
                 : "Our adoption coordinator sent an update on {$ref} for {$petName}.";
-            $url = route('track', [
-                'reference' => $ref,
-                'email' => $this->application->email,
-            ]);
+            $url = $this->application->user_id !== null
+                ? route('account.user.adoption-applications', ['open' => $this->application->id])
+                : route('track', [
+                    'reference' => $ref,
+                    'email' => $this->application->email,
+                ]);
         }
 
         return [

@@ -57,6 +57,8 @@ class AdoptionApplicationController extends Controller
             })
                 ->latest()
                 ->get(),
+
+            'openApplicationId' => $request->integer('open') ?: null,
         ]);
     }
 

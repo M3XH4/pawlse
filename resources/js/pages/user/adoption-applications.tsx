@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Share2, Users, MapPin, Ban, MessageCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Ban, MessageCircle, Paperclip, Send, FileText, X } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -9,6 +9,24 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+
+interface MessageAttachment {
+    path?: string;
+    name: string;
+    mime?: string;
+    size?: number;
+    url: string;
+}
+
+interface ApplicationMessage {
+    id: number;
+    sender_type: 'admin' | 'user' | string;
+    sender_name: string;
+    message: string | null;
+    attachments?: MessageAttachment[];
+    created_at?: string;
+    created_at_formatted?: string;
+}
 
 interface Application {
     id: number;
@@ -65,6 +83,7 @@ interface Application {
         pet_condition?: string | null;
         notes?: string | null;
     }[];
+    messages?: ApplicationMessage[];
 }
 
 interface UserShelterVisit {
@@ -106,14 +125,108 @@ interface UserAdoptionApplicationsProps {
     applications: Application[];
     shelterVisits?: UserShelterVisit[];
     rehomingRequests?: UserRehomingRequest[];
+    openApplicationId?: number | null;
 }
 
 export default function UserAdoptionApplications({
     applications = [],
     shelterVisits = [],
     rehomingRequests = [],
+    openApplicationId = null,
 }: UserAdoptionApplicationsProps) {
     const [resubmittingApp, setResubmittingApp] = useState<Application | null>(null);
+    const [activeConversationAppId, setActiveConversationAppId] = useState<number | null>(openApplicationId);
+    const [replyText, setReplyText] = useState('');
+    const [replyFiles, setReplyFiles] = useState<File[]>([]);
+    const [isSendingReply, setIsSendingReply] = useState(false);
+    const [replyError, setReplyError] = useState<string | null>(null);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+    const replyFileInputRef = useRef<HTMLInputElement | null>(null);
+    const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+    const activeConversationApp = applications.find((a) => a.id === activeConversationAppId) ?? null;
+
+    useEffect(() => {
+        if (openApplicationId) {
+            setActiveConversationAppId(openApplicationId);
+        }
+    }, [openApplicationId]);
+
+    useEffect(() => {
+        if (activeConversationApp && messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    }, [activeConversationApp?.id, activeConversationApp?.messages?.length]);
+
+    useEffect(() => {
+        if (!activeConversationAppId && !lightboxUrl) {
+            return;
+        }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                if (lightboxUrl) {
+                    setLightboxUrl(null);
+                } else {
+                    setActiveConversationAppId(null);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeConversationAppId, lightboxUrl]);
+
+    const openConversation = (appId: number) => {
+        setReplyText('');
+        setReplyFiles([]);
+        setReplyError(null);
+        if (replyFileInputRef.current) {
+            replyFileInputRef.current.value = '';
+        }
+        setActiveConversationAppId(appId);
+    };
+
+    const handleReplySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!activeConversationApp || isSendingReply) {
+            return;
+        }
+
+        if (!replyText.trim() && replyFiles.length === 0) {
+            setReplyError('Please enter a message or attach at least one file.');
+            return;
+        }
+
+        setReplyError(null);
+        setIsSendingReply(true);
+
+        router.post(
+            `/account/user/adoption-applications/${activeConversationApp.id}/messages`,
+            {
+                message: replyText.trim(),
+                attachments: replyFiles,
+            },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReplyText('');
+                    setReplyFiles([]);
+                    if (replyFileInputRef.current) {
+                        replyFileInputRef.current.value = '';
+                    }
+                },
+                onError: (errors) => {
+                    const firstError = Object.values(errors)[0];
+                    setReplyError(typeof firstError === 'string' ? firstError : 'Failed to send your reply. Please try again.');
+                },
+                onFinish: () => {
+                    setIsSendingReply(false);
+                },
+            },
+        );
+    };
 
     const activeCount = applications.filter(
         (a) => a.status === 'pending' || a.status === 'scheduled',
@@ -350,14 +463,15 @@ export default function UserAdoptionApplications({
                                         <div className="bg-amber-50/70 dark:bg-amber-950/20 p-3.5 rounded-xl border border-amber-200 text-xs font-bold text-amber-900 dark:text-amber-200 space-y-2.5">
                                             <div className="flex items-start gap-2.5">
                                                 <MessageCircle size={16} className="shrink-0 mt-0.5 text-paw-orange" />
-                                                <p>Our adoption coordinator requested additional information or requirement photos. Please reply on the tracking page so we can continue reviewing your application.</p>
+                                                <p>Our adoption coordinator requested additional information or requirement photos. Please reply in the conversation sidebar so we can continue reviewing your application.</p>
                                             </div>
-                                            <Link
-                                                href={`/track?reference=${encodeURIComponent(refCode)}&email=${encodeURIComponent(app.email || '')}`}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-paw-orange text-white hover:bg-orange-600 text-xs font-black uppercase tracking-wider transition-all shadow-sm"
+                                            <button
+                                                type="button"
+                                                onClick={() => openConversation(app.id)}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-paw-orange text-white hover:bg-orange-600 text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
                                             >
-                                                Reply & Upload Requirements <ChevronRight size={13} />
-                                            </Link>
+                                                Reply &amp; Upload Requirements <ChevronRight size={13} />
+                                            </button>
                                         </div>
                                     )}
 
@@ -370,12 +484,19 @@ export default function UserAdoptionApplications({
 
                                     {(app.status === 'pending' || app.status === 'needs_info' || app.status === 'scheduled') && (
                                         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                            <Link
-                                                href={`/track?reference=${encodeURIComponent(refCode)}&email=${encodeURIComponent(app.email || '')}`}
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 text-xs font-black text-gray-700 dark:text-gray-200 transition-all"
+                                            <button
+                                                type="button"
+                                                onClick={() => openConversation(app.id)}
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 text-xs font-black text-gray-700 dark:text-gray-200 transition-all cursor-pointer"
                                             >
-                                                <MessageCircle size={13} className="text-paw-orange" /> Open Conversation
-                                            </Link>
+                                                <MessageCircle size={13} className="text-paw-orange" />
+                                                <span>Open Conversation</span>
+                                                {(app.messages?.length ?? 0) > 0 && (
+                                                    <span className="ml-0.5 inline-flex items-center justify-center rounded-full bg-paw-orange/15 px-2 py-0.5 text-[10px] font-black text-paw-orange">
+                                                        {app.messages?.length}
+                                                    </span>
+                                                )}
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -386,6 +507,19 @@ export default function UserAdoptionApplications({
                                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-black text-red-700 uppercase tracking-wider transition-all cursor-pointer"
                                             >
                                                 <Ban size={13} /> Cancel Application
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {(app.status === 'approved' || app.status === 'rejected' || app.status === 'cancelled') && (app.messages?.length ?? 0) > 0 && (
+                                        <div className="pt-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => openConversation(app.id)}
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 text-xs font-black text-gray-700 dark:text-gray-200 transition-all cursor-pointer"
+                                            >
+                                                <MessageCircle size={13} className="text-paw-orange" />
+                                                <span>View Conversation History ({app.messages?.length})</span>
                                             </button>
                                         </div>
                                     )}
@@ -486,6 +620,254 @@ export default function UserAdoptionApplications({
                     />
                 )}
             </AnimatePresence>
+
+            <AnimatePresence>
+                {activeConversationApp && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-end">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setActiveConversationAppId(null)}
+                            className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+                        />
+                        <motion.aside
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+                            aria-label="Coordinator conversation sidebar"
+                            className="relative z-10 flex h-full w-full sm:max-w-lg flex-col bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl"
+                        >
+                            <div className="p-5 pr-14 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveConversationAppId(null)}
+                                    aria-label="Close conversation sidebar"
+                                    className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                >
+                                    <X size={18} />
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-12 w-12 rounded-xl overflow-hidden bg-paw-orange/10 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
+                                        {activeConversationApp.shelter_animal?.photo_url ? (
+                                            <ImageWithFallback
+                                                src={activeConversationApp.shelter_animal.photo_url}
+                                                alt={activeConversationApp.shelter_animal.name}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <Heart size={20} className="text-paw-orange" />
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h2 className="font-fredoka text-base font-bold text-[#0B2340] dark:text-white truncate">
+                                                {activeConversationApp.shelter_animal?.name || 'Adoption Application'}
+                                            </h2>
+                                            <span className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                                ADP-{String(activeConversationApp.id).padStart(5, '0')}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Coordinator Conversation &amp; Requirements
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="pt-2.5">
+                                    {getStatusBadge(activeConversationApp.status, activeConversationApp.rejection_reason)}
+                                </div>
+                            </div>
+
+                            <div
+                                ref={messagesContainerRef}
+                                className="flex-1 overflow-y-auto p-5 space-y-3"
+                            >
+                                {(!activeConversationApp.messages || activeConversationApp.messages.length === 0) ? (
+                                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 p-6 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                                        No messages yet. You can send additional details or upload requirement photos here for the adoption coordinator.
+                                    </div>
+                                ) : (
+                                    activeConversationApp.messages.map((msg) => {
+                                        const isUser = msg.sender_type === 'user';
+                                        const timestamp =
+                                            msg.created_at_formatted ||
+                                            (msg.created_at
+                                                ? new Date(msg.created_at).toLocaleString(undefined, {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                      hour: 'numeric',
+                                                      minute: '2-digit',
+                                                  })
+                                                : null);
+
+                                        return (
+                                            <div
+                                                key={msg.id}
+                                                className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                                            >
+                                                <div
+                                                    className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs space-y-2 border ${
+                                                        isUser
+                                                            ? 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200/80 dark:border-orange-900 text-slate-900 dark:text-orange-50'
+                                                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                        <span>
+                                                            {isUser
+                                                                ? `${msg.sender_name} (You)`
+                                                                : `${msg.sender_name} • Shelter Coordinator`}
+                                                        </span>
+                                                        {timestamp && <span>{timestamp}</span>}
+                                                    </div>
+                                                    {msg.message && (
+                                                        <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">
+                                                            {msg.message}
+                                                        </p>
+                                                    )}
+                                                    {msg.attachments && msg.attachments.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 pt-1">
+                                                            {msg.attachments.map((att, aIdx) => {
+                                                                const isImage =
+                                                                    att.mime?.startsWith('image/') ||
+                                                                    /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+                                                                return isImage ? (
+                                                                    <button
+                                                                        key={aIdx}
+                                                                        type="button"
+                                                                        onClick={() => setLightboxUrl(att.url)}
+                                                                        className="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 w-20 h-20 bg-white cursor-pointer"
+                                                                        title={att.name}
+                                                                    >
+                                                                        <img
+                                                                            src={att.url}
+                                                                            alt={att.name}
+                                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                                        />
+                                                                    </button>
+                                                                ) : (
+                                                                    <a
+                                                                        key={aIdx}
+                                                                        href={att.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:border-paw-orange transition-colors"
+                                                                    >
+                                                                        <FileText size={13} className="text-paw-orange" />
+                                                                        <span className="max-w-[140px] truncate">{att.name}</span>
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {activeConversationApp.status !== 'cancelled' && activeConversationApp.status !== 'rejected' ? (
+                                <form
+                                    onSubmit={handleReplySubmit}
+                                    className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 space-y-3"
+                                >
+                                    {replyError && (
+                                        <p className="text-xs font-bold text-red-600 dark:text-red-400">{replyError}</p>
+                                    )}
+
+                                    <textarea
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        rows={3}
+                                        placeholder="Write additional details or answer the coordinator's questions..."
+                                        className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-paw-orange rounded-2xl outline-none font-medium text-xs text-slate-900 dark:text-white resize-none transition-all"
+                                    />
+
+                                    {replyFiles.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {replyFiles.map((file, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200"
+                                                >
+                                                    <Paperclip size={12} className="text-paw-orange" />
+                                                    <span className="max-w-[160px] truncate">{file.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setReplyFiles((prev) => prev.filter((_, i) => i !== idx))
+                                                        }
+                                                        className="text-slate-400 hover:text-red-500 cursor-pointer"
+                                                        aria-label={`Remove ${file.name}`}
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer transition-all">
+                                            <Paperclip size={14} className="text-paw-orange" />
+                                            <span>Attach (max 5)</span>
+                                            <input
+                                                ref={replyFileInputRef}
+                                                type="file"
+                                                multiple
+                                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                                onChange={(e) => {
+                                                    const selected = Array.from(e.target.files || []).slice(0, 5);
+                                                    setReplyFiles(selected);
+                                                }}
+                                                className="hidden"
+                                            />
+                                        </label>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSendingReply}
+                                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-paw-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                        >
+                                            <Send size={13} />
+                                            {isSendingReply ? 'Sending...' : 'Send Reply'}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+                                    This application is {activeConversationApp.status}. Messaging is closed.
+                                </div>
+                            )}
+                        </motion.aside>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    onClick={() => setLightboxUrl(null)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setLightboxUrl(null)}
+                        className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors cursor-pointer"
+                        aria-label="Close image preview"
+                    >
+                        <X size={20} />
+                    </button>
+                    <img
+                        src={lightboxUrl}
+                        alt="Attachment preview"
+                        className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </DashboardSectionPage>
     );
 }

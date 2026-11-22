@@ -227,3 +227,138 @@ test('applicant can cancel scheduled adoption application from dashboard or trac
 
     expect($guestApp->fresh()->status)->toBe(AdoptionApplicationStatus::Cancelled);
 });
+
+test('authenticated applicant can view messages and reply from dashboard without using track page', function () {
+    Notification::fake();
+    Storage::fake('public');
+
+    PermissionRole::findOrCreate(Role::User->value, 'web');
+    PermissionRole::findOrCreate(Role::Admin->value, 'web');
+
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $user->syncRoles([Role::User]);
+
+    $otherUser = User::factory()->create(['role' => Role::User->value]);
+    $otherUser->syncRoles([Role::User]);
+
+    $admin = User::factory()->create(['role' => Role::Admin->value]);
+    $admin->syncRoles([Role::Admin]);
+
+    $animal = ShelterAnimal::factory()->create();
+    $application = AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $animal->id,
+        'status' => AdoptionApplicationStatus::NeedsInfo,
+        'email' => $user->email,
+        'full_name' => $user->name,
+    ]);
+
+    $application->messages()->create([
+        'user_id' => $admin->id,
+        'sender_type' => 'admin',
+        'sender_name' => $admin->name,
+        'message' => 'Please upload a photo of your pet area.',
+        'attachments' => [],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('account.user.adoption-applications', ['open' => $application->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('user/adoption-applications')
+            ->where('openApplicationId', $application->id)
+            ->where('applications.0.id', $application->id)
+            ->where('applications.0.messages.0.message', 'Please upload a photo of your pet area.')
+        );
+
+    $photo = UploadedFile::fake()->image('pet-area.jpg', 600, 400);
+
+    $this->actingAs($user)
+        ->post(route('account.user.adoption-applications.messages.store', $application), [
+            'message' => 'Here is our indoor pet area.',
+            'attachments' => [$photo],
+        ])
+        ->assertRedirect();
+
+    $application->refresh();
+    expect($application->status)->toBe(AdoptionApplicationStatus::Pending)
+        ->and($application->messages)->toHaveCount(2);
+
+    $reply = $application->messages->last();
+    expect($reply->sender_type)->toBe('user')
+        ->and($reply->message)->toBe('Here is our indoor pet area.')
+        ->and($reply->attachments)->toHaveCount(1);
+
+    Storage::disk('public')->assertExists($reply->attachments[0]['path']);
+
+    Notification::assertSentTo($admin, AdoptionApplicationMessageNotification::class);
+
+    // Another authenticated user cannot reply to someone else's application
+    $this->actingAs($otherUser)
+        ->post(route('account.user.adoption-applications.messages.store', $application), [
+            'message' => 'Unauthorized dashboard reply',
+        ])
+        ->assertForbidden();
+});
+
+test('coordinator notifications link registered applicants to dashboard sidebar instead of track page', function () {
+    Notification::fake();
+
+    PermissionRole::findOrCreate(Role::User->value, 'web');
+    PermissionRole::findOrCreate(Role::Admin->value, 'web');
+
+    $user = User::factory()->create(['role' => Role::User->value]);
+    $user->syncRoles([Role::User]);
+
+    $admin = User::factory()->create(['role' => Role::Admin->value]);
+    $admin->syncRoles([Role::Admin]);
+
+    $animal = ShelterAnimal::factory()->create();
+    $application = AdoptionApplication::factory()->create([
+        'user_id' => $user->id,
+        'shelter_animal_id' => $animal->id,
+        'status' => AdoptionApplicationStatus::Pending,
+        'email' => $user->email,
+        'full_name' => $user->name,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.messages.store', $application), [
+            'message' => 'Could you share a photo of your balcony?',
+            'request_info' => true,
+        ])
+        ->assertRedirect(route('account.admin.adoption-management'));
+
+    $expectedUrl = route('account.user.adoption-applications', ['open' => $application->id]);
+
+    Notification::assertSentTo(
+        $user,
+        AdoptionApplicationStatusUpdatedNotification::class,
+        function (AdoptionApplicationStatusUpdatedNotification $notification) use ($user, $expectedUrl): bool {
+            $mail = $notification->toMail($user);
+            $data = $notification->toArray($user);
+
+            return $mail->actionUrl === $expectedUrl
+                && $data['url'] === $expectedUrl;
+        }
+    );
+
+    $this->actingAs($admin)
+        ->post(route('account.admin.adoption-management.messages.store', $application), [
+            'message' => 'Follow-up question from coordinator.',
+            'request_info' => false,
+        ])
+        ->assertRedirect(route('account.admin.adoption-management'));
+
+    Notification::assertSentTo(
+        $user,
+        AdoptionApplicationMessageNotification::class,
+        function (AdoptionApplicationMessageNotification $notification) use ($user, $expectedUrl): bool {
+            $mail = $notification->toMail($user);
+            $data = $notification->toArray($user);
+
+            return $mail->actionUrl === $expectedUrl
+                && $data['url'] === $expectedUrl;
+        }
+    );
+});
