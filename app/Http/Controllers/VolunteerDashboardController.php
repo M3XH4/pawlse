@@ -225,6 +225,13 @@ class VolunteerDashboardController extends Controller
                 'role' => $application->role,
                 'reference_number' => $application->reference_number,
                 'created_at' => $application->created_at->toDateString(),
+                'submitted_human' => $application->created_at->diffForHumans(),
+                'full_name' => $application->full_name,
+                'email' => $application->email,
+                'mobile' => $application->mobile,
+                'address' => $application->address,
+                'why' => $application->why,
+                'experience' => $application->experience,
                 'rejection_reason' => $application->rejection_reason,
             ] : null,
         ]);

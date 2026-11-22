@@ -4,6 +4,7 @@ import { Gift, Wallet, TrendingUp, History, Info, Filter, ArrowRight, ShieldChec
 import React, { useState } from 'react';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ChartSkeleton } from '@/components/ui/skeleton-presets';
 import { useMounted } from '@/hooks/use-mounted';
 import { toast } from 'sonner';
 
@@ -721,9 +722,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                   {isMounted ? (
                     <React.Suspense
                       fallback={
-                        <div className="h-[300px] w-full flex items-center justify-center text-gray-300 font-bold">
-                          Loading chart...
-                        </div>
+                        <ChartSkeleton className="h-[300px]" heightClass="h-[190px]" />
                       }
                     >
                       <DonationAreaChart
@@ -733,10 +732,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                       />
                     </React.Suspense>
                   ) : (
-                    // 👇 optional placeholder (prevents layout jump)
-                    <div className="h-[300px] w-full flex items-center justify-center text-gray-300 font-bold">
-                      Loading chart...
-                    </div>
+                    <ChartSkeleton className="h-[300px]" heightClass="h-[190px]" />
                   )}
                 </div>
 

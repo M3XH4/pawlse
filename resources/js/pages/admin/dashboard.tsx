@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Deferred, Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     AlertCircle,
@@ -14,6 +14,8 @@ import {
     Users,
 } from 'lucide-react';
 import { AdminCard } from '@/components/admin/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { KpiGridSkeleton, ListTimelineSkeleton } from '@/components/ui/skeleton-presets';
 import { cn } from '@/lib/utils';
 import {
     rescueManagement,
@@ -41,8 +43,8 @@ type RecentActivity = {
 };
 
 type DashboardProps = {
-    stats: Stats;
-    recentActivities: RecentActivity[];
+    stats?: Stats;
+    recentActivities?: RecentActivity[];
 };
 
 export default function AdminDashboard({ stats, recentActivities }: DashboardProps) {
@@ -56,7 +58,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
             href: rescueManagement.url(),
             icon: FileText,
             color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-            pending: stats.rescues.pending,
+            pending: stats?.rescues.pending,
         },
         {
             title: 'Adoption Applications',
@@ -64,7 +66,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
             href: adoptionManagement.url(),
             icon: Heart,
             color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-            pending: stats.adoptions.pending,
+            pending: stats?.adoptions.pending,
         },
         {
             title: 'Verify Donations',
@@ -79,7 +81,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
             href: volunteerManagement.url(),
             icon: UserCheck,
             color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-            pending: stats.volunteers.pending,
+            pending: stats?.volunteers.pending,
         },
         {
             title: 'Event Management',
@@ -142,114 +144,118 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* Rescues Metric */}
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Rescues</span>
-                            <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
-                                <FileText className="h-5 w-5" />
+                <Deferred data="stats" fallback={<KpiGridSkeleton count={4} />}>
+                    {stats && (
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            {/* Rescues Metric */}
+                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Rescues</span>
+                                    <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                        <FileText className="h-5 w-5" />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                        {stats.rescues.total}
+                                    </h3>
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                        {stats.rescues.pending > 0 ? (
+                                            <>
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                    {stats.rescues.pending} Pending
+                                                </span>
+                                                <span className="text-gray-400">requires attention</span>
+                                            </>
+                                        ) : (
+                                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                                All rescues assigned
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
-                                {stats.rescues.total}
-                            </h3>
-                            <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                {stats.rescues.pending > 0 ? (
-                                    <>
-                                        <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                            {stats.rescues.pending} Pending
-                                        </span>
-                                        <span className="text-gray-400">requires attention</span>
-                                    </>
-                                ) : (
-                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                                        All rescues assigned
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Adoptions Metric */}
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Adoptions</span>
-                            <div className="rounded-xl bg-rose-50 p-2.5 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                <Heart className="h-5 w-5" />
+                            {/* Adoptions Metric */}
+                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Adoptions</span>
+                                    <div className="rounded-xl bg-rose-50 p-2.5 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                        <Heart className="h-5 w-5" />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                        {stats.adoptions.total}
+                                    </h3>
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                        {stats.adoptions.pending > 0 ? (
+                                            <>
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                    {stats.adoptions.pending} Pending
+                                                </span>
+                                                <span className="text-gray-400">applications</span>
+                                            </>
+                                        ) : (
+                                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                                No pending adoptions
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
-                                {stats.adoptions.total}
-                            </h3>
-                            <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                {stats.adoptions.pending > 0 ? (
-                                    <>
-                                        <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                            {stats.adoptions.pending} Pending
-                                        </span>
-                                        <span className="text-gray-400">applications</span>
-                                    </>
-                                ) : (
-                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                                        No pending adoptions
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Donations Metric */}
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Donations (PHP)</span>
-                            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
-                                <Gift className="h-5 w-5" />
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white">
-                                ₱{stats.donations.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </h3>
-                            <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                <span className="rounded-full bg-amber-50 px-2 py-0.5 font-bold text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
-                                    {stats.donations.in_kind_count} Verified In-Kind
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Volunteers Metric */}
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Volunteers</span>
-                            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400">
-                                <Users className="h-5 w-5" />
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
-                                {stats.volunteers.active}
-                            </h3>
-                            <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                {stats.volunteers.pending > 0 ? (
-                                    <>
-                                        <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                            {stats.volunteers.pending} Pending
+                            {/* Donations Metric */}
+                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Donations (PHP)</span>
+                                    <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
+                                        <Gift className="h-5 w-5" />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white">
+                                        ₱{stats.donations.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </h3>
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 font-bold text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
+                                            {stats.donations.in_kind_count} Verified In-Kind
                                         </span>
-                                        <span className="text-gray-400 font-medium">applications</span>
-                                    </>
-                                ) : (
-                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                                        No pending volunteers
-                                    </span>
-                                )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Volunteers Metric */}
+                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Volunteers</span>
+                                    <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400">
+                                        <Users className="h-5 w-5" />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                        {stats.volunteers.active}
+                                    </h3>
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                        {stats.volunteers.pending > 0 ? (
+                                            <>
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                    {stats.volunteers.pending} Pending
+                                                </span>
+                                                <span className="text-gray-400 font-medium">applications</span>
+                                            </>
+                                        ) : (
+                                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                                No pending volunteers
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    )}
+                </Deferred>
 
                 {/* Main Content Layout */}
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -317,47 +323,49 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             </div>
                             <hr className="my-4 border-gray-100 dark:border-slate-800" />
                             
-                            {recentActivities.length === 0 ? (
-                                <div className="py-12 text-center text-sm text-gray-500">
-                                    No activity logged in the database yet.
-                                </div>
-                            ) : (
-                                <div className="flow-root">
-                                    <ul className="relative">
-                                        {recentActivities.slice(0, 5).map((activity, idx, arr) => {
-                                            const isLast = idx === arr.length - 1;
+                            <Deferred data="recentActivities" fallback={<ListTimelineSkeleton rows={5} className="border-0 shadow-none" />}>
+                                {!recentActivities || recentActivities.length === 0 ? (
+                                    <div className="py-12 text-center text-sm text-gray-500">
+                                        No activity logged in the database yet.
+                                    </div>
+                                ) : (
+                                    <div className="flow-root">
+                                        <ul className="relative">
+                                            {recentActivities.slice(0, 5).map((activity, idx, arr) => {
+                                                const isLast = idx === arr.length - 1;
 
-                                            return (
-                                                <li key={activity.id} className="relative">
-                                                    {!isLast && (
-                                                        <span
-                                                            className="absolute left-[17px] top-[34px] -bottom-[8px] w-0.5 -translate-x-1/2 bg-gray-100 dark:bg-slate-800"
-                                                            aria-hidden="true"
-                                                        />
-                                                    )}
-                                                    <div className={cn('relative flex items-center space-x-3.5', !isLast && 'pb-6')}>
-                                                        <div className="relative z-10 flex shrink-0">
-                                                            <span className={cn('flex h-8.5 w-8.5 items-center justify-center rounded-xl ring-4 ring-white dark:ring-slate-900 shadow-xs', getActivityColor(activity.type))}>
-                                                                {getActivityIcon(activity.type)}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex min-w-0 flex-1 items-center justify-between space-x-4">
-                                                            <div className="min-w-0">
-                                                                <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                                    {activity.description}
-                                                                </p>
+                                                return (
+                                                    <li key={activity.id} className="relative">
+                                                        {!isLast && (
+                                                            <span
+                                                                className="absolute left-[17px] top-[34px] -bottom-[8px] w-0.5 -translate-x-1/2 bg-gray-100 dark:bg-slate-800"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+                                                        <div className={cn('relative flex items-center space-x-3.5', !isLast && 'pb-6')}>
+                                                            <div className="relative z-10 flex shrink-0">
+                                                                <span className={cn('flex h-8.5 w-8.5 items-center justify-center rounded-xl ring-4 ring-white dark:ring-slate-900 shadow-xs', getActivityColor(activity.type))}>
+                                                                    {getActivityIcon(activity.type)}
+                                                                </span>
                                                             </div>
-                                                            <div className="shrink-0 whitespace-nowrap text-right text-xs text-gray-400 dark:text-gray-500">
-                                                                <time>{activity.time}</time>
+                                                            <div className="flex min-w-0 flex-1 items-center justify-between space-x-4">
+                                                                <div className="min-w-0">
+                                                                    <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                                        {activity.description}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="shrink-0 whitespace-nowrap text-right text-xs text-gray-400 dark:text-gray-500">
+                                                                    <time>{activity.time}</time>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            )}
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                )}
+                            </Deferred>
                         </div>
                     </div>
 
@@ -375,58 +383,77 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             </div>
                             <hr className="my-4 border-gray-100 dark:border-slate-800" />
                             
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="flex items-center justify-between text-xs font-semibold">
-                                        <span className="text-gray-600 dark:text-gray-400">Rescue Status: Assigned / Total</span>
-                                        <span className="text-emerald-600 dark:text-emerald-400">
-                                            {stats.rescues.total - stats.rescues.pending} / {stats.rescues.total}
-                                        </span>
+                            <Deferred
+                                data="stats"
+                                fallback={
+                                    <div className="space-y-4">
+                                        {Array.from({ length: 3 }).map((_, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <div className="flex justify-between">
+                                                    <Skeleton className="h-3 w-36" />
+                                                    <Skeleton className="h-3 w-12" />
+                                                </div>
+                                                <Skeleton className="h-2 w-full rounded-full" />
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
-                                        <div
-                                            className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
-                                            style={{
-                                                width: `${stats.rescues.total > 0 ? ((stats.rescues.total - stats.rescues.pending) / stats.rescues.total) * 100 : 0}%`,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
+                                }
+                            >
+                                {stats && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="flex items-center justify-between text-xs font-semibold">
+                                                <span className="text-gray-600 dark:text-gray-400">Rescue Status: Assigned / Total</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400">
+                                                    {stats.rescues.total - stats.rescues.pending} / {stats.rescues.total}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                                <div
+                                                    className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
+                                                    style={{
+                                                        width: `${stats.rescues.total > 0 ? ((stats.rescues.total - stats.rescues.pending) / stats.rescues.total) * 100 : 0}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
 
-                                <div>
-                                    <div className="flex items-center justify-between text-xs font-semibold">
-                                        <span className="text-gray-600 dark:text-gray-400">Adoptions: Completed / Applied</span>
-                                        <span className="text-rose-600 dark:text-rose-400">
-                                            {stats.adoptions.total - stats.adoptions.pending} / {stats.adoptions.total}
-                                        </span>
-                                    </div>
-                                    <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
-                                        <div
-                                            className="h-2 rounded-full bg-gradient-to-r from-rose-400 to-rose-600"
-                                            style={{
-                                                width: `${stats.adoptions.total > 0 ? ((stats.adoptions.total - stats.adoptions.pending) / stats.adoptions.total) * 100 : 0}%`,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
+                                        <div>
+                                            <div className="flex items-center justify-between text-xs font-semibold">
+                                                <span className="text-gray-600 dark:text-gray-400">Adoptions: Completed / Applied</span>
+                                                <span className="text-rose-600 dark:text-rose-400">
+                                                    {stats.adoptions.total - stats.adoptions.pending} / {stats.adoptions.total}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                                <div
+                                                    className="h-2 rounded-full bg-gradient-to-r from-rose-400 to-rose-600"
+                                                    style={{
+                                                        width: `${stats.adoptions.total > 0 ? ((stats.adoptions.total - stats.adoptions.pending) / stats.adoptions.total) * 100 : 0}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
 
-                                <div>
-                                    <div className="flex items-center justify-between text-xs font-semibold">
-                                        <span className="text-gray-600 dark:text-gray-400">Volunteers: Active / Total Applied</span>
-                                        <span className="text-blue-600 dark:text-blue-400">
-                                            {stats.volunteers.active} / {stats.volunteers.active + stats.volunteers.pending}
-                                        </span>
+                                        <div>
+                                            <div className="flex items-center justify-between text-xs font-semibold">
+                                                <span className="text-gray-600 dark:text-gray-400">Volunteers: Active / Total Applied</span>
+                                                <span className="text-blue-600 dark:text-blue-400">
+                                                    {stats.volunteers.active} / {stats.volunteers.active + stats.volunteers.pending}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
+                                                <div
+                                                    className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                                                    style={{
+                                                        width: `${(stats.volunteers.active + stats.volunteers.pending) > 0 ? (stats.volunteers.active / (stats.volunteers.active + stats.volunteers.pending)) * 100 : 0}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 dark:bg-slate-850">
-                                        <div
-                                            className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
-                                            style={{
-                                                width: `${(stats.volunteers.active + stats.volunteers.pending) > 0 ? (stats.volunteers.active / (stats.volunteers.active + stats.volunteers.pending)) * 100 : 0}%`,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                )}
+                            </Deferred>
                         </div>
 
                         {/* Quick Tips or Reminders */}

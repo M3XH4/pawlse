@@ -78,11 +78,13 @@ test('admin dashboard overview page works and returns correct statistics and act
     $response->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/dashboard')
-            ->has('stats')
-            ->has('recentActivities')
-            ->where('stats.rescues.total', 5)
-            ->where('stats.rescues.pending', 3)
-            ->where('stats.adoptions.total', 1)
-            ->where('stats.donations.total_amount', 500)
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('stats')
+                ->has('recentActivities')
+                ->where('stats.rescues.total', 5)
+                ->where('stats.rescues.pending', 3)
+                ->where('stats.adoptions.total', 1)
+                ->where('stats.donations.total_amount', 500)
+            )
         );
 });

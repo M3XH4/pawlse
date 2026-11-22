@@ -3,6 +3,8 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { TableSkeleton } from '@/components/ui/skeleton-presets';
+import { useInertiaNavigating } from '@/hooks/use-inertia-loading';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
@@ -217,6 +219,7 @@ interface Props {
 }
 
 export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList }: Props) {
+    const isFiltering = useInertiaNavigating({ delayMs: 80, ignorePartial: false });
     // Search and filter state
     const [search, setSearch] = useState(filters.search || '');
     const [speciesFilter, setSpeciesFilter] = useState(filters.species || 'all');
@@ -665,6 +668,9 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
             </div>
 
             {/* MASTER RECORDS TABLE */}
+            {isFiltering ? (
+                <TableSkeleton rows={8} columns={8} />
+            ) : (
             <div className="bg-white dark:bg-[#0B1527] rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
@@ -1044,6 +1050,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     </div>
                 )}
             </div>
+            )}
 
             {/* FULL RECORD SIDE PANEL (SLIDE-OVER SHEET) */}
             {selectedAnimal && (

@@ -9,7 +9,9 @@ import {
     notificationsHrefByTheme,
 } from '@/components/dashboard/nav-items';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
+import { DashboardRouteSkeleton } from '@/components/ui/skeleton-presets';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
+import { useInertiaNavigationState } from '@/hooks/use-inertia-loading';
 import { dashboardThemes } from '@/lib/dashboard-theme';
 import type { DashboardTheme } from '@/types/dashboard';
 
@@ -28,6 +30,10 @@ export default function DashboardLayout({
     const page = usePage();
     const isMaintenanceMode = Boolean(page.props.isMaintenanceMode);
     const { markTabRead } = useDashboardNotifications();
+    const { isNavigating, targetPath } = useInertiaNavigationState({
+        delayMs: 120,
+        ignorePartial: true,
+    });
 
     // Automatically mark all unread notifications matching the visited tab as read
     useEffect(() => {
@@ -138,7 +144,9 @@ export default function DashboardLayout({
                             </div>
                         </div>
                     )}
-                    <main className="flex-1 px-4 pb-8 pt-3 sm:px-6 lg:px-8">{children}</main>
+                    <main className="flex-1 px-4 pb-8 pt-3 sm:px-6 lg:px-8">
+                        {isNavigating ? <DashboardRouteSkeleton targetPath={targetPath} /> : children}
+                    </main>
                 </div>
             </div>
         </DashboardContext.Provider>

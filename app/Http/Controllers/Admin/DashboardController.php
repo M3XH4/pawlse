@@ -21,7 +21,19 @@ class DashboardController extends Controller
      */
     public function index(Request $request): Response
     {
-        // 1. Gather Key Metrics
+        return Inertia::render('admin/dashboard', [
+            'stats' => Inertia::defer(fn (): array => $this->getDashboardStats()),
+            'recentActivities' => Inertia::defer(fn (): array => $this->getRecentActivities()),
+        ]);
+    }
+
+    /**
+     * Gather key admin dashboard metrics.
+     *
+     * @return array<string, mixed>
+     */
+    private function getDashboardStats(): array
+    {
         $totalRescues = PetReport::count();
         $pendingRescues = PetReport::where('status', 'pending')->count();
         $totalAdoptions = AdoptionApplication::count();
@@ -38,7 +50,7 @@ class DashboardController extends Controller
         $activeVolunteers = User::where('role', Role::Volunteer->value)->count();
         $pendingVolunteers = VolunteerApplication::where('status', 'pending')->count();
 
-        $stats = [
+        return [
             'rescues' => [
                 'total' => $totalRescues,
                 'pending' => $pendingRescues,
@@ -56,8 +68,15 @@ class DashboardController extends Controller
                 'pending' => $pendingVolunteers,
             ],
         ];
+    }
 
-        // 2. Fetch recent records to build a chronological timeline
+    /**
+     * Fetch recent records to build a chronological timeline.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getRecentActivities(): array
+    {
         $recentActivities = [];
 
         // Recent Rescues
@@ -142,12 +161,7 @@ class DashboardController extends Controller
         });
 
         // Limit to 8 activities
-        $recentActivities = array_slice($recentActivities, 0, 8);
-
-        return Inertia::render('admin/dashboard', [
-            'stats' => $stats,
-            'recentActivities' => $recentActivities,
-        ]);
+        return array_slice($recentActivities, 0, 8);
     }
 
     private function formatStatusLabel(?string $status): string

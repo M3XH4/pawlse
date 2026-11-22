@@ -5,6 +5,7 @@ import {
     AlertCircle, Activity, Power, RefreshCw, AlertTriangle, ShieldCheck, Check
 } from 'lucide-react';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 interface PredictionLog {
@@ -480,7 +481,20 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                             </button>
                         </div>
 
-                        {health?.is_healthy ? (
+                        {checkingHealth ? (
+                            <div className="space-y-3" aria-busy="true" aria-label="Checking AI service health">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-2.5 w-2.5 rounded-full" />
+                                    <Skeleton className="h-3.5 w-28" />
+                                    <Skeleton className="ml-auto h-3 w-12" />
+                                </div>
+                                <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 dark:border-slate-800 dark:bg-slate-850/40">
+                                    <Skeleton className="h-3 w-full" />
+                                    <Skeleton className="h-3 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            </div>
+                        ) : health?.is_healthy ? (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <span className="relative flex h-2.5 w-2.5">

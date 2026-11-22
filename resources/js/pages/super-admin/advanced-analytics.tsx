@@ -47,6 +47,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { cn } from '@/lib/utils';
+import { ChartSkeleton, KpiGridSkeleton } from '@/components/ui/skeleton-presets';
 import { Spinner } from '@/components/ui/spinner';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -514,12 +515,8 @@ export default function SuperAdminAdvancedAnalytics() {
             {/* ── Loading Skeleton ── */}
             {loading && !data && (
                 <div className="space-y-6">
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-32 animate-pulse rounded-2xl bg-gray-100 dark:bg-slate-800" />
-                        ))}
-                    </div>
-                    <div className="h-80 animate-pulse rounded-2xl bg-gray-100 dark:bg-slate-800" />
+                    <KpiGridSkeleton count={4} />
+                    <ChartSkeleton heightClass="h-64" />
                 </div>
             )}
 

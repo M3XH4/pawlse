@@ -8,6 +8,8 @@ import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { formatPhotoUrl } from '@/lib/utils';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
+import { CardGridSkeleton } from '@/components/ui/skeleton-presets';
+import { useInertiaNavigating } from '@/hooks/use-inertia-loading';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -58,6 +60,7 @@ interface MissingPetsPageProps {
 }
 
 export default function MissingPetsPage({ reports, filters }: MissingPetsPageProps) {
+  const isFiltering = useInertiaNavigating({ delayMs: 80, ignorePartial: false });
   const { auth, flash } = usePage<{
     auth?: {
       user?: {
@@ -509,6 +512,9 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
           </div>
 
           {/* Grid of pets */}
+          {isFiltering ? (
+            <CardGridSkeleton count={6} columnsClass="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {mappedReports.length === 0 ? (
               <div className="col-span-full bg-white rounded-[40px] p-16 text-center border-2 border-gray-100 shadow-xl">
@@ -528,6 +534,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
               ))
             )}
           </div>
+          )}
 
           {/* Pagination */}
           {reports?.last_page > 1 && (

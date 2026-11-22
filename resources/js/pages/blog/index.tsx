@@ -13,6 +13,8 @@ import {
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { CardGridSkeleton } from '@/components/ui/skeleton-presets';
+import { useInertiaNavigating } from '@/hooks/use-inertia-loading';
 import { toast } from 'sonner';
 
 interface BlogPostItem {
@@ -184,6 +186,7 @@ export default function BlogIndex({
     filters,
 }: BlogIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
+    const isFiltering = useInertiaNavigating({ delayMs: 80, ignorePartial: false });
     const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
     const [shareModalPost, setShareModalPost] = useState<BlogPostItem | null>(null);
     const [copiedUrl, setCopiedUrl] = useState(false);
@@ -668,7 +671,9 @@ export default function BlogIndex({
                         </div>
                     </div>
 
-                    {posts.data.length === 0 ? (
+                    {isFiltering ? (
+                        <CardGridSkeleton count={6} columnsClass="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" />
+                    ) : posts.data.length === 0 ? (
                         <div className="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center border border-gray-100 dark:border-gray-800 shadow-sm max-w-lg mx-auto">
                             <AlertCircle size={48} className="mx-auto text-paw-orange mb-4" />
                             <h3 className="text-xl font-black text-paw-navy dark:text-white">No articles found</h3>
