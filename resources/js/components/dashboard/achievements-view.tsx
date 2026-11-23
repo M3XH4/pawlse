@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import {
@@ -307,6 +307,7 @@ export function AchievementsView({
         title: string;
         subtitle: string;
     } | null>(null);
+    const hasCelebratedRef = useRef(false);
 
     const fireAchievementToast = useCallback(
         (options: {
@@ -352,13 +353,23 @@ export function AchievementsView({
                         </button>
                     </div>
                 ),
-                { duration: 6000 },
+                {
+                    id: `pawlse-achievement-${audience}`,
+                    duration: 6000,
+                    unstyled: true,
+                    className: '!bg-transparent !border-0 !p-0 !shadow-none !w-auto',
+                },
             );
         },
-        [],
+        [audience],
     );
 
     useEffect(() => {
+        if (hasCelebratedRef.current) {
+            return;
+        }
+        hasCelebratedRef.current = true;
+
         const storageKey = `pawlse-rank-${audience}-${userId}`;
         let previousRank: string | null = null;
 

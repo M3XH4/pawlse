@@ -35,7 +35,7 @@ test('all volunteer dashboard pages are reachable for volunteers', function (str
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component($component));
 })->with([
-    ['account.volunteer.index', 'volunteer/profile-information'],
+    ['account.volunteer.index', 'volunteer/dashboard'],
     ['account.volunteer.profile', 'volunteer/profile-information'],
     ['account.volunteer.status', 'volunteer/volunteer-status'],
     ['account.volunteer.apply-foster.show', 'volunteer/apply-foster'],

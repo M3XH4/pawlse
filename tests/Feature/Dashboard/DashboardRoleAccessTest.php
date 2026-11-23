@@ -58,7 +58,7 @@ test('role dashboards share notifications and chrome props', function (string $s
         );
 })->with([
     ['user', 'account.user.index', 'user/dashboard', 'user'],
-    ['volunteer', 'account.volunteer.index', 'volunteer/profile-information', 'volunteer'],
+    ['volunteer', 'account.volunteer.index', 'volunteer/dashboard', 'volunteer'],
     ['admin', 'account.admin.dashboard', 'admin/dashboard', 'admin'],
     ['superAdmin', 'account.super-admin.dashboard', 'super-admin/dashboard', 'super-admin'],
 ]);

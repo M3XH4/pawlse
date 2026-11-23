@@ -76,7 +76,7 @@ export function DashboardSidebar({
     }, []);
 
     const isNavItemActive = (match: string) =>
-        match === '/account/user'
+        match === '/account/user' || match === '/account/volunteer'
             ? currentUrl === match
             : currentUrl === match || currentUrl.startsWith(`${match}/`);
 

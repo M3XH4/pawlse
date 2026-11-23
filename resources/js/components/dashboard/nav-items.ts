@@ -107,6 +107,7 @@ export const userNavItems: DashboardNavItem[] = [
 ];
 
 export const volunteerNavItems: DashboardNavItem[] = [
+    navItem('Home', '/account/volunteer', Home),
     navItem('Profile Information', profile.url(), User),
     navItem('Volunteer Status', status.url(), Zap),
     navItem('Assigned Tasks', assignedTasks.url(), ClipboardList),

@@ -182,7 +182,7 @@ Route::prefix('account/user')->name('account.user.')->middleware($userDashboardM
 });
 
 Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volunteerDashboardMiddleware)->group(function () {
-    Route::get('/', [VolunteerDashboardController::class, 'profile'])->name('index');
+    Route::get('/', [VolunteerDashboardController::class, 'index'])->name('index');
     Route::get('profile', [VolunteerDashboardController::class, 'profile'])->name('profile');
     Route::post('profile', [VolunteerDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('status', [VolunteerDashboardController::class, 'status'])->name('status');
