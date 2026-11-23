@@ -25,6 +25,8 @@ import {
     ShelterVisitModal,
     type ShelterVisitSettings,
 } from '@/components/adoption/shelter-visit-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface ShelterVisitItem {
     id: number;
@@ -59,6 +61,7 @@ export default function UserShelterVisits({
     visits = [],
     shelterVisitSettings,
 }: UserShelterVisitsProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
     const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -84,19 +87,23 @@ export default function UserShelterVisits({
 
     const handleCancelVisit = (visit: ShelterVisitItem) => {
         const ref = formatRef(visit.id);
-        if (!window.confirm(`Are you sure you want to cancel your shelter visit request (${ref})?`)) {
-            return;
-        }
-
-        setCancellingId(visit.id);
-        router.post(
-            `/account/user/shelter-visits/${visit.id}/cancel`,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setCancellingId(null),
+        openConfirmModal({
+            title: 'Cancel Shelter Visit Request',
+            description: `Are you sure you want to cancel your shelter visit request (${ref})?`,
+            confirmText: 'Cancel Visit',
+            variant: 'danger',
+            onConfirm: () => {
+                setCancellingId(visit.id);
+                router.post(
+                    `/account/user/shelter-visits/${visit.id}/cancel`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onFinish: () => setCancellingId(null),
+                    },
+                );
             },
-        );
+        });
     };
 
     const getStatusBadge = (status: ShelterVisitItem['status']) => {
@@ -443,6 +450,8 @@ export default function UserShelterVisits({
                 onClose={() => setIsVisitModalOpen(false)}
                 settings={shelterVisitSettings}
             />
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

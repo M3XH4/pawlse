@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { forwardGeocode } from '@/lib/geocoding';
 
 export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
@@ -78,6 +80,7 @@ interface PartnerManagementProps {
 }
 
 export default function PartnerManagement({ partners, stats, filters }: PartnerManagementProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [search, setSearch] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
@@ -304,12 +307,18 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     };
 
     const handleDelete = (partner: PartnerRecord) => {
-        if (confirm(`Are you sure you want to archive "${partner.name}"?`)) {
-            router.delete(`/account/super-admin/partners/${partner.id}`, {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Partner "${partner.name}" archived.`),
-            });
-        }
+        openConfirmModal({
+            title: 'Archive Partner',
+            description: `Are you sure you want to archive "${partner.name}"?`,
+            confirmText: 'Archive Partner',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/partners/${partner.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => toast.success(`Partner "${partner.name}" archived.`),
+                });
+            },
+        });
     };
 
     const handleRestore = (partner: PartnerRecord) => {
@@ -1235,6 +1244,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

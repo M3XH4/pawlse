@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface UserRecord {
     id: number;
@@ -84,6 +86,7 @@ export default function UserManagement({
     permission_catalog = [],
     stats
 }: UserManagementProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     // Active Tab: 'users' | 'roles-permissions'
     const [activeTab, setActiveTab] = useState<'users' | 'roles-permissions'>(
         filters.tab === 'roles-permissions' ? 'roles-permissions' : 'users'
@@ -296,12 +299,18 @@ export default function UserManagement({
     };
 
     const handleDeleteUser = (user: UserRecord) => {
-        if (confirm(`Are you sure you want to archive user ${user.name}?`)) {
-            router.delete(`/account/super-admin/user-management/${user.id}`, {
-                onSuccess: () => toast.success('User archived successfully.'),
-                onError: (err: any) => toast.error(err.error || 'Failed to archive user.')
-            });
-        }
+        openConfirmModal({
+            title: 'Archive User',
+            description: `Are you sure you want to archive user ${user.name}?`,
+            confirmText: 'Archive User',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/user-management/${user.id}`, {
+                    onSuccess: () => toast.success('User archived successfully.'),
+                    onError: (err: any) => toast.error(err.error || 'Failed to archive user.')
+                });
+            },
+        });
     };
 
     // Role Permission Matrix Handlers
@@ -368,12 +377,18 @@ export default function UserManagement({
     };
 
     const handleDeleteCustomRole = (roleName: string) => {
-        if (confirm(`Are you sure you want to delete role '${roleName}'?`)) {
-            router.delete(`/account/super-admin/roles/${roleName}`, {
-                onSuccess: () => toast.success(`Role '${roleName}' deleted successfully.`),
-                onError: (err: any) => toast.error(err.error || 'Failed to delete role.')
-            });
-        }
+        openConfirmModal({
+            title: 'Delete Custom Role',
+            description: `Are you sure you want to delete role '${roleName}'?`,
+            confirmText: 'Delete Role',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/roles/${roleName}`, {
+                    onSuccess: () => toast.success(`Role '${roleName}' deleted successfully.`),
+                    onError: (err: any) => toast.error(err.error || 'Failed to delete role.')
+                });
+            },
+        });
     };
 
     const getRoleBadgeClasses = (roleName: string) => {
@@ -1380,6 +1395,8 @@ export default function UserManagement({
                     </div>
                 )}
             </AnimatePresence>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

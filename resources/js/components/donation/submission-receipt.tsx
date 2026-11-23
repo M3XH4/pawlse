@@ -1,6 +1,8 @@
 import { CheckCircle2, X, Printer, Mail, ShieldCheck, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface SubmissionReceiptProps {
     isOpen: boolean;
@@ -41,6 +43,8 @@ export function SubmissionReceipt({
     purpose,
     issuedAt,
 }: SubmissionReceiptProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+
     // eslint-disable-next-line curly
     if (!isOpen) return null;
 
@@ -135,7 +139,13 @@ export function SubmissionReceipt({
     const handlePrintPdf = () => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
-            alert('Pop-up blocker is enabled. Please allow pop-ups to print the receipt.');
+            openConfirmModal({
+                title: 'Pop-up Blocker Enabled',
+                description: 'Pop-up blocker is enabled. Please allow pop-ups to print the receipt.',
+                confirmText: 'Got it',
+                variant: 'info',
+                hideCancel: true,
+            });
             return;
         }
 
@@ -632,6 +642,8 @@ export function SubmissionReceipt({
                     </div>
                 </div>
             </motion.div>
+
+            <ConfirmationModal {...confirmModalProps} />
         </motion.div>
     );
 }

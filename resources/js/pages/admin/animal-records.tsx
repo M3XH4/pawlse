@@ -9,6 +9,8 @@ import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { PhoneInput } from '@/components/phone-input';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import {
     PawPrint,
     Search,
@@ -220,6 +222,7 @@ interface Props {
 }
 
 export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList, basePath = '/account/admin/animal-records' }: Props) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     // Search and filter state
     const [search, setSearch] = useState(filters.search || '');
     const [speciesFilter, setSpeciesFilter] = useState(filters.species || 'all');
@@ -1471,15 +1474,21 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                                         {isActive && (
                                                                             <button
                                                                                 onClick={() => {
-                                                                                    if (confirm(`Mark "${cond.title}" as resolved?`)) {
-                                                                                        router.put(`${basePath}/medical/${cond.id}`, {
-                                                                                            status: 'resolved',
-                                                                                            update_animal_status: selectedAnimal.status === 'treatment' ? 'available' : undefined,
-                                                                                        }, {
-                                                                                            onSuccess: () => toast.success(`"${cond.title}" marked as resolved!`),
-                                                                                            onError: () => toast.error('Failed to update status.'),
-                                                                                        });
-                                                                                    }
+                                                                                    openConfirmModal({
+                                                                                        title: 'Mark Condition Resolved',
+                                                                                        description: `Mark "${cond.title}" as resolved?`,
+                                                                                        confirmText: 'Mark Resolved',
+                                                                                        variant: 'success',
+                                                                                        onConfirm: () => {
+                                                                                            router.put(`${basePath}/medical/${cond.id}`, {
+                                                                                                status: 'resolved',
+                                                                                                update_animal_status: selectedAnimal.status === 'treatment' ? 'available' : undefined,
+                                                                                            }, {
+                                                                                                onSuccess: () => toast.success(`"${cond.title}" marked as resolved!`),
+                                                                                                onError: () => toast.error('Failed to update status.'),
+                                                                                            });
+                                                                                        },
+                                                                                    });
                                                                                 }}
                                                                                 className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
                                                                                 title="Mark condition as resolved / cured"
@@ -1490,11 +1499,17 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
                                                                         <button
                                                                             onClick={() => {
-                                                                                if (confirm(`Remove this record "${cond.title}"?`)) {
-                                                                                    router.delete(`${basePath}/medical/${cond.id}`, {
-                                                                                        onSuccess: () => toast.success('Record removed'),
-                                                                                    });
-                                                                                }
+                                                                                openConfirmModal({
+                                                                                    title: 'Remove Medical Record',
+                                                                                    description: `Remove this record "${cond.title}"?`,
+                                                                                    confirmText: 'Remove',
+                                                                                    variant: 'danger',
+                                                                                    onConfirm: () => {
+                                                                                        router.delete(`${basePath}/medical/${cond.id}`, {
+                                                                                            onSuccess: () => toast.success('Record removed'),
+                                                                                        });
+                                                                                    },
+                                                                                });
                                                                             }}
                                                                             className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                                                             title="Delete record"
@@ -1556,11 +1571,17 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
                                                             <button
                                                                 onClick={() => {
-                                                                    if (confirm(`Remove vaccine record "${vac.title}"?`)) {
-                                                                        router.delete(`${basePath}/medical/${vac.id}`, {
-                                                                            onSuccess: () => toast.success('Medical record removed'),
-                                                                        });
-                                                                    }
+                                                                    openConfirmModal({
+                                                                        title: 'Remove Vaccine Record',
+                                                                        description: `Remove vaccine record "${vac.title}"?`,
+                                                                        confirmText: 'Remove',
+                                                                        variant: 'danger',
+                                                                        onConfirm: () => {
+                                                                            router.delete(`${basePath}/medical/${vac.id}`, {
+                                                                                onSuccess: () => toast.success('Medical record removed'),
+                                                                            });
+                                                                        },
+                                                                    });
                                                                 }}
                                                                 className="text-gray-400 hover:text-rose-600 p-1"
                                                                 title="Delete record"
@@ -1607,11 +1628,17 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
                                                             <button
                                                                 onClick={() => {
-                                                                    if (confirm(`Remove medical record "${med.title}"?`)) {
-                                                                        router.delete(`${basePath}/medical/${med.id}`, {
-                                                                            onSuccess: () => toast.success('Medical record removed'),
-                                                                        });
-                                                                    }
+                                                                    openConfirmModal({
+                                                                        title: 'Remove Medical Record',
+                                                                        description: `Remove medical record "${med.title}"?`,
+                                                                        confirmText: 'Remove',
+                                                                        variant: 'danger',
+                                                                        onConfirm: () => {
+                                                                            router.delete(`${basePath}/medical/${med.id}`, {
+                                                                                onSuccess: () => toast.success('Medical record removed'),
+                                                                            });
+                                                                        },
+                                                                    });
                                                                 }}
                                                                 className="text-gray-400 hover:text-rose-600 p-1"
                                                                 title="Delete record"
@@ -2038,6 +2065,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     />
                 </div>
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </AdminPageShell>
     );
 }

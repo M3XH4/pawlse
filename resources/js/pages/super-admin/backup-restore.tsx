@@ -9,6 +9,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface BackupRecord {
     id: number;
@@ -39,6 +41,7 @@ interface BackupRestoreProps {
 }
 
 export default function BackupRestore({ backups, settings }: BackupRestoreProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [runningBackup, setRunningBackup] = useState(false);
     const [restoringBackupId, setRestoringBackupId] = useState<number | null>(null);
 
@@ -64,29 +67,41 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
     };
 
     const triggerRestore = (backup: BackupRecord) => {
-        if (confirm(`CRITICAL WARNING: Are you sure you want to restore the database to backup "${backup.filename}"? Current unsaved changes will be overwritten.`)) {
-            setRestoringBackupId(backup.id);
-            toast.info('Restoring database schema and data...');
-            router.post(`/account/super-admin/backup-restore/${backup.id}/restore`, {}, {
-                onSuccess: () => {
-                    toast.success('Database restored successfully.');
-                    setRestoringBackupId(null);
-                },
-                onError: (err: any) => {
-                    toast.error(err.error || 'Restoration failed.');
-                    setRestoringBackupId(null);
-                }
-            });
-        }
+        openConfirmModal({
+            title: 'Restore Database Backup',
+            description: `CRITICAL WARNING: Are you sure you want to restore the database to backup "${backup.filename}"? Current unsaved changes will be overwritten.`,
+            confirmText: 'Restore Backup',
+            variant: 'warning',
+            onConfirm: () => {
+                setRestoringBackupId(backup.id);
+                toast.info('Restoring database schema and data...');
+                router.post(`/account/super-admin/backup-restore/${backup.id}/restore`, {}, {
+                    onSuccess: () => {
+                        toast.success('Database restored successfully.');
+                        setRestoringBackupId(null);
+                    },
+                    onError: (err: any) => {
+                        toast.error(err.error || 'Restoration failed.');
+                        setRestoringBackupId(null);
+                    }
+                });
+            },
+        });
     };
 
     const triggerDelete = (backup: BackupRecord) => {
-        if (confirm(`Are you sure you want to delete backup file "${backup.filename}"?`)) {
-            router.delete(`/account/super-admin/backup-restore/${backup.id}`, {
-                onSuccess: () => toast.success('Backup file deleted.'),
-                onError: () => toast.error('Failed to delete backup.')
-            });
-        }
+        openConfirmModal({
+            title: 'Delete Backup File',
+            description: `Are you sure you want to delete backup file "${backup.filename}"?`,
+            confirmText: 'Delete Backup',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/backup-restore/${backup.id}`, {
+                    onSuccess: () => toast.success('Backup file deleted.'),
+                    onError: () => toast.error('Failed to delete backup.')
+                });
+            },
+        });
     };
 
     const handleSaveSettings = (e: React.FormEvent) => {
@@ -287,6 +302,8 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

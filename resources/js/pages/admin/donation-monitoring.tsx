@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { SustainabilityAdminTab } from '@/components/care-sustainability/sustainability-admin-tab';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface DonationRecord {
@@ -225,6 +227,7 @@ export default function DonationMonitoring({
     pendingAmountEditRequests = [],
     basePath = '/account/admin/donation-monitoring',
 }: DonationMonitoringProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs' | 'sustainability'>('donations');
     
     // Filters State
@@ -585,13 +588,19 @@ export default function DonationMonitoring({
     };
 
     const deleteInventoryItem = (item: InventoryItemData) => {
-        if (confirm(`Are you sure you want to delete "${item.name}" and all its batch history?`)) {
-            router.delete(`${basePath}/inventory/${item.id}`, {
-                onSuccess: () => {
-                    toast.success(`"${item.name}" removed from inventory.`);
-                }
-            });
-        }
+        openConfirmModal({
+            title: 'Delete Inventory Item',
+            description: `Are you sure you want to delete "${item.name}" and all its batch history?`,
+            confirmText: 'Delete Item',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`${basePath}/inventory/${item.id}`, {
+                    onSuccess: () => {
+                        toast.success(`"${item.name}" removed from inventory.`);
+                    }
+                });
+            },
+        });
     };
 
     return (
@@ -3001,6 +3010,8 @@ export default function DonationMonitoring({
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </AdminPageShell>
     );
 }

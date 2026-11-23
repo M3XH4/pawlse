@@ -10,6 +10,8 @@ import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/sect
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface CommunityHonorRecord {
     id: number;
@@ -70,6 +72,7 @@ export default function CommunityHonorManagement({
     recognitionMetrics, 
     filters 
 }: CommunityHonorProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [search, setSearch] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -194,12 +197,18 @@ export default function CommunityHonorManagement({
     };
 
     const handleDelete = (item: CommunityHonorRecord) => {
-        if (confirm(`Remove "${item.name}" from public honor recognition?`)) {
-            router.delete(`/account/super-admin/community-honors/${item.id}`, {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Removed "${item.name}".`),
-            });
-        }
+        openConfirmModal({
+            title: 'Remove Honor Recognition',
+            description: `Remove "${item.name}" from public honor recognition?`,
+            confirmText: 'Remove',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/community-honors/${item.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => toast.success(`Removed "${item.name}".`),
+                });
+            },
+        });
     };
 
     return (
@@ -731,6 +740,8 @@ export default function CommunityHonorManagement({
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

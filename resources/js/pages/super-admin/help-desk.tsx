@@ -25,6 +25,8 @@ import {
 } from '@/components/dashboard/section-page';
 import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +67,7 @@ export default function SuperAdminHelpDesk({
     stats,
     filters,
 }: SuperAdminHelpDeskProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [activeTab, setActiveTab] = useState<'admin_inquiries' | 'all_tickets' | 'faqs'>(
         filters.tab === 'admin_inquiries' || filters.tab === 'escalated'
             ? 'admin_inquiries'
@@ -115,11 +118,17 @@ export default function SuperAdminHelpDesk({
     };
 
     const handleDeleteFaq = (faq: FrequentProblem) => {
-        if (confirm(`Are you sure you want to delete "${faq.title}"?`)) {
-            router.delete(`/account/super-admin/help-desk/frequent-problems/${faq.id}`, {
-                preserveScroll: true,
-            });
-        }
+        openConfirmModal({
+            title: 'Delete FAQ',
+            description: `Are you sure you want to delete "${faq.title}"?`,
+            confirmText: 'Delete FAQ',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/help-desk/frequent-problems/${faq.id}`, {
+                    preserveScroll: true,
+                });
+            },
+        });
     };
 
     const adminInquiriesList = tickets.data.filter(
@@ -595,6 +604,8 @@ export default function SuperAdminHelpDesk({
                 editingProblem={editingFaq}
                 role="super-admin"
             />
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

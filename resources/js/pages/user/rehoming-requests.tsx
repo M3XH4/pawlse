@@ -23,6 +23,8 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { RehomingModal } from '@/components/adoption/rehoming-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface RehomingRequestItem {
     id: number;
@@ -51,6 +53,7 @@ interface UserRehomingRequestsProps {
 export default function UserRehomingRequests({
     rehomingRequests = [],
 }: UserRehomingRequestsProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [isRehomingModalOpen, setIsRehomingModalOpen] = useState(false);
     const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -80,23 +83,23 @@ export default function UserRehomingRequests({
 
     const handleWithdrawRequest = (req: RehomingRequestItem) => {
         const ref = formatRef(req.id);
-        if (
-            !window.confirm(
-                `Are you sure you want to withdraw your rehoming request (${ref}) for ${req.animal_name}?`,
-            )
-        ) {
-            return;
-        }
-
-        setWithdrawingId(req.id);
-        router.post(
-            `/account/user/rehoming-requests/${req.id}/cancel`,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setWithdrawingId(null),
+        openConfirmModal({
+            title: 'Withdraw Rehoming Request',
+            description: `Are you sure you want to withdraw your rehoming request (${ref}) for ${req.animal_name}?`,
+            confirmText: 'Withdraw Request',
+            variant: 'danger',
+            onConfirm: () => {
+                setWithdrawingId(req.id);
+                router.post(
+                    `/account/user/rehoming-requests/${req.id}/cancel`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onFinish: () => setWithdrawingId(null),
+                    },
+                );
             },
-        );
+        });
     };
 
     const getStatusBadge = (status: RehomingRequestItem['status']) => {
@@ -439,6 +442,8 @@ export default function UserRehomingRequests({
                 isOpen={isRehomingModalOpen}
                 onClose={() => setIsRehomingModalOpen(false)}
             />
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

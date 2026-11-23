@@ -23,6 +23,8 @@ import {
   RehomingTab,
   RehomingRequestData,
 } from '@/components/admin/adoption/rehoming-tab';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface ApplicationFile {
   id: number;
@@ -164,6 +166,7 @@ export default function AdoptionManagement({
   shelterVisitSettings,
   basePath = '/account/admin/adoption-management',
 }: AdoptionManagementProps) {
+  const { confirmModalProps, openConfirmModal } = useConfirmationModal();
   const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
   const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-adoption-view');
   
@@ -1244,26 +1247,32 @@ export default function AdoptionManagement({
                               type="button"
                               disabled={isToggling || isDeleting || needProcessing}
                               onClick={() => {
-                                if (confirm(`Remove "${need.item}" from wishlist?`)) {
-                                  setDeletingNeedId(need.id);
-                                  router.delete(`${basePath}/needs/${need.id}`, {
-                                    preserveScroll: true,
-                                    only: ['pets'],
-                                    onSuccess: () => {
-                                      if (selectedPetForNeeds.needs) {
-                                        const updated = selectedPetForNeeds.needs.filter((n) => n.id !== need.id);
-                                        setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
-                                      }
-                                      if (editingNeed?.id === need.id) {
-                                        setEditingNeed(null);
-                                        setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
-                                      }
-                                    },
-                                    onFinish: () => {
-                                      setDeletingNeedId(null);
-                                    },
-                                  });
-                                }
+                                openConfirmModal({
+                                  title: 'Remove Wishlist Item',
+                                  description: `Remove "${need.item}" from wishlist?`,
+                                  confirmText: 'Remove',
+                                  variant: 'danger',
+                                  onConfirm: () => {
+                                    setDeletingNeedId(need.id);
+                                    router.delete(`${basePath}/needs/${need.id}`, {
+                                      preserveScroll: true,
+                                      only: ['pets'],
+                                      onSuccess: () => {
+                                        if (selectedPetForNeeds.needs) {
+                                          const updated = selectedPetForNeeds.needs.filter((n) => n.id !== need.id);
+                                          setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
+                                        }
+                                        if (editingNeed?.id === need.id) {
+                                          setEditingNeed(null);
+                                          setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
+                                        }
+                                      },
+                                      onFinish: () => {
+                                        setDeletingNeedId(null);
+                                      },
+                                    });
+                                  },
+                                });
                               }}
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                               title="Delete need"
@@ -1460,6 +1469,8 @@ export default function AdoptionManagement({
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmationModal {...confirmModalProps} />
     </>
   );
 }

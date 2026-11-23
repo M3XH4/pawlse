@@ -23,6 +23,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
 
@@ -52,6 +54,7 @@ interface RehomingTabProps {
 }
 
 export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
+  const { confirmModalProps, openConfirmModal } = useConfirmationModal();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedRequest, setSelectedRequest] = useState<RehomingRequestData | null>(null);
@@ -91,27 +94,33 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
 
   const handleIntakeSubmit = () => {
     if (!selectedRequest) return;
-    if (!confirm(`Are you sure you want to admit ${selectedRequest.animal_name} into shelter master records as an available adoptable pet?`)) return;
-
-    setIsIntaking(true);
-    router.post(
-      `/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/intake`,
-      { intake_notes: data.admin_notes },
-      {
-        preserveScroll: true,
-        only: ['rehomingRequests', 'pets'],
-        onSuccess: () => {
-          setSelectedRequest(null);
-          reset();
-        },
-        onError: (errs) => {
-          toast.error(Object.values(errs)[0] || 'Failed to intake pet to shelter.');
-        },
-        onFinish: () => {
-          setIsIntaking(false);
-        },
-      }
-    );
+    openConfirmModal({
+      title: 'Admit Pet to Shelter Records',
+      description: `Are you sure you want to admit ${selectedRequest.animal_name} into shelter master records as an available adoptable pet?`,
+      confirmText: 'Admit Pet',
+      variant: 'success',
+      onConfirm: () => {
+        setIsIntaking(true);
+        router.post(
+          `/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/intake`,
+          { intake_notes: data.admin_notes },
+          {
+            preserveScroll: true,
+            only: ['rehomingRequests', 'pets'],
+            onSuccess: () => {
+              setSelectedRequest(null);
+              reset();
+            },
+            onError: (errs) => {
+              toast.error(Object.values(errs)[0] || 'Failed to intake pet to shelter.');
+            },
+            onFinish: () => {
+              setIsIntaking(false);
+            },
+          }
+        );
+      },
+    });
   };
 
   const filteredRequests = useMemo(() => {
@@ -576,6 +585,8 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmationModal {...confirmModalProps} />
     </div>
   );
 }

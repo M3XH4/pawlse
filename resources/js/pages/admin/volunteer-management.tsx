@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { User, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface PaginatedData<T> {
     data: T[];
@@ -151,6 +153,7 @@ export default function VolunteerManagement({
     filters,
     basePath = '/account/admin/volunteer-management',
 }: VolunteerManagementProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'food_pickups'>('applications');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
@@ -333,11 +336,18 @@ export default function VolunteerManagement({
     };
 
     const handleCancelTask = (taskId: number) => {
-        if (!confirm('Are you sure you want to cancel this assignment?')) return;
-        router.post(`${basePath}/tasks/${taskId}/status`, {
-            status: 'cancelled'
-        }, {
-            onSuccess: () => toast.success('Task assignment cancelled.')
+        openConfirmModal({
+            title: 'Cancel Task Assignment',
+            description: 'Are you sure you want to cancel this assignment?',
+            confirmText: 'Cancel Assignment',
+            variant: 'danger',
+            onConfirm: () => {
+                router.post(`${basePath}/tasks/${taskId}/status`, {
+                    status: 'cancelled'
+                }, {
+                    onSuccess: () => toast.success('Task assignment cancelled.')
+                });
+            },
         });
     };
 
@@ -1394,6 +1404,8 @@ export default function VolunteerManagement({
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </>
     );
 }

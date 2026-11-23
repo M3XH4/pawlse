@@ -27,6 +27,8 @@ import {
 import { CreateTicketModal } from '@/components/help-desk/create-ticket-modal';
 import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +77,7 @@ export default function AdminHelpDesk({
     stats,
     filters,
 }: AdminHelpDeskProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [activeTab, setActiveTab] = useState<'incoming' | 'escalated' | 'faqs'>(
         (filters.active_tab as any) || 'incoming'
     );
@@ -110,11 +113,17 @@ export default function AdminHelpDesk({
     };
 
     const handleDeleteFaq = (faq: FrequentProblem) => {
-        if (confirm(`Are you sure you want to delete "${faq.title}"?`)) {
-            router.delete(`/account/admin/help-desk/frequent-problems/${faq.id}`, {
-                preserveScroll: true,
-            });
-        }
+        openConfirmModal({
+            title: 'Delete FAQ',
+            description: `Are you sure you want to delete "${faq.title}"?`,
+            confirmText: 'Delete FAQ',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/admin/help-desk/frequent-problems/${faq.id}`, {
+                    preserveScroll: true,
+                });
+            },
+        });
     };
 
     const displayedTickets =
@@ -631,6 +640,8 @@ export default function AdminHelpDesk({
                 editingProblem={editingFaq}
                 role="admin"
             />
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

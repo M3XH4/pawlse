@@ -7,6 +7,8 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface PartnerFoodPickupModel {
     id: number;
@@ -79,6 +81,7 @@ interface AssignedTasksProps {
 }
 
 export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = true }: AssignedTasksProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const activeTasks = tasks?.data || [];
     const [confirmingTask, setConfirmingTask] = useState<TaskModel | null>(null);
     const [volunteerNotes, setVolunteerNotes] = useState('');
@@ -86,12 +89,16 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
     const [isMapOpen, setIsMapOpen] = useState(false);
 
     const handleCancelTask = (taskId: number) => {
-        if (!confirm('Are you sure you want to cancel this task assignment?')) {
-            return;
-        }
-
-        router.delete(`/account/volunteer/assigned-tasks/${taskId}`, {
-            preserveScroll: true,
+        openConfirmModal({
+            title: 'Cancel Task Assignment',
+            description: 'Are you sure you want to cancel this task assignment?',
+            confirmText: 'Cancel Assignment',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/volunteer/assigned-tasks/${taskId}`, {
+                    preserveScroll: true,
+                });
+            },
         });
     };
 
@@ -397,6 +404,8 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                     onClose={() => setIsMapOpen(false)}
                 />
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

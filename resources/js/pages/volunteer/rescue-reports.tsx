@@ -9,6 +9,8 @@ import {
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl } from '@/lib/utils';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface PetReport {
     id: number;
@@ -53,6 +55,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'assigned');
     const [isMapOpen, setIsMapOpen] = useState(false);
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
 
     const handleSearch = () => {
         router.get(
@@ -238,9 +241,15 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                                         <div className="flex gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800/40">
                                             <button
                                                 onClick={() => {
-                                                    if (confirm('Are you sure you want to mark this rescue report as resolved?')) {
-                                                        router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'resolved' });
-                                                    }
+                                                    openConfirmModal({
+                                                        title: 'Mark Rescue Report as Resolved',
+                                                        description: 'Are you sure you want to mark this rescue report as resolved?',
+                                                        confirmText: 'Mark Resolved',
+                                                        variant: 'success',
+                                                        onConfirm: () => {
+                                                            router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'resolved' });
+                                                        },
+                                                    });
                                                 }}
                                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-sm"
                                             >
@@ -248,9 +257,15 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    if (confirm('Are you sure you want to cancel this rescue assignment?')) {
-                                                        router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'cancelled' });
-                                                    }
+                                                    openConfirmModal({
+                                                        title: 'Cancel Rescue Assignment',
+                                                        description: 'Are you sure you want to cancel this rescue assignment?',
+                                                        confirmText: 'Cancel Rescue',
+                                                        variant: 'danger',
+                                                        onConfirm: () => {
+                                                            router.post(`/account/volunteer/rescue-reports/${report.id}/status`, { status: 'cancelled' });
+                                                        },
+                                                    });
                                                 }}
                                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-red-200 dark:border-red-900/55"
                                             >
@@ -296,6 +311,8 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                     onClose={() => setIsMapOpen(false)}
                 />
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

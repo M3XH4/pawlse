@@ -14,6 +14,8 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { toast } from 'sonner';
 
 interface PetOption {
@@ -86,6 +88,7 @@ export default function UserStories({
     categories,
     filters,
 }: UserStoriesProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
@@ -266,18 +269,23 @@ export default function UserStories({
     };
 
     const handleDelete = (id: number) => {
-        if (!confirm('Are you sure you want to delete this story? This cannot be undone.')) {
-            return;
-        }
-        setDeletingId(id);
-        router.delete(`/account/user/stories/${id}`, {
-            onSuccess: () => {
-                setDeletingId(null);
-                toast.success('Story deleted successfully.');
-            },
-            onError: () => {
-                setDeletingId(null);
-                toast.error('Failed to delete story.');
+        openConfirmModal({
+            title: 'Delete Story',
+            description: 'Are you sure you want to delete this story? This cannot be undone.',
+            confirmText: 'Delete Story',
+            variant: 'danger',
+            onConfirm: () => {
+                setDeletingId(id);
+                router.delete(`/account/user/stories/${id}`, {
+                    onSuccess: () => {
+                        setDeletingId(null);
+                        toast.success('Story deleted successfully.');
+                    },
+                    onError: () => {
+                        setDeletingId(null);
+                        toast.error('Failed to delete story.');
+                    },
+                });
             },
         });
     };
@@ -952,6 +960,8 @@ export default function UserStories({
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

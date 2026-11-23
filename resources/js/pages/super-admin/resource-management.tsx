@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface ResourceRecord {
     id: number;
@@ -62,6 +64,7 @@ interface ResourceManagementProps {
 }
 
 export default function ResourceManagement({ resources, stats, filters }: ResourceManagementProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [search, setSearch] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
@@ -179,12 +182,18 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
     };
 
     const handleDelete = (res: ResourceRecord) => {
-        if (confirm(`Are you sure you want to archive resource "${res.title}"?`)) {
-            router.delete(`/account/super-admin/resources/${res.id}`, {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Resource "${res.title}" archived.`),
-            });
-        }
+        openConfirmModal({
+            title: 'Archive Resource',
+            description: `Are you sure you want to archive resource "${res.title}"?`,
+            confirmText: 'Archive Resource',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/resources/${res.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => toast.success(`Resource "${res.title}" archived.`),
+                });
+            },
+        });
     };
 
     const handleRestore = (res: ResourceRecord) => {
@@ -666,6 +675,8 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

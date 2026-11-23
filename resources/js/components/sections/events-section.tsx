@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
 import { getEventDateBadge, formatEventTime, formatEventDate, shareEvent } from '@/lib/event-utils';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface EventsProps {
     events?: any[];
@@ -84,6 +86,7 @@ export function Events({
     joinedEventIds: propsJoinedEventIds = [],
     joinedEventRoles: propsJoinedEventRoles = {},
 }: EventsProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const displayEvents = (propsEvents && propsEvents.length > 0) ? propsEvents.map((ev, idx) => {
         const cat = ev.category || ev.type || 'Community';
 
@@ -159,33 +162,37 @@ export function Events({
     };
 
     const handleLeaveEvent = (eventId: number) => {
-        if (!confirm('Are you sure you want to cancel your attendance for this event? Your spot will be released.')) {
-            return;
-        }
-
-        setIsSubmittingBooking(true);
-        router.post(
-            `/events/${eventId}/leave`,
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setJoinedIds((prev) => prev.filter((id) => id !== eventId));
-                    setJoinedRoles((prev) => {
-                        const next = { ...prev };
-                        delete next[eventId];
-                        return next;
-                    });
-                    toast.success('Your registration has been cancelled.');
-                    setBookingEvent(null);
-                    setIsSubmittingBooking(false);
-                },
-                onError: () => {
-                    setIsSubmittingBooking(false);
-                    toast.error('Failed to cancel attendance.');
-                }
-            }
-        );
+        openConfirmModal({
+            title: 'Cancel Event Registration',
+            description: 'Are you sure you want to cancel your attendance for this event? Your spot will be released.',
+            confirmText: 'Cancel Attendance',
+            variant: 'danger',
+            onConfirm: () => {
+                setIsSubmittingBooking(true);
+                router.post(
+                    `/events/${eventId}/leave`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            setJoinedIds((prev) => prev.filter((id) => id !== eventId));
+                            setJoinedRoles((prev) => {
+                                const next = { ...prev };
+                                delete next[eventId];
+                                return next;
+                            });
+                            toast.success('Your registration has been cancelled.');
+                            setBookingEvent(null);
+                            setIsSubmittingBooking(false);
+                        },
+                        onError: () => {
+                            setIsSubmittingBooking(false);
+                            toast.error('Failed to cancel attendance.');
+                        }
+                    }
+                );
+            },
+        });
     };
 
     const handleBookmark = (e: React.MouseEvent, event: any) => {
@@ -577,6 +584,8 @@ export function Events({
                     </div>
                 </div>
             </section>
+
+            <ConfirmationModal {...confirmModalProps} />
         </>
     );
 }

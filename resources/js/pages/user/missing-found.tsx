@@ -13,6 +13,8 @@ import {
     MissingPetShareModal,
     MissingPetItem,
 } from '@/components/missing';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface PetReport {
     id: number;
@@ -56,6 +58,7 @@ interface UserMissingFoundReportsProps {
 }
 
 export default function UserMissingFoundReports({ reports, filters }: UserMissingFoundReportsProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [selectedPet, setSelectedPet] = useState<MissingPetItem | null>(null);
     const [sharingPet, setSharingPet] = useState<MissingPetItem | null>(null);
@@ -119,11 +122,17 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
     };
 
     const handleMarkReunited = (reportId: number) => {
-        if (confirm('Did you find your missing pet and want to mark this report as safely reunited?')) {
-            router.post(`/missing/reports/${reportId}/reunited`, {}, {
-                preserveScroll: true,
-            });
-        }
+        openConfirmModal({
+            title: 'Mark Pet as Safely Reunited',
+            description: 'Did you find your missing pet and want to mark this report as safely reunited?',
+            confirmText: 'Yes, Mark Reunited',
+            variant: 'success',
+            onConfirm: () => {
+                router.post(`/missing/reports/${reportId}/reunited`, {}, {
+                    preserveScroll: true,
+                });
+            },
+        });
     };
 
     const getStatusBadge = (status: string) => {
@@ -355,6 +364,8 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                 onClose={() => setSharingPet(null)}
                 pet={sharingPet}
             />
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

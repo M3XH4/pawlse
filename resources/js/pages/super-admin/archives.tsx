@@ -8,6 +8,8 @@ import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/sect
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { toast } from 'sonner';
 
 interface TrashedRecord {
@@ -49,6 +51,7 @@ interface ArchiveProps {
 }
 
 export default function Archives({ items, filters, stats }: ArchiveProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedType, setSelectedType] = useState(filters.type || 'all');
 
@@ -82,21 +85,33 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
     const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-sa-archives-view');
 
     const handleRestore = (item: TrashedRecord) => {
-        if (confirm(`Are you sure you want to restore this ${item.type} record?`)) {
-            router.post(`/account/super-admin/archives/${item.type}/${item.id}/restore`, {}, {
-                onSuccess: () => toast.success('Record restored successfully.'),
-                onError: () => toast.error('Failed to restore record.')
-            });
-        }
+        openConfirmModal({
+            title: 'Restore Archived Record',
+            description: `Are you sure you want to restore this ${item.type} record?`,
+            confirmText: 'Restore Record',
+            variant: 'info',
+            onConfirm: () => {
+                router.post(`/account/super-admin/archives/${item.type}/${item.id}/restore`, {}, {
+                    onSuccess: () => toast.success('Record restored successfully.'),
+                    onError: () => toast.error('Failed to restore record.')
+                });
+            },
+        });
     };
 
     const handlePermanentDelete = (item: TrashedRecord) => {
-        if (confirm(`WARNING: Are you sure you want to PERMANENTLY delete this ${item.type} record? This action CANNOT be undone.`)) {
-            router.delete(`/account/super-admin/archives/${item.type}/${item.id}/force`, {
-                onSuccess: () => toast.success('Record permanently deleted.'),
-                onError: () => toast.error('Failed to delete record.')
-            });
-        }
+        openConfirmModal({
+            title: 'Permanently Delete Record',
+            description: `WARNING: Are you sure you want to PERMANENTLY delete this ${item.type} record? This action CANNOT be undone.`,
+            confirmText: 'Permanently Delete',
+            variant: 'danger',
+            onConfirm: () => {
+                router.delete(`/account/super-admin/archives/${item.type}/${item.id}/force`, {
+                    onSuccess: () => toast.success('Record permanently deleted.'),
+                    onError: () => toast.error('Failed to delete record.')
+                });
+            },
+        });
     };
 
     return (
@@ -319,6 +334,8 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                     />
                 </div>
             </div>
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }

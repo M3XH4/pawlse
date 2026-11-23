@@ -36,6 +36,8 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface TrackedItemDetail {
   label: string;
@@ -142,6 +144,7 @@ export default function UnifiedTrackPage({
   searched = false,
   item = null,
 }: TrackProps) {
+  const { confirmModalProps, openConfirmModal } = useConfirmationModal();
   const [referenceInput, setReferenceInput] = useState(searchedReference);
   const [emailInput, setEmailInput] = useState(searchedEmail);
   const [resubmittingApp, setResubmittingApp] = useState<any | null>(null);
@@ -209,22 +212,30 @@ export default function UnifiedTrackPage({
   };
 
   const handleCancelApplication = () => {
-    if (!item || !confirm('Are you sure you want to cancel this adoption application? This action cannot be undone.')) {
+    if (!item) {
       return;
     }
 
-    setIsCancelling(true);
-    router.post(
-      `/track/adoption-applications/${item.id}/cancel`,
-      {
-        reference: item.reference,
-        email: searchedEmail || emailInput.trim(),
+    openConfirmModal({
+      title: 'Cancel Adoption Application',
+      description: 'Are you sure you want to cancel this adoption application? This action cannot be undone.',
+      confirmText: 'Cancel Application',
+      variant: 'danger',
+      onConfirm: () => {
+        setIsCancelling(true);
+        router.post(
+          `/track/adoption-applications/${item.id}/cancel`,
+          {
+            reference: item.reference,
+            email: searchedEmail || emailInput.trim(),
+          },
+          {
+            preserveScroll: true,
+            onFinish: () => setIsCancelling(false),
+          }
+        );
       },
-      {
-        preserveScroll: true,
-        onFinish: () => setIsCancelling(false),
-      }
-    );
+    });
   };
 
   const handleCopyLink = () => {
@@ -248,13 +259,19 @@ export default function UnifiedTrackPage({
   };
 
   const handleMarkReunited = (reportId: number) => {
-    if (confirm('Are you sure you want to mark this pet as safely reunited?')) {
-      router.post(
-        `/missing/reports/${reportId}/reunited`,
-        { email: searchedEmail || emailInput.trim() },
-        { preserveScroll: true }
-      );
-    }
+    openConfirmModal({
+      title: 'Mark Pet as Safely Reunited',
+      description: 'Are you sure you want to mark this pet as safely reunited?',
+      confirmText: 'Yes, Mark Reunited',
+      variant: 'success',
+      onConfirm: () => {
+        router.post(
+          `/missing/reports/${reportId}/reunited`,
+          { email: searchedEmail || emailInput.trim() },
+          { preserveScroll: true }
+        );
+      },
+    });
   };
 
   const getStatusBadge = (theme: TrackedItem['status_theme'], label: string) => {
@@ -896,6 +913,8 @@ export default function UnifiedTrackPage({
           />
         </div>
       )}
+
+      <ConfirmationModal {...confirmModalProps} />
 
       <Footer />
     </div>

@@ -9,6 +9,8 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface MessageAttachment {
     path?: string;
@@ -134,6 +136,7 @@ export default function UserAdoptionApplications({
     rehomingRequests = [],
     openApplicationId = null,
 }: UserAdoptionApplicationsProps) {
+    const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const [resubmittingApp, setResubmittingApp] = useState<Application | null>(null);
     const [activeConversationAppId, setActiveConversationAppId] = useState<number | null>(openApplicationId);
     const [replyText, setReplyText] = useState('');
@@ -500,9 +503,15 @@ export default function UserAdoptionApplications({
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    if (confirm(`Are you sure you want to cancel your adoption application (${refCode})?`)) {
-                                                        router.post(`/account/user/adoption-applications/${app.id}/cancel`, {}, { preserveScroll: true });
-                                                    }
+                                                    openConfirmModal({
+                                                        title: 'Cancel Adoption Application',
+                                                        description: `Are you sure you want to cancel your adoption application (${refCode})? This action cannot be undone.`,
+                                                        confirmText: 'Cancel Application',
+                                                        variant: 'danger',
+                                                        onConfirm: () => {
+                                                            router.post(`/account/user/adoption-applications/${app.id}/cancel`, {}, { preserveScroll: true });
+                                                        },
+                                                    });
                                                 }}
                                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-black text-red-700 uppercase tracking-wider transition-all cursor-pointer"
                                             >
@@ -868,6 +877,8 @@ export default function UserAdoptionApplications({
                     />
                 </div>
             )}
+
+            <ConfirmationModal {...confirmModalProps} />
         </DashboardSectionPage>
     );
 }
