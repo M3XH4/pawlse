@@ -61,9 +61,14 @@ class HomeController extends Controller
             ->get()
             ->map(function (ShelterAnimal $pet) use ($getString, $appliedPetIds) {
                 $defaultImg = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800';
-                $allPhotos = $pet->all_photos;
-                $primaryImg = $pet->photo_url ?: ($allPhotos[0] ?? $defaultImg);
+                $allPhotos = array_map(
+                    fn (string $photo): string => (string) $this->preferWebpUrl($photo),
+                    $pet->all_photos
+                );
+                $primaryImg = (string) $this->preferWebpUrl($pet->photo_url) ?: ($allPhotos[0] ?? $defaultImg);
                 $photosList = ! empty($allPhotos) ? $allPhotos : [$primaryImg];
+                $beforeImg = $this->preferWebpUrl($pet->before_photo_url);
+                $afterImg = $this->preferWebpUrl($pet->after_photo_url);
 
                 return [
                     'id' => $pet->id,
@@ -87,10 +92,10 @@ class HomeController extends Controller
                     'mainImg' => $primaryImg,
                     'photos' => $photosList,
                     'gallery_photos' => $pet->gallery_photos ?? [],
-                    'beforeImg' => $pet->before_photo_url,
-                    'afterImg' => $pet->after_photo_url,
-                    'before_photo_url' => $pet->before_photo_url,
-                    'after_photo_url' => $pet->after_photo_url,
+                    'beforeImg' => $beforeImg,
+                    'afterImg' => $afterImg,
+                    'before_photo_url' => $beforeImg,
+                    'after_photo_url' => $afterImg,
                     'vaccinated' => (bool) $pet->vaccinated,
                     'shelterDays' => $pet->admitted_at ? (int) abs($pet->admitted_at->diffInDays(now())) : 14,
                 ];
@@ -272,11 +277,11 @@ class HomeController extends Controller
                     'story' => $animal->rescue_story ?: $animal->story,
                     'location' => $animal->rescue_location ?: 'Iligan City, 2024',
                     'status' => $displayStatus,
-                    'image' => $animal->photo_url ?: ($getString($animal->type, 'Dog') === 'Cat'
+                    'image' => $this->preferWebpUrl($animal->photo_url) ?: ($getString($animal->type, 'Dog') === 'Cat'
                         ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80'
                         : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=800'),
-                    'before_image' => $animal->before_photo_url,
-                    'after_image' => $animal->after_photo_url,
+                    'before_image' => $this->preferWebpUrl($animal->before_photo_url),
+                    'after_image' => $this->preferWebpUrl($animal->after_photo_url),
                 ];
             });
 
@@ -307,5 +312,24 @@ class HomeController extends Controller
             ],
             'careSustainability' => CareSustainability::current()->toPublicArray(),
         ]);
+    }
+
+    /**
+     * Prefer a sibling WebP asset for local PNG storage images when available.
+     */
+    private function preferWebpUrl(?string $url): ?string
+    {
+        if (! is_string($url) || $url === '') {
+            return $url;
+        }
+
+        if (str_starts_with($url, '/storage/') && preg_match('/\.png$/i', $url) === 1) {
+            $webpUrl = preg_replace('/\.png$/i', '.webp', $url);
+            if ($webpUrl !== null && file_exists(public_path(ltrim($webpUrl, '/')))) {
+                return $webpUrl;
+            }
+        }
+
+        return $url;
     }
 }

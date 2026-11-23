@@ -58,6 +58,8 @@ class PetController extends Controller
             $aiUrl = rtrim((string) config('services.ai.url', 'http://127.0.0.1:8000'), '/');
             $imageFile = $request->file('image');
 
+            $allowBlurry = $mode === 'reporting' ? 'true' : 'false';
+
             $response = Http::timeout(120)
                 ->withHeaders([
                     'X-Internal-Token' => (string) config('services.ai.secret'),
@@ -67,6 +69,7 @@ class PetController extends Controller
                     fopen($imageFile->getRealPath(), 'r'),
                     $imageFile->getClientOriginalName()
                 )
+                ->attach('allow_blurry', $allowBlurry)
                 ->post($aiUrl.'/predict');
 
             if ($response->failed()) {

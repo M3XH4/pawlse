@@ -361,7 +361,10 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-4 mb-8 group">
               <div className="w-16 h-16 rounded-full overflow-hidden shadow-xl shadow-paw-orange/20 group-hover:rotate-12 transition-transform bg-white">
-                <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                <picture>
+                  <source srcSet="/images/logo.webp" type="image/webp" />
+                  <img src="/images/logo.png" alt="Logo" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                </picture>
               </div>
               <div>
                 <h1 className="text-3xl font-black tracking-tighter text-white leading-none uppercase">ILIGAN</h1>

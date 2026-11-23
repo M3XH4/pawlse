@@ -661,12 +661,23 @@ class PetReportController extends Controller
 
         $reports = $reportsQuery->latest()->paginate(9)->withQueryString();
 
+        $sharedPetId = $request->input('pet') ?? $request->input('id');
+        $sharedMissingPet = null;
+        if ($sharedPetId) {
+            $sharedMissingPet = PetReport::with('photos')
+                ->where('type', 'missing')
+                ->whereNotIn('status', ['duplicate', 'cancelled'])
+                ->find($sharedPetId);
+        }
+
         return Inertia::render('missing', [
             'reports' => $reports,
             'filters' => [
                 'search' => $search,
                 'status' => $statusFilter,
             ],
+        ])->withViewData([
+            'sharedMissingPet' => $sharedMissingPet,
         ]);
     }
 

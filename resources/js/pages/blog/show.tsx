@@ -6,11 +6,13 @@ import {
     Copy, Check, Shield, User, Tag, Sparkles, MessageSquareOff,
     CheckCircle2, ExternalLink, PawPrint, HeartHandshake,
     GraduationCap, Scale, Newspaper, Megaphone, PartyPopper,
-    FileText, Star, MessageSquareQuote, AlertCircle
+    FileText, Star, MessageSquareQuote, AlertCircle, Bookmark
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { BlogShareModal } from '@/components/blog/blog-share-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { useBookmarks } from '@/context/bookmark-context';
 import { toast } from 'sonner';
 
 interface BlogPostItem {
@@ -84,6 +86,7 @@ export default function BlogShow({
     relatedPosts,
     categories,
 }: BlogShowProps) {
+    const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
     const [copiedUrl, setCopiedUrl] = useState(false);
 
     const handleReact = (reactionType: string) => {
@@ -97,21 +100,10 @@ export default function BlogShow({
         });
     };
 
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
     const handleShareNative = () => {
-        const shareUrl = window.location.href;
-        if (navigator.share) {
-            navigator.share({
-                title: post.title,
-                text: post.summary || post.title,
-                url: shareUrl,
-            }).then(() => {
-                router.post(`/blog/${post.id}/share`, {}, { preserveScroll: true });
-            }).catch(() => {
-                handleCopyLink();
-            });
-        } else {
-            handleCopyLink();
-        }
+        setIsShareModalOpen(true);
     };
 
     const handleCopyLink = () => {
@@ -224,6 +216,30 @@ export default function BlogShow({
                             </div>
 
                             <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        if (isBookmarked(post.id, 'blog')) {
+                                            removeBookmark(post.id, 'blog');
+                                        } else {
+                                            addBookmark({
+                                                id: post.id,
+                                                type: 'blog',
+                                                title: post.title,
+                                                image: post.featured_image || post.shelter_animal?.photo_url || '',
+                                                data: post,
+                                            });
+                                        }
+                                    }}
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                                        isBookmarked(post.id, 'blog')
+                                            ? 'bg-paw-orange/15 text-paw-orange border-paw-orange/40'
+                                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-transparent'
+                                    }`}
+                                >
+                                    <Bookmark size={14} className={isBookmarked(post.id, 'blog') ? 'fill-paw-orange text-paw-orange' : ''} />
+                                    <span>{isBookmarked(post.id, 'blog') ? 'Saved' : 'Save'}</span>
+                                </button>
+
                                 <button
                                     onClick={handleShareNative}
                                     className="px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200 transition flex items-center gap-1.5 cursor-pointer"
@@ -433,7 +449,13 @@ export default function BlogShow({
                                         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        onClick={() => router.post(`/blog/${post.id}/share`, {}, { preserveScroll: true })}
+                                        onClick={() => {
+                                            const shareCaption = `${post.title}\n${post.summary ? `• ${post.summary}\n` : ''}${typeof window !== 'undefined' ? window.location.href : ''}`;
+                                            navigator.clipboard?.writeText(shareCaption).then(() => {
+                                                toast.success('Article details copied! Paste (Ctrl+V) into your Facebook post.');
+                                            }).catch(() => {});
+                                            router.post(`/blog/${post.id}/share`, {}, { preserveScroll: true });
+                                        }}
                                         className="px-3.5 py-2 rounded-xl bg-[#1877F2] text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 transition shadow-sm"
                                     >
                                         Facebook
@@ -567,6 +589,13 @@ export default function BlogShow({
                     )}
                 </article>
             </main>
+
+            <BlogShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                post={post}
+                categories={categories}
+            />
 
             <Footer />
         </div>

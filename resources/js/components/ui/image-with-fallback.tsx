@@ -16,6 +16,8 @@ export function ImageWithFallback({
   alt,
   style,
   className,
+  loading = 'lazy',
+  decoding = 'async',
   onLoad,
   onError,
   ...rest
@@ -73,6 +75,8 @@ export function ImageWithFallback({
         ref={imgRef}
         src={imgSrc}
         alt={alt || 'Image'}
+        loading={loading}
+        decoding={decoding}
         className={cn(
           className,
           showSkeleton && 'transition-opacity duration-300',

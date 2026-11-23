@@ -164,6 +164,8 @@ class BlogController extends Controller
             'post' => $post,
             'relatedPosts' => $relatedPosts,
             'categories' => BlogPost::CATEGORIES,
+        ])->withViewData([
+            'sharedBlogPost' => $post,
         ]);
     }
 

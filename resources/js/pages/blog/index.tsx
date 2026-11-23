@@ -8,11 +8,13 @@ import {
     PawPrint, HeartHandshake, GraduationCap, Scale, Newspaper,
     Layers, Tag, Compass, Flame, TrendingUp, Star,
     Gavel, ShieldAlert, AlertTriangle, HeartCrack, ShieldCheck, BookOpen, CheckCircle2, Info,
-    MessageSquareQuote
+    MessageSquareQuote, Bookmark
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { BlogShareModal } from '@/components/blog/blog-share-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { useBookmarks } from '@/context/bookmark-context';
 import { toast } from 'sonner';
 
 interface BlogPostItem {
@@ -183,6 +185,7 @@ export default function BlogIndex({
     recentCampaigns,
     filters,
 }: BlogIndexProps) {
+    const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
     const [search, setSearch] = useState(filters.search || '');
     const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
     const [shareModalPost, setShareModalPost] = useState<BlogPostItem | null>(null);
@@ -244,20 +247,22 @@ export default function BlogIndex({
     const handleOpenShare = (e: React.MouseEvent, post: BlogPostItem) => {
         e.preventDefault();
         e.stopPropagation();
+        setShareModalPost(post);
+    };
 
-        const shareUrl = `${window.location.origin}/blog/${post.slug}`;
-        if (navigator.share) {
-            navigator.share({
-                title: post.title,
-                text: post.summary || post.title,
-                url: shareUrl,
-            }).then(() => {
-                router.post(`/blog/${post.id}/share`, {}, { preserveScroll: true });
-            }).catch(() => {
-                setShareModalPost(post);
-            });
+    const handleToggleBookmark = (e: React.MouseEvent, post: BlogPostItem) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isBookmarked(post.id, 'blog')) {
+            removeBookmark(post.id, 'blog');
         } else {
-            setShareModalPost(post);
+            addBookmark({
+                id: post.id,
+                type: 'blog',
+                title: post.title,
+                image: post.featured_image || post.shelter_animal?.photo_url || '',
+                data: post,
+            });
         }
     };
 
@@ -632,6 +637,19 @@ export default function BlogIndex({
                                         </button>
 
                                         <button
+                                            onClick={(e) => handleToggleBookmark(e, featuredPost)}
+                                            className={`flex items-center gap-1.5 text-xs font-bold transition px-3 py-1.5 rounded-xl border cursor-pointer ${
+                                                isBookmarked(featuredPost.id, 'blog')
+                                                    ? 'bg-paw-orange/15 text-paw-orange border-paw-orange/40'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-paw-orange border-transparent'
+                                            }`}
+                                            title={isBookmarked(featuredPost.id, 'blog') ? 'Remove bookmark' : 'Bookmark article'}
+                                        >
+                                            <Bookmark size={14} className={isBookmarked(featuredPost.id, 'blog') ? 'fill-paw-orange text-paw-orange' : ''} />
+                                            <span>{isBookmarked(featuredPost.id, 'blog') ? 'Saved' : 'Save'}</span>
+                                        </button>
+
+                                        <button
                                             onClick={(e) => handleOpenShare(e, featuredPost)}
                                             className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-paw-navy dark:hover:text-white transition bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl cursor-pointer"
                                             title="Share Post"
@@ -788,6 +806,18 @@ export default function BlogIndex({
                                                 >
                                                     <Heart size={13} className={hasUserReacted ? 'fill-white' : ''} />
                                                     <span>{post.reaction_summary?.total ?? 0}</span>
+                                                </button>
+
+                                                <button
+                                                    onClick={(e) => handleToggleBookmark(e, post)}
+                                                    className={`p-1.5 rounded-xl transition cursor-pointer ${
+                                                        isBookmarked(post.id, 'blog')
+                                                            ? 'bg-paw-orange/15 text-paw-orange'
+                                                            : 'text-gray-500 hover:text-paw-orange bg-gray-100 dark:bg-gray-800 hover:bg-gray-200'
+                                                    }`}
+                                                    title={isBookmarked(post.id, 'blog') ? 'Remove bookmark' : 'Bookmark article'}
+                                                >
+                                                    <Bookmark size={14} className={isBookmarked(post.id, 'blog') ? 'fill-paw-orange text-paw-orange' : ''} />
                                                 </button>
 
                                                 <button
@@ -1050,87 +1080,12 @@ export default function BlogIndex({
             </main>
 
             {/* Share Dialog Modal */}
-            <AnimatePresence>
-                {shareModalPost && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setShareModalPost(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 10 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 10 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800 text-paw-navy dark:text-white"
-                        >
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-10 h-10 rounded-2xl bg-paw-orange/10 flex items-center justify-center text-paw-orange">
-                                        <Share2 size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-lg">Share this Story</h3>
-                                        <p className="text-xs text-gray-500 font-medium">Spread awareness and save more strays</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setShareModalPost(null)}
-                                    className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition cursor-pointer"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-
-                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 line-clamp-2">
-                                "{shareModalPost.title}"
-                            </p>
-
-                            <div className="space-y-3">
-                                <a
-                                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/blog/' + shareModalPost.slug)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={() => router.post(`/blog/${shareModalPost.id}/share`, {}, { preserveScroll: true })}
-                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#1877F2] text-white font-bold text-xs uppercase tracking-wider hover:opacity-90 transition"
-                                >
-                                    Share to Facebook
-                                </a>
-
-                                <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareModalPost.title)}&url=${encodeURIComponent(window.location.origin + '/blog/' + shareModalPost.slug)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={() => router.post(`/blog/${shareModalPost.id}/share`, {}, { preserveScroll: true })}
-                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#000000] text-white font-bold text-xs uppercase tracking-wider hover:opacity-90 transition border border-gray-700"
-                                >
-                                    Share to X (Twitter)
-                                </a>
-
-                                <a
-                                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareModalPost.title + ' ' + window.location.origin + '/blog/' + shareModalPost.slug)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={() => router.post(`/blog/${shareModalPost.id}/share`, {}, { preserveScroll: true })}
-                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider hover:opacity-90 transition"
-                                >
-                                    Share to WhatsApp
-                                </a>
-
-                                <button
-                                    onClick={() => handleCopyLink(shareModalPost.slug)}
-                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-paw-navy dark:text-white font-bold text-xs uppercase tracking-wider transition border border-gray-200 dark:border-gray-700 cursor-pointer"
-                                >
-                                    {copiedUrl ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                                    <span>{copiedUrl ? 'Copied to Clipboard!' : 'Copy Article Link'}</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <BlogShareModal
+                isOpen={!!shareModalPost}
+                onClose={() => setShareModalPost(null)}
+                post={shareModalPost}
+                categories={categories}
+            />
 
             <Footer />
         </div>

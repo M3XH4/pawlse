@@ -36,6 +36,7 @@ import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ShareModal } from '@/components/adoption/share-modal';
 import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
 import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
+import { useBookmarks } from '@/context/bookmark-context';
 
 interface PetShowProps {
   pet: AdoptPetDetail;
@@ -53,6 +54,7 @@ const TABS = [
 type TabType = typeof TABS[number];
 
 export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
+  const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
   const [activeTab, setActiveTab] = useState<TabType>('Overview');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -300,8 +302,37 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                         onClick={() => setIsShareOpen(true)}
                         className="p-2.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors border border-slate-200/60 cursor-pointer"
                         title="Share animal profile"
+                        aria-label={`Share ${pet.name}`}
                       >
                         <Share2 size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isBookmarked(pet.id, 'pet')) {
+                            removeBookmark(pet.id, 'pet');
+                          } else {
+                            addBookmark({
+                              id: pet.id,
+                              type: 'pet',
+                              title: pet.name,
+                              subtitle: `${pet.breed || pet.type || 'Adoptable Pet'} • ${pet.age || 'Young'} • ${pet.gender || ''}`.replace(/\s•\s$/, ''),
+                              image: primaryPhoto,
+                              url: `/adopt/${pet.id}`,
+                              data: pet,
+                            });
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl transition-colors border cursor-pointer ${
+                          isBookmarked(pet.id, 'pet')
+                            ? 'text-rose-500 bg-rose-50 border-rose-200 hover:bg-rose-100'
+                            : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50 border-slate-200/60'
+                        }`}
+                        title={isBookmarked(pet.id, 'pet') ? 'Remove from bookmarks' : 'Save to bookmarks'}
+                        aria-label={isBookmarked(pet.id, 'pet') ? `Remove ${pet.name} from bookmarks` : `Bookmark ${pet.name}`}
+                      >
+                        <Heart size={16} className={isBookmarked(pet.id, 'pet') ? 'fill-rose-500' : ''} />
                       </button>
                     </div>
                   </div>

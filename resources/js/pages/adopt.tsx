@@ -34,6 +34,7 @@ import { PetDetailModal, AdoptPetDetail } from '@/components/adoption/pet-detail
 import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
 import { RehomingModal } from '@/components/adoption/rehoming-modal';
 import { ShareModal } from '@/components/adoption/share-modal';
+import { useBookmarks } from '@/context/bookmark-context';
 
 interface AdoptProps {
   pets: AdoptPetDetail[];
@@ -41,6 +42,7 @@ interface AdoptProps {
 }
 
 export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
+  const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
   const [selectedPet, setSelectedPet] = useState<AdoptPetDetail | null>(null);
   const [applyingPet, setApplyingPet] = useState<AdoptPetDetail | null>(null);
   const [sharingPet, setSharingPet] = useState<AdoptPetDetail | null>(null);
@@ -565,110 +567,161 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-              {filteredPets.map((pet) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {filteredPets.map((pet) => {
+                const bookmarked = isBookmarked(pet.id, 'pet');
+                const handleToggleBookmark = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (bookmarked) {
+                    removeBookmark(pet.id, 'pet');
+                  } else {
+                    addBookmark({
+                      id: pet.id,
+                      type: 'pet',
+                      title: pet.name,
+                      subtitle: `${pet.breed || pet.type || 'Adoptable Pet'} • ${pet.age || 'Young'} • ${pet.gender || ''}`.replace(/\s•\s$/, ''),
+                      image: pet.img || pet.mainImg || '',
+                      url: `/adopt/${pet.id}`,
+                      data: pet,
+                    });
+                  }
+                };
+
+                return (
                 <motion.div
                   key={pet.id}
                   whileHover={{ y: -5 }}
                   onClick={() => setSelectedPet(pet)}
-                  className="bg-white rounded-[24px] overflow-hidden shadow-lg shadow-paw-navy/5 cursor-pointer group border border-gray-100 transition-all hover:shadow-xl"
+                  className="bg-white rounded-[28px] overflow-hidden shadow-lg shadow-paw-navy/5 cursor-pointer group border border-gray-100 transition-all hover:shadow-xl flex flex-col"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gray-100">
                     <ImageWithFallback
                       src={pet.img || pet.mainImg || ''}
                       alt={pet.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                      className="w-full h-full object-cover object-[50%_20%] transition-transform duration-500 group-hover:scale-108"
                     />
 
                     {/* Vaccination Badge */}
                     <div
-                      className={`absolute top-2.5 right-2.5 ${
+                      className={`absolute top-3.5 right-3.5 ${
                         pet.vaccinated ? 'bg-paw-green' : 'bg-gray-500/90'
-                      } backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md`}
+                      } backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md`}
                     >
-                      <Shield size={10} className="text-white" />
-                      <span className="text-white font-black text-[8px] uppercase">
+                      <Shield size={12} className="text-white" />
+                      <span className="text-white font-black text-[10px] uppercase">
                         {pet.vaccinated ? 'Vaccinated' : 'Pending'}
                       </span>
                     </div>
 
                     {/* Available or Applied Badge */}
                     {pet.has_applied ? (
-                      <div className="absolute top-2.5 left-2.5 bg-emerald-600 text-white font-black text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                        <CheckCircle2 size={10} />
+                      <div className="absolute top-3.5 left-3.5 bg-emerald-600 text-white font-black text-[11px] px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                        <CheckCircle2 size={12} />
                         Applied
                       </div>
                     ) : (
-                      <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[#FF9B00] font-black text-[9px] flex items-center gap-1 shadow-md">
-                        <Heart size={9} fill="currentColor" />
+                      <div className="absolute top-3.5 left-3.5 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-[#FF9B00] font-black text-[11px] flex items-center gap-1.5 shadow-md">
+                        <Heart size={11} fill="currentColor" />
                         Available
                       </div>
                     )}
 
                     {/* Rescued & In Shelter Tag + Multi-Photo Counter */}
-                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
                       {pet.is_rescued !== false && (
-                        <span className="bg-emerald-600/95 text-white backdrop-blur-xs px-2 py-0.5 rounded-full font-black text-[8px] uppercase tracking-wider flex items-center gap-1 shadow-md">
-                          <ShieldCheck size={9} />
+                        <span className="bg-emerald-600/95 text-white backdrop-blur-xs px-2.5 py-1 rounded-full font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md">
+                          <ShieldCheck size={11} />
                           <span>Rescued • In Shelter</span>
                         </span>
                       )}
                       {pet.photos && pet.photos.length > 1 && (
-                        <span className="bg-slate-900/75 text-white backdrop-blur-xs px-2 py-0.5 rounded-full font-bold text-[8px] flex items-center gap-1 shadow-md ml-auto">
-                          <Images size={9} />
+                        <span className="bg-slate-900/75 text-white backdrop-blur-xs px-2.5 py-1 rounded-full font-bold text-[10px] flex items-center gap-1 shadow-md ml-auto">
+                          <Images size={11} />
                           <span>{pet.photos.length}</span>
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="p-3.5">
-                    <h3 className="text-base md:text-lg font-black text-paw-navy mb-1 truncate">
-                      {pet.name}
-                    </h3>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-xl font-black text-paw-navy mb-2 truncate">
+                        {pet.name}
+                      </h3>
 
-                    <div className="flex items-center gap-1.5 mb-2.5">
-                      <span className="bg-amber-100 text-amber-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase truncate max-w-[110px]">
-                        {pet.breed}
-                      </span>
-                      {pet.color && (
-                        <span className="bg-sky-100 text-sky-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase truncate max-w-[90px]">
-                          {pet.color}
+                      <div className="flex items-center flex-wrap gap-1.5 mb-3">
+                        <span className="bg-amber-100 text-amber-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase truncate max-w-[150px]">
+                          {pet.breed}
                         </span>
-                      )}
+                        {pet.color && (
+                          <span className="bg-sky-100 text-sky-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase truncate max-w-[130px]">
+                            {pet.color}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 mb-4 text-xs font-bold text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <Info size={13} className="text-paw-orange shrink-0" />
+                          <span>{pet.age} • {pet.gender}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar size={13} className="text-paw-blue shrink-0" />
+                          <span>
+                            {(() => {
+                              const days = Math.max(0, pet.shelterDays || 0);
+                              if (days === 0) return 'Admitted today';
+                              if (days < 30) return `${days}d in care`;
+                              return `${Math.floor(days / 30)}mo in care`;
+                            })()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-1 mb-3 text-[10px] font-bold text-gray-500">
-                      <div className="flex items-center gap-1.5">
-                        <Info size={11} className="text-paw-orange shrink-0" />
-                        <span>{pet.age} • {pet.gender}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={11} className="text-paw-blue shrink-0" />
-                        <span>
-                          {(() => {
-                            const days = Math.max(0, pet.shelterDays || 0);
-                            if (days === 0) return 'Admitted today';
-                            if (days < 30) return `${days}d in care`;
-                            return `${Math.floor(days / 30)}mo in care`;
-                          })()}
-                        </span>
-                      </div>
-                    </div>
+                    <div className="flex items-center gap-2.5 pt-2 border-t border-gray-100">
+                      <button
+                        type="button"
+                        className={`flex-1 py-3 px-4 rounded-2xl font-black text-xs uppercase tracking-wider shadow-sm transition-colors cursor-pointer ${
+                          pet.has_applied
+                            ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                            : 'bg-[#0B2340] text-white hover:bg-paw-orange'
+                        }`}
+                      >
+                        {pet.has_applied ? 'Applied • View Details' : `Meet ${pet.name}`}
+                      </button>
 
-                    <button
-                      type="button"
-                      className={`w-full py-2 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-sm transition-colors ${
-                        pet.has_applied
-                          ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                          : 'bg-[#0B2340] text-white hover:bg-paw-orange'
-                      }`}
-                    >
-                      {pet.has_applied ? 'Applied • View Details' : `Meet ${pet.name}`}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSharingPet(pet);
+                        }}
+                        aria-label={`Share ${pet.name}`}
+                        title={`Share ${pet.name}`}
+                        className="w-11 h-11 rounded-full bg-gray-100 hover:bg-paw-orange/15 text-gray-500 hover:text-paw-orange flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                      >
+                        <Share2 size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleToggleBookmark}
+                        aria-label={bookmarked ? `Remove ${pet.name} from bookmarks` : `Bookmark ${pet.name}`}
+                        title={bookmarked ? 'Remove from bookmarks' : 'Save to bookmarks'}
+                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
+                          bookmarked
+                            ? 'bg-rose-50 text-rose-500 hover:bg-rose-100'
+                            : 'bg-gray-100 text-gray-500 hover:bg-rose-50 hover:text-rose-500'
+                        }`}
+                      >
+                        <Heart size={18} className={bookmarked ? 'fill-rose-500' : ''} />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           )}
 

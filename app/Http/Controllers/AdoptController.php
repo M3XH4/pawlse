@@ -46,9 +46,14 @@ class AdoptController extends Controller
             'is_accepting_visits' => true,
         ]);
 
+        $sharedPetId = $request->input('pet') ?? $request->input('id');
+        $sharedAdoptPet = $sharedPetId ? ShelterAnimal::find($sharedPetId) : null;
+
         return Inertia::render('adopt', [
             'pets' => $pets,
             'shelterVisitSettings' => $shelterVisitSettings,
+        ])->withViewData([
+            'sharedAdoptPet' => $sharedAdoptPet,
         ]);
     }
 
@@ -80,6 +85,8 @@ class AdoptController extends Controller
         return Inertia::render('adopt/show', [
             'pet' => static::transformPet($pet, $hasApplied),
             'shelterVisitSettings' => $shelterVisitSettings,
+        ])->withViewData([
+            'sharedAdoptPet' => $pet,
         ]);
     }
 

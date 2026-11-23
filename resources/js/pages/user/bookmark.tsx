@@ -11,7 +11,7 @@ import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export default function UserBookmarks() {
     const { bookmarks, removeBookmark } = useBookmarks();
-    const [activeTab, setActiveTab] = useState<'all' | 'pet' | 'event' | 'missingPet'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'pet' | 'event' | 'missingPet' | 'blog'>('all');
 
     const filteredBookmarks = bookmarks.filter((item) => {
         if (activeTab === 'all') {
@@ -20,7 +20,7 @@ export default function UserBookmarks() {
         return item.type === activeTab;
     });
 
-    const getTabCount = (type: 'all' | 'pet' | 'event' | 'missingPet') => {
+    const getTabCount = (type: 'all' | 'pet' | 'event' | 'missingPet' | 'blog') => {
         if (type === 'all') {
             return bookmarks.length;
         }
@@ -30,12 +30,12 @@ export default function UserBookmarks() {
     return (
         <DashboardSectionPage
             title="My Bookmarks"
-            description="Access your saved adoptable pets, community events, and missing pet alerts."
+            description="Access your saved adoptable pets, community events, missing pet alerts, and articles."
             badge={<DashboardMetricBadge icon={<Bookmark className="h-4 w-4" />} label={`${bookmarks.length} Saved`} />}
         >
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-gray-100 dark:border-gray-800 pb-px">
-                {(['all', 'pet', 'event', 'missingPet'] as const).map((tab) => (
+            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-100 dark:border-gray-800 pb-px">
+                {(['all', 'pet', 'event', 'missingPet', 'blog'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -45,7 +45,7 @@ export default function UserBookmarks() {
                                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
-                        {tab === 'all' ? 'All' : tab === 'missingPet' ? 'Missing Alerts' : tab + 's'}
+                        {tab === 'all' ? 'All' : tab === 'missingPet' ? 'Missing Alerts' : tab === 'blog' ? 'Articles' : tab + 's'}
                         <span
                             className={`px-1.5 py-0.5 rounded-full text-[10px] ${
                                 activeTab === tab
@@ -70,8 +70,8 @@ export default function UserBookmarks() {
                         </h3>
                         <p className="mt-2 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">
                             {activeTab === 'all'
-                                ? 'Start bookmarking pets, events, and more to access them later.'
-                                : `You don't have any bookmarked ${activeTab === 'missingPet' ? 'missing alerts' : activeTab + 's'} yet.`}
+                                ? 'Start bookmarking pets, events, articles, and more to access them later.'
+                                : `You don't have any bookmarked ${activeTab === 'missingPet' ? 'missing alerts' : activeTab === 'blog' ? 'articles' : activeTab + 's'} yet.`}
                         </p>
                     </div>
                 </DashboardCard>
@@ -98,10 +98,12 @@ export default function UserBookmarks() {
                                             ? 'bg-paw-coral'
                                             : item.type === 'event'
                                               ? 'bg-paw-blue'
-                                              : 'bg-red-500'
+                                              : item.type === 'blog'
+                                                ? 'bg-amber-500'
+                                                : 'bg-red-500'
                                     }`}
                                 >
-                                    {item.type === 'pet' ? 'Pet' : item.type === 'event' ? 'Event' : 'Missing Alert'}
+                                    {item.type === 'pet' ? 'Pet' : item.type === 'event' ? 'Event' : item.type === 'blog' ? 'Article' : 'Missing Alert'}
                                 </span>
                             </div>
 
@@ -162,6 +164,20 @@ export default function UserBookmarks() {
                                             )}
                                         </div>
                                     )}
+                                    {item.type === 'blog' && (
+                                        <div className="text-xs font-bold text-gray-500 space-y-1">
+                                            {item.data?.category && (
+                                                <p className="uppercase text-[10px] tracking-wider text-paw-orange">
+                                                    {String(item.data.category).replace(/_/g, ' ')}
+                                                </p>
+                                            )}
+                                            {item.data?.summary && (
+                                                <p className="line-clamp-2 text-gray-500 font-medium">
+                                                    {item.data.summary}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-2.5 pt-2">
@@ -171,7 +187,9 @@ export default function UserBookmarks() {
                                                 ? `/adopt/${item.id}`
                                                 : item.type === 'event'
                                                   ? `/events?event=${item.id}`
-                                                  : '/missing'
+                                                  : item.type === 'blog'
+                                                    ? `/blog/${item.data?.slug ?? item.id}`
+                                                    : '/missing'
                                         }
                                         className="flex-1 py-2 rounded-xl border border-gray-250 dark:border-gray-800 text-[#0B2340] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors"
                                     >

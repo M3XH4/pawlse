@@ -382,3 +382,48 @@ test('rescue report remains pending when confidence is below auto-validation thr
     expect($report->ai_validation_status)->toBe('pending')
         ->and($predictionLog->fresh()->is_accurate)->toBeNull();
 });
+
+test('predict endpoint sends allow_blurry=true only when mode is reporting', function () {
+    Http::fake([
+        '*/predict' => Http::response([
+            'accepted' => true,
+            'is_blurry' => true,
+            'species' => 'dog',
+            'breed' => 'Unknown',
+            'confidence' => 0.0,
+            'confidence_level' => 'Low',
+            'is_confident' => false,
+            'age_group' => 'Adult',
+            'gender' => 'Unknown',
+            'neutral_names' => ['Buddy'],
+        ], 200),
+    ]);
+
+    $this->postJson('/ai/predict', [
+        'image' => UploadedFile::fake()->image('blurry.jpg', 300, 300),
+        'mode' => 'reporting',
+    ])->assertOk()
+        ->assertJson([
+            'accepted' => true,
+            'is_blurry' => true,
+            'confidence' => 0,
+            'age_group' => 'Adult',
+            'gender' => 'Unknown',
+        ]);
+
+    $this->postJson('/ai/predict', [
+        'image' => UploadedFile::fake()->image('blurry.jpg', 300, 300),
+        'mode' => 'identifying',
+    ])->assertOk();
+
+    Http::assertSentCount(2);
+
+    $recorded = Http::recorded();
+    $reportingBody = $recorded[0][0]->body();
+    $identifyingBody = $recorded[1][0]->body();
+
+    expect($reportingBody)->toContain('name="allow_blurry"')
+        ->and($reportingBody)->toContain('true')
+        ->and($identifyingBody)->toContain('name="allow_blurry"')
+        ->and($identifyingBody)->toContain('false');
+});

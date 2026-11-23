@@ -17,19 +17,20 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
     const pageProps = usePage().props as { careSustainability?: CareSustainabilityData };
     const sustainability = propSustainability || pageProps.careSustainability;
 
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+    const [isOpen, setIsOpen] = useState<boolean>(() => {
+        if (typeof window === 'undefined') {
+            return true;
+        }
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved !== null ? saved === 'true' : true;
+        } catch {
+            return true;
+        }
+    });
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved !== null) {
-                setIsOpen(saved === 'true');
-            }
-        } catch {
-            // Ignore storage access errors
-        }
-
         const handleStorage = (e: StorageEvent) => {
             if (e.key === STORAGE_KEY && e.newValue !== null) {
                 setIsOpen(e.newValue === 'true');
@@ -127,7 +128,7 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
     return (
         <>
             <div className="fixed bottom-6 left-4 sm:left-6 z-40 select-none">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                     {isOpen ? (
                         <motion.div
                             key="expanded-drawer"

@@ -57,6 +57,7 @@ type AnimalPrediction = {
     age_group?: string;
     age_confidence?: number;
     age_reason?: string;
+    gender?: string;
     suggested_names?: string[];
     neutral_names?: string[];
     box?: number[];
@@ -87,6 +88,8 @@ type AIResult = {
 
     totalAnimalsDetected?: number;
     animals?: AnimalPrediction[];
+    isBlurry?: boolean;
+    blurScore?: number;
 };
 
 export type AnimalReviewItem = {
@@ -472,6 +475,8 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 totalAnimalsDetected:
                     data.total_animals_detected ?? data.animals?.length ?? 1,
                 animals: data.animals ?? [],
+                isBlurry: Boolean(data.is_blurry),
+                blurScore: data.blur_score,
             };
             setAiResult(suggestions);
             setEditedResult(suggestions);
@@ -495,7 +500,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                               breed: a.breed,
                               rawBreed: a.raw_breed,
                               ageCategory: ageCat,
-                              gender: 'Unknown',
+                              gender: a.gender ?? 'Unknown',
                               suggestedName: name,
                               confidence: Math.round((a.confidence ?? 0) * 100),
                               confidenceLevel: a.confidence_level ?? 'High',
@@ -537,7 +542,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 setWizardStep(2);
             }
 
-            if ((data.total_animals_detected ?? 1) > 1) {
+            if (data.is_blurry) {
+                toast.warning(
+                    'Image is blurry, but a pet was detected. Breed confidence is 0% and default age/gender values were applied for review.',
+                );
+            } else if ((data.total_animals_detected ?? 1) > 1) {
                 toast.success(
                     `AI detected ${data.total_animals_detected} animals in this photo! Multi-animal review activated.`,
                 );
@@ -2773,12 +2782,34 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                             AI Identification
                                                             Results
                                                         </h4>
-                                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1">
-                                                            <CheckCircle2
-                                                                size={14}
-                                                                className="text-green-600"
-                                                            />
-                                                            <span className="text-xs font-black text-green-600">
+                                                        <div
+                                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${
+                                                                aiResult.isConfident &&
+                                                                !aiResult.isBlurry
+                                                                    ? 'bg-green-100'
+                                                                    : 'bg-amber-100'
+                                                            }`}
+                                                        >
+                                                            {aiResult.isConfident &&
+                                                            !aiResult.isBlurry ? (
+                                                                <CheckCircle2
+                                                                    size={14}
+                                                                    className="text-green-600"
+                                                                />
+                                                            ) : (
+                                                                <AlertTriangle
+                                                                    size={14}
+                                                                    className="text-amber-700"
+                                                                />
+                                                            )}
+                                                            <span
+                                                                className={`text-xs font-black ${
+                                                                    aiResult.isConfident &&
+                                                                    !aiResult.isBlurry
+                                                                        ? 'text-green-600'
+                                                                        : 'text-amber-700'
+                                                                }`}
+                                                            >
                                                                 {
                                                                     aiResult.confidence
                                                                 }

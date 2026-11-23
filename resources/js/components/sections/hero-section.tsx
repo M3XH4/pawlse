@@ -32,7 +32,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
       <div
         className="absolute inset-0 z-0 pointer-events-none opacity-10"
         style={{
-          backgroundImage: 'url(/images/overlay-image.jpg)',
+          backgroundImage: 'image-set(url(/images/overlay-image.webp) type("image/webp"), url(/images/overlay-image.jpg) type("image/jpeg"))',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat'
@@ -202,11 +202,16 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
           }}
           className="relative w-[60vw] max-w-[950px] min-w-[650px]"
         >
-          <img
-            src="/images/hero-image.png"
-            alt="Happy Cat and Dog"
-            className="w-full h-auto object-contain drop-shadow-2xl"
-          />
+          <picture>
+            <source srcSet="/images/hero-image.webp" type="image/webp" />
+            <img
+              src="/images/hero-image.png"
+              alt="Happy Cat and Dog"
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-auto object-contain drop-shadow-2xl"
+            />
+          </picture>
         </motion.div>
       </div>
 
@@ -222,11 +227,16 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <div className="relative w-[88vw] max-w-[420px] sm:max-w-[500px]">
-            <img
-              src="/images/hero-image.png"
-              alt="Happy Cat and Dog"
-              className="w-full h-auto object-contain drop-shadow-2xl"
-            />
+            <picture>
+              <source srcSet="/images/hero-image.webp" type="image/webp" />
+              <img
+                src="/images/hero-image.png"
+                alt="Happy Cat and Dog"
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-auto object-contain drop-shadow-2xl"
+              />
+            </picture>
           </div>
         </motion.div>
       </div>

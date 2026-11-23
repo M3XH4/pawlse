@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
-export type BookmarkType = 'pet' | 'event' | 'vlog' | 'merch' | 'missingPet';
+export type BookmarkType = 'pet' | 'event' | 'vlog' | 'merch' | 'missingPet' | 'blog';
 
 export interface BookmarkItem {
   id: string | number;
