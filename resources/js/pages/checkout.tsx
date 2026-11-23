@@ -74,6 +74,8 @@ export default function Checkout({ donation, simulation_enabled = false, officia
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showReceiptZoom, setShowReceiptZoom] = useState(false);
+    const [isScanningProof, setIsScanningProof] = useState(false);
+    const [detectedAmount, setDetectedAmount] = useState<number | null>(null);
 
     const isProofSubmitted = donation.status === 'payment_proof_submitted';
     const isCompleted = donation.status === 'completed';
@@ -116,18 +118,63 @@ export default function Checkout({ donation, simulation_enabled = false, officia
         return null;
     };
 
-    const handleFileSelect = (file: File) => {
+    const handleFileSelect = async (file: File) => {
         setData('proof', file);
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
+        setDetectedAmount(null);
 
-        // Auto-detect transaction reference from file name if present
+        // Fallback: auto-detect transaction reference from file name if present
         const detectedFromFilename = extractReferenceFromString(file.name);
         if (detectedFromFilename && !data.payment_reference.trim()) {
-            setData((prev) => ({ ...prev, payment_reference: detectedFromFilename }));
-            toast.success(`Auto-detected reference #${detectedFromFilename} from receipt image!`, {
-                icon: <Sparkles className="text-amber-500" size={16} />,
+            setData('payment_reference', detectedFromFilename);
+        }
+
+        // Run receipt OCR to extract Reference No. and Amount Received
+        setIsScanningProof(true);
+        try {
+            const csrfToken =
+                document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            const formData = new FormData();
+            formData.append('proof', file);
+
+            const response = await fetch(`/checkout/${donation.public_reference}/extract-proof`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    Accept: 'application/json',
+                },
+                body: formData,
             });
+
+            if (response.ok) {
+                const result: { reference_no?: string | null; amount_received?: number | null } =
+                    await response.json();
+
+                if (result.reference_no) {
+                    setData('payment_reference', result.reference_no);
+                }
+                if (typeof result.amount_received === 'number' && result.amount_received > 0) {
+                    setDetectedAmount(result.amount_received);
+                }
+
+                if (result.reference_no || result.amount_received) {
+                    const parts: string[] = [];
+                    if (result.reference_no) {
+                        parts.push(`Ref #${result.reference_no}`);
+                    }
+                    if (result.amount_received) {
+                        parts.push(`Amount ₱${Number(result.amount_received).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                    }
+                    toast.success(`Detected ${parts.join(' • ')} from receipt!`, {
+                        icon: <Sparkles className="text-amber-500" size={16} />,
+                    });
+                }
+            }
+        } catch {
+            // Silent fallback to manual entry if OCR is unavailable
+        } finally {
+            setIsScanningProof(false);
         }
     };
 
@@ -402,13 +449,16 @@ export default function Checkout({ donation, simulation_enabled = false, officia
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                                             {/* QR Code Container */}
                                             <div className="md:col-span-5 flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-blue-100 shadow-sm">
-                                                <div className="relative group cursor-pointer" onClick={() => setShowQrModal(true)}>
+                                                <div
+                                                    className="relative group cursor-pointer inline-flex items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2 shadow-xs"
+                                                    onClick={() => setShowQrModal(true)}
+                                                >
                                                     <img
-                                                        src={accounts.gcash.qr_image || '/images/gcash-qr.jpg'}
+                                                        src="/images/gcash-qr-only.png"
                                                         alt="Official GCash QR Code"
-                                                        className="w-44 h-44 object-contain rounded-xl border border-gray-200 p-1.5 transition-transform group-hover:scale-[1.02]"
+                                                        className="block w-44 h-44 sm:w-48 sm:h-48 object-contain transition-transform duration-200 group-hover:scale-[1.02]"
                                                     />
-                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center text-white font-black text-xs gap-1.5 backdrop-blur-[2px]">
+                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-xs gap-1.5 backdrop-blur-[2px]">
                                                         <Maximize2 size={16} /> Click to Enlarge
                                                     </div>
                                                 </div>
@@ -589,10 +639,43 @@ export default function Checkout({ donation, simulation_enabled = false, officia
                                         </div>
                                         <p className="text-[11px] text-gray-400 font-bold mt-1 flex items-center gap-1">
                                             <Sparkles size={12} className="text-amber-500" />
-                                            Reference is automatically detected when you select your receipt screenshot!
+                                            {isScanningProof
+                                                ? 'Scanning receipt for Reference No. and Amount Received...'
+                                                : 'Reference and amount are automatically detected when you select your receipt screenshot!'}
                                         </p>
                                         {errors.payment_reference && (
                                             <p className="text-xs text-red-500 font-bold mt-1">{errors.payment_reference}</p>
+                                        )}
+
+                                        {/* Pop-up Amount Received extracted from receipt */}
+                                        {(isScanningProof || detectedAmount !== null) && (
+                                            <div className="mt-3 p-3.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                                                        <CheckCircle2 size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                                                            Amount Received (from Receipt)
+                                                        </div>
+                                                        <div className="text-base font-black text-emerald-950 font-mono">
+                                                            {isScanningProof
+                                                                ? 'Detecting...'
+                                                                : `₱${Number(detectedAmount).toLocaleString(undefined, {
+                                                                      minimumFractionDigits: 2,
+                                                                      maximumFractionDigits: 2,
+                                                                  })}`}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {!isScanningProof &&
+                                                    detectedAmount !== null &&
+                                                    Math.abs(detectedAmount - Number(donation.amount)) > 0.01 && (
+                                                        <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full shrink-0">
+                                                            Pledged: ₱{Number(donation.amount).toLocaleString()}
+                                                        </span>
+                                                    )}
+                                            </div>
                                         )}
                                     </div>
 
@@ -785,16 +868,16 @@ export default function Checkout({ donation, simulation_enabled = false, officia
             {/* QR Code Lightbox Modal */}
             {showQrModal && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                    <div className="relative bg-white rounded-3xl p-5 sm:p-6 max-w-sm w-full max-h-[92vh] overflow-y-auto text-center space-y-3 shadow-2xl">
                         <button
                             type="button"
                             onClick={() => setShowQrModal(false)}
-                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-full transition-colors cursor-pointer"
+                            className="absolute top-3.5 right-3.5 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-full transition-colors cursor-pointer"
                         >
                             <X size={20} />
                         </button>
 
-                        <div className="pt-2">
+                        <div className="pt-1">
                             <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-700">
                                 Official GCash QR
                             </span>
@@ -804,11 +887,11 @@ export default function Checkout({ donation, simulation_enabled = false, officia
                             </p>
                         </div>
 
-                        <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 inline-block mx-auto">
+                        <div className="p-2 bg-gray-50 rounded-2xl border border-gray-200 inline-flex items-center justify-center mx-auto overflow-hidden">
                             <img
                                 src={accounts.gcash?.qr_image || '/images/gcash-qr.jpg'}
                                 alt="Official GCash QR Code"
-                                className="w-64 h-64 object-contain mx-auto rounded-xl"
+                                className="block w-auto max-w-full h-auto max-h-[45vh] object-contain mx-auto rounded-xl"
                             />
                         </div>
 

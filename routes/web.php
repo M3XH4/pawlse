@@ -93,6 +93,7 @@ Route::post('/donate/in-kind', [DonateController::class, 'storeInKind'])->name('
 Route::post('/donate/sponsor', [DonateController::class, 'storeSponsor'])->name('donate.store-sponsor')->middleware('throttle:15,1');
 Route::get('/checkout/{ref}', [DonateController::class, 'checkout'])->name('donate.checkout');
 Route::post('/checkout/{ref}/pay', [DonateController::class, 'pay'])->name('donate.pay');
+Route::post('/checkout/{ref}/extract-proof', [DonateController::class, 'extractProofDetails'])->name('donate.checkout.extract-proof')->middleware('throttle:30,1');
 Route::post('/checkout/{ref}/proof', [DonateController::class, 'submitProof'])->name('donate.checkout.proof')->middleware('throttle:15,1');
 Route::post('/webhooks/payment', [PaymentWebhookController::class, 'handle'])->name('webhooks.payment');
 
@@ -266,6 +267,9 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
     Route::post('donation-monitoring/donations/{donation}/verify-cash', [DonationMonitoringController::class, 'verifyCash'])->name('donation-monitoring.verify-cash');
     Route::post('donation-monitoring/donations/{donation}/reject', [DonationMonitoringController::class, 'rejectDonation'])->name('donation-monitoring.reject');
+    Route::post('donation-monitoring/donations/{donation}/request-amount-edit', [DonationMonitoringController::class, 'requestAmountEdit'])->name('donation-monitoring.request-amount-edit');
+    Route::post('donation-monitoring/amount-edit-requests/{editRequest}/confirm', [DonationMonitoringController::class, 'confirmAmountEdit'])->name('donation-monitoring.amount-edit.confirm');
+    Route::post('donation-monitoring/amount-edit-requests/{editRequest}/reject', [DonationMonitoringController::class, 'rejectAmountEdit'])->name('donation-monitoring.amount-edit.reject');
     Route::post('donation-monitoring/in-kind/{donation}/verify', [DonationMonitoringController::class, 'verifyInKind'])->name('donation-monitoring.in-kind.verify');
     Route::post('donation-monitoring/inventory', [DonationMonitoringController::class, 'storeInventoryItem'])->name('donation-monitoring.inventory.store');
     Route::put('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'updateInventoryItem'])->name('donation-monitoring.inventory.update');
@@ -451,6 +455,9 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::get('donation-monitoring', [DonationMonitoringController::class, 'index'])->name('donation-monitoring');
     Route::post('donation-monitoring/donations/{donation}/verify-cash', [DonationMonitoringController::class, 'verifyCash'])->name('donation-monitoring.verify-cash');
     Route::post('donation-monitoring/donations/{donation}/reject', [DonationMonitoringController::class, 'rejectDonation'])->name('donation-monitoring.reject');
+    Route::post('donation-monitoring/donations/{donation}/request-amount-edit', [DonationMonitoringController::class, 'requestAmountEdit'])->name('donation-monitoring.request-amount-edit');
+    Route::post('donation-monitoring/amount-edit-requests/{editRequest}/confirm', [DonationMonitoringController::class, 'confirmAmountEdit'])->name('donation-monitoring.amount-edit.confirm');
+    Route::post('donation-monitoring/amount-edit-requests/{editRequest}/reject', [DonationMonitoringController::class, 'rejectAmountEdit'])->name('donation-monitoring.amount-edit.reject');
     Route::post('donation-monitoring/in-kind/{donation}/verify', [DonationMonitoringController::class, 'verifyInKind'])->name('donation-monitoring.in-kind.verify');
     Route::post('donation-monitoring/inventory', [DonationMonitoringController::class, 'storeInventoryItem'])->name('donation-monitoring.inventory.store');
     Route::put('donation-monitoring/inventory/{item}', [DonationMonitoringController::class, 'updateInventoryItem'])->name('donation-monitoring.inventory.update');

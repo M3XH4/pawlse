@@ -75,6 +75,30 @@ interface DonationRecord {
         poster_image?: string | null;
         poster_url?: string | null;
     } | null;
+    pending_amount_edit_request?: {
+        id: number;
+        original_amount: number | string;
+        requested_amount: number | string;
+        reason: string;
+        status: string;
+        requester?: {
+            name: string;
+        } | null;
+    } | null;
+}
+
+interface PendingAmountEditRequest {
+    id: number;
+    donation_id: number;
+    public_reference: string | null;
+    donor_name: string | null;
+    original_amount: number;
+    requested_amount: number;
+    reason: string;
+    status: string;
+    requested_by_name: string;
+    created_at: string | null;
+    time_ago: string | null;
 }
 
 interface InventoryBatchData {
@@ -162,6 +186,8 @@ interface DonationMonitoringProps {
         pendingCashCount: number;
         pendingInKindCount: number;
     };
+    isSuperAdmin?: boolean;
+    pendingAmountEditRequests?: PendingAmountEditRequest[];
     basePath?: string;
 }
 
@@ -195,6 +221,8 @@ export default function DonationMonitoring({
     sustainabilityHistory,
     filters,
     stats,
+    isSuperAdmin = false,
+    pendingAmountEditRequests = [],
     basePath = '/account/admin/donation-monitoring',
 }: DonationMonitoringProps) {
     const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs' | 'sustainability'>('donations');
@@ -215,6 +243,9 @@ export default function DonationMonitoring({
     const [rejectingDonation, setRejectingDonation] = useState<DonationRecord | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [zoomedProofUrl, setZoomedProofUrl] = useState<string | null>(null);
+    const [editingAmountDonation, setEditingAmountDonation] = useState<DonationRecord | null>(null);
+    const [editAmountValue, setEditAmountValue] = useState('');
+    const [editAmountReason, setEditAmountReason] = useState('');
 
     // Inventory Modals
     const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -389,6 +420,51 @@ export default function DonationMonitoring({
                 setRejectReason('');
                 setSelectedDonationDetails(null);
                 toast.success(`Donation ${rejectingDonation.public_reference} has been rejected.`);
+            },
+            onError: (err) => {
+                Object.values(err).forEach(e => toast.error(e));
+            }
+        });
+    };
+
+    const submitRequestAmountEdit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingAmountDonation) return;
+
+        router.post(`${basePath}/donations/${editingAmountDonation.id}/request-amount-edit`, {
+            requested_amount: parseFloat(editAmountValue),
+            reason: editAmountReason,
+        }, {
+            onSuccess: () => {
+                setEditingAmountDonation(null);
+                setEditAmountValue('');
+                setEditAmountReason('');
+                setSelectedDonationDetails(null);
+                toast.success('Amount edit request submitted for Super Admin confirmation.');
+            },
+            onError: (err) => {
+                Object.values(err).forEach(e => toast.error(e));
+            }
+        });
+    };
+
+    const handleConfirmAmountEdit = (editRequestId: number) => {
+        router.post(`${basePath}/amount-edit-requests/${editRequestId}/confirm`, {}, {
+            onSuccess: () => {
+                setSelectedDonationDetails(null);
+                toast.success('Donation amount edit confirmed and applied.');
+            },
+            onError: (err) => {
+                Object.values(err).forEach(e => toast.error(e));
+            }
+        });
+    };
+
+    const handleRejectAmountEdit = (editRequestId: number) => {
+        router.post(`${basePath}/amount-edit-requests/${editRequestId}/reject`, {}, {
+            onSuccess: () => {
+                setSelectedDonationDetails(null);
+                toast.success('Donation amount edit request rejected.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -660,6 +736,75 @@ export default function DonationMonitoring({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Pending Amount Edit Approvals Banner */}
+                        {pendingAmountEditRequests.length > 0 && (
+                            <div className="bg-amber-50/90 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800/60 rounded-[28px] p-5 space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-9 w-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                                            <ShieldAlert size={18} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-amber-950 dark:text-amber-100">
+                                                Pending Donation Amount Edit Requests ({pendingAmountEditRequests.length})
+                                            </h3>
+                                            <p className="text-xs font-bold text-amber-800/80 dark:text-amber-300/80">
+                                                {isSuperAdmin
+                                                    ? 'Review and confirm or reject requested donation amount adjustments below.'
+                                                    : 'These amount edits require Super Administrator confirmation before taking effect.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2.5">
+                                    {pendingAmountEditRequests.map((req) => (
+                                        <div
+                                            key={req.id}
+                                            className="bg-white dark:bg-gray-900/90 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+                                                    <span className="font-mono text-paw-orange">{req.public_reference}</span>
+                                                    <span className="text-paw-navy dark:text-white">{req.donor_name}</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                                                        ₱{req.original_amount.toLocaleString()} → ₱{req.requested_amount.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 font-bold">
+                                                    Requested by {req.requested_by_name} {req.time_ago ? `(${req.time_ago})` : ''} • Reason: {req.reason}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                {isSuperAdmin ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleConfirmAmountEdit(req.id)}
+                                                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                                                        >
+                                                            <CheckCircle2 size={13} /> Confirm Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRejectAmountEdit(req.id)}
+                                                            className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 text-xs font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                                                        >
+                                                            <XCircle size={13} /> Reject
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 text-[11px] font-black uppercase tracking-wider">
+                                                        Awaiting Super Admin
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Donations list */}
                         <div className="bg-white dark:bg-[#111827] border border-gray-100 dark:border-gray-800 rounded-[32px] overflow-hidden shadow-sm">
@@ -1422,7 +1567,51 @@ export default function DonationMonitoring({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                             <div>
                                                 <div className="font-bold text-gray-400 text-xs">Total Amount</div>
-                                                <div className="font-black text-2xl text-green-600 mt-0.5">₱{Number(selectedDonationDetails.amount || 0).toLocaleString()}</div>
+                                                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                                    <div className="font-black text-2xl text-green-600">₱{Number(selectedDonationDetails.amount || 0).toLocaleString()}</div>
+                                                    {!selectedDonationDetails.pending_amount_edit_request && selectedDonationDetails.status !== 'rejected' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingAmountDonation(selectedDonationDetails);
+                                                                setEditAmountValue(String(selectedDonationDetails.amount ?? ''));
+                                                                setEditAmountReason('');
+                                                            }}
+                                                            className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-50 border border-gray-200 hover:border-amber-300 text-xs font-black text-paw-navy flex items-center gap-1 cursor-pointer transition-colors"
+                                                            title="Request Amount Edit (Requires Super Admin Confirmation)"
+                                                        >
+                                                            <Edit2 size={12} /> Edit Amount
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {selectedDonationDetails.pending_amount_edit_request && (
+                                                    <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1.5">
+                                                        <div className="font-black text-amber-900">
+                                                            Pending Edit: ₱{Number(selectedDonationDetails.pending_amount_edit_request.requested_amount).toLocaleString()} (Awaiting Super Admin)
+                                                        </div>
+                                                        <div className="text-amber-800 font-bold">
+                                                            Reason: {selectedDonationDetails.pending_amount_edit_request.reason}
+                                                        </div>
+                                                        {isSuperAdmin && (
+                                                            <div className="flex items-center gap-2 pt-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleConfirmAmountEdit(selectedDonationDetails.pending_amount_edit_request!.id)}
+                                                                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] uppercase cursor-pointer"
+                                                                >
+                                                                    Confirm Edit
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRejectAmountEdit(selectedDonationDetails.pending_amount_edit_request!.id)}
+                                                                    className="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-600 hover:text-white text-red-700 font-black text-[11px] uppercase cursor-pointer"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-gray-400 text-xs">Payment Reference / Txn No.</div>
@@ -1890,6 +2079,65 @@ export default function DonationMonitoring({
                                 Confirm Verification
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* REQUEST AMOUNT EDIT MODAL */}
+            {editingAmountDonation && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+                    <div onClick={() => setEditingAmountDonation(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div className="bg-white dark:bg-gray-900 rounded-[32px] p-8 max-w-md w-full relative z-10 shadow-2xl">
+                        <h3 className="text-2xl font-black text-paw-navy dark:text-white mb-2">Edit Donation Amount</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-bold mb-4">
+                            Ref: <span className="text-paw-orange font-black">{editingAmountDonation.public_reference}</span> ({editingAmountDonation.donor_name}) • Current: ₱{Number(editingAmountDonation.amount || 0).toLocaleString()}
+                        </p>
+
+                        <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-xs font-bold text-amber-800 dark:text-amber-300">
+                            This change will be sent to a Super Administrator for confirmation before the donation amount is updated.
+                        </div>
+
+                        <form onSubmit={submitRequestAmountEdit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Actual Amount Received (₱) *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="1"
+                                    required
+                                    value={editAmountValue}
+                                    onChange={(e) => setEditAmountValue(e.target.value)}
+                                    placeholder="e.g. 250.00"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm font-black text-paw-navy dark:text-white focus:border-paw-orange outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1.5">Reason for Adjustment *</label>
+                                <textarea
+                                    required
+                                    rows={3}
+                                    value={editAmountReason}
+                                    onChange={(e) => setEditAmountReason(e.target.value)}
+                                    placeholder="e.g. Receipt screenshot shows ₱250.00 instead of pledged ₱500.00"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white resize-none focus:border-paw-orange outline-none"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingAmountDonation(null)}
+                                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-2xl font-black text-xs uppercase tracking-wider cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-3 bg-paw-orange hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-paw-orange/20 cursor-pointer"
+                                >
+                                    Submit for Approval
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

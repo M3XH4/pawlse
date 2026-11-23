@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\CareSustainability;
 use App\Models\Donation;
+use App\Models\DonationAmountEditRequest;
 use App\Models\Event;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
@@ -39,6 +40,7 @@ class DonationMonitoringController extends Controller
                 'feedingSponsorship',
                 'user',
                 'verifiedBy',
+                'pendingAmountEditRequest.requester',
             ]);
 
             if ($request->filled('search')) {
@@ -261,6 +263,29 @@ class DonationMonitoringController extends Controller
                 });
         };
 
+        $getPendingAmountEditRequests = function () {
+            return DonationAmountEditRequest::query()
+                ->with(['donation', 'requester'])
+                ->where('status', 'pending')
+                ->latest('id')
+                ->get()
+                ->map(function (DonationAmountEditRequest $req) {
+                    return [
+                        'id' => $req->id,
+                        'donation_id' => $req->donation_id,
+                        'public_reference' => $req->donation?->public_reference,
+                        'donor_name' => $req->donation?->donor_name,
+                        'original_amount' => (float) $req->original_amount,
+                        'requested_amount' => (float) $req->requested_amount,
+                        'reason' => $req->reason,
+                        'status' => $req->status,
+                        'requested_by_name' => $req->requester?->name ?? 'Administrator',
+                        'created_at' => $req->created_at?->format('M j, Y, g:i A'),
+                        'time_ago' => $req->created_at?->diffForHumans(),
+                    ];
+                });
+        };
+
         $currentUser = $request->user();
         $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
         $isSuperAdminPath = $request->is('account/super-admin/*');
@@ -274,6 +299,7 @@ class DonationMonitoringController extends Controller
             'inventoryStats' => $getInventoryStats,
             'sustainability' => fn () => CareSustainability::current()->toPublicArray(),
             'sustainabilityHistory' => $getSustainabilityHistory,
+            'pendingAmountEditRequests' => $getPendingAmountEditRequests,
             'filters' => $request->all(),
             'stats' => $getStats,
             'isSuperAdmin' => $isSuperAdmin,
@@ -881,5 +907,164 @@ class DonationMonitoringController extends Controller
         });
 
         return redirect()->back()->with('success', "Donation {$donation->public_reference} marked as rejected.");
+    }
+
+    /**
+     * Request a donation amount edit (requires Super Admin confirmation before applying).
+     */
+    public function requestAmountEdit(Request $request, Donation $donation): RedirectResponse
+    {
+        $donationType = $donation->type instanceof DonationType ? $donation->type->value : $donation->type;
+        if ($donationType === DonationType::InKind->value) {
+            return redirect()->back()->withErrors(['requested_amount' => 'Amount edits are only applicable to monetary donations.']);
+        }
+
+        $validated = $request->validate([
+            'requested_amount' => ['required', 'numeric', 'min:1', 'max:10000000'],
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $originalAmount = round((float) ($donation->amount ?? 0), 2);
+        $requestedAmount = round((float) $validated['requested_amount'], 2);
+
+        if (abs($requestedAmount - $originalAmount) < 0.01) {
+            return redirect()->back()->withErrors(['requested_amount' => 'The requested amount must be different from the current amount.']);
+        }
+
+        $hasPending = $donation->amountEditRequests()->where('status', 'pending')->exists();
+        if ($hasPending) {
+            return redirect()->back()->withErrors(['requested_amount' => 'There is already a pending amount edit request awaiting Super Admin confirmation for this donation.']);
+        }
+
+        DonationAmountEditRequest::create([
+            'donation_id' => $donation->id,
+            'requested_by' => auth()->id(),
+            'original_amount' => $originalAmount,
+            'requested_amount' => $requestedAmount,
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+        ]);
+
+        AuditLog::log(
+            'donation_amount_edit_requested',
+            "Requested amount edit for donation #{$donation->public_reference} from ₱{$originalAmount} to ₱{$requestedAmount}: {$validated['reason']}"
+        );
+
+        DB::table('donation_audit_logs')->insert([
+            'donation_id' => $donation->id,
+            'action' => 'amount_edit_requested',
+            'old_status' => $donation->status,
+            'new_status' => $donation->status,
+            'performed_by' => auth()->id(),
+            'notes' => "Requested amount edit from ₱{$originalAmount} to ₱{$requestedAmount} (Pending Super Admin confirmation). Reason: {$validated['reason']}",
+            'created_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', "Amount edit request for {$donation->public_reference} submitted for Super Admin confirmation.");
+    }
+
+    /**
+     * Confirm and apply a pending donation amount edit request (Super Admin only).
+     */
+    public function confirmAmountEdit(Request $request, DonationAmountEditRequest $editRequest): RedirectResponse
+    {
+        if (! $request->user()?->isSuperAdmin()) {
+            abort(403, 'Only a Super Administrator can confirm donation amount edits.');
+        }
+
+        if ($editRequest->status !== 'pending') {
+            return redirect()->back()->withErrors(['error' => 'This amount edit request has already been processed.']);
+        }
+
+        $validated = $request->validate([
+            'review_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($editRequest, $validated) {
+            $donation = $editRequest->donation()->lockForUpdate()->firstOrFail();
+
+            $editRequest->update([
+                'status' => 'approved',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'review_notes' => $validated['review_notes'] ?? null,
+            ]);
+
+            $newAmount = (float) $editRequest->requested_amount;
+            $oldAmount = (float) $editRequest->original_amount;
+
+            $donation->update([
+                'amount' => $newAmount,
+            ]);
+
+            $donation->payments()->update([
+                'amount' => (int) round($newAmount),
+            ]);
+
+            AuditLog::log(
+                'donation_amount_edit_confirmed',
+                "Confirmed amount edit for donation #{$donation->public_reference} from ₱{$oldAmount} to ₱{$newAmount}"
+            );
+
+            DB::table('donation_audit_logs')->insert([
+                'donation_id' => $donation->id,
+                'action' => 'amount_edit_confirmed',
+                'old_status' => $donation->status,
+                'new_status' => $donation->status,
+                'performed_by' => auth()->id(),
+                'notes' => "Super Admin confirmed amount edit from ₱{$oldAmount} to ₱{$newAmount}.",
+                'created_at' => now(),
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Donation amount edit confirmed and applied.');
+    }
+
+    /**
+     * Reject a pending donation amount edit request (Super Admin only).
+     */
+    public function rejectAmountEdit(Request $request, DonationAmountEditRequest $editRequest): RedirectResponse
+    {
+        if (! $request->user()?->isSuperAdmin()) {
+            abort(403, 'Only a Super Administrator can reject donation amount edits.');
+        }
+
+        if ($editRequest->status !== 'pending') {
+            return redirect()->back()->withErrors(['error' => 'This amount edit request has already been processed.']);
+        }
+
+        $validated = $request->validate([
+            'review_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($editRequest, $validated) {
+            $donation = $editRequest->donation;
+
+            $editRequest->update([
+                'status' => 'rejected',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'review_notes' => $validated['review_notes'] ?? 'Rejected by Super Administrator.',
+            ]);
+
+            if ($donation) {
+                AuditLog::log(
+                    'donation_amount_edit_rejected',
+                    "Rejected amount edit for donation #{$donation->public_reference}"
+                );
+
+                DB::table('donation_audit_logs')->insert([
+                    'donation_id' => $donation->id,
+                    'action' => 'amount_edit_rejected',
+                    'old_status' => $donation->status,
+                    'new_status' => $donation->status,
+                    'performed_by' => auth()->id(),
+                    'notes' => 'Super Admin rejected the requested amount edit.',
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('success', 'Donation amount edit request rejected.');
     }
 }

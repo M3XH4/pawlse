@@ -26,7 +26,9 @@ use App\Notifications\DonationProofSubmittedNotification;
 use App\Notifications\DonationReceivedNotification;
 use App\Notifications\DonationVerifiedNotification;
 use App\Notifications\SubmissionEReceiptNotification;
+use App\Services\Donations\ReceiptOcrService;
 use App\Support\EReceiptDispatcher;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -538,6 +540,43 @@ class DonateController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Extract transaction reference number and amount received from an uploaded receipt image.
+     */
+    public function extractProofDetails(Request $request, string $ref, ReceiptOcrService $ocrService): JsonResponse
+    {
+        Donation::where('public_reference', $ref)->firstOrFail();
+
+        $request->validate([
+            'proof' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        $file = $request->file('proof');
+        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        $tmpDir = storage_path('app/private/tmp_ocr');
+
+        if (! is_dir($tmpDir)) {
+            mkdir($tmpDir, 0755, true);
+        }
+
+        $tmpFilename = uniqid('ocr_', true).'.'.$extension;
+        $tmpPath = $tmpDir.DIRECTORY_SEPARATOR.$tmpFilename;
+        $file->move($tmpDir, $tmpFilename);
+
+        try {
+            $extracted = $ocrService->extractFromPath($tmpPath);
+
+            return response()->json([
+                'reference_no' => $extracted['reference_no'],
+                'amount_received' => $extracted['amount_received'],
+            ]);
+        } finally {
+            if (file_exists($tmpPath)) {
+                @unlink($tmpPath);
+            }
+        }
     }
 
     /**

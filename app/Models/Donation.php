@@ -60,4 +60,22 @@ class Donation extends Model
     {
         return $this->hasMany(PaymentProof::class);
     }
+
+    /**
+     * @return HasMany<DonationAmountEditRequest, $this>
+     */
+    public function amountEditRequests(): HasMany
+    {
+        return $this->hasMany(DonationAmountEditRequest::class);
+    }
+
+    /**
+     * @return HasOne<DonationAmountEditRequest, $this>
+     */
+    public function pendingAmountEditRequest(): HasOne
+    {
+        return $this->hasOne(DonationAmountEditRequest::class)
+            ->where('status', 'pending')
+            ->latestOfMany();
+    }
 }
