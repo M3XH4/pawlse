@@ -88,6 +88,7 @@ export function navItem(
 }
 
 export const userNavItems: DashboardNavItem[] = [
+    navItem('Home', '/account/user', Home),
     navItem('My Bookmarks', bookmark.url(), Bookmark),
     navItem('My Adoption Applications', adoptionApplications.url(), Heart),
     navItem('My Shelter Visits', shelterVisits.url(), Building2),

@@ -76,7 +76,9 @@ export function DashboardSidebar({
     }, []);
 
     const isNavItemActive = (match: string) =>
-        currentUrl === match || currentUrl.startsWith(`${match}/`);
+        match === '/account/user'
+            ? currentUrl === match
+            : currentUrl === match || currentUrl.startsWith(`${match}/`);
 
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};

@@ -52,6 +52,7 @@ use App\Http\Controllers\SuperAdmin\ResourceManagementController;
 use App\Http\Controllers\SuperAdmin\SecurityController;
 use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 use App\Http\Controllers\SuperAdmin\UserManagementController;
+use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\UserStoryController;
 use App\Http\Controllers\VetController;
@@ -151,7 +152,7 @@ Route::prefix('account/notifications')->name('account.notifications.')->middlewa
 });
 
 Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {
-    Route::inertia('/', 'user/bookmark')->name('index');
+    Route::get('/', [UserDashboardController::class, 'index'])->name('index');
     Route::inertia('bookmark', 'user/bookmark')->name('bookmark');
     Route::get('rescue-reports', [PetReportController::class, 'userReports'])->name('rescue-reports');
     Route::get('adoption-applications', [AdoptionApplicationController::class, 'index'])->name('adoption-applications');

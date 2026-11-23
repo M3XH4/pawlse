@@ -57,7 +57,7 @@ test('role dashboards share notifications and chrome props', function (string $s
             ->has('dashboardNotificationActions.markAllReadUrl'),
         );
 })->with([
-    ['user', 'account.user.index', 'user/bookmark', 'user'],
+    ['user', 'account.user.index', 'user/dashboard', 'user'],
     ['volunteer', 'account.volunteer.index', 'volunteer/profile-information', 'volunteer'],
     ['admin', 'account.admin.dashboard', 'admin/dashboard', 'admin'],
     ['superAdmin', 'account.super-admin.dashboard', 'super-admin/dashboard', 'super-admin'],

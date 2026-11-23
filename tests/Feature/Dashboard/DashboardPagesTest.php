@@ -15,7 +15,7 @@ test('all user dashboard pages are reachable for users', function (string $route
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component($component));
 })->with([
-    ['account.user.index', 'user/bookmark'],
+    ['account.user.index', 'user/dashboard'],
     ['account.user.bookmark', 'user/bookmark'],
     ['account.user.rescue-reports', 'user/rescue-reports'],
     ['account.user.adoption-applications', 'user/adoption-applications'],
