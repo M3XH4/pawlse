@@ -16,13 +16,17 @@ use App\Models\Partner;
 use App\Models\PartnerFoodPickup;
 use App\Models\User;
 use App\Models\VolunteerApplication;
+use App\Models\VolunteerInjuryReport;
 use App\Notifications\VolunteerApplicationReviewedNotification;
 use App\Notifications\VolunteerCertificateIssuedNotification;
+use App\Notifications\VolunteerMedicalAidUpdatedNotification;
 use App\Notifications\VolunteerTaskAssignedNotification;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -121,6 +125,27 @@ class VolunteerManagementController extends Controller
                 });
             });
 
+        $injuryReportsQuery = VolunteerInjuryReport::with([
+            'user:id,name,email,phone',
+            'assignedTask.event:id,title',
+            'assignedTask.feedingSchedule:id,zone',
+            'assignedTask.petReport:id,name,animal_type,location',
+            'initiatedBy:id,name',
+            'confirmedBy:id,name',
+            'assignedMedic:id,name,phone',
+        ])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($outer) use ($search) {
+                    $outer->where('description', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%")
+                        ->orWhere('incident_type', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            });
+
         $currentUser = $request->user();
         $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
         $isSuperAdminPath = $request->is('account/super-admin/*');
@@ -158,6 +183,17 @@ class VolunteerManagementController extends Controller
             ],
             'events' => fn () => Event::query()->where('approval_status', 'approved')->latest()->get(),
             'feedingSchedules' => fn () => FeedingSchedule::query()->where('status', 'active')->latest()->get(),
+            'injuryReports' => fn () => $injuryReportsQuery->latest()->paginate(10, ['*'], 'injuries_page')->withQueryString(),
+            'injuryStats' => fn () => [
+                'reported' => VolunteerInjuryReport::query()->where('status', VolunteerInjuryReport::StatusReported)->count(),
+                'medical_aid_initiated' => VolunteerInjuryReport::query()->where('status', VolunteerInjuryReport::StatusMedicalAidInitiated)->count(),
+                'confirmed' => VolunteerInjuryReport::query()->where('status', VolunteerInjuryReport::StatusConfirmed)->count(),
+            ],
+            'incidentTypes' => VolunteerInjuryReport::INCIDENT_TYPES,
+            'severities' => VolunteerInjuryReport::SEVERITIES,
+            'medicalAidTypes' => VolunteerInjuryReport::MEDICAL_AID_TYPES,
+            'fieldMedicsAndLeads' => fn () => $this->resolveFieldMedicsAndLeads(),
+            'fieldGroups' => fn () => $this->resolveFieldGroups(),
             'filters' => [
                 'search' => $search,
                 'status' => $statusFilter,
@@ -661,5 +697,391 @@ class VolunteerManagementController extends Controller
 
         $pickup->loadMissing('partner');
         AuditLog::log('partner_food_pickup_assign', "Assigned volunteer {$volunteer?->name} to daily food pickup for {$pickup->partner?->name}");
+    }
+
+    /**
+     * Initiate medical aid for a reported volunteer field injury.
+     */
+    public function initiateMedicalAid(Request $request, VolunteerInjuryReport $injuryReport): RedirectResponse
+    {
+        if ($injuryReport->status !== VolunteerInjuryReport::StatusReported) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Medical aid can only be initiated for newly reported injuries.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $validated = $request->validate([
+            'medical_aid_type' => ['required', 'string', Rule::in(array_keys(VolunteerInjuryReport::MEDICAL_AID_TYPES))],
+            'medical_facility' => ['nullable', 'string', 'max:255'],
+            'medical_aid_notes' => ['required', 'string', 'max:1500'],
+            'assigned_medic_user_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $admin = $request->user();
+
+        $injuryReport->update([
+            'status' => VolunteerInjuryReport::StatusMedicalAidInitiated,
+            'medical_aid_type' => $validated['medical_aid_type'],
+            'medical_facility' => $validated['medical_facility'] ?? null,
+            'medical_aid_notes' => $validated['medical_aid_notes'],
+            'assigned_medic_user_id' => $validated['assigned_medic_user_id'] ?? $injuryReport->assigned_medic_user_id,
+            'initiated_by_user_id' => $admin?->id,
+            'medical_aid_initiated_at' => now(),
+        ]);
+
+        $injuryReport->loadMissing('user');
+        $injuryReport->user?->notify(new VolunteerMedicalAidUpdatedNotification($injuryReport));
+
+        AuditLog::log(
+            'volunteer_medical_aid_initiated',
+            "Initiated medical aid ({$validated['medical_aid_type']}) for volunteer {$injuryReport->user?->name} (Injury Report #{$injuryReport->id})"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Medical aid initiated and volunteer notified.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Confirm that medical aid for a volunteer field injury has been completed/verified.
+     */
+    public function confirmMedicalAid(Request $request, VolunteerInjuryReport $injuryReport): RedirectResponse
+    {
+        if ($injuryReport->status !== VolunteerInjuryReport::StatusMedicalAidInitiated) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Medical aid must be initiated before it can be confirmed.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $validated = $request->validate([
+            'confirmation_notes' => ['nullable', 'string', 'max:1500'],
+        ]);
+
+        $admin = $request->user();
+
+        $injuryReport->update([
+            'status' => VolunteerInjuryReport::StatusConfirmed,
+            'confirmed_by_user_id' => $admin?->id,
+            'confirmed_at' => now(),
+            'confirmation_notes' => $validated['confirmation_notes'] ?? null,
+        ]);
+
+        $injuryReport->loadMissing('user');
+        $injuryReport->user?->notify(new VolunteerMedicalAidUpdatedNotification($injuryReport));
+
+        AuditLog::log(
+            'volunteer_medical_aid_confirmed',
+            "Confirmed medical aid completion for volunteer {$injuryReport->user?->name} (Injury Report #{$injuryReport->id})"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Medical aid confirmed and case closed.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Allow an admin/super-admin to log a field injury report on behalf of a volunteer.
+     */
+    public function storeInjuryReport(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'incident_type' => ['required', 'string', Rule::in(array_keys(VolunteerInjuryReport::INCIDENT_TYPES))],
+            'severity' => ['required', 'string', Rule::in(array_keys(VolunteerInjuryReport::SEVERITIES))],
+            'body_part' => ['nullable', 'string', 'max:120'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'incident_occurred_at' => ['required', 'date'],
+            'description' => ['required', 'string', 'max:2000'],
+            'first_aid_applied' => ['boolean'],
+            'first_aid_notes' => ['nullable', 'string', 'max:1000'],
+            'assigned_medic_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'initiate_aid_now' => ['boolean'],
+            'medical_aid_type' => ['nullable', 'required_if:initiate_aid_now,true', 'string', Rule::in(array_keys(VolunteerInjuryReport::MEDICAL_AID_TYPES))],
+            'medical_facility' => ['nullable', 'string', 'max:255'],
+            'medical_aid_notes' => ['nullable', 'required_if:initiate_aid_now,true', 'string', 'max:1500'],
+        ]);
+
+        $admin = $request->user();
+        $initiateAidNow = (bool) ($validated['initiate_aid_now'] ?? false);
+
+        $report = VolunteerInjuryReport::query()->create([
+            'user_id' => $validated['user_id'],
+            'incident_type' => $validated['incident_type'],
+            'severity' => $validated['severity'],
+            'body_part' => $validated['body_part'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'incident_occurred_at' => $validated['incident_occurred_at'],
+            'description' => $validated['description'],
+            'first_aid_applied' => (bool) ($validated['first_aid_applied'] ?? false),
+            'first_aid_notes' => $validated['first_aid_notes'] ?? null,
+            'assigned_medic_user_id' => $validated['assigned_medic_user_id'] ?? null,
+            'status' => $initiateAidNow
+                ? VolunteerInjuryReport::StatusMedicalAidInitiated
+                : VolunteerInjuryReport::StatusReported,
+            'medical_aid_type' => $initiateAidNow ? ($validated['medical_aid_type'] ?? null) : null,
+            'medical_facility' => $initiateAidNow ? ($validated['medical_facility'] ?? null) : null,
+            'medical_aid_notes' => $initiateAidNow ? ($validated['medical_aid_notes'] ?? null) : null,
+            'initiated_by_user_id' => $initiateAidNow ? $admin?->id : null,
+            'medical_aid_initiated_at' => $initiateAidNow ? now() : null,
+        ]);
+
+        $report->loadMissing('user');
+        if ($initiateAidNow) {
+            $report->user?->notify(new VolunteerMedicalAidUpdatedNotification($report));
+        }
+
+        AuditLog::log(
+            'volunteer_injury_logged_by_admin',
+            "Admin {$admin?->name} logged a {$report->severity} {$report->incident_type} injury report for volunteer {$report->user?->name} (#{$report->id})"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $initiateAidNow
+                ? 'Injury report logged and medical aid initiated for volunteer.'
+                : 'Injury report logged for volunteer.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Resolve volunteers currently in the field with Medic/Lead roles or certified medic applications.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveFieldMedicsAndLeads(): array
+    {
+        $activeFieldTasks = AssignedTask::query()
+            ->with(['user:id,name,email,phone', 'feedingSchedule:id,zone', 'event:id,title'])
+            ->where('status', 'pending')
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(role) like ?', ['%medic%'])
+                    ->orWhereRaw('LOWER(role) like ?', ['%lead%']);
+            })
+            ->get();
+
+        $results = [];
+
+        foreach ($activeFieldTasks as $task) {
+            if (! $task->user) {
+                continue;
+            }
+            $location = $task->feedingSchedule?->zone ?? $task->event?->title ?? 'Active Field Duty';
+            $results[$task->user->id] = [
+                'id' => $task->user->id,
+                'name' => $task->user->name,
+                'phone' => $task->user->phone,
+                'role' => $task->role,
+                'assignment' => $location,
+                'in_field' => true,
+            ];
+        }
+
+        $medicApplications = VolunteerApplication::query()
+            ->with('user:id,name,email,phone')
+            ->where('status', 'approved')
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(role) like ?', ['%medic%'])
+                    ->orWhereNotNull('medic_certifications');
+            })
+            ->get();
+
+        foreach ($medicApplications as $app) {
+            if (! $app->user || isset($results[$app->user->id])) {
+                continue;
+            }
+            $results[$app->user->id] = [
+                'id' => $app->user->id,
+                'name' => $app->user->name,
+                'phone' => $app->user->phone,
+                'role' => $app->role ?: 'Field Medic',
+                'assignment' => 'On-Call Certified Medic',
+                'in_field' => false,
+            ];
+        }
+
+        return array_values($results);
+    }
+
+    /**
+     * Update a group member's assigned role on a Feeding Route or Event.
+     */
+    public function updateGroupMemberRole(Request $request, AssignedTask $task): RedirectResponse
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'max:100'],
+        ]);
+
+        $oldRole = $task->role;
+        $task->update([
+            'role' => $validated['role'],
+        ]);
+
+        $task->loadMissing(['user', 'feedingSchedule', 'event']);
+        $groupName = $task->feedingSchedule?->zone ?? $task->event?->title ?? "Task #{$task->id}";
+
+        AuditLog::log(
+            'volunteer_group_role_updated',
+            "Updated {$task->user?->name}'s role in '{$groupName}' from '{$oldRole}' to '{$validated['role']}'"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Updated {$task->user?->name}'s role to {$validated['role']}.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Remove a volunteer from a Feeding Route or Event group.
+     */
+    public function removeGroupMember(Request $request, AssignedTask $task): RedirectResponse
+    {
+        $task->loadMissing(['user', 'feedingSchedule', 'event']);
+        $memberName = $task->user?->name ?? $task->guest_name ?? 'Volunteer';
+        $groupName = $task->feedingSchedule?->zone ?? $task->event?->title ?? "Task #{$task->id}";
+
+        if ($task->event && $task->event->spots !== null) {
+            $task->event->increment('spots');
+        }
+
+        $task->delete();
+
+        AuditLog::log(
+            'volunteer_group_member_removed',
+            "Removed {$memberName} from field group '{$groupName}'"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$memberName} removed from {$groupName}.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Build unified Field Groups from active Feeding Routes and approved upcoming Events.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveFieldGroups(): array
+    {
+        $feedingGroups = FeedingSchedule::query()
+            ->where('status', 'active')
+            ->with([
+                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,email,phone,avatar_path')
+                    ->orderBy('created_at'),
+            ])
+            ->latest()
+            ->get()
+            ->map(fn (FeedingSchedule $schedule): array => $this->formatFieldGroup(
+                id: $schedule->id,
+                type: 'feeding',
+                name: $schedule->zone,
+                schedule: "{$schedule->day} • {$schedule->time}",
+                quota: (int) $schedule->volunteers,
+                executionStatus: $schedule->execution_status ?? 'scheduled',
+                tasks: $schedule->assignedTasks,
+            ));
+
+        $eventGroups = Event::query()
+            ->where('approval_status', 'approved')
+            ->whereDate('date', '>=', now()->toDateString())
+            ->with([
+                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,email,phone,avatar_path')
+                    ->orderBy('created_at'),
+            ])
+            ->orderBy('date')
+            ->get()
+            ->map(fn (Event $event): array => $this->formatFieldGroup(
+                id: $event->id,
+                type: 'event',
+                name: $event->title,
+                schedule: ($event->date?->format('M d, Y') ?? '').($event->time ? " • {$event->time}" : ''),
+                quota: $event->spots !== null && $event->spots > 0 ? (int) $event->spots + $event->assignedTasks->count() : 0,
+                executionStatus: null,
+                tasks: $event->assignedTasks,
+            ));
+
+        return $feedingGroups->concat($eventGroups)->values()->all();
+    }
+
+    /**
+     * @param  Collection<int, AssignedTask>  $tasks
+     * @return array<string, mixed>
+     */
+    private function formatFieldGroup(
+        int $id,
+        string $type,
+        string $name,
+        string $schedule,
+        int $quota,
+        ?string $executionStatus,
+        $tasks,
+    ): array {
+        $members = $tasks
+            ->filter(fn (AssignedTask $t): bool => $t->user !== null)
+            ->map(function (AssignedTask $t): array {
+                $roleLower = strtolower((string) $t->role);
+
+                return [
+                    'task_id' => $t->id,
+                    'user_id' => $t->user_id,
+                    'name' => $t->user->name,
+                    'email' => $t->user->email,
+                    'phone' => $t->user->phone,
+                    'avatar_path' => $t->user->avatar_path,
+                    'role' => $t->role,
+                    'status' => $t->status,
+                    'is_lead' => str_contains($roleLower, 'lead'),
+                    'is_recorder' => str_contains($roleLower, 'recorder'),
+                    'is_medic' => str_contains($roleLower, 'medic'),
+                ];
+            })
+            ->sortBy(function (array $m): int {
+                if ($m['is_lead']) {
+                    return 0;
+                }
+                if ($m['is_medic']) {
+                    return 1;
+                }
+                if ($m['is_recorder']) {
+                    return 2;
+                }
+
+                return 3;
+            })
+            ->values();
+
+        return [
+            'id' => $id,
+            'type' => $type,
+            'name' => $name,
+            'schedule' => $schedule,
+            'quota' => $quota,
+            'execution_status' => $executionStatus,
+            'members_count' => $members->count(),
+            'has_lead' => $members->contains('is_lead', true),
+            'has_recorder' => $members->contains('is_recorder', true),
+            'has_medic' => $members->contains('is_medic', true),
+            'members' => $members->all(),
+        ];
     }
 }

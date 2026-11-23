@@ -11,6 +11,7 @@ use App\Models\BlogPostReaction;
 use App\Models\CareSustainability;
 use App\Models\Certificate;
 use App\Models\Event;
+use App\Models\FeedingDistributionLog;
 use App\Models\FeedingSchedule;
 use App\Models\FosterParent;
 use App\Models\FosterPlacement;
@@ -20,10 +21,13 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\UserBadge;
 use App\Models\VolunteerApplication;
+use App\Models\VolunteerInjuryReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,9 +66,73 @@ class VolunteerDashboardController extends Controller
             ->sum('hours_logged');
 
         $pendingTasks = (clone $pendingTasksQuery)
-            ->with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
+            ->with([
+                'event.assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])->with('user:id,name,avatar_path'),
+                'feedingSchedule.assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])->with('user:id,name,avatar_path'),
+                'petReport',
+                'partnerFoodPickup.partner',
+            ])
             ->latest()
             ->get();
+
+        $myFieldTeams = $pendingTasks
+            ->filter(fn (AssignedTask $task): bool => $task->feedingSchedule !== null || $task->event !== null)
+            ->map(function (AssignedTask $task) use ($user): array {
+                $isFeeding = $task->feedingSchedule !== null;
+                $groupName = $isFeeding
+                    ? $task->feedingSchedule->zone
+                    : $task->event->title;
+                $scheduleText = $isFeeding
+                    ? "{$task->feedingSchedule->day} • {$task->feedingSchedule->time}"
+                    : (($task->event->date?->format('M d, Y') ?? '').($task->event->time ? " • {$task->event->time}" : ''));
+                $rosterCollection = $isFeeding
+                    ? $task->feedingSchedule->assignedTasks
+                    : $task->event->assignedTasks;
+
+                $members = $rosterCollection
+                    ->filter(fn (AssignedTask $m): bool => $m->user !== null)
+                    ->map(function (AssignedTask $m) use ($user): array {
+                        $roleLower = strtolower((string) $m->role);
+
+                        return [
+                            'id' => $m->id,
+                            'user_id' => $m->user_id,
+                            'name' => $m->user->name,
+                            'avatar_path' => $m->user->avatar_path,
+                            'role' => $m->role,
+                            'is_me' => $m->user_id === $user->id,
+                            'is_medic' => str_contains($roleLower, 'medic'),
+                            'is_lead' => str_contains($roleLower, 'lead'),
+                            'is_recorder' => str_contains($roleLower, 'recorder'),
+                        ];
+                    })
+                    ->sortBy(function (array $m): int {
+                        if ($m['is_lead']) {
+                            return 0;
+                        }
+                        if ($m['is_medic']) {
+                            return 1;
+                        }
+                        if ($m['is_recorder']) {
+                            return 2;
+                        }
+
+                        return 3;
+                    })
+                    ->values()
+                    ->all();
+
+                return [
+                    'task_id' => $task->id,
+                    'group_type' => $isFeeding ? 'Feeding Route Team' : 'Event Team',
+                    'group_name' => $groupName,
+                    'schedule' => $scheduleText,
+                    'execution_status' => $isFeeding ? ($task->feedingSchedule->execution_status ?? 'scheduled') : null,
+                    'my_role' => $task->role,
+                    'members' => $members,
+                ];
+            })
+            ->values();
 
         $activeMissions = $pendingTasks
             ->take(4)
@@ -243,6 +311,30 @@ class VolunteerDashboardController extends Controller
             })
             ->values();
 
+        $injuryReportsQuery = VolunteerInjuryReport::query()
+            ->where('user_id', $user->id);
+
+        $injuryReportsSummary = [
+            'total' => (clone $injuryReportsQuery)->count(),
+            'openCount' => (clone $injuryReportsQuery)
+                ->whereIn('status', [VolunteerInjuryReport::StatusReported, VolunteerInjuryReport::StatusMedicalAidInitiated])
+                ->count(),
+            'recentReports' => (clone $injuryReportsQuery)
+                ->latest()
+                ->take(3)
+                ->get()
+                ->map(fn (VolunteerInjuryReport $report): array => [
+                    'id' => $report->id,
+                    'incident_type' => $report->incident_type,
+                    'incident_label' => VolunteerInjuryReport::INCIDENT_TYPES[$report->incident_type] ?? $report->incident_type,
+                    'severity' => $report->severity,
+                    'status' => $report->status,
+                    'medical_aid_type' => $report->medical_aid_type,
+                    'incident_occurred_at' => $report->incident_occurred_at?->toIso8601String(),
+                ])
+                ->values(),
+        ];
+
         return Inertia::render('volunteer/dashboard', [
             'volunteerSummary' => [
                 'role' => $application?->role ?? 'Volunteer',
@@ -279,6 +371,8 @@ class VolunteerDashboardController extends Controller
             'latestBlogs' => $latestBlogs,
             'blogCategories' => BlogPost::CATEGORIES,
             'volunteerMapEnabled' => $this->isVolunteerMapEnabled(),
+            'injuryReportsSummary' => $injuryReportsSummary,
+            'myFieldTeams' => $myFieldTeams,
         ]);
     }
 
@@ -544,7 +638,26 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $tasks = AssignedTask::with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
+        $tasks = AssignedTask::with([
+            'event.assignedTasks' => function ($query) {
+                $query->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,avatar_path')
+                    ->orderBy('created_at');
+            },
+            'feedingSchedule.startedBy:id,name',
+            'feedingSchedule.completedBy:id,name',
+            'feedingSchedule.assignedTasks' => function ($query) {
+                $query->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,avatar_path')
+                    ->orderBy('created_at');
+            },
+            'feedingSchedule.distributionLogs' => function ($query) {
+                $query->with('recordedBy:id,name')
+                    ->latest('recorded_at');
+            },
+            'petReport',
+            'partnerFoodPickup.partner',
+        ])
             ->where('user_id', $user->id)
             ->where('status', 'pending')
             ->latest()
@@ -553,6 +666,7 @@ class VolunteerDashboardController extends Controller
         return Inertia::render('volunteer/assigned-tasks', [
             'tasks' => $tasks,
             'volunteerMapEnabled' => $this->isVolunteerMapEnabled(),
+            'foodTypes' => FeedingDistributionLog::FOOD_TYPES,
         ]);
     }
 
@@ -773,6 +887,167 @@ class VolunteerDashboardController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => "Confirmed! Food pickup from {$partnerName} marked as fetched.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Start a feeding route run (available to volunteers joined to the route).
+     */
+    public function startFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        $user = $request->user();
+
+        $assignedTask = AssignedTask::query()
+            ->where('user_id', $user->id)
+            ->where('feeding_schedule_id', $schedule->id)
+            ->whereIn('status', ['pending', 'completed'])
+            ->first();
+
+        if (! $assignedTask) {
+            abort(403, 'You must be joined to this feeding route to start it.');
+        }
+
+        if ($schedule->execution_status === FeedingSchedule::ExecutionInProgress) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => 'This feeding route is already in progress.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        if ($schedule->execution_status === FeedingSchedule::ExecutionCompleted) {
+            Inertia::flash('toast', [
+                'type' => 'warning',
+                'message' => 'This feeding route run is already completed. An admin can reset it for the next run.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $schedule->update([
+            'execution_status' => FeedingSchedule::ExecutionInProgress,
+            'started_at' => now(),
+            'started_by_user_id' => $user->id,
+        ]);
+
+        AuditLog::log('feeding_route_started', "Volunteer {$user->name} started feeding route '{$schedule->zone}'");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Feeding route '{$schedule->zone}' is now In Progress!",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Complete a feeding route run (available to volunteers joined to the route).
+     */
+    public function completeFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        $user = $request->user();
+
+        $assignedTask = AssignedTask::query()
+            ->where('user_id', $user->id)
+            ->where('feeding_schedule_id', $schedule->id)
+            ->whereIn('status', ['pending', 'completed'])
+            ->first();
+
+        if (! $assignedTask) {
+            abort(403, 'You must be joined to this feeding route to complete it.');
+        }
+
+        if ($schedule->execution_status !== FeedingSchedule::ExecutionInProgress) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Only an in-progress feeding route can be marked as completed.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $schedule->update([
+            'execution_status' => FeedingSchedule::ExecutionCompleted,
+            'completed_at' => now(),
+            'completed_by_user_id' => $user->id,
+        ]);
+
+        AuditLog::log('feeding_route_completed', "Volunteer {$user->name} completed feeding route '{$schedule->zone}'");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Feeding route '{$schedule->zone}' marked as completed!",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Record street-level food distribution on an active feeding route (Recorders / Route Leads only).
+     */
+    public function recordFeedingDistribution(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        $user = $request->user();
+
+        $assignedTask = AssignedTask::query()
+            ->where('user_id', $user->id)
+            ->where('feeding_schedule_id', $schedule->id)
+            ->whereIn('status', ['pending', 'completed'])
+            ->first();
+
+        if (! $assignedTask) {
+            abort(403, 'You are not assigned to this feeding route.');
+        }
+
+        $normalizedRole = strtolower((string) $assignedTask->role);
+        if (! str_contains($normalizedRole, 'recorder') && ! str_contains($normalizedRole, 'route lead')) {
+            abort(403, 'Only volunteers assigned as Recorder or Route Lead can record street food distributions.');
+        }
+
+        if ($schedule->execution_status !== FeedingSchedule::ExecutionInProgress) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Start the feeding route first before recording street food distributions.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $validated = $request->validate([
+            'street_or_stop' => ['required', 'string', 'max:255'],
+            'food_type' => ['required', 'string', Rule::in(FeedingDistributionLog::FOOD_TYPES)],
+            'food_packs_distributed' => ['required', 'integer', 'min:1', 'max:1000'],
+            'strays_fed' => ['required', 'integer', 'min:0', 'max:1000'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($schedule, $user, $assignedTask, $validated): void {
+            FeedingDistributionLog::query()->create([
+                'feeding_schedule_id' => $schedule->id,
+                'recorded_by_user_id' => $user->id,
+                'assigned_task_id' => $assignedTask->id,
+                'street_or_stop' => $validated['street_or_stop'],
+                'food_type' => $validated['food_type'],
+                'food_packs_distributed' => $validated['food_packs_distributed'],
+                'strays_fed' => $validated['strays_fed'],
+                'notes' => $validated['notes'] ?? null,
+                'recorded_at' => now(),
+            ]);
+
+            $schedule->increment('total_food_distributed', (int) $validated['food_packs_distributed']);
+        });
+
+        AuditLog::log(
+            'feeding_distribution_recorded',
+            "Recorder {$user->name} logged {$validated['food_packs_distributed']} {$validated['food_type']} pack(s) at {$validated['street_or_stop']} on route '{$schedule->zone}'"
+        );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Recorded {$validated['food_packs_distributed']} food pack(s) distributed at {$validated['street_or_stop']}.",
         ]);
 
         return redirect()->back();

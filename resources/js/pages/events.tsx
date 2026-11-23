@@ -70,6 +70,16 @@ interface EventModel {
     status: string;
 }
 
+interface FeedingRouteMember {
+    id: number;
+    role: string;
+    user?: {
+        id: number;
+        name: string;
+        avatar_path?: string | null;
+    } | null;
+}
+
 interface FeedingRouteModel {
     id: number;
     zone: string;
@@ -78,6 +88,11 @@ interface FeedingRouteModel {
     volunteers: number;
     strays: number;
     status: string;
+    execution_status?: 'scheduled' | 'in_progress' | 'completed';
+    total_food_distributed?: number;
+    joined_volunteers_count?: number;
+    assigned_tasks?: FeedingRouteMember[];
+    assignedTasks?: FeedingRouteMember[];
 }
 
 interface EventsProps {
@@ -1092,11 +1107,28 @@ export default function Events({
                                                                         className="text-paw-orange"
                                                                     />
                                                                 </div>
-                                                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black tracking-widest text-green-700 uppercase">
-                                                                    {
-                                                                        feeding.status
-                                                                    }
-                                                                </span>
+                                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black tracking-widest text-green-700 uppercase">
+                                                                        {
+                                                                            feeding.status
+                                                                        }
+                                                                    </span>
+                                                                    <span
+                                                                        className={`rounded-full px-2.5 py-1 text-[10px] font-black tracking-widest uppercase ${
+                                                                            feeding.execution_status === 'in_progress'
+                                                                                ? 'bg-emerald-600 text-white'
+                                                                                : feeding.execution_status === 'completed'
+                                                                                    ? 'bg-blue-100 text-blue-700'
+                                                                                    : 'bg-gray-100 text-gray-600'
+                                                                        }`}
+                                                                    >
+                                                                        {feeding.execution_status === 'in_progress'
+                                                                            ? 'In Progress'
+                                                                            : feeding.execution_status === 'completed'
+                                                                                ? 'Completed'
+                                                                                : 'Scheduled'}
+                                                                    </span>
+                                                                </div>
                                                             </div>
 
                                                             <h3 className="mb-2 text-xl leading-tight font-black text-paw-navy">
@@ -1141,15 +1173,49 @@ export default function Events({
                                                                 </div>
                                                                 <div className="text-center">
                                                                     <p className="mb-1 text-2xl font-black text-paw-blue">
-                                                                        {
-                                                                            feeding.volunteers
-                                                                        }
+                                                                        {feeding.joined_volunteers_count ?? (feeding.assigned_tasks || feeding.assignedTasks || []).length}
+                                                                        {' / '}
+                                                                        {feeding.volunteers > 0 ? feeding.volunteers : '∞'}
                                                                     </p>
                                                                     <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">
-                                                                        Volunteers
+                                                                        Joined
                                                                     </p>
                                                                 </div>
                                                             </div>
+
+                                                            {(() => {
+                                                                const roster = feeding.assigned_tasks || feeding.assignedTasks || [];
+                                                                if (roster.length === 0) {
+                                                                    return (
+                                                                        <p className="text-center text-xs font-semibold text-gray-400">
+                                                                            No volunteers joined yet — be the first!
+                                                                        </p>
+                                                                    );
+                                                                }
+                                                                return (
+                                                                    <div className="space-y-1.5 border-t border-gray-100 pt-3">
+                                                                        <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                                                                            Route Team ({roster.length})
+                                                                            {(feeding.total_food_distributed ?? 0) > 0 && (
+                                                                                <span className="ml-2 text-paw-orange">
+                                                                                    • {feeding.total_food_distributed} packs distributed
+                                                                                </span>
+                                                                            )}
+                                                                        </p>
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {roster.map((member) => (
+                                                                                <span
+                                                                                    key={member.id}
+                                                                                    className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-bold text-paw-navy"
+                                                                                >
+                                                                                    <span>{member.user?.name || 'Volunteer'}</span>
+                                                                                    <span className="text-[10px] text-gray-500">({member.role})</span>
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
 
                                                         <button

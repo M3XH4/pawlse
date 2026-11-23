@@ -4,10 +4,13 @@ import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
-import { User, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus } from 'lucide-react';
+import { User, Users, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus, HeartPulse, Stethoscope, Trash2, Edit3, SlidersHorizontal, Calendar, Utensils } from 'lucide-react';
+import { formatPhotoUrl } from '@/lib/utils';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { usePermissions } from '@/hooks/use-permissions';
 
@@ -130,6 +133,70 @@ interface VolunteerManagementProps {
     };
     events: EventDropdownModel[];
     feedingSchedules: ScheduleDropdownModel[];
+    injuryReports?: PaginatedData<{
+        id: number;
+        incident_type: string;
+        severity: string;
+        body_part: string | null;
+        location: string | null;
+        incident_occurred_at: string;
+        description: string;
+        first_aid_applied: boolean;
+        first_aid_notes: string | null;
+        photo_url: string | null;
+        status: 'reported' | 'medical_aid_initiated' | 'confirmed';
+        medical_aid_type: string | null;
+        medical_facility: string | null;
+        medical_aid_notes: string | null;
+        medical_aid_initiated_at: string | null;
+        confirmed_at: string | null;
+        confirmation_notes: string | null;
+        user?: { id: number; name: string; email: string; phone?: string | null } | null;
+        initiated_by?: { id: number; name: string } | null;
+        confirmed_by?: { id: number; name: string } | null;
+        assigned_medic?: { id: number; name: string; phone?: string | null } | null;
+    }>;
+    injuryStats?: {
+        reported: number;
+        medical_aid_initiated: number;
+        confirmed: number;
+    };
+    incidentTypes?: Record<string, string>;
+    severities?: Record<string, string>;
+    medicalAidTypes?: Record<string, string>;
+    fieldMedicsAndLeads?: Array<{
+        id: number;
+        name: string;
+        phone?: string | null;
+        role: string;
+        assignment: string;
+        in_field: boolean;
+    }>;
+    fieldGroups?: Array<{
+        id: number;
+        type: 'feeding' | 'event';
+        name: string;
+        schedule: string;
+        quota: number;
+        execution_status: string | null;
+        members_count: number;
+        has_lead: boolean;
+        has_recorder: boolean;
+        has_medic: boolean;
+        members: Array<{
+            task_id: number;
+            user_id: number;
+            name: string;
+            email: string;
+            phone?: string | null;
+            avatar_path?: string | null;
+            role: string;
+            status: string;
+            is_lead: boolean;
+            is_recorder: boolean;
+            is_medic: boolean;
+        }>;
+    }>;
     allVolunteers?: { id: number; name: string; email: string }[];
     allRecipients?: { id: number; name: string; email: string; role?: string }[];
     filters: {
@@ -137,6 +204,87 @@ interface VolunteerManagementProps {
         status: string;
     };
     basePath?: string;
+}
+
+const GROUP_ROLE_OPTIONS = [
+    {
+        value: 'Route Lead',
+        label: 'Route Lead',
+        description: 'Leads the pack on the ground, coordinates stops, and oversees route start & completion.',
+    },
+    {
+        value: 'Recorder',
+        label: 'Recorder',
+        description: 'Tracks and logs how many food packs are distributed across streets during this route.',
+    },
+    {
+        value: 'Field Medic',
+        label: 'Field Medic',
+        description: 'Provides immediate first aid and medical support to volunteers or animals if needed.',
+    },
+    {
+        value: 'Food Carrier',
+        label: 'Food Carrier',
+        description: 'Transports and carries food packs, kibble, and water along the route.',
+    },
+    {
+        value: 'Feeder',
+        label: 'Feeder',
+        description: 'Distributes food and water directly to stray animals at designated stops.',
+    },
+    {
+        value: 'Volunteer',
+        label: 'Volunteer',
+        description: 'General team member assisting with event or field operations.',
+    },
+];
+
+const EVENT_ROLE_PRESETS = [
+    {
+        value: 'Event Lead',
+        label: 'Event Lead',
+        description: 'Coordinates the event team on-site, manages volunteer shifts, and handles escalations.',
+    },
+    {
+        value: 'Field Medic',
+        label: 'Field Medic',
+        description: 'Provides immediate first aid and medical support to volunteers or animals during the event.',
+    },
+    {
+        value: 'Registration Desk',
+        label: 'Registration',
+        description: 'Checks in attendees, adopters, and volunteers at the event entrance.',
+    },
+    {
+        value: 'Adoption Booth Volunteer',
+        label: 'Adoption Booth',
+        description: 'Assists visitors with adoptable pets, inquiries, and adoption applications.',
+    },
+    {
+        value: 'Logistics',
+        label: 'Logistics',
+        description: 'Handles event setup, supplies, crates, equipment, and teardown.',
+    },
+];
+
+function getRoleBadgeStyle(role: string): string {
+    const lower = role.toLowerCase();
+    if (lower.includes('lead')) {
+        return 'bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800';
+    }
+    if (lower.includes('medic')) {
+        return 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800';
+    }
+    if (lower.includes('recorder')) {
+        return 'bg-paw-orange/15 text-paw-orange border border-paw-orange/30';
+    }
+    if (lower.includes('carrier')) {
+        return 'bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800';
+    }
+    if (lower.includes('feeder')) {
+        return 'bg-violet-100 text-violet-800 border border-violet-300 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-800';
+    }
+    return 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
 }
 
 export default function VolunteerManagement({
@@ -149,6 +297,13 @@ export default function VolunteerManagement({
     foodPickupStats = { today_total: 0, awaiting_verification: 0, completed: 0, missed: 0 },
     events,
     feedingSchedules,
+    injuryReports = { data: [], links: [], total: 0 },
+    injuryStats = { reported: 0, medical_aid_initiated: 0, confirmed: 0 },
+    incidentTypes = {},
+    severities = { minor: 'Minor', moderate: 'Moderate', severe: 'Severe', critical: 'Critical' },
+    medicalAidTypes = {},
+    fieldMedicsAndLeads = [],
+    fieldGroups = [],
     allVolunteers = [],
     allRecipients = [],
     filters,
@@ -159,7 +314,15 @@ export default function VolunteerManagement({
     const canApproveVolunteers = can('volunteers.approve');
     const canAssignTasks = can('volunteers.assign_tasks');
     const canCertifyVolunteers = can('volunteers.certify');
-    const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'food_pickups'>('applications');
+    const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'groups' | 'food_pickups' | 'injuries'>(() => {
+        if (typeof window !== 'undefined') {
+            const tab = new URLSearchParams(window.location.search).get('tab');
+            if (tab === 'injuries' || tab === 'tasks' || tab === 'groups' || tab === 'volunteers' || tab === 'food_pickups') {
+                return tab;
+            }
+        }
+        return 'applications';
+    });
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
 
@@ -177,6 +340,59 @@ export default function VolunteerManagement({
     const [assignEventId, setAssignEventId] = useState(events[0]?.id?.toString() || '');
     const [assignScheduleId, setAssignScheduleId] = useState(feedingSchedules[0]?.id?.toString() || '');
     const [assignRole, setAssignRole] = useState('Feeding');
+
+    // Injury report medical aid modal state
+    const [initiatingInjury, setInitiatingInjury] = useState<NonNullable<VolunteerManagementProps['injuryReports']>['data'][number] | null>(null);
+    const [medicalAidType, setMedicalAidType] = useState(Object.keys(medicalAidTypes)[0] || 'anti_rabies_tetanus');
+    const [medicalFacility, setMedicalFacility] = useState('');
+    const [medicalAidNotes, setMedicalAidNotes] = useState('');
+    const [assignedMedicId, setAssignedMedicId] = useState('');
+    const [confirmingInjury, setConfirmingInjury] = useState<NonNullable<VolunteerManagementProps['injuryReports']>['data'][number] | null>(null);
+    const [confirmationNotes, setConfirmationNotes] = useState('');
+    const [isSubmittingInjuryAction, setIsSubmittingInjuryAction] = useState(false);
+
+    // Admin Log Volunteer Injury modal state
+    const [isLogInjuryOpen, setIsLogInjuryOpen] = useState(false);
+    const [logInjuryUserId, setLogInjuryUserId] = useState(volunteerList[0]?.id?.toString() || '');
+    const [logIncidentType, setLogIncidentType] = useState(Object.keys(incidentTypes)[0] || 'animal_bite');
+    const [logSeverity, setLogSeverity] = useState('moderate');
+    const [logBodyPart, setLogBodyPart] = useState('');
+    const [logLocation, setLogLocation] = useState('');
+    const [logOccurredAt, setLogOccurredAt] = useState(() => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    });
+    const [logDescription, setLogDescription] = useState('');
+    const [logFirstAidApplied, setLogFirstAidApplied] = useState(false);
+    const [logFirstAidNotes, setLogFirstAidNotes] = useState('');
+    const [logMedicId, setLogMedicId] = useState('');
+    const [logInitiateAidNow, setLogInitiateAidNow] = useState(true);
+    const [logAidType, setLogAidType] = useState(Object.keys(medicalAidTypes)[0] || 'anti_rabies_tetanus');
+    const [logAidFacility, setLogAidFacility] = useState('');
+    const [logAidNotes, setLogAidNotes] = useState('');
+
+    // Group Member Role Edit modal state
+    const [editingGroupMember, setEditingGroupMember] = useState<{
+        task_id: number;
+        name: string;
+        role: string;
+        groupName: string;
+        groupType: 'feeding' | 'event';
+    } | null>(null);
+    const [editingMemberRole, setEditingMemberRole] = useState('');
+    const [addingToGroup, setAddingToGroup] = useState<{
+        type: 'feeding' | 'event';
+        id: number;
+        name: string;
+        schedule: string;
+        members_count: number;
+        quota: number;
+    } | null>(null);
+    const [selectedGroupKey, setSelectedGroupKey] = useState<{ type: 'feeding' | 'event'; id: number } | null>(null);
+    const activeDrawerGroup = selectedGroupKey
+        ? fieldGroups.find((g) => g.type === selectedGroupKey.type && g.id === selectedGroupKey.id) || null
+        : null;
 
     // Complete Task modal state
     const [completingTask, setCompletingTask] = useState<TaskModel | null>(null);
@@ -452,12 +668,33 @@ export default function VolunteerManagement({
                         Assigned Tasks ({tasks.total})
                     </button>
                     <button
+                        onClick={() => setActiveTab('groups')}
+                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
+                            activeTab === 'groups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        }`}
+                    >
+                        Field Groups ({fieldGroups.length})
+                    </button>
+                    <button
                         onClick={() => setActiveTab('food_pickups')}
                         className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
                             activeTab === 'food_pickups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Daily Food Pickups ({foodPickups.total})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('injuries')}
+                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer inline-flex items-center gap-2 ${
+                            activeTab === 'injuries' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        }`}
+                    >
+                        <span>Injury Reports ({injuryReports.total})</span>
+                        {(injuryStats.reported + injuryStats.medical_aid_initiated) > 0 && (
+                            <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-black text-white">
+                                {injuryStats.reported + injuryStats.medical_aid_initiated}
+                            </span>
+                        )}
                     </button>
                 </div>
 
@@ -734,6 +971,75 @@ export default function VolunteerManagement({
                     </AdminCard>
                 )}
 
+                {/* Field Groups Management Tab */}
+                {activeTab === 'groups' && (
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white">
+                                    Field Groups & Team Rosters
+                                </h3>
+                                <p className="text-xs font-semibold text-gray-400">
+                                    Manage Feeding Route and Event teams — assign members, update roles (Route Lead, Recorder, Medic, Feeder), or remove members.
+                                </p>
+                            </div>
+                        </div>
+
+                        {fieldGroups.length === 0 ? (
+                            <AdminCard className="p-8 text-center">
+                                <Users className="mx-auto mb-3 text-gray-300" size={40} />
+                                <p className="text-sm font-bold text-gray-500">No active Feeding Routes or upcoming Events found.</p>
+                            </AdminCard>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                {fieldGroups.map((group) => (
+                                    <AdminCard key={`${group.type}-${group.id}`} className="p-5 flex flex-col justify-between gap-4">
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                                                    group.type === 'feeding'
+                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                        : 'bg-paw-orange/15 text-paw-orange'
+                                                }`}>
+                                                    {group.type === 'feeding' ? 'Feeding Route' : 'Event Team'}
+                                                </span>
+                                                {group.execution_status && (
+                                                    <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-gray-600 dark:bg-slate-800 dark:text-gray-300">
+                                                        {group.execution_status.replace('_', ' ')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h4 className="mt-2 font-fredoka text-base font-bold text-[#0B2340] dark:text-white">
+                                                {group.name}
+                                            </h4>
+                                            <p className="mt-0.5 text-xs font-semibold text-gray-400">
+                                                {group.schedule}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-3.5 dark:border-gray-800">
+                                            <TeamAvatarStack
+                                                members={group.members}
+                                                maxVisible={3}
+                                                onClick={() => setSelectedGroupKey({ type: group.type, id: group.id })}
+                                                emptyText="0 members"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedGroupKey({ type: group.type, id: group.id })}
+                                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gray-100 px-3.5 py-1.5 text-[11px] font-black uppercase tracking-wider text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
+                                            >
+                                                <SlidersHorizontal size={12} />
+                                                Manage
+                                            </button>
+                                        </div>
+                                    </AdminCard>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Daily Food Pickups Tab */}
                 {activeTab === 'food_pickups' && (
                     <div className="space-y-6">
@@ -968,6 +1274,175 @@ export default function VolunteerManagement({
                     </div>
                 )}
 
+                {/* Field Injury Reports Tab */}
+                {activeTab === 'injuries' && (
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white">
+                                    Volunteer Field Injury & Medical Aid
+                                </h3>
+                                <p className="text-xs font-semibold text-gray-400">
+                                    Review volunteer-submitted injuries or log a field injury directly and assign an available Field Medic or Lead.
+                                </p>
+                            </div>
+                            {canAssignTasks && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLogInjuryOpen(true)}
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-sm hover:bg-rose-700"
+                                >
+                                    <Plus size={14} />
+                                    Log Volunteer Injury
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Available Field Medics & Team Leads */}
+                        <AdminCard className="p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                    <HeartPulse size={14} />
+                                    Available Field Medics & Route Leads ({fieldMedicsAndLeads.length})
+                                </span>
+                            </div>
+                            {fieldMedicsAndLeads.length === 0 ? (
+                                <p className="text-xs font-semibold text-gray-400">
+                                    No active Field Medics or Route Leads assigned right now. You can assign a volunteer with the &quot;Medic&quot; or &quot;Route Lead&quot; role in Assign Task.
+                                </p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {fieldMedicsAndLeads.map((m) => (
+                                        <span
+                                            key={m.id}
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                                                m.in_field
+                                                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                    : 'border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-slate-800 dark:text-gray-300'
+                                            }`}
+                                        >
+                                            <span>{m.name}</span>
+                                            <span className="text-[10px] uppercase opacity-75">• {m.role} ({m.assignment})</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </AdminCard>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-amber-600">Reported (Needs Aid)</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-amber-600">{injuryStats.reported}</p>
+                            </AdminCard>
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-blue-600">Medical Aid Initiated</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-blue-600">{injuryStats.medical_aid_initiated}</p>
+                            </AdminCard>
+                            <AdminCard className="p-4">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600">Confirmed & Closed</p>
+                                <p className="mt-1 font-fredoka text-2xl font-bold text-emerald-600">{injuryStats.confirmed}</p>
+                            </AdminCard>
+                        </div>
+
+                        <AdminCard className="p-6">
+                            {injuryReports.data.length === 0 ? (
+                                <p className="text-center text-gray-500 font-bold py-8">No volunteer field injury reports found.</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {injuryReports.data.map((report) => (
+                                        <div
+                                            key={report.id}
+                                            className="rounded-2xl border border-gray-100 p-5 dark:border-gray-800 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                                        >
+                                            <div className="space-y-2 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="font-fredoka text-base font-bold text-[#0B2340] dark:text-white">
+                                                        #{report.id} • {report.user?.name || 'Volunteer'}
+                                                    </span>
+                                                    <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                                                        {incidentTypes[report.incident_type] || report.incident_type} ({report.severity})
+                                                    </span>
+                                                    <span
+                                                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                                                            report.status === 'confirmed'
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                : report.status === 'medical_aid_initiated'
+                                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                                        }`}
+                                                    >
+                                                        {report.status.replace(/_/g, ' ')}
+                                                    </span>
+                                                </div>
+
+                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{report.description}</p>
+
+                                                <div className="flex flex-wrap gap-4 text-xs font-semibold text-gray-500">
+                                                    <span>Occurred: {new Date(report.incident_occurred_at).toLocaleString()}</span>
+                                                    {report.location && <span>Location: {report.location}</span>}
+                                                    {report.body_part && <span>Body Part: {report.body_part}</span>}
+                                                    {report.user?.phone && <span>Contact: {report.user.phone}</span>}
+                                                </div>
+
+                                                {report.medical_aid_initiated_at && (
+                                                    <div className="rounded-xl bg-blue-50/70 p-3 text-xs font-semibold text-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                                                        Aid: {medicalAidTypes[report.medical_aid_type || ''] || report.medical_aid_type}
+                                                        {report.medical_facility ? ` • ${report.medical_facility}` : ''}
+                                                        {report.assigned_medic ? ` • Field Medic: ${report.assigned_medic.name}` : ''}
+                                                        {report.medical_aid_notes ? ` — ${report.medical_aid_notes}` : ''}
+                                                    </div>
+                                                )}
+
+                                                {report.confirmed_at && (
+                                                    <div className="rounded-xl bg-emerald-50/70 p-3 text-xs font-semibold text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                                        Confirmed {new Date(report.confirmed_at).toLocaleString()}
+                                                        {report.confirmation_notes ? ` — ${report.confirmation_notes}` : ''}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {canAssignTasks && (
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    {report.status === 'reported' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setInitiatingInjury(report);
+                                                                setMedicalAidType(Object.keys(medicalAidTypes)[0] || 'anti_rabies_tetanus');
+                                                                setMedicalFacility('');
+                                                                setMedicalAidNotes('');
+                                                                setAssignedMedicId(report.assigned_medic?.id ? String(report.assigned_medic.id) : '');
+                                                            }}
+                                                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-blue-700"
+                                                        >
+                                                            <Stethoscope size={14} />
+                                                            Initiate Medical Aid
+                                                        </button>
+                                                    )}
+                                                    {report.status === 'medical_aid_initiated' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setConfirmingInjury(report);
+                                                                setConfirmationNotes('');
+                                                            }}
+                                                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-emerald-700"
+                                                        >
+                                                            <CheckCircle2 size={14} />
+                                                            Confirm Medical Aid
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <Pagination links={injuryReports.links} />
+                                </div>
+                            )}
+                        </AdminCard>
+                    </div>
+                )}
+
             </AdminPageShell>
 
             {/* Reject application Modal */}
@@ -1009,18 +1484,61 @@ export default function VolunteerManagement({
                 </div>
             )}
 
-            {/* Assign Task Modal */}
+            {/* Assign Task / Add Member to Group Modal */}
             {isAssignOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
-                        <h3 className="font-fredoka text-xl font-bold mb-4 text-[#0B2340] dark:text-white">Assign Task manually</h3>
-                        <form onSubmit={handleAssignSubmit} className="space-y-4">
+                        <div className="mb-5 flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
+                                    {addingToGroup ? 'Add Member to Group' : 'Assign Task manually'}
+                                </h3>
+                                {addingToGroup && (
+                                    <div className="mt-2.5 rounded-2xl border border-gray-100 bg-gray-50/80 p-3.5 dark:border-gray-800 dark:bg-slate-800/60">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                                                addingToGroup.type === 'feeding'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                    : 'bg-paw-orange/15 text-paw-orange'
+                                            }`}>
+                                                {addingToGroup.type === 'feeding' ? 'Feeding Route' : 'Event Team'}
+                                            </span>
+                                            <span className="text-xs font-bold text-[#0B2340] dark:text-white">
+                                                {addingToGroup.name}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                            {addingToGroup.schedule} • {addingToGroup.members_count} / {addingToGroup.quota > 0 ? addingToGroup.quota : '∞'} members
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsAssignOpen(false);
+                                    setAddingToGroup(null);
+                                }}
+                                className="cursor-pointer rounded-xl p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form
+                            onSubmit={(e) => {
+                                handleAssignSubmit(e);
+                                setAddingToGroup(null);
+                            }}
+                            className="space-y-4"
+                        >
                             <ModernSelect
                                 label="Volunteer"
                                 required
+                                searchable
                                 value={assignTargetUserId}
                                 onChange={(val) => setAssignTargetUserId(val)}
-                                placeholder="Select volunteer..."
+                                placeholder="Search volunteer by name or email..."
                                 options={volunteerList.map(v => ({
                                     value: String(v.id),
                                     label: v.name,
@@ -1028,71 +1546,130 @@ export default function VolunteerManagement({
                                 }))}
                             />
 
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Activity Type</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAssignActivityType('event')}
-                                        className={`py-3 rounded-xl border text-sm font-bold uppercase ${
-                                            assignActivityType === 'event' ? 'border-paw-orange bg-paw-orange/10 text-paw-orange' : 'border-gray-200 dark:border-gray-800 dark:text-gray-300'
-                                        }`}
-                                    >
-                                        Event Proper
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAssignActivityType('feeding')}
-                                        className={`py-3 rounded-xl border text-sm font-bold uppercase ${
-                                            assignActivityType === 'feeding' ? 'border-paw-orange bg-paw-orange/10 text-paw-orange' : 'border-gray-200 dark:border-gray-800 dark:text-gray-300'
-                                        }`}
-                                    >
-                                        Feeding Route
-                                    </button>
-                                </div>
-                            </div>
+                            {!addingToGroup && (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Activity Type</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAssignActivityType('event')}
+                                                className={`py-3 rounded-xl border text-sm font-bold uppercase ${
+                                                    assignActivityType === 'event' ? 'border-paw-orange bg-paw-orange/10 text-paw-orange' : 'border-gray-200 dark:border-gray-800 dark:text-gray-300'
+                                                }`}
+                                            >
+                                                Event Proper
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setAssignActivityType('feeding')}
+                                                className={`py-3 rounded-xl border text-sm font-bold uppercase ${
+                                                    assignActivityType === 'feeding' ? 'border-paw-orange bg-paw-orange/10 text-paw-orange' : 'border-gray-200 dark:border-gray-800 dark:text-gray-300'
+                                                }`}
+                                            >
+                                                Feeding Route
+                                            </button>
+                                        </div>
+                                    </div>
 
-                            {assignActivityType === 'event' ? (
-                                <ModernSelect
-                                    label="Select Event"
-                                    required
-                                    value={assignEventId}
-                                    onChange={(val) => setAssignEventId(val)}
-                                    placeholder="Select event..."
-                                    options={events.map(e => ({
-                                        value: String(e.id),
-                                        label: e.title,
-                                    }))}
-                                />
-                            ) : (
-                                <ModernSelect
-                                    label="Select Feeding Route"
-                                    required
-                                    value={assignScheduleId}
-                                    onChange={(val) => setAssignScheduleId(val)}
-                                    placeholder="Select feeding route..."
-                                    options={feedingSchedules.map(s => ({
-                                        value: String(s.id),
-                                        label: s.zone,
-                                    }))}
-                                />
+                                    {assignActivityType === 'event' ? (
+                                        <ModernSelect
+                                            label="Select Event"
+                                            required
+                                            searchable
+                                            value={assignEventId}
+                                            onChange={(val) => setAssignEventId(val)}
+                                            placeholder="Select event..."
+                                            options={events.map(e => ({
+                                                value: String(e.id),
+                                                label: e.title,
+                                            }))}
+                                        />
+                                    ) : (
+                                        <ModernSelect
+                                            label="Select Feeding Route"
+                                            required
+                                            searchable
+                                            value={assignScheduleId}
+                                            onChange={(val) => setAssignScheduleId(val)}
+                                            placeholder="Select feeding route..."
+                                            options={feedingSchedules.map(s => ({
+                                                value: String(s.id),
+                                                label: s.zone,
+                                            }))}
+                                        />
+                                    )}
+                                </>
                             )}
 
-                            <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Assigned Role *</label>
-                                <input
-                                    required
-                                    type="text"
-                                    value={assignRole}
-                                    onChange={(e) => setAssignRole(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
-                                />
-                            </div>
+                            {assignActivityType === 'feeding' ? (
+                                <div className="space-y-2">
+                                    <ModernSelect
+                                        label="Assigned Role"
+                                        required
+                                        value={assignRole}
+                                        onChange={(val) => setAssignRole(val)}
+                                        placeholder="Select role..."
+                                        options={GROUP_ROLE_OPTIONS}
+                                    />
+                                    {(() => {
+                                        const selectedRoleInfo = GROUP_ROLE_OPTIONS.find((r) => r.value === assignRole);
+                                        if (!selectedRoleInfo) return null;
+                                        return (
+                                            <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                                                <span className="font-black">{selectedRoleInfo.label}:</span> {selectedRoleInfo.description}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                                        Event Role *
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        {EVENT_ROLE_PRESETS.map((preset) => (
+                                            <button
+                                                key={preset.value}
+                                                type="button"
+                                                onClick={() => setAssignRole(preset.value)}
+                                                className={`px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition text-center ${
+                                                    assignRole === preset.value
+                                                        ? 'bg-paw-orange text-white shadow-xs'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300'
+                                                }`}
+                                            >
+                                                {preset.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {(() => {
+                                        const selectedEventRole = EVENT_ROLE_PRESETS.find((r) => r.value === assignRole);
+                                        if (!selectedEventRole) return null;
+                                        return (
+                                            <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                                                <span className="font-black">{selectedEventRole.value}:</span> {selectedEventRole.description}
+                                            </div>
+                                        );
+                                    })()}
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Or type a custom event role (e.g., Vet Assistant)..."
+                                        value={assignRole}
+                                        onChange={(e) => setAssignRole(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white"
+                                    />
+                                </div>
+                            )}
 
                             <div className="flex justify-end gap-2 pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsAssignOpen(false)}
+                                    onClick={() => {
+                                        setIsAssignOpen(false);
+                                        setAddingToGroup(null);
+                                    }}
                                     className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
                                 >
                                     Cancel
@@ -1101,7 +1678,7 @@ export default function VolunteerManagement({
                                     type="submit"
                                     className="px-4 py-2 bg-paw-orange text-white hover:bg-orange-650 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                                 >
-                                    Assign Task
+                                    {addingToGroup ? 'Add Member' : 'Assign Task'}
                                 </button>
                             </div>
                         </form>
@@ -1411,6 +1988,721 @@ export default function VolunteerManagement({
                                     }`}
                                 >
                                     {pickupTargetStatus === 'completed' ? 'Confirm Completed' : 'Mark as Missed'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Initiate Medical Aid Modal */}
+            {initiatingInjury && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <Stethoscope className="text-blue-600" /> Initiate Medical Aid
+                        </h3>
+                        <p className="text-xs font-semibold text-gray-500 mb-4">
+                            Volunteer: <span className="text-[#0B2340] dark:text-white">{initiatingInjury.user?.name}</span> (Report #{initiatingInjury.id})
+                        </p>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setIsSubmittingInjuryAction(true);
+                                router.post(
+                                    `${basePath}/injuries/${initiatingInjury.id}/initiate-aid`,
+                                    {
+                                        medical_aid_type: medicalAidType,
+                                        medical_facility: medicalFacility || null,
+                                        medical_aid_notes: medicalAidNotes,
+                                        assigned_medic_user_id: assignedMedicId ? Number(assignedMedicId) : null,
+                                    },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => setInitiatingInjury(null),
+                                        onError: (errors) => toast.error(Object.values(errors)[0] || 'Failed to initiate medical aid.'),
+                                        onFinish: () => setIsSubmittingInjuryAction(false),
+                                    }
+                                );
+                            }}
+                            className="space-y-4"
+                        >
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Medical Aid Type *</label>
+                                <select
+                                    value={medicalAidType}
+                                    onChange={(e) => setMedicalAidType(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                >
+                                    {Object.entries(medicalAidTypes).map(([key, label]) => (
+                                        <option key={key} value={key}>{label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            {fieldMedicsAndLeads.length > 0 && (
+                                <ModernSelect
+                                    label="Assign Field Medic / Lead (Optional)"
+                                    value={assignedMedicId}
+                                    onChange={(val) => setAssignedMedicId(val)}
+                                    placeholder="Select available medic or lead..."
+                                    options={[
+                                        { value: '', label: 'None / External Clinic Only' },
+                                        ...fieldMedicsAndLeads.map((m) => ({
+                                            value: String(m.id),
+                                            label: `${m.name} (${m.role})`,
+                                            description: m.assignment,
+                                        })),
+                                    ]}
+                                />
+                            )}
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Clinic / Facility / Provider</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., City Animal Bite Center"
+                                    value={medicalFacility}
+                                    onChange={(e) => setMedicalFacility(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Instructions & Notes *</label>
+                                <textarea
+                                    required
+                                    rows={3}
+                                    placeholder="Describe the medical aid dispatched or instructions for the volunteer..."
+                                    value={medicalAidNotes}
+                                    onChange={(e) => setMedicalAidNotes(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setInitiatingInjury(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingInjuryAction}
+                                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                                >
+                                    {isSubmittingInjuryAction ? 'Saving...' : 'Initiate Aid'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirm Medical Aid Modal */}
+            {confirmingInjury && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <CheckCircle2 className="text-emerald-600" /> Confirm Medical Aid
+                        </h3>
+                        <p className="text-xs font-semibold text-gray-500 mb-4">
+                            Confirm that medical aid for <span className="text-[#0B2340] dark:text-white">{confirmingInjury.user?.name}</span> has been delivered and verified.
+                        </p>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setIsSubmittingInjuryAction(true);
+                                router.post(
+                                    `${basePath}/injuries/${confirmingInjury.id}/confirm-aid`,
+                                    { confirmation_notes: confirmationNotes || null },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => setConfirmingInjury(null),
+                                        onError: (errors) => toast.error(Object.values(errors)[0] || 'Failed to confirm medical aid.'),
+                                        onFinish: () => setIsSubmittingInjuryAction(false),
+                                    }
+                                );
+                            }}
+                            className="space-y-4"
+                        >
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Confirmation Notes (Optional)</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="e.g., Volunteer received anti-rabies shot and is cleared for rest."
+                                    value={confirmationNotes}
+                                    onChange={(e) => setConfirmationNotes(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmingInjury(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingInjuryAction}
+                                    className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                                >
+                                    {isSubmittingInjuryAction ? 'Confirming...' : 'Confirm Aid Completed'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin Log Volunteer Injury Modal */}
+            {isLogInjuryOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border bg-white shadow-2xl dark:border-gray-800 dark:bg-slate-900">
+                        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+                            <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white flex items-center gap-2">
+                                <AlertTriangle className="text-rose-600" size={20} /> Log Volunteer Field Injury
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsLogInjuryOpen(false)}
+                                className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl cursor-pointer dark:hover:bg-slate-800"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form
+                            id="admin-log-injury-form"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setIsSubmittingInjuryAction(true);
+                                router.post(
+                                    `${basePath}/injuries`,
+                                    {
+                                        user_id: Number(logInjuryUserId),
+                                        incident_type: logIncidentType,
+                                        severity: logSeverity,
+                                        body_part: logBodyPart || null,
+                                        location: logLocation || null,
+                                        incident_occurred_at: logOccurredAt.replace('T', ' '),
+                                        description: logDescription,
+                                        first_aid_applied: logFirstAidApplied,
+                                        first_aid_notes: logFirstAidNotes || null,
+                                        assigned_medic_user_id: logMedicId ? Number(logMedicId) : null,
+                                        initiate_aid_now: logInitiateAidNow,
+                                        medical_aid_type: logInitiateAidNow ? logAidType : null,
+                                        medical_facility: logInitiateAidNow ? (logAidFacility || null) : null,
+                                        medical_aid_notes: logInitiateAidNow ? logAidNotes : null,
+                                    },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => {
+                                            setIsLogInjuryOpen(false);
+                                            setLogDescription('');
+                                            setLogBodyPart('');
+                                            setLogLocation('');
+                                            setLogFirstAidNotes('');
+                                            setLogAidNotes('');
+                                        },
+                                        onError: (errors) => toast.error(Object.values(errors)[0] || 'Failed to log volunteer injury.'),
+                                        onFinish: () => setIsSubmittingInjuryAction(false),
+                                    }
+                                );
+                            }}
+                            className="flex-1 space-y-4 overflow-y-auto px-6 py-5"
+                        >
+                            <ModernSelect
+                                label="Injured Volunteer"
+                                required
+                                value={logInjuryUserId}
+                                onChange={(val) => setLogInjuryUserId(val)}
+                                placeholder="Select injured volunteer..."
+                                options={volunteerList.map((v) => ({
+                                    value: String(v.id),
+                                    label: v.name,
+                                    description: v.email,
+                                }))}
+                            />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <ModernSelect
+                                    label="Incident Type"
+                                    required
+                                    value={logIncidentType}
+                                    onChange={(val) => setLogIncidentType(val)}
+                                    options={Object.entries(incidentTypes).map(([key, label]) => ({
+                                        value: key,
+                                        label,
+                                    }))}
+                                />
+                                <ModernSelect
+                                    label="Severity"
+                                    required
+                                    value={logSeverity}
+                                    onChange={(val) => setLogSeverity(val)}
+                                    options={Object.entries(severities).map(([key, label]) => ({
+                                        value: key,
+                                        label,
+                                    }))}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Affected Body Part</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., Left Hand"
+                                        value={logBodyPart}
+                                        onChange={(e) => setLogBodyPart(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                    />
+                                </div>
+                                <ModernDateTimePicker
+                                    label="When Did It Happen?"
+                                    required
+                                    value={logOccurredAt}
+                                    onChange={(val) => setLogOccurredAt(val)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Field Location</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., Downtown Market Circuit"
+                                    value={logLocation}
+                                    onChange={(e) => setLogLocation(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Incident Details *</label>
+                                <textarea
+                                    required
+                                    rows={2}
+                                    placeholder="Describe what happened..."
+                                    value={logDescription}
+                                    onChange={(e) => setLogDescription(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                />
+                            </div>
+
+                            {fieldMedicsAndLeads.length > 0 && (
+                                <ModernSelect
+                                    label="Available Field Medic / Route Lead"
+                                    value={logMedicId}
+                                    onChange={(val) => setLogMedicId(val)}
+                                    placeholder="Assign available medic or lead (optional)..."
+                                    options={[
+                                        { value: '', label: 'None selected' },
+                                        ...fieldMedicsAndLeads.map((m) => ({
+                                            value: String(m.id),
+                                            label: `${m.name} (${m.role})`,
+                                            description: m.assignment,
+                                        })),
+                                    ]}
+                                />
+                            )}
+
+                            <div className="rounded-2xl border border-blue-200/80 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20 space-y-3">
+                                <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[#0B2340] dark:text-white">
+                                    <input
+                                        type="checkbox"
+                                        checked={logInitiateAidNow}
+                                        onChange={(e) => setLogInitiateAidNow(e.target.checked)}
+                                        className="h-4 w-4 rounded accent-blue-600"
+                                    />
+                                    Initiate Medical Aid immediately
+                                </label>
+                                {logInitiateAidNow && (
+                                    <div className="space-y-3">
+                                        <ModernSelect
+                                            label="Medical Aid Type"
+                                            required
+                                            value={logAidType}
+                                            onChange={(val) => setLogAidType(val)}
+                                            options={Object.entries(medicalAidTypes).map(([key, label]) => ({
+                                                value: key,
+                                                label,
+                                            }))}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Clinic / Facility (optional)"
+                                            value={logAidFacility}
+                                            onChange={(e) => setLogAidFacility(e.target.value)}
+                                            className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl outline-none font-semibold text-xs dark:text-white"
+                                        />
+                                        <textarea
+                                            required
+                                            rows={2}
+                                            placeholder="Medical aid instructions / dispatch notes..."
+                                            value={logAidNotes}
+                                            onChange={(e) => setLogAidNotes(e.target.value)}
+                                            className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl outline-none font-semibold text-xs dark:text-white"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </form>
+
+                        <div className="flex shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-gray-800">
+                            <button
+                                type="button"
+                                onClick={() => setIsLogInjuryOpen(false)}
+                                className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                form="admin-log-injury-form"
+                                disabled={isSubmittingInjuryAction}
+                                className="px-5 py-2 bg-rose-600 text-white hover:bg-rose-700 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                            >
+                                {isSubmittingInjuryAction ? 'Saving...' : 'Save Injury Report'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Field Group Slide-Over Side Drawer */}
+            {activeDrawerGroup && (
+                <div
+                    className="fixed inset-0 z-40 flex justify-end bg-black/50 backdrop-blur-xs"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setSelectedGroupKey(null);
+                        }
+                    }}
+                >
+                    <div className="flex h-full w-full max-w-md flex-col border-l border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-slate-900">
+                        {/* Branded Header */}
+                        <div className="shrink-0 border-b border-gray-100 bg-gradient-to-br from-slate-50 via-white to-orange-50/30 p-6 dark:border-gray-800 dark:from-slate-800/70 dark:via-slate-900 dark:to-slate-900">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3.5">
+                                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+                                        activeDrawerGroup.type === 'feeding'
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                            : 'bg-paw-orange/15 text-paw-orange'
+                                    }`}>
+                                        {activeDrawerGroup.type === 'feeding' ? <Utensils size={20} /> : <Calendar size={20} />}
+                                    </div>
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                                                activeDrawerGroup.type === 'feeding'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                    : 'bg-paw-orange/15 text-paw-orange'
+                                            }`}>
+                                                {activeDrawerGroup.type === 'feeding' ? 'Feeding Route' : 'Event Team'}
+                                            </span>
+                                            {activeDrawerGroup.execution_status && (
+                                                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-gray-600 dark:bg-slate-800 dark:text-gray-300">
+                                                    {activeDrawerGroup.execution_status.replace('_', ' ')}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h3 className="mt-1.5 font-fredoka text-xl font-bold leading-snug text-[#0B2340] dark:text-white">
+                                            {activeDrawerGroup.name}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedGroupKey(null)}
+                                    className="cursor-pointer rounded-xl p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 shadow-2xs border border-gray-100 dark:border-gray-800 dark:bg-slate-800">
+                                    <Clock size={13} className="text-paw-orange" />
+                                    {activeDrawerGroup.schedule}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 shadow-2xs border border-gray-100 dark:border-gray-800 dark:bg-slate-800">
+                                    <Users size={13} className="text-paw-blue" />
+                                    {activeDrawerGroup.members_count} / {activeDrawerGroup.quota > 0 ? activeDrawerGroup.quota : '∞'} members
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Scrollable Body */}
+                        <div className="flex-1 space-y-6 overflow-y-auto p-6">
+                            {/* Key Role Coverage Grid (Feeding Routes only) */}
+                            {activeDrawerGroup.type === 'feeding' && (
+                                <div className="space-y-2.5">
+                                    <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
+                                        Key Role Coverage
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { label: 'Route Lead', filled: activeDrawerGroup.has_lead, activeClass: 'border-sky-200 bg-sky-50/70 text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300' },
+                                            { label: 'Recorder', filled: activeDrawerGroup.has_recorder, activeClass: 'border-orange-200 bg-orange-50/70 text-paw-orange dark:border-orange-900 dark:bg-orange-950/30' },
+                                            { label: 'Field Medic', filled: activeDrawerGroup.has_medic, activeClass: 'border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' },
+                                        ].map((item) => (
+                                            <div
+                                                key={item.label}
+                                                className={`rounded-2xl border p-2.5 text-center ${
+                                                    item.filled
+                                                        ? item.activeClass
+                                                        : 'border-dashed border-gray-200 bg-gray-50/60 text-gray-400 dark:border-gray-800 dark:bg-slate-800/40'
+                                                }`}
+                                            >
+                                                <p className="text-[10px] font-black uppercase tracking-wider">{item.label}</p>
+                                                <p className="mt-1 text-[11px] font-bold">
+                                                    {item.filled ? 'Assigned' : 'Unassigned'}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Group Roster */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
+                                        Group Roster ({activeDrawerGroup.members.length})
+                                    </p>
+                                </div>
+
+                                {activeDrawerGroup.members.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center dark:border-gray-800 dark:bg-slate-800/40">
+                                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-gray-300 shadow-2xs dark:bg-slate-800 dark:text-gray-600">
+                                            <Users size={22} />
+                                        </span>
+                                        <p className="mt-3 text-xs font-bold text-[#0B2340] dark:text-white">
+                                            No volunteers assigned yet
+                                        </p>
+                                        <p className="mt-1 text-[11px] font-medium text-gray-400">
+                                            Add members below to build this team and assign roles.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2.5">
+                                        {activeDrawerGroup.members.map((member) => {
+                                            const initials = member.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
+                                            const avatarSrc = member.avatar_path ? formatPhotoUrl(member.avatar_path) : null;
+                                            return (
+                                                <div
+                                                    key={member.task_id}
+                                                    className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-2xs transition hover:border-gray-200 dark:border-gray-800 dark:bg-slate-800/50"
+                                                >
+                                                    <div className="flex min-w-0 items-center gap-3">
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-xs font-black text-[#0B2340] dark:bg-slate-700 dark:text-white">
+                                                            {avatarSrc ? (
+                                                                <img src={avatarSrc} alt={member.name} className="h-full w-full object-cover" />
+                                                            ) : (
+                                                                <span>{initials}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-xs font-bold text-[#0B2340] dark:text-white">
+                                                                {member.name}
+                                                            </p>
+                                                            <p className="truncate text-[11px] font-medium text-gray-400">
+                                                                {member.email}{member.phone ? ` • ${member.phone}` : ''}
+                                                            </p>
+                                                            <span className={`mt-1.5 inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${getRoleBadgeStyle(member.role)}`}>
+                                                                {member.role}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {canAssignTasks && (
+                                                        <div className="flex shrink-0 items-center gap-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setEditingGroupMember({
+                                                                        task_id: member.task_id,
+                                                                        name: member.name,
+                                                                        role: member.role,
+                                                                        groupName: activeDrawerGroup.name,
+                                                                        groupType: activeDrawerGroup.type,
+                                                                    });
+                                                                    setEditingMemberRole(member.role);
+                                                                }}
+                                                                className="cursor-pointer rounded-xl p-2 text-blue-600 transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                                                                title="Change Role"
+                                                            >
+                                                                <Edit3 size={14} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openConfirmModal({
+                                                                    title: 'Remove Group Member',
+                                                                    description: `Remove ${member.name} from "${activeDrawerGroup.name}"?`,
+                                                                    confirmText: 'Remove',
+                                                                    variant: 'danger',
+                                                                    onConfirm: () => {
+                                                                        router.delete(`${basePath}/groups/members/${member.task_id}`, {
+                                                                            preserveScroll: true,
+                                                                        });
+                                                                    },
+                                                                })}
+                                                                className="cursor-pointer rounded-xl p-2 text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950/40"
+                                                                title="Remove from Group"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sticky Footer */}
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-800 dark:bg-slate-900/90">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedGroupKey(null)}
+                                className="cursor-pointer rounded-xl bg-white px-4 py-2 text-xs font-bold uppercase text-gray-600 border border-gray-200 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-slate-800 dark:text-gray-300"
+                            >
+                                Close
+                            </button>
+                            {canAssignTasks && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAssignActivityType(activeDrawerGroup.type);
+                                        if (activeDrawerGroup.type === 'feeding') {
+                                            setAssignScheduleId(String(activeDrawerGroup.id));
+                                            setAssignRole('Route Lead');
+                                        } else {
+                                            setAssignEventId(String(activeDrawerGroup.id));
+                                            setAssignRole('Event Lead');
+                                        }
+                                        setAddingToGroup({
+                                            type: activeDrawerGroup.type,
+                                            id: activeDrawerGroup.id,
+                                            name: activeDrawerGroup.name,
+                                            schedule: activeDrawerGroup.schedule,
+                                            members_count: activeDrawerGroup.members_count,
+                                            quota: activeDrawerGroup.quota,
+                                        });
+                                        setIsAssignOpen(true);
+                                    }}
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-orange px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-orange-600"
+                                >
+                                    <UserPlus size={14} />
+                                    Add Member
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Change Group Member Role Modal */}
+            {editingGroupMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-8 border dark:border-gray-800 shadow-2xl">
+                        <h3 className="font-fredoka text-xl font-bold mb-2 text-[#0B2340] dark:text-white flex items-center gap-2">
+                            <Users className="text-paw-orange" size={20} /> Change Member Role
+                        </h3>
+                        <p className="text-xs font-semibold text-gray-500 mb-4">
+                            {editingGroupMember.name} in <span className="text-[#0B2340] dark:text-white">{editingGroupMember.groupName}</span>
+                        </p>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                router.post(
+                                    `${basePath}/groups/members/${editingGroupMember.task_id}/role`,
+                                    { role: editingMemberRole },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => setEditingGroupMember(null),
+                                        onError: (errors) => toast.error(Object.values(errors)[0] || 'Failed to update role.'),
+                                    }
+                                );
+                            }}
+                            className="space-y-4"
+                        >
+                            {editingGroupMember.groupType === 'feeding' ? (
+                                <div className="space-y-2">
+                                    <ModernSelect
+                                        label="Assigned Role"
+                                        required
+                                        value={editingMemberRole}
+                                        onChange={(val) => setEditingMemberRole(val)}
+                                        placeholder="Select role..."
+                                        options={GROUP_ROLE_OPTIONS}
+                                    />
+                                    {(() => {
+                                        const selectedRoleInfo = GROUP_ROLE_OPTIONS.find((r) => r.value === editingMemberRole);
+                                        if (!selectedRoleInfo) return null;
+                                        return (
+                                            <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                                                <span className="font-black">{selectedRoleInfo.label}:</span> {selectedRoleInfo.description}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                                        Event Role *
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        {EVENT_ROLE_PRESETS.map((preset) => (
+                                            <button
+                                                key={preset.value}
+                                                type="button"
+                                                onClick={() => setEditingMemberRole(preset.value)}
+                                                className={`px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition text-center ${
+                                                    editingMemberRole === preset.value
+                                                        ? 'bg-paw-orange text-white shadow-xs'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300'
+                                                }`}
+                                            >
+                                                {preset.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {(() => {
+                                        const selectedEventRole = EVENT_ROLE_PRESETS.find((r) => r.value === editingMemberRole);
+                                        if (!selectedEventRole) return null;
+                                        return (
+                                            <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                                                <span className="font-black">{selectedEventRole.value}:</span> {selectedEventRole.description}
+                                            </div>
+                                        );
+                                    })()}
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Or type a custom event role..."
+                                        value={editingMemberRole}
+                                        onChange={(e) => setEditingMemberRole(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none font-semibold text-sm dark:text-white"
+                                    />
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingGroupMember(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-paw-orange text-white hover:bg-orange-600 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                                >
+                                    Update Role
                                 </button>
                             </div>
                         </form>

@@ -23,6 +23,10 @@ import {
     XCircle,
     AlertTriangle,
     Check,
+    Play,
+    Flag,
+    RotateCcw,
+    ClipboardCheck,
     Image as ImageIcon,
     ShieldCheck,
     Eye,
@@ -69,8 +73,20 @@ interface FeedingScheduleModel {
     volunteers: number;
     strays: number;
     status: string; // active, closed
+    execution_status?: 'scheduled' | 'in_progress' | 'completed';
+    total_food_distributed?: number;
     assigned_tasks_count?: number;
     assigned_tasks?: any[];
+    distribution_logs?: Array<{
+        id: number;
+        street_or_stop: string;
+        food_type: string;
+        food_packs_distributed: number;
+        strays_fed: number;
+        notes?: string | null;
+        recorded_at: string;
+        recorded_by?: { id: number; name: string } | null;
+    }>;
 }
 
 interface EventManagementProps {
@@ -194,6 +210,7 @@ export default function EventManagement({
     const [feedingStrays, setFeedingStrays] = useState('30');
     const [feedingStatus, setFeedingStatus] = useState('active');
     const [isSubmittingFeeding, setIsSubmittingFeeding] = useState(false);
+    const [viewingDistributionSchedule, setViewingDistributionSchedule] = useState<FeedingScheduleModel | null>(null);
 
     // Rejection reason modal state
     const [rejectingEvent, setRejectingEvent] = useState<EventModel | null>(null);
@@ -786,6 +803,7 @@ export default function EventManagement({
                                             <th className="py-3 px-4 min-w-[130px] whitespace-nowrap">Volunteers Needed</th>
                                             <th className="py-3 px-4 min-w-[110px] whitespace-nowrap">Stray Count</th>
                                             <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">Joined Volunteers</th>
+                                            <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">Route Run & Food</th>
                                             <th className="py-3 px-4 min-w-[90px] whitespace-nowrap">Status</th>
                                             <th className="py-3 px-4 text-right min-w-[110px] whitespace-nowrap">Actions</th>
                                         </tr>
@@ -811,8 +829,33 @@ export default function EventManagement({
                                                         title="Click to view joined volunteers"
                                                     >
                                                         <Users size={13} className="text-paw-orange shrink-0" />
-                                                        <span>{(schedule as any).assigned_tasks_count || 0} Joined</span>
+                                                        <span>{(schedule as any).assigned_tasks_count || 0} / {schedule.volunteers || '∞'} Joined</span>
                                                     </button>
+                                                </td>
+                                                <td className="py-4 px-4 whitespace-nowrap">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className={`inline-flex w-fit text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                                                            schedule.execution_status === 'in_progress'
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                                                : schedule.execution_status === 'completed'
+                                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                                                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                                        }`}>
+                                                            {schedule.execution_status === 'in_progress'
+                                                                ? 'In Progress'
+                                                                : schedule.execution_status === 'completed'
+                                                                    ? 'Completed'
+                                                                    : 'Scheduled'}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setViewingDistributionSchedule(schedule)}
+                                                            className="inline-flex w-fit items-center gap-1 text-[11px] font-bold text-paw-orange hover:underline cursor-pointer"
+                                                        >
+                                                            <ClipboardCheck size={12} />
+                                                            {schedule.total_food_distributed ?? 0} packs logged
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-4 whitespace-nowrap">
                                                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
@@ -826,6 +869,36 @@ export default function EventManagement({
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     {canManageEvents && (
                                                     <div className="flex justify-end gap-1.5">
+                                                        {(!schedule.execution_status || schedule.execution_status === 'scheduled') && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => router.post(`${feedingBasePath}/${schedule.id}/start`, {}, { preserveScroll: true })}
+                                                                className="p-1.5 hover:bg-emerald-50 text-emerald-600 dark:hover:bg-emerald-950/50 rounded-lg cursor-pointer transition"
+                                                                title="Start Feeding Route"
+                                                            >
+                                                                <Play size={16} />
+                                                            </button>
+                                                        )}
+                                                        {schedule.execution_status === 'in_progress' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => router.post(`${feedingBasePath}/${schedule.id}/complete`, {}, { preserveScroll: true })}
+                                                                className="p-1.5 hover:bg-blue-50 text-blue-600 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer transition"
+                                                                title="Complete Feeding Route"
+                                                            >
+                                                                <Flag size={16} />
+                                                            </button>
+                                                        )}
+                                                        {schedule.execution_status === 'completed' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => router.post(`${feedingBasePath}/${schedule.id}/reset`, {}, { preserveScroll: true })}
+                                                                className="p-1.5 hover:bg-amber-50 text-amber-600 dark:hover:bg-amber-950/50 rounded-lg cursor-pointer transition"
+                                                                title="Reset Route for Next Run"
+                                                            >
+                                                                <RotateCcw size={16} />
+                                                            </button>
+                                                        )}
                                                         <button
                                                             type="button"
                                                             onClick={() => openFeedingEdit(schedule)}
@@ -854,6 +927,59 @@ export default function EventManagement({
                         )}
                     </AdminCard>
                 )}
+
+            {/* Feeding Distribution Logs Modal */}
+            {viewingDistributionSchedule && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-6 sm:p-8 border dark:border-gray-800 shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white flex items-center gap-2">
+                                    <ClipboardCheck className="text-paw-orange" size={20} />
+                                    Food Distribution Logs
+                                </h3>
+                                <p className="text-xs font-semibold text-gray-500 mt-0.5">
+                                    {viewingDistributionSchedule.zone} • Total: {viewingDistributionSchedule.total_food_distributed ?? 0} packs
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setViewingDistributionSchedule(null)}
+                                className="p-1 text-gray-400 hover:bg-gray-100 rounded-lg cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {(viewingDistributionSchedule.distribution_logs || []).length === 0 ? (
+                            <p className="text-sm font-semibold text-gray-500 text-center py-8">
+                                No street food distribution logs recorded for this route yet.
+                            </p>
+                        ) : (
+                            <div className="max-h-80 overflow-y-auto space-y-2.5">
+                                {(viewingDistributionSchedule.distribution_logs || []).map((log) => (
+                                    <div key={log.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-3.5 dark:border-gray-800 dark:bg-slate-800/60">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-bold text-[#0B2340] dark:text-white">
+                                                {log.street_or_stop}
+                                            </span>
+                                            <span className="rounded-full bg-paw-orange/15 px-2.5 py-0.5 text-[11px] font-black text-paw-orange">
+                                                {log.food_packs_distributed} packs • {log.food_type}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                            Strays fed: {log.strays_fed} • Recorded by {log.recorded_by?.name || 'Recorder'}
+                                        </p>
+                                        {log.notes && (
+                                            <p className="mt-1 text-xs text-gray-500">{log.notes}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             </AdminPageShell>
 

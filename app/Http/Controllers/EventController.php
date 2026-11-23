@@ -59,6 +59,16 @@ class EventController extends Controller
 
         // Fetch feeding schedules with search and pagination
         $feedingQuery = FeedingSchedule::query()
+            ->withCount([
+                'assignedTasks as joined_volunteers_count' => fn ($q) => $q->whereIn('status', ['pending', 'completed']),
+            ])
+            ->with([
+                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,avatar_path')
+                    ->orderBy('created_at'),
+                'startedBy:id,name',
+                'completedBy:id,name',
+            ])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('zone', 'like', "%{$search}%")

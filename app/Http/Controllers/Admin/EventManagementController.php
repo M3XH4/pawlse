@@ -67,8 +67,16 @@ class EventManagementController extends Controller
                 });
             });
 
-        $feedingSchedules = $feedingQuery->withCount('assignedTasks')
-            ->with(['assignedTasks.user'])
+        $feedingSchedules = $feedingQuery->withCount([
+            'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed']),
+        ])
+            ->with([
+                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                    ->with('user:id,name,email,avatar_path'),
+                'distributionLogs' => fn ($q) => $q->with('recordedBy:id,name')->latest('recorded_at'),
+                'startedBy:id,name',
+                'completedBy:id,name',
+            ])
             ->latest()
             ->paginate(10, ['*'], 'feeding_page')
             ->withQueryString();
@@ -374,6 +382,91 @@ class EventManagementController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Feeding route deleted successfully.',
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Start a feeding route run from the admin/super-admin panel.
+     */
+    public function startFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        if ($schedule->execution_status === FeedingSchedule::ExecutionInProgress) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => 'Feeding route is already in progress.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $schedule->update([
+            'execution_status' => FeedingSchedule::ExecutionInProgress,
+            'started_at' => now(),
+            'started_by_user_id' => $request->user()?->id,
+            'completed_at' => null,
+            'completed_by_user_id' => null,
+        ]);
+
+        AuditLog::log('feeding_route_started', "Admin started feeding route '{$schedule->zone}'");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Feeding route '{$schedule->zone}' started.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Complete a feeding route run from the admin/super-admin panel.
+     */
+    public function completeFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        if ($schedule->execution_status !== FeedingSchedule::ExecutionInProgress) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Only an in-progress feeding route can be completed.',
+            ]);
+
+            return redirect()->back();
+        }
+
+        $schedule->update([
+            'execution_status' => FeedingSchedule::ExecutionCompleted,
+            'completed_at' => now(),
+            'completed_by_user_id' => $request->user()?->id,
+        ]);
+
+        AuditLog::log('feeding_route_completed', "Admin completed feeding route '{$schedule->zone}'");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Feeding route '{$schedule->zone}' marked as completed.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Reset a completed feeding route back to scheduled for its next run.
+     */
+    public function resetFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
+    {
+        $schedule->update([
+            'execution_status' => FeedingSchedule::ExecutionScheduled,
+            'started_at' => null,
+            'started_by_user_id' => null,
+            'completed_at' => null,
+            'completed_by_user_id' => null,
+        ]);
+
+        AuditLog::log('feeding_route_reset', "Admin reset feeding route '{$schedule->zone}' to scheduled");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Feeding route '{$schedule->zone}' reset to scheduled for the next run.",
         ]);
 
         return redirect()->back();
