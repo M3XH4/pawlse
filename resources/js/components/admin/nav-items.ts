@@ -38,6 +38,7 @@ export type AdminNavItem = {
     href: string;
     match: string;
     icon: LucideIcon;
+    permission?: string | string[];
 };
 
 export const adminNavItems: AdminNavItem[] = [
@@ -52,30 +53,35 @@ export const adminNavItems: AdminNavItem[] = [
         href: animalRecords.url(),
         match: animalRecords.url(),
         icon: PawPrint,
+        permission: 'pets.view',
     },
     {
         title: 'Rescue Management',
         href: rescueManagement.url(),
         match: rescueManagement.url(),
         icon: FileText,
+        permission: 'rescues.view',
     },
     {
         title: 'AI Validation Panel',
         href: aiValidation.url(),
         match: aiValidation.url(),
         icon: Sparkles,
+        permission: 'ai_validation.view',
     },
     {
         title: 'Adoption Management',
         href: adoptionManagement.url(),
         match: adoptionManagement.url(),
         icon: Heart,
+        permission: ['adoptions.review', 'adoptions.manage'],
     },
     {
         title: 'Foster Home Management',
         href: fosterManagement.url(),
         match: fosterManagement.url(),
         icon: Home,
+        permission: ['foster.view', 'foster.manage'],
     },
     {
         title: 'My Foster Pets',
@@ -88,30 +94,35 @@ export const adminNavItems: AdminNavItem[] = [
         href: volunteerManagement.url(),
         match: volunteerManagement.url(),
         icon: User,
+        permission: 'volunteers.view',
     },
     {
         title: 'Donation Monitoring',
         href: donationMonitoring.url(),
         match: donationMonitoring.url(),
         icon: Gift,
+        permission: 'donations.view',
     },
     {
         title: 'Event Management',
         href: events.url(),
         match: events.url(),
         icon: Calendar,
+        permission: 'events.view',
     },
     {
         title: 'Blog Management',
         href: blogManagement.url(),
         match: blogManagement.url(),
         icon: Newspaper,
+        permission: 'blogs.view',
     },
     {
         title: 'Reports & Analytics',
         href: reportsAnalytics.url(),
         match: reportsAnalytics.url(),
         icon: BarChart3,
+        permission: 'analytics.view',
     },
     {
         title: 'Notifications',
@@ -124,6 +135,7 @@ export const adminNavItems: AdminNavItem[] = [
         href: '/account/admin/help-desk',
         match: '/account/admin/help-desk',
         icon: LifeBuoy,
+        permission: 'help_desk.view',
     },
     {
         title: 'Account Settings',

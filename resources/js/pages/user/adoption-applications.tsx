@@ -11,6 +11,7 @@ import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { formatPillLabel } from '@/lib/utils';
 
 interface MessageAttachment {
     path?: string;
@@ -285,7 +286,7 @@ export default function UserAdoptionApplications({
             default:
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-                        {status}
+                        {formatPillLabel(status)}
                     </span>
                 );
         }

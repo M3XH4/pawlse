@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { formatPillLabel } from '@/lib/utils';
 
 interface UserRecord {
     id: number;
@@ -24,6 +25,7 @@ interface UserRecord {
     role: string;
     roles: string[];
     direct_permissions: string[];
+    revoked_permissions: string[];
     all_permissions: string[];
     email_verified_at: string | null;
     created_at: string;
@@ -134,13 +136,15 @@ export default function UserManagement({
         role: string;
         verified: boolean;
         permissions: string[];
+        revoked_permissions: string[];
     }>({
         name: '',
         email: '',
         password: '',
         role: 'user',
         verified: true,
-        permissions: []
+        permissions: [],
+        revoked_permissions: []
     });
 
     // Keep matrixPermissions synced when changing selected matrix role
@@ -209,7 +213,8 @@ export default function UserManagement({
             password: '',
             role: 'user',
             verified: true,
-            permissions: []
+            permissions: [],
+            revoked_permissions: []
         });
         setDrawerPermissionSearch('');
         // expand all categories by default
@@ -228,7 +233,8 @@ export default function UserManagement({
             password: '',
             role: user.role || 'user',
             verified: !!user.email_verified_at,
-            permissions: user.direct_permissions || []
+            permissions: user.direct_permissions || [],
+            revoked_permissions: user.revoked_permissions || []
         });
         setDrawerPermissionSearch('');
         const initExpanded: Record<string, boolean> = {};
@@ -243,33 +249,59 @@ export default function UserManagement({
         reset();
     };
 
-    // Toggle a direct permission for the user inside the drawer
-    const toggleUserPermission = (permissionName: string) => {
-        const current = data.permissions || [];
-        if (current.includes(permissionName)) {
-            setData('permissions', current.filter(p => p !== permissionName));
-        } else {
-            setData('permissions', [...current, permissionName]);
-        }
-    };
-
-    // Select or Clear all permissions in a category inside the drawer
-    const toggleCategoryPermissions = (categoryPerms: PermissionItem[], selectAll: boolean) => {
-        const permNames = categoryPerms.map(p => p.name);
-        const current = data.permissions || [];
-        if (selectAll) {
-            const combined = Array.from(new Set([...current, ...permNames]));
-            setData('permissions', combined);
-        } else {
-            setData('permissions', current.filter(p => !permNames.includes(p)));
-        }
-    };
-
     // Active role permissions for the selected role in the drawer
     const currentRolePermissions = useMemo(() => {
         const found = roles_detail.find(r => r.name === data.role);
         return found ? found.permissions : [];
     }, [data.role, roles_detail]);
+
+    // Toggle a permission for the user inside the drawer (direct grant or role revocation)
+    const toggleUserPermission = (permissionName: string) => {
+        const isInherited = currentRolePermissions.includes(permissionName);
+        if (isInherited) {
+            const currentRevoked = data.revoked_permissions || [];
+            if (currentRevoked.includes(permissionName)) {
+                setData('revoked_permissions', currentRevoked.filter(p => p !== permissionName));
+            } else {
+                setData('revoked_permissions', [...currentRevoked, permissionName]);
+            }
+            return;
+        }
+
+        const currentDirect = data.permissions || [];
+        if (currentDirect.includes(permissionName)) {
+            setData('permissions', currentDirect.filter(p => p !== permissionName));
+        } else {
+            setData('permissions', [...currentDirect, permissionName]);
+        }
+    };
+
+    // Grant or Revoke all permissions in a category inside the drawer
+    const toggleCategoryPermissions = (categoryPerms: PermissionItem[], selectAll: boolean) => {
+        const permNames = categoryPerms.map(p => p.name);
+        const currentDirect = data.permissions || [];
+        const currentRevoked = data.revoked_permissions || [];
+
+        if (selectAll) {
+            const nextRevoked = currentRevoked.filter(p => !permNames.includes(p));
+            const nonInherited = permNames.filter(p => !currentRolePermissions.includes(p));
+            const nextDirect = Array.from(new Set([...currentDirect, ...nonInherited]));
+            setData({
+                ...data,
+                permissions: nextDirect,
+                revoked_permissions: nextRevoked,
+            });
+        } else {
+            const nextDirect = currentDirect.filter(p => !permNames.includes(p));
+            const inheritedInCat = permNames.filter(p => currentRolePermissions.includes(p));
+            const nextRevoked = Array.from(new Set([...currentRevoked, ...inheritedInCat]));
+            setData({
+                ...data,
+                permissions: nextDirect,
+                revoked_permissions: nextRevoked,
+            });
+        }
+    };
 
     // Handle Form Submit from Sidebar Drawer
     const handleUserFormSubmit = (e: React.FormEvent) => {
@@ -408,30 +440,30 @@ export default function UserManagement({
         switch (roleName) {
             case 'super-admin':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700 shadow-2xs ring-1 ring-inset ring-rose-500/25 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-500/30">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700 shadow-2xs ring-1 ring-inset ring-rose-500/25 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-500/30">
                         <ShieldAlert className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-                        <span>super-admin</span>
+                        <span>Super Admin</span>
                     </span>
                 );
             case 'admin':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 shadow-2xs ring-1 ring-inset ring-violet-500/25 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-500/30">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 shadow-2xs ring-1 ring-inset ring-violet-500/25 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-500/30">
                         <Shield className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                        <span>admin</span>
+                        <span>Admin</span>
                     </span>
                 );
             case 'volunteer':
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs ring-1 ring-inset ring-emerald-500/25 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs ring-1 ring-inset ring-emerald-500/25 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30">
                         <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span>volunteer</span>
+                        <span>Volunteer</span>
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs ring-1 ring-inset ring-slate-400/25 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs ring-1 ring-inset ring-slate-400/25 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
                         <UserIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                        <span>{roleName}</span>
+                        <span>{formatPillLabel(roleName)}</span>
                     </span>
                 );
         }
@@ -836,8 +868,8 @@ export default function UserManagement({
                                             }`}
                                         >
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${getRoleBadgeClasses(r.name)}`}>
-                                                    {r.name}
+                                                <span className={`inline-flex items-center whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${getRoleBadgeClasses(r.name)}`}>
+                                                    {formatPillLabel(r.name)}
                                                 </span>
                                                 {r.is_system ? (
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">System</span>
@@ -882,7 +914,7 @@ export default function UserManagement({
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-fredoka text-xl font-bold text-slate-800 dark:text-white">
-                                            Permission Scope for <span className="text-indigo-600 dark:text-indigo-400 capitalize">{selectedMatrixRole}</span>
+                                            Permission Scope for <span className="text-indigo-600 dark:text-indigo-400">{formatPillLabel(selectedMatrixRole)}</span>
                                         </h3>
                                         <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
                                             {matrixPermissions.length} enabled
@@ -1204,7 +1236,10 @@ export default function UserManagement({
 
                                                 const isExpanded = openCategories[cat.category] !== false;
                                                 const catPermNames = filteredPerms.map(p => p.name);
-                                                const allDirect = catPermNames.every(p => data.permissions?.includes(p));
+                                                const allActive = catPermNames.every(p =>
+                                                    (currentRolePermissions.includes(p) && !data.revoked_permissions?.includes(p)) ||
+                                                    data.permissions?.includes(p)
+                                                );
 
                                                 return (
                                                     <div key={cat.category} className="rounded-xl border border-gray-100 bg-gray-50/40 dark:border-slate-800 dark:bg-slate-900/30 overflow-hidden">
@@ -1225,10 +1260,10 @@ export default function UserManagement({
                                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => toggleCategoryPermissions(filteredPerms, !allDirect)}
+                                                                    onClick={() => toggleCategoryPermissions(filteredPerms, !allActive)}
                                                                     className="text-[11px] font-bold text-indigo-600 hover:underline dark:text-indigo-400"
                                                                 >
-                                                                    {allDirect ? 'Clear All' : 'Grant All'}
+                                                                    {allActive ? 'Revoke All' : 'Grant All'}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -1237,15 +1272,18 @@ export default function UserManagement({
                                                             <div className="p-3 pt-0 grid gap-2">
                                                                 {filteredPerms.map((perm) => {
                                                                     const isInherited = currentRolePermissions.includes(perm.name);
-                                                                    const isDirect = data.permissions?.includes(perm.name);
-                                                                    const isGranted = isInherited || isDirect;
+                                                                    const isRevoked = isInherited && (data.revoked_permissions?.includes(perm.name) ?? false);
+                                                                    const isDirect = !isInherited && (data.permissions?.includes(perm.name) ?? false);
+                                                                    const isGranted = (isInherited && !isRevoked) || isDirect;
 
                                                                     return (
                                                                         <label
                                                                             key={perm.name}
                                                                             onClick={() => toggleUserPermission(perm.name)}
                                                                             className={`flex items-start justify-between gap-3 p-2.5 rounded-lg border text-xs cursor-pointer transition-all ${
-                                                                                isDirect
+                                                                                isRevoked
+                                                                                    ? 'bg-rose-50/60 border-rose-300 dark:bg-rose-950/20 dark:border-rose-800'
+                                                                                    : isDirect
                                                                                     ? 'bg-emerald-50/60 border-emerald-300 dark:bg-emerald-950/20 dark:border-emerald-800'
                                                                                     : isInherited
                                                                                     ? 'bg-indigo-50/30 border-indigo-200/60 dark:bg-indigo-950/10 dark:border-indigo-900/40'
@@ -1270,7 +1308,11 @@ export default function UserManagement({
                                                                             </div>
 
                                                                             <div>
-                                                                                {isDirect ? (
+                                                                                {isRevoked ? (
+                                                                                    <span className="inline-flex items-center rounded-md bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                                                                                        Revoked
+                                                                                    </span>
+                                                                                ) : isDirect ? (
                                                                                     <span className="inline-flex items-center rounded-md bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                                                                                         Direct Override
                                                                                     </span>

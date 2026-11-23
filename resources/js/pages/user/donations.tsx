@@ -10,6 +10,7 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { formatPillLabel } from '@/lib/utils';
 
 interface DonationRecord {
     id: number;
@@ -299,8 +300,8 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-block text-xs font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
-                                                {donation.status.replace('_', ' ')}
+                                            <span className={`inline-block whitespace-nowrap text-xs font-black px-2.5 py-1 rounded-full ${getStatusColor(donation.status)}`}>
+                                                {formatPillLabel(donation.status)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -356,8 +357,8 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                                         </p>
                                     </div>
 
-                                    <span className={`inline-block text-[10px] font-black px-2.5 py-1 rounded-full capitalize ${getStatusColor(donation.status)}`}>
-                                        {donation.status.replace('_', ' ')}
+                                    <span className={`inline-block whitespace-nowrap text-[10px] font-black px-2.5 py-1 rounded-full ${getStatusColor(donation.status)}`}>
+                                        {formatPillLabel(donation.status)}
                                     </span>
                                 </div>
 

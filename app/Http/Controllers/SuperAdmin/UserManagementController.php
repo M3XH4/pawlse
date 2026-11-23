@@ -66,7 +66,8 @@ class UserManagementController extends Controller
                     'role' => $user->roles->first()?->name ?? $user->role ?? 'user',
                     'roles' => $user->roles->pluck('name')->toArray(),
                     'direct_permissions' => $user->permissions->pluck('name')->toArray(),
-                    'all_permissions' => $user->roles->flatMap->permissions->merge($user->permissions)->pluck('name')->unique()->values()->toArray(),
+                    'revoked_permissions' => $user->getRevokedPermissions(),
+                    'all_permissions' => $user->getAllPermissions()->pluck('name')->values()->toArray(),
                     'email_verified_at' => $user->email_verified_at,
                     'created_at' => $user->created_at->toDateTimeString(),
                 ];
@@ -162,6 +163,8 @@ class UserManagementController extends Controller
             'verified' => ['boolean'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
+            'revoked_permissions' => ['nullable', 'array'],
+            'revoked_permissions.*' => ['string'],
         ]);
 
         $user = User::create([
@@ -173,6 +176,7 @@ class UserManagementController extends Controller
         $role = $request->role;
         $user->forceFill([
             'role' => $role,
+            'revoked_permissions' => array_values(array_unique($request->input('revoked_permissions', []))),
         ]);
 
         if ($request->verified) {
@@ -187,6 +191,8 @@ class UserManagementController extends Controller
         if ($request->has('permissions')) {
             $user->syncPermissions($request->permissions ?? []);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         AuditLog::log('user_create', "Created user {$user->name} ({$user->email}) as {$role}");
 
@@ -206,6 +212,8 @@ class UserManagementController extends Controller
             'verified' => ['boolean'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
+            'revoked_permissions' => ['nullable', 'array'],
+            'revoked_permissions.*' => ['string'],
         ]);
 
         $user->name = $request->name;
@@ -217,6 +225,7 @@ class UserManagementController extends Controller
 
         $role = $request->role;
         $user->role = $role;
+        $user->revoked_permissions = array_values(array_unique($request->input('revoked_permissions', [])));
 
         if ($request->verified && ! $user->email_verified_at) {
             $user->email_verified_at = now();
@@ -232,6 +241,8 @@ class UserManagementController extends Controller
         if ($request->has('permissions')) {
             $user->syncPermissions($request->permissions ?? []);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         AuditLog::log('user_update', "Updated user {$user->name} ({$user->email}) details and permissions");
 

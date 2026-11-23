@@ -28,7 +28,7 @@ import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-pr
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
-import { cn } from '@/lib/utils';
+import { cn, formatPillLabel } from '@/lib/utils';
 
 interface SuperAdminHelpDeskProps {
     tickets: {
@@ -531,8 +531,8 @@ export default function SuperAdminHelpDesk({
                                                     <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 uppercase">
                                                         {problem.category}
                                                     </span>
-                                                    <span className="rounded-md bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300 capitalize">
-                                                        Audience: {problem.target_audience}
+                                                    <span className="whitespace-nowrap rounded-md bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                                        Audience: {formatPillLabel(problem.target_audience)}
                                                     </span>
                                                     {problem.helpful_count > 0 && (
                                                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">

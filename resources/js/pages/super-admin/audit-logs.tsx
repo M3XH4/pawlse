@@ -6,6 +6,7 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { formatPillLabel } from '@/lib/utils';
 
 interface AuditLogRecord {
     id: number;
@@ -282,8 +283,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                             <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-700 dark:bg-slate-800 dark:text-gray-300">
                                 <tr>
                                     <th className="px-6 py-4">User</th>
-                                    <th className="px-6 py-4">Role</th>
-                                    <th className="px-6 py-4">Action Type</th>
+                                    <th className="px-6 py-4 whitespace-nowrap">Role</th>
+                                    <th className="px-6 py-4 whitespace-nowrap">Action Type</th>
                                     <th className="px-6 py-4">Description</th>
                                     <th className="px-6 py-4">IP Address</th>
                                     <th className="px-6 py-4">Browser Info</th>
@@ -303,36 +304,36 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                                             <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
                                                 {log.user_name}
                                             </td>
-                                            <td className="px-6 py-4 text-xs font-medium">
+                                            <td className="px-6 py-4 text-xs font-medium whitespace-nowrap">
                                                 {log.user_role === 'super-admin' && (
-                                                    <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-950/20 dark:text-red-400">
+                                                    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-950/20 dark:text-red-400">
                                                         Super Admin
                                                     </span>
                                                 )}
                                                 {log.user_role === 'admin' && (
-                                                    <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-bold text-purple-700 ring-1 ring-inset ring-purple-600/20 dark:bg-purple-950/20 dark:text-purple-400">
+                                                    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-purple-50 px-2 py-0.5 text-xs font-bold text-purple-700 ring-1 ring-inset ring-purple-600/20 dark:bg-purple-950/20 dark:text-purple-400">
                                                         Admin
                                                     </span>
                                                 )}
                                                 {log.user_role === 'volunteer' && (
-                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                                    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/20 dark:text-emerald-400">
                                                         Volunteer
                                                     </span>
                                                 )}
                                                 {log.user_role === 'user' && (
-                                                    <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-950/20 dark:text-indigo-400">
+                                                    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-950/20 dark:text-indigo-400">
                                                         User
                                                     </span>
                                                 )}
                                                 {(log.user_role === 'system' || !log.user_role) && (
-                                                    <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-xs font-bold text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-800/20 dark:text-gray-400">
+                                                    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-gray-50 px-2 py-0.5 text-xs font-bold text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-800/20 dark:text-gray-400">
                                                         System / Guest
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-600/20 dark:bg-blue-950/20 dark:text-blue-400">
-                                                    {log.action}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center whitespace-nowrap rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-600/20 dark:bg-blue-950/20 dark:text-blue-400">
+                                                    {formatPillLabel(log.action)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-xs font-medium max-w-xs truncate" title={log.description}>
@@ -363,8 +364,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold text-sm text-gray-900 dark:text-white">{log.user_name}</span>
-                                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
-                                                {log.action}
+                                            <span className="inline-flex items-center whitespace-nowrap rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                                {formatPillLabel(log.action)}
                                             </span>
                                         </div>
                                         <span className="text-[11px] text-gray-400">{log.created_at}</span>
@@ -372,7 +373,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                                     <p className="text-xs text-gray-600 dark:text-slate-300">{log.description}</p>
                                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400 pt-1">
                                         <span className="font-mono">{log.ip_address}</span>
-                                        <span className="capitalize">{log.user_role || 'system'}</span>
+                                        <span>{formatPillLabel(log.user_role || 'system')}</span>
                                     </div>
                                 </div>
                             ))

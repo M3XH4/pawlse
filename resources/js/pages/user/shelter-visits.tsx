@@ -16,6 +16,7 @@ import {
     MessageSquareText,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPillLabel } from '@/lib/utils';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -135,7 +136,7 @@ export default function UserShelterVisits({
             default:
                 return (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {status}
+                        {formatPillLabel(status)}
                     </span>
                 );
         }

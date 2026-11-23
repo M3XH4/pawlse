@@ -17,6 +17,7 @@ import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { toast } from 'sonner';
+import { formatPillLabel } from '@/lib/utils';
 
 interface PetOption {
     id: number;
@@ -319,7 +320,7 @@ export default function UserStories({
             default:
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
-                        {status}
+                        {formatPillLabel(status)}
                     </span>
                 );
         }

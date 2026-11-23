@@ -33,6 +33,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatPillLabel } from '@/lib/utils';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { cn, formatPhotoUrl } from '@/lib/utils';
 import {
@@ -778,8 +779,8 @@ export default function VolunteerDashboard({
                                                         <span>View on Map</span>
                                                     </button>
                                                 )}
-                                                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                    {mission.status}
+                                                <span className="whitespace-nowrap rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                    {formatPillLabel(mission.status)}
                                                 </span>
                                                 <Link href={mission.href} aria-label={`Open ${mission.title}`}>
                                                     <ArrowRight className="size-4 text-[#94A3B8] transition group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
@@ -976,8 +977,8 @@ export default function VolunteerDashboard({
                             >
                                 <div>
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="inline-block rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 dark:text-sky-300">
-                                            {event.type}
+                                        <span className="inline-block whitespace-nowrap rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 dark:text-sky-300">
+                                            {formatPillLabel(event.type)}
                                         </span>
                                         {event.spots !== null && (
                                             <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8]">

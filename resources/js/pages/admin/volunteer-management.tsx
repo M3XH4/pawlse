@@ -9,6 +9,7 @@ import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PaginatedData<T> {
     data: T[];
@@ -154,6 +155,10 @@ export default function VolunteerManagement({
     basePath = '/account/admin/volunteer-management',
 }: VolunteerManagementProps) {
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+    const { can } = usePermissions();
+    const canApproveVolunteers = can('volunteers.approve');
+    const canAssignTasks = can('volunteers.assign_tasks');
+    const canCertifyVolunteers = can('volunteers.certify');
     const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'food_pickups'>('applications');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
@@ -529,7 +534,7 @@ export default function VolunteerManagement({
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
-                                                    {app.status === 'pending' && (
+                                                    {canApproveVolunteers && app.status === 'pending' && (
                                                         <div className="flex justify-end gap-1.5">
                                                             <button
                                                                 onClick={() => handleApprove(app.id)}
@@ -564,6 +569,7 @@ export default function VolunteerManagement({
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white">Active Volunteers Directory</h3>
                             <div className="flex gap-2">
+                                {canAssignTasks && (
                                 <button
                                     onClick={() => {
                                         setIsAssignOpen(true);
@@ -575,6 +581,8 @@ export default function VolunteerManagement({
                                 >
                                     <Plus size={14} /> Assign Task
                                 </button>
+                                )}
+                                {canCertifyVolunteers && (
                                 <button
                                     onClick={() => {
                                         setIsCertOpen(true);
@@ -585,6 +593,7 @@ export default function VolunteerManagement({
                                 >
                                     <Award size={14} /> Issue Certificate
                                 </button>
+                                )}
                             </div>
                         </div>
 
@@ -608,6 +617,7 @@ export default function VolunteerManagement({
                                                 <td className="py-4 px-4 font-bold text-[#0B2340] dark:text-white">{vol.name}</td>
                                                 <td className="py-4 px-4">{vol.email}</td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
+                                                    {canAssignTasks && (
                                                     <button
                                                         onClick={() => {
                                                             setAssignTargetUserId(String(vol.id));
@@ -617,6 +627,7 @@ export default function VolunteerManagement({
                                                     >
                                                         Assign Activity
                                                     </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -690,7 +701,7 @@ export default function VolunteerManagement({
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
-                                                    {task.status === 'pending' && (
+                                                    {canAssignTasks && task.status === 'pending' && (
                                                         <div className="flex justify-end gap-1.5">
                                                             <button
                                                                 onClick={() => {
@@ -755,6 +766,7 @@ export default function VolunteerManagement({
                                         Assign volunteers to fetch 1-day shelf-life food from daily food partners (e.g., Greenwich) and verify completion or mark missed.
                                     </p>
                                 </div>
+                                {canAssignTasks && (
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -769,6 +781,7 @@ export default function VolunteerManagement({
                                 >
                                     <Plus size={16} /> Schedule Pickup
                                 </button>
+                                )}
                             </div>
 
                             {todayFoodPickups.length > 0 && (
@@ -797,7 +810,7 @@ export default function VolunteerManagement({
                                                             : 'Needs a volunteer to fetch today'}
                                                     </p>
                                                 </div>
-                                                {todayItem.status === 'pending' && !todayItem.assigned_volunteer_id ? (
+                                                {canAssignTasks && todayItem.status === 'pending' && !todayItem.assigned_volunteer_id ? (
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -898,7 +911,7 @@ export default function VolunteerManagement({
                                                             )}
                                                         </td>
                                                         <td className="py-4 px-4 text-right whitespace-nowrap">
-                                                            {!isFinal && (
+                                                            {canAssignTasks && !isFinal && (
                                                                 <div className="flex justify-end gap-1.5 flex-wrap">
                                                                     {pickup.status !== 'fetched' && (
                                                                         <button

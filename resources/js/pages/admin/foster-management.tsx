@@ -6,6 +6,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { usePermissions } from '@/hooks/use-permissions';
+import { formatPillLabel } from '@/lib/utils';
 import {
     Heart,
     HeartHandshake,
@@ -193,6 +195,8 @@ export default function FosterManagement({
     const [currentTab, setCurrentTab] = useState<'placements' | 'available_pets' | 'foster_parents' | 'care_updates' | 'history' | 'audit'>('placements');
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+    const { can } = usePermissions();
+    const canManageFoster = can('foster.manage');
 
     // Modals
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -572,6 +576,7 @@ export default function FosterManagement({
 
             {/* Action Bar & Quick Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {canManageFoster && (
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
@@ -588,6 +593,7 @@ export default function FosterManagement({
                         <UserCheck size={16} /> Authorize New Foster Parent
                     </button>
                 </div>
+                )}
 
                 {/* Filter and Search */}
                 <form onSubmit={handleSearch} className="flex items-center gap-2">
@@ -809,7 +815,7 @@ export default function FosterManagement({
 
                                             <td className="py-3.5 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                                                    {placement.status === 'active' && (
+                                                    {canManageFoster && placement.status === 'active' && (
                                                         <>
                                                             <button
                                                                 type="button"
@@ -893,6 +899,7 @@ export default function FosterManagement({
                                     <span className="text-[11px] text-gray-400 font-medium">
                                         Vaccinated: {pet.vaccinated ? 'Yes' : 'Pending'}
                                     </span>
+                                    {canManageFoster && (
                                     <button
                                         type="button"
                                         onClick={() => openAssignForPet(pet)}
@@ -900,6 +907,7 @@ export default function FosterManagement({
                                     >
                                         <Plus size={14} /> Place in Foster
                                     </button>
+                                    )}
                                 </div>
                             </AdminCard>
                         ))
@@ -948,8 +956,8 @@ export default function FosterManagement({
                                                         </span>
                                                     )}
                                                     {parent.housing_type && (
-                                                        <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
-                                                            {parent.housing_type}
+                                                        <span className="px-1.5 py-0.5 rounded whitespace-nowrap bg-gray-100 dark:bg-gray-800">
+                                                            {formatPillLabel(parent.housing_type)}
                                                         </span>
                                                     )}
                                                 </div>
@@ -957,6 +965,7 @@ export default function FosterManagement({
                                         </div>
                                     </div>
 
+                                    {canManageFoster && (
                                     <div className="flex items-center gap-1">
                                         {parent.status === 'pending' && (
                                             <button
@@ -993,6 +1002,7 @@ export default function FosterManagement({
                                             <Settings2 size={15} />
                                         </button>
                                     </div>
+                                    )}
                                 </div>
 
                                 {/* Capacity Bar */}
@@ -1082,6 +1092,7 @@ export default function FosterManagement({
                                             <span className="text-xs text-gray-400 font-medium">
                                                 {update.created_at}
                                             </span>
+                                            {canManageFoster && (
                                             <button
                                                 type="button"
                                                 onClick={() => openAcknowledgeModal(update)}
@@ -1089,6 +1100,7 @@ export default function FosterManagement({
                                             >
                                                 {update.is_acknowledged ? 'Edit Response' : 'Review & Respond'}
                                             </button>
+                                            )}
                                         </div>
                                     </div>
 

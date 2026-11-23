@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
     BarChart3,
     Download,
@@ -80,6 +81,8 @@ export default function ReportsAnalytics({
     animalBreakdown,
     donationBreakdown,
 }: ReportsProps) {
+    const { can } = usePermissions();
+    const canExportReports = can('analytics.export');
     const [filter, setFilter] = useState<TimeFilter>('monthly');
 
     // Get current dataset based on filter
@@ -580,6 +583,7 @@ export default function ReportsAnalytics({
                     </div>
 
                     {/* Right Column: Excel / Report Export Options */}
+                    {canExportReports && (
                     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
                         <div>
                             <div className="flex items-center gap-2">
@@ -654,6 +658,7 @@ export default function ReportsAnalytics({
                             </p>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </>

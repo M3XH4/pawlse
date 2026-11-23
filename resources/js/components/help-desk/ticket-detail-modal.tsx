@@ -17,7 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
-import { cn } from '@/lib/utils';
+import { cn, formatPillLabel } from '@/lib/utils';
 
 interface TicketDetailModalProps {
     ticket: HelpDeskTicket | null;
@@ -271,8 +271,8 @@ export function TicketDetailModal({
                                         {ticket.user?.name ?? 'User'}
                                     </span>
                                     {ticket.user?.role && (
-                                        <span className="ml-1.5 rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 capitalize dark:bg-gray-700 dark:text-gray-300">
-                                            {ticket.user.role}
+                                        <span className="ml-1.5 whitespace-nowrap rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                            {formatPillLabel(ticket.user.role)}
                                         </span>
                                     )}
                                 </div>
@@ -323,8 +323,8 @@ export function TicketDetailModal({
                                                     {reply.user?.name ?? 'Staff'}
                                                 </span>
                                                 {reply.user?.role && (
-                                                    <span className="rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 capitalize dark:bg-gray-700 dark:text-gray-300">
-                                                        {reply.user.role}
+                                                    <span className="whitespace-nowrap rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                                        {formatPillLabel(reply.user.role)}
                                                     </span>
                                                 )}
                                                 {isInternal && (
@@ -427,11 +427,11 @@ export function TicketDetailModal({
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span
                                                                     className={cn(
-                                                                        'rounded-md px-2 py-0.5 text-[10px] font-bold border',
+                                                                        'whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold border',
                                                                         getCannedCategoryBadgeClass(problem.category)
                                                                     )}
                                                                 >
-                                                                    {problem.category}
+                                                                    {formatPillLabel(problem.category)}
                                                                 </span>
                                                                 <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                                                     <span>Insert into reply</span>

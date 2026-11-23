@@ -43,3 +43,16 @@ export function formatPhotoUrl(path?: string | null, animalType?: string | null)
 
     return `/storage/${path}`;
 }
+
+export function formatPillLabel(value?: string | null): string {
+    if (!value) {
+        return '';
+    }
+
+    return value
+        .replace(/[_-]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}

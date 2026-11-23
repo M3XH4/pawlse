@@ -44,6 +44,7 @@ export type DashboardNavItem = {
     badge?: number;
     method?: 'get' | 'post';
     as?: 'a' | 'button';
+    permission?: string | string[];
     children?: DashboardNavItem[];
 };
 

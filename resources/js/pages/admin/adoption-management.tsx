@@ -9,6 +9,7 @@ import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/vi
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { formatPhotoUrl } from '@/lib/utils';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   PostAdoptionTab,
   PostAdoptionFollowUpData,
@@ -167,6 +168,9 @@ export default function AdoptionManagement({
   basePath = '/account/admin/adoption-management',
 }: AdoptionManagementProps) {
   const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+  const { can } = usePermissions();
+  const canReviewAdoptions = can('adoptions.review') || can('adoptions.manage');
+  const canManageAdoptions = can('adoptions.manage');
   const [activeTab, setActiveTab] = useState<'applications' | 'pets' | 'follow-ups' | 'shelter-visits' | 'rehoming'>('applications');
   const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-adoption-view');
   
@@ -643,6 +647,7 @@ export default function AdoptionManagement({
 
                     <div className="p-4 pt-0">
                       {/* Wishlist / Needs Button */}
+                      {canManageAdoptions && (
                       <button
                         onClick={() => {
                           setSelectedPetForNeeds(pet);
@@ -658,6 +663,7 @@ export default function AdoptionManagement({
                         <Gift size={13} />
                         <span>{pet.needs?.length ? `Wishlist (${pet.needs.length})` : '+ Add Needs'}</span>
                       </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -971,7 +977,7 @@ export default function AdoptionManagement({
 
               {/* Drawer Footer Actions */}
               <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 flex justify-between gap-4">
-                {(selectedApp.status === 'pending' || selectedApp.status === 'needs_info') && (
+                {canReviewAdoptions && (selectedApp.status === 'pending' || selectedApp.status === 'needs_info') && (
                   <>
                     <button
                       onClick={() => setIsRejectOpen(true)}
@@ -989,7 +995,7 @@ export default function AdoptionManagement({
                   </>
                 )}
 
-                {selectedApp.status === 'scheduled' && (
+                {canReviewAdoptions && selectedApp.status === 'scheduled' && (
                   <>
                     <button
                       onClick={() => setIsRejectOpen(true)}

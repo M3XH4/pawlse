@@ -17,17 +17,24 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Contracts\Permission as PermissionContract;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'first_name', 'middle_initial', 'last_name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style'])]
+#[Fillable(['name', 'first_name', 'middle_initial', 'last_name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style', 'revoked_permissions'])]
 #[Hidden(['password', 'email_verification_otp_hash', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, MustVerifyEmail, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, MustVerifyEmail, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+
+    use HasRoles {
+        hasPermissionTo as protected spatieHasPermissionTo;
+        getAllPermissions as protected spatieGetAllPermissions;
+    }
 
     protected static function booted(): void
     {
@@ -84,8 +91,57 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'email_verification_otp_sent_at' => 'datetime',
             'email_verification_otp_attempts' => 'integer',
             'password' => 'hashed',
+            'revoked_permissions' => 'array',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the list of permission names explicitly revoked for this user.
+     *
+     * @return list<string>
+     */
+    public function getRevokedPermissions(): array
+    {
+        return array_values(array_filter($this->revoked_permissions ?? [], 'is_string'));
+    }
+
+    /**
+     * Determine if the user has the given permission, respecting per-user revocations.
+     */
+    public function hasPermissionTo($permission, ?string $guardName = null): bool
+    {
+        if ($this->hasRole(Role::SuperAdmin->value)) {
+            return true;
+        }
+
+        $permissionName = match (true) {
+            $permission instanceof PermissionContract => $permission->name,
+            $permission instanceof \BackedEnum => (string) $permission->value,
+            is_string($permission) => $permission,
+            default => null,
+        };
+
+        if ($permissionName !== null && in_array($permissionName, $this->getRevokedPermissions(), true)) {
+            return false;
+        }
+
+        return $this->spatieHasPermissionTo($permission, $guardName);
+    }
+
+    /**
+     * Get all effective permissions for this user (role + direct minus revoked).
+     */
+    public function getAllPermissions(): Collection
+    {
+        $revoked = $this->getRevokedPermissions();
+        $permissions = $this->spatieGetAllPermissions();
+
+        if ($revoked === []) {
+            return $permissions;
+        }
+
+        return $permissions->reject(fn ($permission): bool => in_array($permission->name, $revoked, true))->values();
     }
 
     public function sendEmailVerificationNotification(): void

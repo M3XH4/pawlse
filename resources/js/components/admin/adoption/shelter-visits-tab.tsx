@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from '@inertiajs/react';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { formatPillLabel } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Building2,
@@ -333,9 +334,9 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
                       )}
                     </td>
 
-                    <td className="py-4 px-4">
-                      <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-paw-bg dark:bg-gray-700 text-paw-navy dark:text-white">
-                        {visit.purpose}
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-xl text-xs font-bold bg-paw-bg dark:bg-gray-700 text-paw-navy dark:text-white">
+                        {formatPillLabel(visit.purpose)}
                       </span>
                     </td>
 

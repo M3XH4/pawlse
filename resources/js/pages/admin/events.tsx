@@ -4,6 +4,7 @@ import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { usePermissions } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import {
     Calendar,
@@ -91,6 +92,9 @@ export default function EventManagement({
     isSuperAdmin = false,
     basePath = '/account/admin/events',
 }: EventManagementProps) {
+    const { can } = usePermissions();
+    const canManageEvents = can('events.manage');
+    const canApproveEvents = can('events.approve');
     const feedingBasePath = basePath.replace(/\/events$/, '/feeding-schedules');
     const [activeTab, setActiveTab] = useState<'events' | 'feeding'>('events');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -566,12 +570,14 @@ export default function EventManagement({
                                     Browse scheduled community outreach events and monitor sign-ups.
                                 </p>
                             </div>
+                            {canManageEvents && (
                             <button
                                 onClick={openEventCreate}
                                 className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer"
                             >
                                 <Plus size={14} /> Create Event
                             </button>
+                            )}
                         </div>
 
                         {events.data.length === 0 ? (
@@ -676,8 +682,8 @@ export default function EventManagement({
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
                                                     <div className="flex justify-end items-center gap-1.5">
-                                                        {/* Super Admin Quick Approval Actions */}
-                                                        {isSuperAdmin && event.approval_status === 'pending' && (
+                                                        {/* Quick Approval Actions */}
+                                                        {(isSuperAdmin || canApproveEvents) && event.approval_status === 'pending' && (
                                                             <>
                                                                 <button
                                                                     type="button"
@@ -698,6 +704,8 @@ export default function EventManagement({
                                                             </>
                                                         )}
 
+                                                        {canManageEvents && (
+                                                        <>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleToggleEvent(event)}
@@ -731,6 +739,8 @@ export default function EventManagement({
                                                         >
                                                             <Trash size={16} />
                                                         </button>
+                                                        </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -753,12 +763,14 @@ export default function EventManagement({
                                     Manage regular feeding circuits, stray headcounts, and assigned volunteer routes.
                                 </p>
                             </div>
+                            {canManageEvents && (
                             <button
                                 onClick={openFeedingCreate}
                                 className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer"
                             >
                                 <Plus size={14} /> Create Feeding Route
                             </button>
+                            )}
                         </div>
 
                         {feedingSchedules.data.length === 0 ? (
@@ -812,6 +824,7 @@ export default function EventManagement({
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4 text-right whitespace-nowrap">
+                                                    {canManageEvents && (
                                                     <div className="flex justify-end gap-1.5">
                                                         <button
                                                             type="button"
@@ -830,6 +843,7 @@ export default function EventManagement({
                                                             <Trash size={16} />
                                                         </button>
                                                     </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

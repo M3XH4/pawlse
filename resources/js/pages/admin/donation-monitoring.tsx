@@ -16,6 +16,7 @@ import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface DonationRecord {
@@ -228,6 +229,8 @@ export default function DonationMonitoring({
     basePath = '/account/admin/donation-monitoring',
 }: DonationMonitoringProps) {
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+    const { can } = usePermissions();
+    const canManageDonations = can('donations.manage');
     const [activeTab, setActiveTab] = useState<'donations' | 'inventory' | 'logs' | 'sustainability'>('donations');
     
     // Filters State
@@ -946,7 +949,7 @@ export default function DonationMonitoring({
                                                                 )}
 
                                                                 {/* 4. Cash / Sponsorship: Verify Payment */}
-                                                                {!isInKind && (isPendingVerify || isPendingPayment) && (
+                                                                {canManageDonations && !isInKind && (isPendingVerify || isPendingPayment) && (
                                                                     <button
                                                                         onClick={() => setVerifyingCashDonation(donation)}
                                                                         className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-xl transition-colors cursor-pointer"
@@ -957,7 +960,7 @@ export default function DonationMonitoring({
                                                                 )}
 
                                                                 {/* 5. Reject Donation */}
-                                                                {!isCompleted && donation.status !== 'rejected' && (
+                                                                {canManageDonations && !isCompleted && donation.status !== 'rejected' && (
                                                                     <button
                                                                         onClick={() => {
                                                                             setRejectingDonation(donation);
@@ -1084,7 +1087,7 @@ export default function DonationMonitoring({
                                                         </button>
                                                     )}
 
-                                                    {!isInKind && (isPendingVerify || isPendingPayment) && (
+                                                    {canManageDonations && !isInKind && (isPendingVerify || isPendingPayment) && (
                                                         <button
                                                             onClick={() => setVerifyingCashDonation(donation)}
                                                             className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5"
@@ -1093,7 +1096,7 @@ export default function DonationMonitoring({
                                                         </button>
                                                     )}
 
-                                                    {!isCompleted && donation.status !== 'rejected' && (
+                                                    {canManageDonations && !isCompleted && donation.status !== 'rejected' && (
                                                         <button
                                                             onClick={() => {
                                                                 setRejectingDonation(donation);
@@ -1179,12 +1182,14 @@ export default function DonationMonitoring({
                                 </div>
                             </div>
 
+                            {canManageDonations && (
                             <button
                                 onClick={() => setShowAddItemModal(true)}
                                 className="bg-paw-navy hover:bg-paw-orange text-white py-3 px-6 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer w-full lg:w-auto justify-center shrink-0 shadow"
                             >
                                 <Plus size={16} /> Add Inventory Item
                             </button>
+                            )}
                         </div>
 
                         {/* FULL-ON INVENTORY DATA TABLE */}
@@ -1353,6 +1358,8 @@ export default function DonationMonitoring({
                                                                 <Plus size={15} />
                                                             </button>
 
+                                                            {canManageDonations && (
+                                                            <>
                                                             <button
                                                                 onClick={() => setAdjustingItem(item)}
                                                                 className="p-2 bg-gray-100 hover:bg-paw-navy hover:text-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl transition-colors cursor-pointer"
@@ -1387,6 +1394,8 @@ export default function DonationMonitoring({
                                                             >
                                                                 <Trash2 size={15} />
                                                             </button>
+                                                            </>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

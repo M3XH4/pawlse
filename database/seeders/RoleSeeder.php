@@ -37,6 +37,8 @@ class RoleSeeder extends Seeder
             'rescues.edit' => 'Update rescue situation and timeline',
             'rescues.delete' => 'Archive rescue incident reports',
             'rescues.assign' => 'Assign rescue field missions',
+            'ai_validation.view' => 'View AI Validation Panel and flagged reports',
+            'ai_validation.manage' => 'Approve or reject AI-validated rescue reports',
         ],
         'Volunteer Operations' => [
             'volunteers.view' => 'View volunteer applications and roster',
@@ -130,6 +132,7 @@ class RoleSeeder extends Seeder
             'users.view', 'users.create', 'users.edit', 'users.delete',
             'pets.view', 'pets.create', 'pets.edit', 'pets.delete', 'adoptions.review', 'adoptions.manage',
             'rescues.view', 'rescues.create', 'rescues.edit', 'rescues.delete', 'rescues.assign',
+            'ai_validation.view', 'ai_validation.manage',
             'volunteers.view', 'volunteers.approve', 'volunteers.assign_tasks', 'volunteers.certify',
             'donations.view', 'donations.manage', 'donations.export',
             'events.view', 'events.manage',

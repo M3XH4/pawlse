@@ -15,6 +15,7 @@ import {
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface BlogPostModel {
     id: number;
@@ -141,6 +142,10 @@ export default function BlogManagement({
     filters,
     basePath = '/account/admin/blog-management',
 }: BlogManagementProps) {
+    const { can } = usePermissions();
+    const canCreateBlog = can('blogs.create');
+    const canEditBlog = can('blogs.edit');
+    const canDeleteBlog = can('blogs.delete');
     const [search, setSearch] = useState(filters.search || '');
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
@@ -493,12 +498,14 @@ export default function BlogManagement({
                         </button>
                     </form>
 
+                    {canCreateBlog && (
                     <button
                         onClick={openCreateModal}
                         className="w-full lg:w-auto px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-paw-orange/20 transition cursor-pointer"
                     >
                         <Plus size={16} /> New Article
                     </button>
+                    )}
                 </div>
 
                 {/* Articles Table */}
@@ -615,7 +622,7 @@ export default function BlogManagement({
                                                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                                         <span>Rejected</span>
                                                     </span>
-                                                ) : (
+                                                ) : canEditBlog ? (
                                                     <button
                                                         onClick={() => handleToggleStatus(post)}
                                                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition cursor-pointer border shadow-xs ${
@@ -632,6 +639,10 @@ export default function BlogManagement({
                                                         }`} />
                                                         <span className="capitalize">{post.status}</span>
                                                     </button>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                                                        <span className="capitalize">{post.status}</span>
+                                                    </span>
                                                 )}
                                             </td>
 
@@ -643,7 +654,7 @@ export default function BlogManagement({
                                             {/* Actions */}
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    {post.status === 'pending' && (
+                                                    {canEditBlog && post.status === 'pending' && (
                                                         <>
                                                             <button
                                                                 onClick={() => openApproveModal(post)}
@@ -676,6 +687,7 @@ export default function BlogManagement({
                                                         {post.status === 'published' ? <ExternalLink size={15} /> : <Eye size={15} />}
                                                     </a>
 
+                                                    {canEditBlog && (
                                                     <button
                                                         onClick={() => openEditModal(post)}
                                                         className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -683,7 +695,9 @@ export default function BlogManagement({
                                                     >
                                                         <Edit size={15} />
                                                     </button>
+                                                    )}
 
+                                                    {canDeleteBlog && (
                                                     <button
                                                         onClick={() => openDeleteModal(post)}
                                                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -691,6 +705,7 @@ export default function BlogManagement({
                                                     >
                                                         <Trash2 size={15} />
                                                     </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

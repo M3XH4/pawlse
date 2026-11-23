@@ -7,6 +7,7 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { usePermissions } from '@/hooks/use-permissions';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
@@ -102,6 +103,9 @@ export default function RescueManagement({
   filters,
   basePath = '/account/admin/rescue-management',
 }: RescueManagementProps) {
+  const { can } = usePermissions();
+  const canEditRescues = can('rescues.edit');
+  const canAssignRescues = can('rescues.assign');
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
   const [typeFilter, setTypeFilter] = useState(filters.type || 'All');
@@ -853,6 +857,7 @@ export default function RescueManagement({
                     </div>
 
                     {/* 2. Update Status Form */}
+                    {canEditRescues && (
                     <form onSubmit={handleStatusSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
                       <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
                         1. Update Report Status
@@ -881,8 +886,10 @@ export default function RescueManagement({
                         </button>
                       </div>
                     </form>
+                    )}
 
                     {/* 3. Volunteer Assignment Form */}
+                    {canAssignRescues && (
                     <form onSubmit={handleAssignSubmit} className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
                       <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
                         2. Dispatch Responder Volunteer
@@ -924,8 +931,10 @@ export default function RescueManagement({
                         </button>
                       </div>
                     </form>
+                    )}
 
                     {/* 4. Duplicate Resolution Panel */}
+                    {canEditRescues && (
                     <div className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 space-y-2.5">
                       <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
                         3. Duplicate Management
@@ -981,6 +990,7 @@ export default function RescueManagement({
                         </form>
                       )}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>

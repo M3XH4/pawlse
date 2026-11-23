@@ -28,9 +28,10 @@ import { CreateTicketModal } from '@/components/help-desk/create-ticket-modal';
 import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { usePermissions } from '@/hooks/use-permissions';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
-import { cn } from '@/lib/utils';
+import { cn, formatPillLabel } from '@/lib/utils';
 
 interface AdminHelpDeskProps {
     tickets: {
@@ -78,6 +79,8 @@ export default function AdminHelpDesk({
     filters,
 }: AdminHelpDeskProps) {
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+    const { can } = usePermissions();
+    const canManageHelpDesk = can('help_desk.manage');
     const [activeTab, setActiveTab] = useState<'incoming' | 'escalated' | 'faqs'>(
         (filters.active_tab as any) || 'incoming'
     );
@@ -523,6 +526,7 @@ export default function AdminHelpDesk({
                                     Add solutions to frequent problems. These are shown to users and can be inserted into ticket replies with one click.
                                 </p>
                             </div>
+                            {canManageHelpDesk && (
                             <button
                                 type="button"
                                 onClick={() => {
@@ -534,6 +538,7 @@ export default function AdminHelpDesk({
                                 <Plus className="h-4 w-4" />
                                 Add Frequent Problem
                             </button>
+                            )}
                         </div>
 
                         {frequentProblems.length === 0 ? (
@@ -559,8 +564,8 @@ export default function AdminHelpDesk({
                                                     <span className="rounded-md bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 uppercase">
                                                         {problem.category}
                                                     </span>
-                                                    <span className="rounded-md bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300 capitalize">
-                                                        Audience: {problem.target_audience}
+                                                    <span className="whitespace-nowrap rounded-md bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                                        Audience: {formatPillLabel(problem.target_audience)}
                                                     </span>
                                                     {problem.helpful_count > 0 && (
                                                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -586,6 +591,7 @@ export default function AdminHelpDesk({
                                                 </p>
                                             </div>
 
+                                            {canManageHelpDesk && (
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     type="button"
@@ -607,6 +613,7 @@ export default function AdminHelpDesk({
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

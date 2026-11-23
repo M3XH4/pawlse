@@ -5,12 +5,13 @@ import { AdminCard } from '@/components/admin/card';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { formatPhotoUrl } from '@/lib/utils';
+import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { PhoneInput } from '@/components/phone-input';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
     PawPrint,
     Search,
@@ -223,6 +224,10 @@ interface Props {
 
 export default function AnimalMasterRecords({ animals, statusBar, filters, locationsList, basePath = '/account/admin/animal-records' }: Props) {
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+    const { can } = usePermissions();
+    const canCreateAnimal = can('pets.create');
+    const canEditAnimal = can('pets.edit');
+    const canDeleteAnimal = can('pets.delete');
     // Search and filter state
     const [search, setSearch] = useState(filters.search || '');
     const [speciesFilter, setSpeciesFilter] = useState(filters.species || 'all');
@@ -398,12 +403,14 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                         <RefreshCw className="h-4 w-4" />
                     </button>
 
+                    {canCreateAnimal && (
                     <button
                         onClick={() => setIsAddAnimalOpen(true)}
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-paw-orange/25 active:scale-95"
                     >
                         <Plus className="h-4 w-4 stroke-[3]" /> Register New Animal
                     </button>
+                    )}
                 </div>
             </div>
 
@@ -842,6 +849,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                         <Eye className="h-3.5 w-3.5" /> Full Record
                                                     </button>
 
+                                                    {canEditAnimal && (
+                                                    <>
                                                     <button
                                                         onClick={() => handleStartEdit(animal)}
                                                         title="Quick Edit Record"
@@ -865,7 +874,10 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     >
                                                         <Syringe className="h-3.5 w-3.5" />
                                                     </button>
+                                                    </>
+                                                    )}
 
+                                                    {canDeleteAnimal && (
                                                     <button
                                                         onClick={() => setAnimalToDelete(animal)}
                                                         title="Archive Record"
@@ -873,6 +885,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
                                                     </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -982,6 +995,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         </button>
 
                                         <div className="flex items-center gap-1 shrink-0">
+                                            {canEditAnimal && (
+                                            <>
                                             <button
                                                 onClick={() => handleStartEdit(animal)}
                                                 title="Quick Edit Record"
@@ -1003,6 +1018,9 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                             >
                                                 <Syringe className="h-3.5 w-3.5" />
                                             </button>
+                                            </>
+                                            )}
+                                            {canDeleteAnimal && (
                                             <button
                                                 onClick={() => setAnimalToDelete(animal)}
                                                 title="Archive Record"
@@ -1010,6 +1028,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1438,15 +1457,15 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                                                         ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
                                                                                         : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
                                                                                 }`}>
-                                                                                    {cond.severity}
+                                                                                    {formatPillLabel(cond.severity)}
                                                                                 </span>
                                                                             )}
-                                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
+                                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${
                                                                                 cond.status === 'resolved' || cond.status === 'completed'
                                                                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                                                                     : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
                                                                             }`}>
-                                                                                {cond.status.replace('_', ' ')}
+                                                                                {formatPillLabel(cond.status)}
                                                                             </span>
                                                                         </div>
 
@@ -1749,8 +1768,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                                             Submitted on {app.created_at} • {app.applicant_email}
                                                                         </div>
                                                                     </div>
-                                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 capitalize">
-                                                                        {app.status}
+                                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                                                                        {formatPillLabel(app.status)}
                                                                     </span>
                                                                 </div>
                                                             ))}
@@ -1878,8 +1897,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     <span className="font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider text-[11px]">
                                                         Linked Community Incident Report #{selectedAnimal.rescue.pet_report.id}
                                                     </span>
-                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                                        {selectedAnimal.rescue.pet_report.status}
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                        {formatPillLabel(selectedAnimal.rescue.pet_report.status)}
                                                     </span>
                                                 </div>
                                                 <p className="text-gray-700 dark:text-gray-300">{selectedAnimal.rescue.pet_report.description}</p>
@@ -1954,6 +1973,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 <div className="text-xs text-gray-400">
                                     Animal ID: #{selectedAnimal.id} • Registered on {selectedAnimal.admitted_at_human}
                                 </div>
+                                {canEditAnimal && (
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => handleStartMedical(selectedAnimal, 'injury')}
@@ -1974,6 +1994,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         Edit Details
                                     </button>
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>

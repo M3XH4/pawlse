@@ -30,7 +30,7 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { cn } from '@/lib/utils';
+import { cn, formatPillLabel } from '@/lib/utils';
 import type { SharedData } from '@/types';
 
 interface FeaturedPet {
@@ -732,8 +732,8 @@ export default function UserDashboard({
                                             {formatActivityDate(item.date)}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                                        {item.status}
+                                    <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                                        {formatPillLabel(item.status)}
                                     </span>
                                 </Link>
                             ))}

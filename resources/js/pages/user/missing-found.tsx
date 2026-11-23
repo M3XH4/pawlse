@@ -7,7 +7,7 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhotoUrl } from '@/lib/utils';
+import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 import {
     MissingPetDetailModal,
     MissingPetShareModal,
@@ -170,7 +170,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
             default:
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-                        {status}
+                        {formatPillLabel(status)}
                     </span>
                 );
         }

@@ -46,7 +46,7 @@ import {
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { cn } from '@/lib/utils';
+import { cn, formatPillLabel } from '@/lib/utils';
 import { ChartSkeleton, KpiGridSkeleton } from '@/components/ui/skeleton-presets';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -1115,9 +1115,9 @@ export default function SuperAdminAdvancedAnalytics() {
                                                             <div>{actor.name}</div>
                                                             <div className="text-[10px] text-gray-400">{actor.email}</div>
                                                         </td>
-                                                        <td className="py-2.5 px-3">
-                                                            <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-                                                                {actor.role}
+                                                        <td className="py-2.5 px-3 whitespace-nowrap">
+                                                            <span className="inline-flex items-center whitespace-nowrap rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                                                                {formatPillLabel(actor.role)}
                                                             </span>
                                                         </td>
                                                         <td className="py-2.5 px-3 text-right font-bold text-slate-700 dark:text-slate-300">

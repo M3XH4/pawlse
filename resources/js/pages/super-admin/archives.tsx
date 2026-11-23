@@ -11,6 +11,7 @@ import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { toast } from 'sonner';
+import { formatPillLabel } from '@/lib/utils';
 
 interface TrashedRecord {
     id: number;
@@ -247,7 +248,7 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                                                     item.type === 'honor' ? 'bg-amber-50 text-amber-700 ring-amber-600/10' :
                                                     'bg-amber-50 text-amber-700 ring-amber-600/10'
                                                 }`}>
-                                                    {item.type}
+                                                    {formatPillLabel(item.type)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">

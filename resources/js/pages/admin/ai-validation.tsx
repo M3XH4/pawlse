@@ -15,6 +15,7 @@ import {
 import { BreedGuideModal } from '@/components/admin/breed-guide-modal';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { PetBreed } from '@/data/pet-breeds';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PaginatedData<T> {
   data: T[];
@@ -104,6 +105,8 @@ export default function AiValidation({
   filters,
   basePath = '/account/admin/ai-validation',
 }: AiValidationProps) {
+  const { can } = usePermissions();
+  const canManageValidation = can('ai_validation.manage');
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState(filters.status || 'All');
   const [animalTypeFilter, setAnimalTypeFilter] = useState(filters.animal_type || 'All');
@@ -877,22 +880,28 @@ export default function AiValidation({
                               />
                             </div>
                           )}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={handleApprove}
-                              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-500/10 transition-colors cursor-pointer"
-                            >
-                              <CheckCircle2 size={16} />
-                              {dispatchVolunteerId ? 'Approve & Dispatch Volunteer' : 'Approve AI Details'}
-                            </button>
-                            
-                            <button
-                              onClick={() => setIsCorrecting(true)}
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-colors cursor-pointer"
-                            >
-                              <ShieldAlert size={16} /> Flag / Correct Details
-                            </button>
-                          </div>
+                          {canManageValidation ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleApprove}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-500/10 transition-colors cursor-pointer"
+                              >
+                                <CheckCircle2 size={16} />
+                                {dispatchVolunteerId ? 'Approve & Dispatch Volunteer' : 'Approve AI Details'}
+                              </button>
+                              
+                              <button
+                                onClick={() => setIsCorrecting(true)}
+                                className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-colors cursor-pointer"
+                              >
+                                <ShieldAlert size={16} /> Flag / Correct Details
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-center text-xs font-semibold text-gray-400 py-2">
+                              View-only access: validation actions are disabled.
+                            </p>
+                          )}
                         </div>
                       )}
 

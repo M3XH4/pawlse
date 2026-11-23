@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
+import { usePermissions } from '@/hooks/use-permissions';
 import { dashboardThemes } from '@/lib/dashboard-theme';
 import { getTabNotificationCount } from '@/lib/tab-notification-matcher';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ export function DashboardSidebar({
 
     const canSwitchToVolunteer = page.props.can_switch_to_volunteer as boolean;
     const isFosterParent = Boolean(page.props.is_foster_parent);
+    const { can, hasAnyPermission } = usePermissions();
 
     const { notifications, isRead } = useDashboardNotifications();
 
@@ -109,6 +111,14 @@ export function DashboardSidebar({
 
     const displayedNavItems = navItems
         .map((item) => {
+            if (theme === 'admin' && item.permission) {
+                const allowed = Array.isArray(item.permission)
+                    ? hasAnyPermission(item.permission)
+                    : can(item.permission);
+                if (!allowed) {
+                    return null;
+                }
+            }
             if (item.title === 'My Foster Pets' && !isFosterParent) {
                 if (theme === 'volunteer') {
                     return {
