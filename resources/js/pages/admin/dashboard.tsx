@@ -2,6 +2,7 @@ import { Deferred, Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     AlertCircle,
+    BarChart3,
     Calendar,
     ChevronRight,
     ClipboardList,
@@ -9,6 +10,7 @@ import {
     Gift,
     Heart,
     PlusCircle,
+    Printer,
     Sparkles,
     UserCheck,
     Users,
@@ -16,6 +18,7 @@ import {
 import { AdminCard } from '@/components/admin/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { KpiGridSkeleton, ListTimelineSkeleton } from '@/components/ui/skeleton-presets';
+import { usePermissions } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
 import {
     rescueManagement,
@@ -24,7 +27,9 @@ import {
     volunteerManagement,
     events,
     aiValidation,
+    reportsAnalytics as adminReportsRoute,
 } from '@/routes/account/admin';
+import reportsAnalytics from '@/routes/account/admin/reports-analytics';
 
 type Stats = {
     rescues: { total: number; pending: number };
@@ -50,6 +55,9 @@ type DashboardProps = {
 export default function AdminDashboard({ stats, recentActivities }: DashboardProps) {
     const { auth } = usePage().props;
     const user = auth.user;
+    const { can } = usePermissions();
+    const canViewAnalytics = can('analytics.view');
+    const canExportAnalytics = can('analytics.export');
 
     const quickActions = [
         {
@@ -132,7 +140,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
 
             <div className="space-y-8">
                 {/* Greeting Section */}
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="font-fredoka text-3xl font-bold tracking-tight text-[#0B2340] dark:text-[#F8FAFC]">
                             Hello, {user?.name ?? 'Admin'}!
@@ -141,6 +149,30 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             Here is what is happening across the PAWLSE network today.
                         </p>
                     </div>
+                    {(canViewAnalytics || canExportAnalytics) && (
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            {canViewAnalytics && (
+                                <Link
+                                    href={adminReportsRoute.url()}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-[#0B2340] shadow-xs transition hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
+                                >
+                                    <BarChart3 className="h-4 w-4 text-teal-600" />
+                                    Reports &amp; Analytics
+                                </Link>
+                            )}
+                            {canExportAnalytics && (
+                                <a
+                                    href={reportsAnalytics.pdf.url({ query: { autoprint: 1 } })}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:opacity-95"
+                                >
+                                    <Printer className="h-4 w-4" />
+                                    Export PDF Report
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Metrics Grid */}

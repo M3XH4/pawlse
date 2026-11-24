@@ -1,8 +1,10 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     DatabaseBackup,
     FileSearch,
     HardDrive,
+    Printer,
     ShieldAlert,
     Users,
     Activity,
@@ -21,6 +23,7 @@ import {
 } from '@/components/dashboard/section-page';
 import { cn } from '@/lib/utils';
 import {
+    advancedAnalytics,
     userManagement,
     auditLogs,
     archives,
@@ -29,6 +32,7 @@ import {
     aiConfiguration,
     systemSettings,
 } from '@/routes/account/super-admin';
+import superAdminAnalytics from '@/routes/account/super-admin/analytics';
 
 type Stats = {
     total_users: number;
@@ -182,6 +186,26 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
         <DashboardSectionPage
             title="System Overview"
             description="Overview of PAWLSE platform administration and operational integrity"
+            badge={
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <Link
+                        href={advancedAnalytics.url()}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs transition hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
+                    >
+                        <BarChart3 className="h-4 w-4 text-indigo-600" />
+                        Advanced Analytics
+                    </Link>
+                    <a
+                        href={superAdminAnalytics.pdf.url({ query: { period: '30d', autoprint: 1 } })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:opacity-95"
+                    >
+                        <Printer className="h-4 w-4" />
+                        Export Executive PDF
+                    </a>
+                </div>
+            }
         >
             <div className="space-y-8">
                 {/* Pending Event Approvals Alert Banner */}

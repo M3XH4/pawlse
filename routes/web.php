@@ -329,6 +329,7 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
 
     Route::get('reports-analytics', [ReportsAnalyticsController::class, 'index'])->name('reports-analytics')->middleware('permission:analytics.view');
     Route::get('reports-analytics/export', [ReportsAnalyticsController::class, 'export'])->name('reports-analytics.export')->middleware('permission:analytics.export');
+    Route::get('reports-analytics/pdf', [ReportsAnalyticsController::class, 'exportPdf'])->name('reports-analytics.pdf')->middleware('permission:analytics.export');
     Route::inertia('notifications', 'admin/notifications')->name('notifications');
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings');
     Route::get('help-desk', [AdminHelpDeskController::class, 'index'])->name('help-desk')->middleware('permission:help_desk.view');
@@ -382,6 +383,7 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
     Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+    Route::get('analytics/pdf', [AnalyticsController::class, 'exportPdf'])->name('analytics.pdf');
     Route::get('partners', [PartnerManagementController::class, 'index'])->name('partners');
     Route::post('partners', [PartnerManagementController::class, 'store'])->name('partners.store');
     Route::put('partners/{partner}', [PartnerManagementController::class, 'update'])->name('partners.update');
