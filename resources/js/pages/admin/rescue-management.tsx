@@ -7,6 +7,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatPhotoUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -111,6 +113,7 @@ export default function RescueManagement({
   const [typeFilter, setTypeFilter] = useState(filters.type || 'All');
   const [duplicateFilter, setDuplicateFilter] = useState(filters.duplicate || 'All');
   const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-admin-rescue-view');
+  const isFiltering = useFilteredSectionLoading();
 
   // Detail Modal State
   const [selectedReport, setSelectedReport] = useState<PetReport | null>(null);
@@ -396,6 +399,12 @@ export default function RescueManagement({
 
       {/* Reports Table / Cards */}
       <AdminCard className="overflow-hidden">
+        <FilteredContentSkeleton
+          isLoading={isFiltering}
+          variant={viewMode === 'cards' ? 'cards' : 'table'}
+          rows={6}
+          columns={6}
+        >
         {/* Table View */}
         {viewMode === 'table' && (
         <div className="overflow-x-auto">
@@ -569,6 +578,7 @@ export default function RescueManagement({
           )}
         </div>
         )}
+        </FilteredContentSkeleton>
 
         <DashboardPagination
           links={reports.links}

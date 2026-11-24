@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -87,6 +89,7 @@ export default function SuperAdminHelpDesk({
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [priorityFilter, setPriorityFilter] = useState(filters.priority || 'all');
     const [roleFilter, setRoleFilter] = useState(filters.submitter_role || 'all');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleApplyFilters = (tabKey: string = activeTab) => {
         router.get(
@@ -345,6 +348,7 @@ export default function SuperAdminHelpDesk({
                     </DashboardCard>
 
                     {/* Ticket list */}
+                    <FilteredContentSkeleton isLoading={isFiltering} variant="list" rows={5}>
                     {(activeTab === 'admin_inquiries' ? adminInquiriesList : tickets.data).length ===
                     0 ? (
                         <DashboardCard className="p-12 text-center">
@@ -482,6 +486,7 @@ export default function SuperAdminHelpDesk({
                             ))}
                         </div>
                     )}
+                    </FilteredContentSkeleton>
                 </div>
             )}
 

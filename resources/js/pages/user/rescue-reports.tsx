@@ -7,6 +7,8 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 
 interface PetReport {
@@ -51,6 +53,7 @@ interface UserRescueReportsProps {
 export default function UserRescueReports({ reports, filters }: UserRescueReportsProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [typeFilter, setTypeFilter] = useState(filters?.type || 'All');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearch = () => {
         router.get(
@@ -161,6 +164,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
             </div>
 
             {/* Reports List */}
+            <FilteredContentSkeleton isLoading={isFiltering} variant="cards" cardCount={6}>
             {reports.data.length === 0 ? (
                 <DashboardCard>
                     <div className="text-center py-8">
@@ -272,6 +276,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                     )}
                 </div>
             )}
+            </FilteredContentSkeleton>
         </DashboardSectionPage>
     );
 }

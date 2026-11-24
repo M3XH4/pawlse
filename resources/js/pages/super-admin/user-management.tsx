@@ -15,7 +15,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { formatPillLabel } from '@/lib/utils';
 
 interface UserRecord {
@@ -164,6 +166,8 @@ export default function UserManagement({
         }, 500);
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
+
+    const isFiltering = useFilteredSectionLoading();
 
     const applyFilters = (overrides = {}) => {
         router.get(
@@ -613,6 +617,12 @@ export default function UserManagement({
 
                         {/* Users Table / Cards */}
                         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                            <FilteredContentSkeleton
+                                isLoading={isFiltering}
+                                variant={viewMode === 'cards' ? 'cards' : 'table'}
+                                rows={6}
+                                columns={6}
+                            >
                             {/* Table View */}
                             {viewMode === 'table' && (
                             <div className="overflow-x-auto">
@@ -793,6 +803,7 @@ export default function UserManagement({
                                 )}
                             </div>
                             )}
+                            </FilteredContentSkeleton>
 
                             <DashboardPagination
                                 links={users.links}

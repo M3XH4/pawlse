@@ -14,7 +14,9 @@ import {
     MissingPetItem,
 } from '@/components/missing';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 
 interface PetReport {
     id: number;
@@ -62,6 +64,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [selectedPet, setSelectedPet] = useState<MissingPetItem | null>(null);
     const [sharingPet, setSharingPet] = useState<MissingPetItem | null>(null);
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearch = () => {
         router.get(
@@ -212,6 +215,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
             </div>
 
             {/* Reports list */}
+            <FilteredContentSkeleton isLoading={isFiltering} variant="cards" cardCount={6}>
             {reports.data.length === 0 ? (
                 <DashboardCard className="p-8 text-center max-w-2xl mx-auto">
                     <FileText className="mx-auto text-gray-300 mb-4" size={56} />
@@ -359,6 +363,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                     )}
                 </div>
             )}
+            </FilteredContentSkeleton>
 
             {/* Pet Detail Modal */}
             <MissingPetDetailModal

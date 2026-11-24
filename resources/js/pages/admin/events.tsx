@@ -4,6 +4,8 @@ import { AdminPageShell } from '@/components/admin/page-shell';
 import { AdminCard } from '@/components/admin/card';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import {
@@ -236,6 +238,8 @@ export default function EventManagement({
     const closeConfirmModal = () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
     };
+
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -600,6 +604,7 @@ export default function EventManagement({
                             )}
                         </div>
 
+                        <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                         {events.data.length === 0 ? (
                             <p className="text-center text-gray-500 font-bold py-12">No events found matching your criteria.</p>
                         ) : (
@@ -770,6 +775,7 @@ export default function EventManagement({
                                 <Pagination links={events.links} />
                             </div>
                         )}
+                        </FilteredContentSkeleton>
                     </AdminCard>
                 )}
 

@@ -398,3 +398,46 @@ export function DashboardRouteSkeleton({ targetPath }: { targetPath: string | nu
 
     return <DashboardPageSkeleton />;
 }
+
+export function FilteredContentSkeleton({
+    isLoading,
+    variant = 'table',
+    rows = 6,
+    columns = 5,
+    cardCount = 6,
+    columnsClass,
+    className,
+    children,
+}: {
+    isLoading: boolean;
+    variant?: 'table' | 'cards' | 'list' | 'analytics';
+    rows?: number;
+    columns?: number;
+    cardCount?: number;
+    columnsClass?: string;
+    className?: string;
+    children: React.ReactNode;
+}) {
+    if (!isLoading) {
+        return <>{children}</>;
+    }
+
+    if (variant === 'cards') {
+        return <CardGridSkeleton count={cardCount} columnsClass={columnsClass} className={className} />;
+    }
+
+    if (variant === 'list') {
+        return <ListTimelineSkeleton rows={rows} className={className} />;
+    }
+
+    if (variant === 'analytics') {
+        return (
+            <div className={cn('grid gap-6 lg:grid-cols-2', className)}>
+                <ChartSkeleton />
+                <ChartSkeleton />
+            </div>
+        );
+    }
+
+    return <TableSkeleton rows={rows} columns={columns} className={className} />;
+}

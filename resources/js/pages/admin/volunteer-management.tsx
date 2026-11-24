@@ -12,7 +12,9 @@ import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 
 interface PaginatedData<T> {
     data: T[];
@@ -478,6 +480,7 @@ export default function VolunteerManagement({
     const [certTargetEventId, setCertTargetEventId] = useState('');
     const [certTitle, setCertTitle] = useState('Certificate of Appreciation');
     const [certDesc, setCertDesc] = useState('');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -701,6 +704,7 @@ export default function VolunteerManagement({
                 {/* Applications Tab */}
                 {activeTab === 'applications' && (
                     <AdminCard className="p-6">
+                        <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                         {applications.data.length === 0 ? (
                             <p className="text-center text-gray-500 font-bold py-8">No volunteer applications found.</p>
                         ) : (
@@ -797,6 +801,7 @@ export default function VolunteerManagement({
                                 <Pagination links={applications.links} />
                             </div>
                         )}
+                        </FilteredContentSkeleton>
                     </AdminCard>
                 )}
 

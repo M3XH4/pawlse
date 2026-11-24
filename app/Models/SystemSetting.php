@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class SystemSetting extends Model
 {
+    private const CACHE_PREFIX = 'system_setting:';
+
     protected $primaryKey = 'key';
 
     public $incrementing = false;
@@ -18,14 +21,31 @@ class SystemSetting extends Model
         'value' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $setting): void {
+            Cache::forget(self::CACHE_PREFIX.$setting->key);
+        });
+
+        static::deleted(function (self $setting): void {
+            Cache::forget(self::CACHE_PREFIX.$setting->key);
+        });
+    }
+
     /**
      * Get a setting by key.
      */
     public static function getValue(string $key, mixed $default = null): mixed
     {
-        $setting = self::find($key);
+        $cached = Cache::rememberForever(self::CACHE_PREFIX.$key, function () use ($key): array {
+            $setting = self::find($key);
 
-        return $setting ? $setting->value : $default;
+            return $setting !== null
+                ? ['found' => true, 'value' => $setting->value]
+                : ['found' => false, 'value' => null];
+        });
+
+        return $cached['found'] ? $cached['value'] : $default;
     }
 
     /**
@@ -33,9 +53,13 @@ class SystemSetting extends Model
      */
     public static function setValue(string $key, mixed $value): self
     {
-        return self::updateOrCreate(
+        $record = self::updateOrCreate(
             ['key' => $key],
             ['value' => $value]
         );
+
+        Cache::forget(self::CACHE_PREFIX.$key);
+
+        return $record;
     }
 }

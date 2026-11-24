@@ -15,7 +15,9 @@ import {
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { toast } from 'sonner';
 import { formatPillLabel } from '@/lib/utils';
 
@@ -113,6 +115,7 @@ export default function UserStories({
 
     // Delete confirmation
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const isFiltering = useFilteredSectionLoading();
 
     // Combine adopted pets for selection
     const availablePets = adoptedPets.length > 0 ? adoptedPets : allAdoptedAnimals;
@@ -501,6 +504,7 @@ export default function UserStories({
             </DashboardCard>
 
             {/* Stories Grid / List */}
+            <FilteredContentSkeleton isLoading={isFiltering} variant="cards" cardCount={6}>
             {stories.data.length === 0 ? (
                 <DashboardCard className="p-12 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-950/40 text-paw-orange mb-4">
@@ -694,6 +698,7 @@ export default function UserStories({
                     })}
                 </div>
             )}
+            </FilteredContentSkeleton>
 
             {/* Create / Edit Modal */}
             {isModalOpen && (

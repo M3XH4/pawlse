@@ -6,6 +6,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatPillLabel } from '@/lib/utils';
 import {
@@ -262,6 +264,7 @@ export default function FosterManagement({
 
     // Acknowledge Form State
     const [adminResponseNotes, setAdminResponseNotes] = useState('');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -713,6 +716,7 @@ export default function FosterManagement({
             {/* TAB 1: PLACEMENTS TABLE */}
             {currentTab === 'placements' && (
                 <AdminCard className="overflow-hidden p-0 border border-gray-200 dark:border-gray-800">
+                    <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                             <thead className="bg-gray-50 dark:bg-gray-900/60 uppercase font-bold text-gray-500 border-b border-gray-200 dark:border-gray-800">
@@ -855,6 +859,7 @@ export default function FosterManagement({
                             </tbody>
                         </table>
                     </div>
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={placements.links}

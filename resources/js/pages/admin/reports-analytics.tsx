@@ -39,6 +39,8 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
 import { reportsAnalytics as reportsAnalyticsRoute } from '@/routes/account/admin';
@@ -340,6 +342,8 @@ export default function ReportsAnalytics({
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    const isFiltering = useFilteredSectionLoading();
+
     const getActiveDataset = () => {
         switch (chartFilter) {
             case 'weekly':
@@ -568,6 +572,7 @@ export default function ReportsAnalytics({
                     })}
                 </div>
 
+                <FilteredContentSkeleton isLoading={isFiltering} variant="analytics">
                 {/* TAB 1: OVERVIEW & TRENDS */}
                 {activeTab === 'overview' && (
                     <div className="space-y-6">
@@ -1499,6 +1504,7 @@ export default function ReportsAnalytics({
                         )}
                     </div>
                 )}
+                </FilteredContentSkeleton>
             </div>
         </>
     );

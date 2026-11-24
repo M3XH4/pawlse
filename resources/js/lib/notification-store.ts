@@ -1,6 +1,5 @@
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { getEcho } from '@/echo';
 import { playNotificationChime } from '@/lib/notification-chime';
 import { syncDocumentTitle } from '@/lib/notification-title';
 import { handleRealtimeAppEvent } from '@/lib/realtime-page-sync';
@@ -150,7 +149,7 @@ class NotificationStore {
         this.notify();
     }
 
-    public setupRealtime(userId: string | number): void {
+    public async setupRealtime(userId: string | number): Promise<void> {
         if (typeof window === 'undefined' || !this.isDashboardActive) {
             return;
         }
@@ -169,6 +168,7 @@ class NotificationStore {
 
         // Primary transport: Laravel Echo WebSocket (Laravel Reverb)
         try {
+            const { getEcho } = await import('@/echo');
             const echo = getEcho();
 
             if (echo) {
@@ -639,11 +639,7 @@ class NotificationStore {
 
         if (this.activeUserId) {
             try {
-                const echo = getEcho();
-
-                if (echo) {
-                    echo.leave(`users.${this.activeUserId}`);
-                }
+                window.Echo?.leave(`users.${this.activeUserId}`);
             } catch {
                 // Ignore cleanup errors
             }

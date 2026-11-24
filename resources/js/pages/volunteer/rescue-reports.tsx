@@ -10,7 +10,9 @@ import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 
 interface PetReport {
     id: number;
@@ -56,6 +58,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'assigned');
     const [isMapOpen, setIsMapOpen] = useState(false);
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearch = () => {
         router.get(
@@ -172,6 +175,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
             </div>
 
             {/* Reports List */}
+            <FilteredContentSkeleton isLoading={isFiltering} variant="cards" cardCount={6}>
             {reports.data.length === 0 ? (
                 <DashboardCard>
                     <div className="text-center py-8">
@@ -304,6 +308,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                     )}
                 </div>
             )}
+            </FilteredContentSkeleton>
 
             {volunteerMapEnabled && (
                 <VolunteerMapModal

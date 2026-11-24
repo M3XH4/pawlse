@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 class CareSustainability extends Model
 {
     use HasFactory;
+
+    private const CURRENT_CACHE_KEY = 'care_sustainability:current';
 
     protected $table = 'care_sustainabilities';
 
@@ -48,32 +51,45 @@ class CareSustainability extends Model
         return $this->belongsTo(User::class, 'updated_by_id');
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            Cache::forget(self::CURRENT_CACHE_KEY);
+        });
+
+        static::deleted(function (): void {
+            Cache::forget(self::CURRENT_CACHE_KEY);
+        });
+    }
+
     /**
      * Get or initialize the singleton care sustainability record.
      */
     public static function current(): self
     {
-        $current = self::first();
+        return Cache::remember(self::CURRENT_CACHE_KEY, 300, function (): self {
+            $current = self::first();
 
-        if (! $current) {
-            $now = Carbon::now();
-            $initialEndpoint = $now->copy()->addDays(round(4250 / 500, 2));
+            if (! $current) {
+                $now = Carbon::now();
+                $initialEndpoint = $now->copy()->addDays(round(4250 / 500, 2));
 
-            $current = self::create([
-                'verified_funds' => 4250.00,
-                'daily_cost' => 500.00,
-                'resource_category' => 'General Animal Care',
-                'sustainability_endpoint' => $initialEndpoint,
-                'threshold_stable_days' => 7.00,
-                'threshold_needs_support_days' => 3.00,
-                'threshold_urgent_days' => 1.00,
-                'threshold_critical_days' => 0.25,
-                'calculation_notes' => 'Baseline care sustainability configuration.',
-                'updated_by_name' => 'ISF Admin',
-            ]);
-        }
+                $current = self::create([
+                    'verified_funds' => 4250.00,
+                    'daily_cost' => 500.00,
+                    'resource_category' => 'General Animal Care',
+                    'sustainability_endpoint' => $initialEndpoint,
+                    'threshold_stable_days' => 7.00,
+                    'threshold_needs_support_days' => 3.00,
+                    'threshold_urgent_days' => 1.00,
+                    'threshold_critical_days' => 0.25,
+                    'calculation_notes' => 'Baseline care sustainability configuration.',
+                    'updated_by_name' => 'ISF Admin',
+                ]);
+            }
 
-        return $current;
+            return $current;
+        });
     }
 
     /**

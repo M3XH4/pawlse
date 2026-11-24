@@ -6,6 +6,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { formatPillLabel } from '@/lib/utils';
 
 interface AuditLogRecord {
@@ -90,6 +92,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
     };
 
     const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-sa-audit-logs-view');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleUserChange = (val: string) => {
         setSelectedUser(val);
@@ -118,7 +121,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
         setSelectedAction('');
         setDateFrom('');
         setDateTo('');
-        router.get('/account/super-admin/audit-logs', {}, { preserveState: false });
+        router.get('/account/super-admin/audit-logs', {}, { preserveState: true, preserveScroll: true });
     };
 
     return (
@@ -290,6 +293,12 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         <ViewModeToggle mode={viewMode} onChange={setViewMode} />
                     </div>
 
+                    <FilteredContentSkeleton
+                        isLoading={isFiltering}
+                        variant={viewMode === 'cards' ? 'cards' : 'table'}
+                        rows={6}
+                        columns={5}
+                    >
                     {viewMode === 'table' && (
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
@@ -393,6 +402,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         )}
                     </div>
                     )}
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={logs.links}

@@ -16,6 +16,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { forwardGeocode } from '@/lib/geocoding';
 
@@ -231,6 +233,8 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             is_emergency: cat === 'veterinary' ? prev.is_emergency : false,
         }));
     };
+
+    const isFiltering = useFilteredSectionLoading();
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -559,6 +563,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
 
                 {/* 3. Partners Table */}
                 <DashboardCard className="overflow-hidden p-0">
+                    <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                             <thead className="bg-gray-50/80 dark:bg-slate-900/60 border-b border-gray-200 dark:border-slate-800 text-gray-500 uppercase tracking-wider font-bold">
@@ -733,6 +738,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             </tbody>
                         </table>
                     </div>
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={partners.links}

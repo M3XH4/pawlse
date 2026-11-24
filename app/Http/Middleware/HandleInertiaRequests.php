@@ -43,12 +43,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        if ($user !== null) {
+            $user->loadMissing('roles:id,name');
+        }
+
         $dashboardRole = $this->dashboardRole($request);
-        $dashboardNotifications = ($request->user() !== null && $dashboardRole !== null)
+        $dashboardNotifications = ($user !== null && $dashboardRole !== null)
             ? $this->dashboardNotifications($request)
             : [];
-        $unreadNotificationCount = ($request->user() !== null && $dashboardRole !== null)
-            ? $request->user()->unreadNotifications()->count()
+        $unreadNotificationCount = ($user !== null && $dashboardRole !== null)
+            ? $user->unreadNotifications()->count()
             : 0;
 
         $dashboardChrome = $dashboardRole === null
@@ -69,22 +74,26 @@ class HandleInertiaRequests extends Middleware
             'isSandboxMode' => fn () => SandboxMode::isEnabled(),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [
-                'user' => $request->user() ? [
-                    ...$request->user()->toArray(),
-                    'roles' => rescue(fn () => $request->user()->roles->pluck('name')->toArray(), [$request->user()->role ?? 'user'], false),
-                    'permissions' => rescue(fn () => $request->user()->getAllPermissions()->pluck('name')->toArray(), [], false),
+                'user' => $user ? [
+                    ...$user->toArray(),
+                    'roles' => rescue(fn () => $user->roles->pluck('name')->toArray(), [$user->role ?? 'user'], false),
+                    'permissions' => rescue(fn () => $user->getAllPermissions()->pluck('name')->toArray(), [], false),
                 ] : null,
             ],
-            'can_switch_to_volunteer' => $request->user()
-                ? rescue(fn () => $request->user()->volunteerApplications()->where('status', 'approved')->exists(), false, false)
-                : false,
-            'is_foster_parent' => $request->user()
-                ? rescue(fn () => $request->user()->isApprovedFosterParent(), false, false)
-                : false,
+            'can_switch_to_volunteer' => Inertia::once(
+                fn () => $user
+                    ? rescue(fn () => $user->volunteerApplications()->where('status', 'approved')->exists(), false, false)
+                    : false
+            ),
+            'is_foster_parent' => Inertia::once(
+                fn () => $user
+                    ? rescue(fn () => $user->isApprovedFosterParent(), false, false)
+                    : false
+            ),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'dashboardRole' => $dashboardRole,
             'dashboardNotifications' => $dashboardNotifications,
-            'dashboardNotificationActions' => ($request->user() === null || $dashboardRole === null)
+            'dashboardNotificationActions' => ($user === null || $dashboardRole === null)
                 ? null
                 : [
                     'markAllReadUrl' => route('account.notifications.read-all'),

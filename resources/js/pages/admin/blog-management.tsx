@@ -15,6 +15,8 @@ import {
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 
 interface BlogPostModel {
@@ -269,6 +271,8 @@ export default function BlogManagement({
         }
     };
 
+    const isFiltering = useFilteredSectionLoading();
+
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(basePath, {
@@ -514,6 +518,7 @@ export default function BlogManagement({
 
                 {/* Articles Table */}
                 <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+                    <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
@@ -718,6 +723,7 @@ export default function BlogManagement({
                             </tbody>
                         </table>
                     </div>
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={posts.links}

@@ -7,7 +7,6 @@ use App\Models\AssignedTask;
 use App\Models\AuditLog;
 use App\Models\Badge;
 use App\Models\BlogPost;
-use App\Models\BlogPostReaction;
 use App\Models\CareSustainability;
 use App\Models\Certificate;
 use App\Models\Event;
@@ -263,24 +262,18 @@ class VolunteerDashboardController extends Controller
             ])
             ->values();
 
-        $latestBlogs = BlogPost::query()
+        $blogPosts = BlogPost::query()
             ->with(['author:id,name,role,avatar_path', 'shelterAnimal:id,name,type,breed,photo_url'])
             ->published()
             ->orderByDesc('is_featured')
             ->latest('published_at')
             ->take(6)
-            ->get()
-            ->map(function (BlogPost $post) use ($user, $sessionId): array {
-                $userReactions = BlogPostReaction::query()
-                    ->where('blog_post_id', $post->id)
-                    ->when(
-                        $user?->id,
-                        fn ($q) => $q->where('user_id', $user->id),
-                        fn ($q) => $q->where('session_id', $sessionId),
-                    )
-                    ->pluck('reaction_type')
-                    ->toArray();
+            ->get();
 
+        $reactionSummaries = BlogPost::loadReactionSummaries($blogPosts, $user?->id, $sessionId);
+
+        $latestBlogs = $blogPosts
+            ->map(function (BlogPost $post) use ($reactionSummaries): array {
                 return [
                     'id' => $post->id,
                     'title' => $post->title,
@@ -305,8 +298,8 @@ class VolunteerDashboardController extends Controller
                         'breed' => $post->shelterAnimal->breed,
                         'photo_url' => $post->shelterAnimal->photo_url,
                     ] : null,
-                    'reaction_summary' => $post->reaction_counts,
-                    'user_reactions' => $userReactions,
+                    'reaction_summary' => $reactionSummaries['counts'][$post->id] ?? $post->reaction_counts,
+                    'user_reactions' => $reactionSummaries['userReactions'][$post->id] ?? [],
                 ];
             })
             ->values();

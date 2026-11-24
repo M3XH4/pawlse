@@ -7,6 +7,8 @@ import {
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 
 interface LoginAttemptRecord {
     id: number;
@@ -58,6 +60,8 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
         }, 500);
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
+
+    const isFiltering = useFilteredSectionLoading();
 
     const applyFilters = (overrides = {}) => {
         router.get(
@@ -175,6 +179,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
 
                 {/* Logs Table */}
                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
                             <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-700 dark:bg-slate-800 dark:text-gray-300">
@@ -241,6 +246,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                             </tbody>
                         </table>
                     </div>
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={logs.links}

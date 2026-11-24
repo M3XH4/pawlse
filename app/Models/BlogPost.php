@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class BlogPost extends Model
@@ -174,6 +175,68 @@ class BlogPost extends Model
             'celebrate' => (int) ($counts['celebrate'] ?? 0),
             'care' => (int) ($counts['care'] ?? 0),
             'total' => array_sum($counts),
+        ];
+    }
+
+    /**
+     * Batch-load reaction summaries and current user/session reactions for a collection of posts.
+     *
+     * @param  Collection<int, self>  $posts
+     * @return array{counts: array<int, array<string, int>>, userReactions: array<int, array<int, string>>}
+     */
+    public static function loadReactionSummaries(Collection $posts, ?int $userId, string $sessionId): array
+    {
+        $postIds = $posts->pluck('id')->filter()->unique()->values()->all();
+
+        if ($postIds === []) {
+            return ['counts' => [], 'userReactions' => []];
+        }
+
+        $groupedCounts = BlogPostReaction::query()
+            ->whereIn('blog_post_id', $postIds)
+            ->selectRaw('blog_post_id, reaction_type, count(*) as count')
+            ->groupBy('blog_post_id', 'reaction_type')
+            ->get();
+
+        $countsByPost = [];
+        foreach ($postIds as $postId) {
+            $countsByPost[$postId] = [
+                'heart' => 0,
+                'paws' => 0,
+                'celebrate' => 0,
+                'care' => 0,
+                'total' => 0,
+            ];
+        }
+
+        foreach ($groupedCounts as $row) {
+            $postId = (int) $row->blog_post_id;
+            $type = (string) $row->reaction_type;
+            $count = (int) $row->count;
+
+            if (isset($countsByPost[$postId][$type])) {
+                $countsByPost[$postId][$type] = $count;
+            }
+            $countsByPost[$postId]['total'] += $count;
+        }
+
+        $userReactionsRaw = BlogPostReaction::query()
+            ->whereIn('blog_post_id', $postIds)
+            ->when(
+                $userId !== null,
+                fn ($q) => $q->where('user_id', $userId),
+                fn ($q) => $q->where('session_id', $sessionId),
+            )
+            ->get(['blog_post_id', 'reaction_type']);
+
+        $userReactionsByPost = [];
+        foreach ($userReactionsRaw as $row) {
+            $userReactionsByPost[(int) $row->blog_post_id][] = (string) $row->reaction_type;
+        }
+
+        return [
+            'counts' => $countsByPost,
+            'userReactions' => $userReactionsByPost,
         ];
     }
 }

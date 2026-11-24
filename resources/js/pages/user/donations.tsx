@@ -10,6 +10,8 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { formatPillLabel } from '@/lib/utils';
 
 interface DonationRecord {
@@ -61,6 +63,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
     const [selectedType, setSelectedType] = useState(filters.type || '');
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-user-donations-view');
+    const isFiltering = useFilteredSectionLoading();
     const [selectedReceiptDonation, setSelectedReceiptDonation] = useState<DonationRecord | null>(null);
 
     // Debounce search term and submit filter queries
@@ -233,6 +236,12 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
 
             {/* Donation List Card */}
             <DashboardCard className="p-0 overflow-hidden">
+                <FilteredContentSkeleton
+                    isLoading={isFiltering}
+                    variant={viewMode === 'cards' ? 'cards' : 'table'}
+                    rows={6}
+                    columns={6}
+                >
                 {/* Table View */}
                 {viewMode === 'table' && (
                 <div className="overflow-x-auto">
@@ -423,6 +432,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                     )}
                 </div>
                 )}
+                </FilteredContentSkeleton>
 
                 <DashboardPagination
                     links={donations.links}

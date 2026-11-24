@@ -9,7 +9,9 @@ import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { toast } from 'sonner';
 import { formatPillLabel } from '@/lib/utils';
 
@@ -84,6 +86,7 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
     };
 
     const [viewMode, setViewMode] = useResponsiveViewMode('pawlse-sa-archives-view');
+    const isFiltering = useFilteredSectionLoading();
 
     const handleRestore = (item: TrashedRecord) => {
         openConfirmModal({
@@ -215,6 +218,12 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                         <ViewModeToggle mode={viewMode} onChange={setViewMode} />
                     </div>
 
+                    <FilteredContentSkeleton
+                        isLoading={isFiltering}
+                        variant={viewMode === 'cards' ? 'cards' : 'table'}
+                        rows={6}
+                        columns={6}
+                    >
                     {viewMode === 'table' && (
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-left text-sm text-gray-500 dark:text-gray-400">
@@ -326,6 +335,7 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                         )}
                     </div>
                     )}
+                    </FilteredContentSkeleton>
 
                     <DashboardPagination
                         links={items.links}

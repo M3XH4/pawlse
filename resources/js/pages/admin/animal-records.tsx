@@ -10,7 +10,9 @@ import { toast } from 'sonner';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { PhoneInput } from '@/components/phone-input';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
     PawPrint,
@@ -263,6 +265,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     }, [animals.data]);
 
     // Handle filter application
+    const isFiltering = useFilteredSectionLoading();
     const applyFilters = (overrides?: Partial<typeof filters>) => {
         const queryParams = {
             search: search.trim() || undefined,
@@ -702,6 +705,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
             {/* MASTER RECORDS TABLE */}
             <div className="bg-white dark:bg-[#0B1527] rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
+                <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={7}>
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -1054,6 +1058,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                         })
                     )}
                 </div>
+                </FilteredContentSkeleton>
 
                 {/* PAGINATION BAR */}
                 <DashboardPagination

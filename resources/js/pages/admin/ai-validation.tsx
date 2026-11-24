@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import { BreedGuideModal } from '@/components/admin/breed-guide-modal';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { PetBreed } from '@/data/pet-breeds';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 
 interface PaginatedData<T> {
@@ -175,6 +177,7 @@ export default function AiValidation({
     setIsCorrecting(true);
     toast.success(`Selected "${breed.name}" (${breed.species}) for correction.`);
   };
+  const isFiltering = useFilteredSectionLoading();
 
   const handleFilterSearch = () => {
     router.get(basePath, {
@@ -495,6 +498,7 @@ export default function AiValidation({
 
       {/* Reports Queue Table */}
       <AdminCard className="p-0 overflow-hidden shadow-xs border border-gray-200/80 dark:border-slate-800">
+        <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -615,6 +619,7 @@ export default function AiValidation({
             </tbody>
           </table>
         </div>
+        </FilteredContentSkeleton>
 
         <DashboardPagination
           links={reports.links}

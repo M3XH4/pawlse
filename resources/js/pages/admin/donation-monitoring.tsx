@@ -15,7 +15,9 @@ import { SustainabilityAdminTab } from '@/components/care-sustainability/sustain
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
@@ -348,6 +350,8 @@ export default function DonationMonitoring({
         }, 500);
         return () => clearTimeout(delayDebounceFn);
     }, [invSearchTerm]);
+
+    const isFiltering = useFilteredSectionLoading();
 
     const applyFilters = (typeVal?: string, statusVal?: string, invCat?: string) => {
         router.get(
@@ -820,6 +824,7 @@ export default function DonationMonitoring({
 
                         {/* Donations list */}
                         <div className="bg-white dark:bg-[#111827] border border-gray-100 dark:border-gray-800 rounded-[32px] overflow-hidden shadow-sm">
+                            <FilteredContentSkeleton isLoading={isFiltering} variant="table" rows={6} columns={6}>
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
@@ -1114,6 +1119,7 @@ export default function DonationMonitoring({
                                     })
                                 )}
                             </div>
+                            </FilteredContentSkeleton>
 
                             {/* Pagination */}
                             <TablePagination

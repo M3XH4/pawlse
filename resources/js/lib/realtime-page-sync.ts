@@ -20,7 +20,11 @@ function debouncedReload(): void {
     }
 
     reloadTimer = setTimeout(() => {
-        router.reload();
+        router.reload({
+            headers: {
+                'X-Realtime-Sync': '1',
+            },
+        });
     }, 250);
 }
 

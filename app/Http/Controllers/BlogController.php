@@ -73,27 +73,23 @@ class BlogController extends Controller
         $userId = $request->user()?->id;
         $sessionId = $request->session()->getId();
 
-        $posts->getCollection()->transform(function (BlogPost $post) use ($userId, $sessionId) {
-            $post->reaction_summary = $post->reaction_counts;
+        $allPostsToSummarize = $posts->getCollection();
+        if ($featuredPost && ! $allPostsToSummarize->contains('id', $featuredPost->id)) {
+            $allPostsToSummarize = $allPostsToSummarize->concat([$featuredPost]);
+        }
 
-            $userReactions = BlogPostReaction::query()
-                ->where('blog_post_id', $post->id)
-                ->when($userId, fn ($q) => $q->where('user_id', $userId), fn ($q) => $q->where('session_id', $sessionId))
-                ->pluck('reaction_type')
-                ->toArray();
+        $reactionSummaries = BlogPost::loadReactionSummaries($allPostsToSummarize, $userId, $sessionId);
 
-            $post->user_reactions = $userReactions;
+        $posts->getCollection()->transform(function (BlogPost $post) use ($reactionSummaries) {
+            $post->reaction_summary = $reactionSummaries['counts'][$post->id] ?? $post->reaction_counts;
+            $post->user_reactions = $reactionSummaries['userReactions'][$post->id] ?? [];
 
             return $post;
         });
 
         if ($featuredPost) {
-            $featuredPost->reaction_summary = $featuredPost->reaction_counts;
-            $featuredPost->user_reactions = BlogPostReaction::query()
-                ->where('blog_post_id', $featuredPost->id)
-                ->when($userId, fn ($q) => $q->where('user_id', $userId), fn ($q) => $q->where('session_id', $sessionId))
-                ->pluck('reaction_type')
-                ->toArray();
+            $featuredPost->reaction_summary = $reactionSummaries['counts'][$featuredPost->id] ?? $featuredPost->reaction_counts;
+            $featuredPost->user_reactions = $reactionSummaries['userReactions'][$featuredPost->id] ?? [];
         }
 
         return Inertia::render('blog/index', [

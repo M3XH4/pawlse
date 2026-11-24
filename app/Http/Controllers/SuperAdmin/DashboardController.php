@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\LoginAttempt;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,10 +22,16 @@ class DashboardController extends Controller
      */
     public function index(Request $request): Response
     {
-        // 1. Gather stats
-        $totalUsers = User::withTrashed()->count();
-        $totalAdmins = User::where('role', Role::Admin->value)->count();
-        $totalVolunteers = User::where('role', Role::Volunteer->value)->count();
+        // 1. Gather stats (consolidate user counts into a single query)
+        $userCounts = User::withTrashed()
+            ->selectRaw('COUNT(*) as total_users')
+            ->selectRaw('SUM(CASE WHEN deleted_at IS NULL AND role = ? THEN 1 ELSE 0 END) as total_admins', [Role::Admin->value])
+            ->selectRaw('SUM(CASE WHEN deleted_at IS NULL AND role = ? THEN 1 ELSE 0 END) as total_volunteers', [Role::Volunteer->value])
+            ->first();
+
+        $totalUsers = (int) ($userCounts?->total_users ?? 0);
+        $totalAdmins = (int) ($userCounts?->total_admins ?? 0);
+        $totalVolunteers = (int) ($userCounts?->total_volunteers ?? 0);
         $totalAuditLogs = AuditLog::count();
         $backupsCount = Backup::where('status', 'completed')->count();
         $pendingEventsCount = Event::where('approval_status', 'pending')->count();
@@ -34,27 +41,31 @@ class DashboardController extends Controller
             ->where('created_at', '>=', now()->subDay())
             ->count();
 
-        // Database size calculation
-        $dbSize = 0;
-        $connection = config('database.default');
-        try {
-            if ($connection === 'sqlite') {
-                $dbPath = config('database.connections.sqlite.database');
-                if (file_exists($dbPath)) {
-                    $dbSize = filesize($dbPath);
+        // Database size calculation (cached for 5 minutes)
+        $dbSize = Cache::remember('super_admin:db_size', 300, function (): int {
+            $connection = config('database.default');
+            try {
+                if ($connection === 'sqlite') {
+                    $dbPath = config('database.connections.sqlite.database');
+                    if (is_string($dbPath) && file_exists($dbPath)) {
+                        return (int) filesize($dbPath);
+                    }
+                } elseif ($connection === 'mysql') {
+                    $dbName = config('database.connections.mysql.database');
+                    $sizeResult = DB::select('
+                        SELECT SUM(data_length + index_length) AS size 
+                        FROM information_schema.TABLES 
+                        WHERE table_schema = ?
+                    ', [$dbName]);
+
+                    return (int) ($sizeResult[0]->size ?? 0);
                 }
-            } elseif ($connection === 'mysql') {
-                $dbName = config('database.connections.mysql.database');
-                $sizeResult = DB::select('
-                    SELECT SUM(data_length + index_length) AS size 
-                    FROM information_schema.TABLES 
-                    WHERE table_schema = ?
-                ', [$dbName]);
-                $dbSize = $sizeResult[0]->size ?? 0;
+            } catch (\Exception $e) {
+                // Fallback to 0 if db access fails
             }
-        } catch (\Exception $e) {
-            // Fallback to 0 if db access fails
-        }
+
+            return 0;
+        });
 
         // Format db size in human readable format
         $dbSizeFormatted = $this->formatBytes($dbSize);
