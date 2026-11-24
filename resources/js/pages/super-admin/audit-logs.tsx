@@ -49,6 +49,8 @@ interface AuditLogProps {
 }
 
 export default function AuditLogs({ logs, users, actions, filters, stats }: AuditLogProps) {
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedRole, setSelectedRole] = useState(filters.role || '');
     const [selectedUser, setSelectedUser] = useState(filters.user_id || '');
@@ -126,43 +128,43 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
         >
             <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Total Audit Logs</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.total_logs}</h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                    <div className="col-span-2 sm:col-span-1 rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Total Audit Logs</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.total_logs}</h3>
                         </div>
-                        <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400">
-                            <Activity className="h-5 w-5" />
-                        </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Active Registered Operators</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.unique_users}</h3>
-                        </div>
-                        <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
-                            <Terminal className="h-5 w-5" />
+                        <div className="shrink-0 rounded-xl bg-indigo-50 p-2 sm:p-2.5 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400">
+                            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Guest / System Actions</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.system_logs}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Active Operators</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.unique_users}</h3>
                         </div>
-                        <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
-                            <FileSearch className="h-5 w-5" />
+                        <div className="shrink-0 rounded-xl bg-emerald-50 p-2 sm:p-2.5 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
+                            <Terminal className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Guest / System</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.system_logs}</h3>
+                        </div>
+                        <div className="shrink-0 rounded-xl bg-amber-50 p-2 sm:p-2.5 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
+                            <FileSearch className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                    <div className="grid gap-4 md:grid-cols-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
                         {/* Search */}
-                        <div className="relative col-span-1 md:col-span-3">
+                        <div className="relative col-span-2 md:col-span-3 min-w-0">
                             <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
@@ -174,8 +176,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         </div>
 
                         {/* Role Filter */}
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by Role</label>
+                        <div className="min-w-0">
+                            <label className="block text-[11px] sm:text-xs font-semibold text-gray-500 mb-1">Filter by Role</label>
                             <ModernSelect
                                 size="sm"
                                 searchable={false}
@@ -193,8 +195,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         </div>
 
                         {/* User Filter */}
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by User</label>
+                        <div className="min-w-0">
+                            <label className="block text-[11px] sm:text-xs font-semibold text-gray-500 mb-1">Filter by User</label>
                             <ModernSelect
                                 size="sm"
                                 value={selectedUser}
@@ -211,8 +213,8 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         </div>
 
                         {/* Action Type Filter */}
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Filter by Action</label>
+                        <div className="col-span-2 sm:col-span-1 min-w-0">
+                            <label className="block text-[11px] sm:text-xs font-semibold text-gray-500 mb-1">Filter by Action</label>
                             <ModernSelect
                                 size="sm"
                                 value={selectedAction}
@@ -228,26 +230,37 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         </div>
 
                         {/* Date From */}
-                        <div>
+                        <div className="min-w-0">
                             <ModernDatePicker
                                 label="Date From"
                                 allowPast={true}
+                                maxDate={todayIso}
                                 value={dateFrom}
                                 onChange={(date) => {
                                     setDateFrom(date);
-                                    applyFilters({ date_from: date });
+                                    if (dateTo && date > dateTo) {
+                                        setDateTo(date);
+                                        applyFilters({ date_from: date, date_to: date });
+                                    } else {
+                                        applyFilters({ date_from: date });
+                                    }
                                 }}
                                 placeholder="From date..."
                             />
                         </div>
 
                         {/* Date To */}
-                        <div>
+                        <div className="min-w-0">
                             <ModernDatePicker
                                 label="Date To"
                                 allowPast={true}
+                                minDate={dateFrom || undefined}
+                                maxDate={todayIso}
                                 value={dateTo}
                                 onChange={(date) => {
+                                    if (dateFrom && date < dateFrom) {
+                                        return;
+                                    }
                                     setDateTo(date);
                                     applyFilters({ date_to: date });
                                 }}
@@ -256,11 +269,11 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                         </div>
 
                         {/* Reset Filters */}
-                        <div className="flex items-end">
+                        <div className="col-span-2 sm:col-span-1 flex items-end min-w-0">
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="w-full py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/30 rounded-xl transition duration-150 cursor-pointer"
+                                className="w-full py-2 text-xs sm:text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/30 rounded-xl transition duration-150 cursor-pointer"
                             >
                                 Reset Filters
                             </button>

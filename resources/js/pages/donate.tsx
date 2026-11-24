@@ -454,7 +454,7 @@ export default function Donate({
     };
 
     return (
-        <div className="min-h-screen bg-paw-bg font-quicksand">
+        <div className="min-h-screen bg-paw-bg font-quicksand overflow-x-hidden">
             <Head title="Donate and Support" />
             <Header />
 
@@ -474,57 +474,61 @@ export default function Donate({
 
                     <div className="grid lg:grid-cols-3 gap-12 items-start" id="donation-form">
                         {/* Left Column: Donation Form & Honor Wall Card */}
-                        <div className="lg:col-span-2">
-                            <div className="bg-white rounded-[40px] shadow-2xl shadow-paw-navy/5 overflow-hidden">
+                        <div className="lg:col-span-2 min-w-0">
+                            <div className="bg-white rounded-[28px] sm:rounded-[40px] shadow-2xl shadow-paw-navy/5 overflow-hidden">
                                 {/* 4 Tabs */}
-                                <div className="flex bg-gray-50 border-b-2 border-gray-100 overflow-x-auto scrollbar-none">
+                                <div className="grid grid-cols-2 sm:flex bg-gray-50 border-b-2 border-gray-100">
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('cash')}
-                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                        className={`sm:flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 sm:py-6 px-2 sm:px-4 font-black text-xs sm:text-base md:text-lg whitespace-nowrap transition-all cursor-pointer ${
                                             activeTab === 'cash' 
                                                 ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
-                                                : 'text-gray-400 hover:bg-gray-100'
+                                                : 'text-gray-400 hover:bg-gray-100 border-b border-gray-100 sm:border-b-0'
                                         }`}
                                     >
-                                        <CreditCard size={20} />
+                                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                         <span>CASH DONATION</span>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('inkind')}
-                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                        className={`sm:flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 sm:py-6 px-2 sm:px-4 font-black text-xs sm:text-base md:text-lg whitespace-nowrap transition-all cursor-pointer ${
                                             activeTab === 'inkind' 
                                                 ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
-                                                : 'text-gray-400 hover:bg-gray-100'
+                                                : 'text-gray-400 hover:bg-gray-100 border-b border-gray-100 sm:border-b-0'
                                         }`}
                                     >
-                                        <Gift size={20} />
+                                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                         <span>IN-KIND</span>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('sponsor')}
-                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                        className={`sm:flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 sm:py-6 px-2 sm:px-4 font-black text-xs sm:text-base md:text-lg whitespace-nowrap transition-all cursor-pointer ${
                                             activeTab === 'sponsor' 
                                                 ? 'bg-white text-paw-orange border-b-4 border-paw-orange' 
                                                 : 'text-gray-400 hover:bg-gray-100'
                                         }`}
                                     >
-                                        <Users size={20} />
+                                        <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                         <span>SPONSOR</span>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('honor')}
-                                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-6 font-black text-base md:text-lg transition-all cursor-pointer ${
+                                        className={`sm:flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 sm:py-6 px-2 sm:px-4 font-black text-xs sm:text-base md:text-lg whitespace-nowrap transition-all cursor-pointer ${
                                             activeTab === 'honor' 
                                                 ? 'bg-white text-amber-500 border-b-4 border-amber-500' 
                                                 : 'text-gray-400 hover:bg-gray-100'
                                         }`}
                                     >
-                                        <Star size={20} className={activeTab === 'honor' ? 'text-amber-500 fill-amber-400' : 'text-gray-400'} />
+                                        <Star className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${activeTab === 'honor' ? 'text-amber-500 fill-amber-400' : 'text-gray-400'}`} />
                                         <span>HONOR WALL</span>
                                     </button>
                                 </div>
 
-                                <div className="p-8 md:p-12">
+                                <div className="p-5 sm:p-8 md:p-12">
                                     <AnimatePresence mode="wait">
                                         {activeTab === 'cash' && (
                                             <motion.div
@@ -590,7 +594,7 @@ export default function Donate({
                                                     </div>
 
                                                     <div>
-                                                        <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex flex-wrap items-center justify-between gap-1 mb-2">
                                                             <label className="block text-sm font-bold text-gray-700">MOBILE NUMBER</label>
                                                             <span className="text-xs text-gray-400 font-bold">Optional (for GCash / SMS updates)</span>
                                                         </div>
@@ -638,26 +642,26 @@ export default function Donate({
                                                 exit={{ opacity: 0, x: -20 }}
                                             >
                                                 <form onSubmit={submitInKind} className="space-y-6">
-                                                    <div className="bg-paw-blue/10 p-6 rounded-3xl border-2 border-paw-blue/20">
+                                                    <div className="bg-paw-blue/10 p-4 sm:p-6 rounded-3xl border-2 border-paw-blue/20">
                                                         <h4 className="font-black text-paw-blue mb-2 flex items-center gap-2">
                                                             <Gift size={20} />
                                                             WHAT WE CURRENTLY NEED
                                                         </h4>
                                                         <ul className="grid grid-cols-2 gap-3 text-sm font-bold text-gray-700 mb-4">
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Dog/Cat Kibble</li>
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Canned Food</li>
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Vitamins</li>
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Leashes & Collars</li>
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Bowls</li>
-                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500" /> Towels/Bedding</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Dog/Cat Kibble</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Canned Food</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Vitamins</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Leashes & Collars</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Bowls</li>
+                                                            <li className="flex items-center gap-2"><Check size={16} className="text-green-500 shrink-0" /> Towels/Bedding</li>
                                                         </ul>
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowWishlist(true)}
-                                                            className="w-full bg-paw-orange text-white py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-md shadow-paw-orange/20 cursor-pointer group"
+                                                            className="w-full bg-paw-orange text-white px-4 py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wide sm:tracking-wider hover:bg-orange-600 transition-all flex items-center justify-center gap-2 text-center shadow-md shadow-paw-orange/20 cursor-pointer group"
                                                         >
-                                                            <Heart size={18} className="group-hover:scale-110 transition-transform" />
-                                                            <span>VIEW ANIMAL WISHLIST {totalWishlistNeedsCount > 0 && `(${totalWishlistNeedsCount} ITEMS NEEDED)`}</span>
+                                                            <Heart className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0 group-hover:scale-110 transition-transform" />
+                                                            <span className="leading-snug">VIEW ANIMAL WISHLIST {totalWishlistNeedsCount > 0 && `(${totalWishlistNeedsCount} ITEMS NEEDED)`}</span>
                                                         </button>
                                                     </div>
 
@@ -761,7 +765,7 @@ export default function Donate({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex flex-wrap items-center justify-between gap-1 mb-2">
                                                                 <label className="block text-sm font-bold text-gray-700">CONTACT PERSON</label>
                                                                 <span className="text-xs text-gray-400 font-bold">Leave blank if same as donor</span>
                                                             </div>
@@ -887,8 +891,8 @@ export default function Donate({
                         </div>
 
                         {/* Right Column: Transparency Dashboard */}
-                        <div className="space-y-8">
-                            <div className="bg-white rounded-[40px] p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10">
+                        <div className="min-w-0 space-y-8">
+                            <div className="bg-white rounded-[28px] sm:rounded-[40px] p-5 sm:p-8 shadow-xl shadow-paw-navy/5 border-2 border-paw-orange/10">
                                 <h3 className="text-2xl font-black text-paw-navy mb-6">Transparency Report</h3>
 
                                 <div className="space-y-6">

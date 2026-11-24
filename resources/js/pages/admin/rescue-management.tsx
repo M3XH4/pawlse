@@ -273,7 +273,7 @@ export default function RescueManagement({
       <Head title="Rescue & Incident Management" />
       
       {/* Aggregate Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
         {[
           {
             label: 'Total Reports',
@@ -313,7 +313,9 @@ export default function RescueManagement({
         ].map((c, idx) => (
           <div
             key={idx}
-            className="bg-white dark:bg-[#111827] border border-gray-200/80 dark:border-[#1E293B] rounded-2xl p-5 shadow-xs flex flex-col justify-between h-28"
+            className={`bg-white dark:bg-[#111827] border border-gray-200/80 dark:border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between h-24 sm:h-28 min-w-0 ${
+              idx === 0 ? 'col-span-2 md:col-span-1' : ''
+            }`}
           >
             <div className="flex justify-between items-start gap-2">
               <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{c.label}</span>

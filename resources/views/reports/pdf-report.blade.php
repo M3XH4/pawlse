@@ -595,6 +595,101 @@
             flex-shrink: 0;
         }
 
+        @media screen and (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+            }
+            .toolbar {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .toolbar-left {
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .toolbar-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            .toolbar-actions .btn {
+                flex: 1 1 auto;
+                justify-content: center;
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+            .page-container {
+                margin: 10px 8px 24px;
+                border-radius: 14px;
+                overflow: hidden;
+            }
+            .hero {
+                padding: 16px;
+                border-radius: 14px 14px 0 0;
+            }
+            .hero-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+            }
+            .hero-partner {
+                width: 100%;
+                justify-content: space-between;
+                text-align: left;
+            }
+            .hero-title {
+                font-size: 20px;
+            }
+            .meta-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 12px 16px;
+            }
+            .doc-body {
+                padding: 16px;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .kpi-card {
+                padding: 10px 12px;
+                min-width: 0;
+            }
+            .kpi-value {
+                font-size: 16px;
+            }
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .card,
+            .section,
+            .section-allow-break {
+                min-width: 0;
+            }
+            .card {
+                padding: 12px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .donut-wrap {
+                gap: 12px;
+            }
+            .doc-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 14px;
+            }
+            .footer-seal {
+                text-align: left;
+            }
+        }
+
         @media print {
             html, body {
                 background: #FFFFFF !important;
@@ -635,8 +730,8 @@
             @if (! empty($csvUrl))
                 <a href="{{ $csvUrl }}" class="btn btn-secondary">Download CSV</a>
             @endif
-            <button type="button" onclick="window.print()" class="btn btn-primary">Save as PDF / Print</button>
-            <button type="button" onclick="window.close()" class="btn btn-secondary">Close</button>
+            <button type="button" onclick="try{localStorage.setItem('pawlse_skip_splash_until',String(Date.now()+180000))}catch(e){}; window.print()" class="btn btn-primary">Save as PDF / Print</button>
+            <button type="button" onclick="try{localStorage.setItem('pawlse_skip_splash_until',String(Date.now()+180000))}catch(e){}; window.close(); if (!window.closed && window.history.length > 1) window.history.back();" class="btn btn-secondary">Close</button>
         </div>
     </div>
 

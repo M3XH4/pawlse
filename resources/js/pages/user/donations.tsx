@@ -226,7 +226,7 @@ export default function UserDonations({ donations, filters, stats }: UserDonatio
                             />
                         </div>
 
-                        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+                        <ViewModeToggle mode={viewMode} onChange={setViewMode} className="w-full sm:w-auto flex" />
                     </div>
                 </div>
             </DashboardCard>

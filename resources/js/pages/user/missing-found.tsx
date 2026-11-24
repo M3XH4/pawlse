@@ -232,42 +232,52 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                         const item = toMissingPetItem(report);
                         return (
                             <DashboardCard key={report.id}>
-                                <div className="flex flex-col md:flex-row gap-6">
-                                    {/* Thumbnails */}
-                                    {report.photos && report.photos.length > 0 ? (
-                                        <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
-                                            {report.photos.map((photo) => (
-                                                <ImageWithFallback
-                                                    key={photo.id}
-                                                    src={formatPhotoUrl(photo.path)}
-                                                    alt="Pet report attachment"
-                                                    className="w-20 h-20 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
-                                                />
-                                            ))}
+                                <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                                    {/* Top Row on Mobile: Thumbnails + Top-Right ID & Status */}
+                                    <div className="flex items-start justify-between gap-3 md:contents">
+                                        {/* Thumbnails */}
+                                        {report.photos && report.photos.length > 0 ? (
+                                            <div className="flex gap-2 shrink-0 overflow-x-auto max-w-[180px] md:max-w-[200px]">
+                                                {report.photos.map((photo) => (
+                                                    <ImageWithFallback
+                                                        key={photo.id}
+                                                        src={formatPhotoUrl(photo.path)}
+                                                        alt="Pet report attachment"
+                                                        className="w-20 h-20 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0"
+                                                    />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="w-20 h-20 rounded-xl bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
+                                                <Search size={28} />
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-col items-end gap-1.5 md:hidden shrink-0">
+                                            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                                {`MIS-${String(report.id).padStart(5, '0')}`}
+                                            </span>
+                                            {getStatusBadge(report.status)}
                                         </div>
-                                    ) : (
-                                        <div className="w-20 h-20 rounded-xl bg-paw-orange/10 text-paw-orange flex items-center justify-center shrink-0">
-                                            <Search size={28} />
-                                        </div>
-                                    )}
+                                    </div>
 
                                     {/* Report Details */}
-                                    <div className="flex-1 space-y-3">
-                                        <div className="flex flex-wrap items-center justify-between gap-3">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
-                                                    Missing Pet Alert: {report.name || 'Unnamed Pet'} ({report.animal_type})
-                                                </h3>
+                                    <div className="flex-1 min-w-0 space-y-3">
+                                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+                                            <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                                                Missing Pet Alert: {report.name || 'Unnamed Pet'} ({(report.animal_type || 'Pet').replace(/\b\w/g, (c) => c.toUpperCase())})
+                                            </h3>
+                                            <div className="hidden md:flex items-center gap-2 shrink-0">
                                                 <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                                     {`MIS-${String(report.id).padStart(5, '0')}`}
                                                 </span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                                    {report.breed || 'Unknown Breed'}
-                                                </span>
                                                 {getStatusBadge(report.status)}
                                             </div>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                                {report.breed || 'Unknown Breed'}
+                                            </span>
                                         </div>
 
                                         <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed line-clamp-2">
@@ -286,30 +296,30 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedPet(item)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-paw-navy dark:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-paw-navy dark:text-white rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer"
                                             >
-                                                <Eye size={13} /> View Details
+                                                <Eye size={13} className="shrink-0" /> View Details
                                             </button>
 
                                             <button
                                                 type="button"
                                                 onClick={() => setSharingPet(item)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-paw-orange rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-orange-50 hover:bg-orange-100 text-paw-orange rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer"
                                             >
-                                                <Share2 size={13} /> Share Alert
+                                                <Share2 size={13} className="shrink-0" /> Share Alert
                                             </button>
 
                                             {report.status !== 'resolved' && (
                                                 <button
                                                     type="button"
                                                     onClick={() => handleMarkReunited(report.id)}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all ml-auto"
+                                                    className="col-span-2 sm:col-span-1 sm:ml-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer"
                                                 >
-                                                    <HeartHandshake size={14} /> My Pet is Reunited!
+                                                    <HeartHandshake size={14} className="shrink-0" /> My Pet is Reunited!
                                                 </button>
                                             )}
                                         </div>

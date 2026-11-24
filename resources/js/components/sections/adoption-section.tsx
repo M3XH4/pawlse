@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Heart, Info, ArrowRight, CheckCircle2, User, Clock, Sparkles, Dog, Cat, ChevronLeft, ChevronRight, ShieldCheck, Images } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
@@ -86,11 +86,96 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
     const [flippedCard, setFlippedCard] = useState<number | null>(null);
     const [applyingPet, setApplyingPet] = useState<any | null>(null);
     const [activePhotoIndexByPet, setActivePhotoIndexByPet] = useState<Record<number, number>>({});
+    const [dragState, setDragState] = useState<{ petId: number; offset: number } | null>(null);
+    const touchStateRef = useRef<{
+        petId: number;
+        startX: number;
+        startY: number;
+        direction: 'horizontal' | 'vertical' | null;
+        deltaX: number;
+    } | null>(null);
+    const didSwipeRef = useRef(false);
     const navigate = (url: string) => router.visit(url);
     const auth = usePage().props.auth as { user?: any } | undefined;
     const user = auth?.user;          
     const isAuthenticated = !!user;
     const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
+
+    const handleTouchStart = (e: React.TouchEvent, petId: number, photoCount: number) => {
+        didSwipeRef.current = false;
+        if (photoCount <= 1 || flippedCard === petId || e.touches.length !== 1) {
+            touchStateRef.current = null;
+
+            return;
+        }
+
+        touchStateRef.current = {
+            petId,
+            startX: e.touches[0].clientX,
+            startY: e.touches[0].clientY,
+            direction: null,
+            deltaX: 0,
+        };
+    };
+
+    const handleTouchMove = (e: React.TouchEvent, petId: number) => {
+        const currentTouch = touchStateRef.current;
+        if (!currentTouch || currentTouch.petId !== petId || e.touches.length !== 1) {
+            return;
+        }
+
+        const dx = e.touches[0].clientX - currentTouch.startX;
+        const dy = e.touches[0].clientY - currentTouch.startY;
+
+        if (currentTouch.direction === null) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+                return;
+            }
+
+            currentTouch.direction = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
+        }
+
+        if (currentTouch.direction === 'horizontal') {
+            didSwipeRef.current = true;
+            currentTouch.deltaX = dx;
+            setDragState({ petId, offset: dx });
+        }
+    };
+
+    const handleTouchEnd = (petId: number, photoCount: number) => {
+        const currentTouch = touchStateRef.current;
+        touchStateRef.current = null;
+        setDragState(null);
+
+        if (!currentTouch || currentTouch.petId !== petId) {
+            return;
+        }
+
+        if (currentTouch.direction === 'horizontal') {
+            if (Math.abs(currentTouch.deltaX) > 40 && photoCount > 1) {
+                const step = currentTouch.deltaX < 0 ? 1 : -1;
+                setActivePhotoIndexByPet((prev) => {
+                    const currentIdx = (prev[petId] ?? 0) % photoCount;
+
+                    return {
+                        ...prev,
+                        [petId]: (currentIdx + step + photoCount) % photoCount,
+                    };
+                });
+            }
+
+            window.setTimeout(() => {
+                didSwipeRef.current = false;
+            }, 250);
+        }
+    };
+
+    const handleTouchCancel = (petId: number) => {
+        if (touchStateRef.current?.petId === petId) {
+            touchStateRef.current = null;
+            setDragState(null);
+        }
+    };
 
 
 
@@ -148,84 +233,111 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-10">
-                    {displayPets.slice(0, 9).map((pet) => (
+                    {displayPets.slice(0, 9).map((pet) => {
+                        const photos: string[] = pet.photos && pet.photos.length > 0 ? pet.photos : [pet.mainImg];
+                        const currentIdx = (activePhotoIndexByPet[pet.id] ?? 0) % photos.length;
+                        const isDraggingThis = Boolean(dragState && dragState.petId === pet.id);
+                        const dragOffset = dragState && dragState.petId === pet.id ? dragState.offset : 0;
+
+                        return (
                         <div key={pet.id} className="h-[400px] perspective-1000">
                             <motion.div
                                 className="relative w-full h-full transition-all duration-700 preserve-3d cursor-pointer"
                                 animate={{ rotateY: flippedCard === pet.id ? 180 : 0 }}
-                                onClick={() => setFlippedCard(flippedCard === pet.id ? null : pet.id)}
+                                onClick={() => {
+                                    if (didSwipeRef.current) {
+                                        didSwipeRef.current = false;
+
+                                        return;
+                                    }
+
+                                    setFlippedCard(flippedCard === pet.id ? null : pet.id);
+                                }}
                             >
                                 {/* Front Side */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.4)] border-4 border-white/10">
-                                    <div className="relative h-full group/img">
-                                        {(() => {
-                                            const photos: string[] = pet.photos && pet.photos.length > 0 ? pet.photos : [pet.mainImg];
-                                            const currentIdx = (activePhotoIndexByPet[pet.id] ?? 0) % photos.length;
-                                            const currentPhoto = photos[currentIdx] || pet.mainImg;
+                                    <div
+                                        className="relative h-full group/img overflow-hidden touch-pan-y select-none"
+                                        onTouchStart={(e) => handleTouchStart(e, pet.id, photos.length)}
+                                        onTouchMove={(e) => handleTouchMove(e, pet.id)}
+                                        onTouchEnd={() => handleTouchEnd(pet.id, photos.length)}
+                                        onTouchCancel={() => handleTouchCancel(pet.id)}
+                                    >
+                                        <div
+                                            className="flex h-full w-full will-change-transform"
+                                            style={{
+                                                transform: `translate3d(calc(-${currentIdx * 100}% + ${dragOffset}px), 0, 0)`,
+                                                transition: isDraggingThis ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                            }}
+                                        >
+                                            {photos.map((photoUrl: string, pIdx: number) => (
+                                                <div key={`${pet.id}-photo-${pIdx}`} className="w-full h-full shrink-0">
+                                                    <ImageWithFallback
+                                                        src={photoUrl}
+                                                        alt={`${pet.name} ${pIdx + 1}`}
+                                                        draggable={false}
+                                                        className="w-full h-full object-cover pointer-events-none"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
 
-                                            return (
-                                                <>
-                                                    <ImageWithFallback src={currentPhoto} alt={pet.name} className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+                                        {/* Multi-photo controls */}
+                                        {photos.length > 1 && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActivePhotoIndexByPet(prev => ({
+                                                            ...prev,
+                                                            [pet.id]: (currentIdx - 1 + photos.length) % photos.length,
+                                                        }));
+                                                    }}
+                                                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
+                                                    aria-label="Previous photo"
+                                                >
+                                                    <ChevronLeft size={15} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActivePhotoIndexByPet(prev => ({
+                                                            ...prev,
+                                                            [pet.id]: (currentIdx + 1) % photos.length,
+                                                        }));
+                                                    }}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
+                                                    aria-label="Next photo"
+                                                >
+                                                    <ChevronRight size={15} />
+                                                </button>
+                                                <div
+                                                    className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/45 backdrop-blur-xs px-2.5 py-1 rounded-full z-20"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Images size={10} className="text-white/90 mr-0.5" />
+                                                    {photos.map((_, pIdx) => (
+                                                        <button
+                                                            key={pIdx}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActivePhotoIndexByPet(prev => ({ ...prev, [pet.id]: pIdx }));
+                                                            }}
+                                                            className={`h-1.5 rounded-full transition-all ${
+                                                                pIdx === currentIdx ? 'w-3.5 bg-paw-orange' : 'w-1.5 bg-white/60 hover:bg-white'
+                                                            }`}
+                                                            aria-label={`View photo ${pIdx + 1}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
 
-                                                    {/* Multi-photo controls */}
-                                                    {photos.length > 1 && (
-                                                        <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setActivePhotoIndexByPet(prev => ({
-                                                                        ...prev,
-                                                                        [pet.id]: (currentIdx - 1 + photos.length) % photos.length,
-                                                                    }));
-                                                                }}
-                                                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
-                                                                aria-label="Previous photo"
-                                                            >
-                                                                <ChevronLeft size={15} />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setActivePhotoIndexByPet(prev => ({
-                                                                        ...prev,
-                                                                        [pet.id]: (currentIdx + 1) % photos.length,
-                                                                    }));
-                                                                }}
-                                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/55 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-xs opacity-0 group-hover/img:opacity-100 transition-opacity z-20"
-                                                                aria-label="Next photo"
-                                                            >
-                                                                <ChevronRight size={15} />
-                                                            </button>
-                                                            <div
-                                                                className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/45 backdrop-blur-xs px-2.5 py-1 rounded-full z-20"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <Images size={10} className="text-white/90 mr-0.5" />
-                                                                {photos.map((_, pIdx) => (
-                                                                    <button
-                                                                        key={pIdx}
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setActivePhotoIndexByPet(prev => ({ ...prev, [pet.id]: pIdx }));
-                                                                        }}
-                                                                        className={`h-1.5 rounded-full transition-all ${
-                                                                            pIdx === currentIdx ? 'w-3.5 bg-paw-orange' : 'w-1.5 bg-white/60 hover:bg-white'
-                                                                        }`}
-                                                                        aria-label={`View photo ${pIdx + 1}`}
-                                                                    />
-                                                                ))}
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </>
-                                            );
-                                        })()}
-
-                                            <div className="absolute bottom-6 left-6 right-6">
+                                            <div className="absolute bottom-6 left-6 right-6 pointer-events-none">
                                                 <div className="flex flex-wrap items-center gap-1.5 mb-2">
                                                     {pet.isRescued !== false && (
                                                         <span className="bg-emerald-600/95 text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 border border-emerald-400/30">
@@ -249,7 +361,7 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="absolute top-6 left-6 bg-white/20 backdrop-blur-md p-3 rounded-full text-white border border-white/30 hover:bg-white/30 transition-all group/bookmark"
+                                            <div className="absolute top-6 left-6 bg-white/20 backdrop-blur-md p-3 rounded-full text-white border border-white/30 hover:bg-white/30 transition-all group/bookmark z-20"
                                                 onClick={(e) => handleBookmark(e, pet)}
                                             >
                                                 <Heart
@@ -257,7 +369,7 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                                                     className={`transition-all ${isBookmarked(pet.id, 'pet') ? 'fill-red-500 text-red-500 scale-110' : 'group-hover/bookmark:scale-110'}`}
                                                 />
                                             </div>
-                                            <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md p-3 rounded-full text-white border border-white/30 animate-pulse">
+                                            <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md p-3 rounded-full text-white border border-white/30 animate-pulse z-20">
                                                 <Info size={18} />
                                             </div>
                                         </div>
@@ -273,21 +385,21 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                                                 </div>
                                             </div>
                                             <p className="text-gray-500 font-bold leading-relaxed mb-3 italic text-xs">"{pet.story}"</p>
-                                            <div className="space-y-2 mb-3">
-                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Behavior</span>
-                                                    <span className="text-xs font-black text-paw-navy">{pet.behavior}</span>
+                                            <div className="space-y-2.5 mb-3">
+                                                <div className="flex items-start justify-between gap-6 border-b border-gray-100 pb-2">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest shrink-0 pt-0.5">Behavior</span>
+                                                    <span className="text-xs font-black text-paw-navy text-right leading-snug">{pet.behavior}</span>
                                                 </div>
-                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Shelter Status</span>
-                                                    <span className="text-[10px] font-black text-emerald-700 flex items-center gap-1">
-                                                        <ShieldCheck size={12} /> {pet.rescuedTag || 'Rescued • In Shelter'}
+                                                <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-2">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest shrink-0">Shelter Status</span>
+                                                    <span className="text-[10px] font-black text-emerald-700 flex items-center justify-end gap-1 text-right">
+                                                        <ShieldCheck size={12} className="shrink-0" /> {pet.rescuedTag || 'Rescued • In Shelter'}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Vaccinated</span>
-                                                    <span className="text-xs font-black text-paw-green flex items-center gap-1">
-                                                        <CheckCircle2 size={12} /> {pet.vaccinated !== false ? 'YES' : 'IN PROGRESS'}
+                                                <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-2">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest shrink-0">Vaccinated</span>
+                                                    <span className="text-xs font-black text-paw-green flex items-center justify-end gap-1 text-right">
+                                                        <CheckCircle2 size={12} className="shrink-0" /> {pet.vaccinated !== false ? 'YES' : 'IN PROGRESS'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -349,7 +461,8 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
                                 </div>
                             </motion.div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
                 <div className="mt-20 flex justify-center">
                     <Link 

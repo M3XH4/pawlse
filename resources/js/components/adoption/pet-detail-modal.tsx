@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -642,15 +643,14 @@ export function PetDetailModal({
                     </button>
                   )
                 ) : (
-                  <a
+                  <Link
                     href={`/adopt/${pet.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={onClose}
                     className="w-full bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white py-3 px-6 rounded-xl font-bold text-sm shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ExternalLink size={16} />
                     View Care History & Shelter Record
-                  </a>
+                  </Link>
                 )}
 
                 {/* 2. Side-by-side buttons: Share & View Full Profile */}
@@ -664,15 +664,14 @@ export function PetDetailModal({
                     Share
                   </button>
 
-                  <a
+                  <Link
                     href={`/adopt/${pet.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={onClose}
                     className="w-full bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white py-2.5 px-3 rounded-xl font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
                     <ExternalLink size={14} />
                     View Full Profile
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

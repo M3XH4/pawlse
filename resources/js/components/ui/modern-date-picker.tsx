@@ -133,6 +133,9 @@ export function ModernDatePicker({
 
     const handleSelectDay = (day: number) => {
         const formatted = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if ((effectiveMinDate && formatted < effectiveMinDate) || (maxDate && formatted > maxDate)) {
+            return;
+        }
         onChange(formatted);
         setIsOpen(false);
     };
@@ -330,15 +333,26 @@ export function ModernDatePicker({
                     <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Quick:</span>
                     {activePresets.map((preset) => {
                         const isSelected = value === preset.value;
+                        const isPresetDisabled = Boolean(
+                            (effectiveMinDate && preset.value < effectiveMinDate) ||
+                            (maxDate && preset.value > maxDate)
+                        );
                         return (
                             <button
                                 type="button"
                                 key={preset.label}
-                                onClick={() => onChange(preset.value)}
-                                className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                                    isSelected
-                                        ? 'bg-paw-orange text-white shadow-sm shadow-paw-orange/20 scale-105'
-                                        : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                disabled={isPresetDisabled}
+                                onClick={() => {
+                                    if (!isPresetDisabled) {
+                                        onChange(preset.value);
+                                    }
+                                }}
+                                className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold transition-all ${
+                                    isPresetDisabled
+                                        ? 'bg-gray-100/70 dark:bg-slate-800/50 text-gray-300 dark:text-slate-600 cursor-not-allowed opacity-50'
+                                        : isSelected
+                                            ? 'bg-paw-orange text-white shadow-sm shadow-paw-orange/20 scale-105 cursor-pointer'
+                                            : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer'
                                 }`}
                             >
                                 {preset.label}
@@ -521,15 +535,31 @@ export function ModernDatePicker({
                                         <Clock size={12} className="text-paw-orange shrink-0" />
                                         <span className="truncate text-[10px]">{helperText}</span>
                                     </>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSelectDay(today.getDate())}
-                                        className="text-[10px] text-paw-orange hover:underline font-bold"
-                                    >
-                                        Today: {monthNames[today.getMonth()].slice(0, 3)} {today.getDate()}
-                                    </button>
-                                )}
+                                ) : (() => {
+                                    const isTodayDisabled = Boolean(
+                                        (effectiveMinDate && todayStr < effectiveMinDate) ||
+                                        (maxDate && todayStr > maxDate)
+                                    );
+                                    return (
+                                        <button
+                                            type="button"
+                                            disabled={isTodayDisabled}
+                                            onClick={() => {
+                                                if (!isTodayDisabled) {
+                                                    onChange(todayStr);
+                                                    setIsOpen(false);
+                                                }
+                                            }}
+                                            className={`text-[10px] font-bold ${
+                                                isTodayDisabled
+                                                    ? 'text-gray-300 dark:text-slate-600 cursor-not-allowed'
+                                                    : 'text-paw-orange hover:underline cursor-pointer'
+                                            }`}
+                                        >
+                                            Today: {monthNames[today.getMonth()].slice(0, 3)} {today.getDate()}
+                                        </button>
+                                    );
+                                })()}
                             </div>
                             <button
                                 type="button"

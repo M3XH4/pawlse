@@ -472,7 +472,7 @@ export default function About({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-paw-orange rounded-[40px] p-8 md:p-16 text-white relative overflow-hidden"
+              className="bg-paw-orange rounded-[40px] p-6 sm:p-10 md:p-16 text-white relative overflow-hidden"
             >
               <div className="relative z-10 max-w-2xl">
                 <span className="bg-white/20 px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-6 inline-block">
@@ -484,17 +484,17 @@ export default function About({
                 <p className="text-lg md:text-xl opacity-90 leading-relaxed mb-8">
                   Iligan Stray Feeders (ISF) is a non-profit, non-government organization focused on feeding stray animals in and around Iligan City. It also serves as a community of volunteers dedicated to animal welfare.
                 </p>
-                <div className="flex flex-wrap gap-4">
-                  <div className="bg-white text-paw-orange px-6 py-3 rounded-2xl font-bold flex items-center gap-2">
-                    <Heart fill="currentColor" size={20} />
-                    Established 2020
+                <div className="flex flex-nowrap items-center gap-2 sm:gap-4">
+                  <div className="bg-white text-paw-orange px-3 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-base flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0">
+                    <Heart fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span>Established 2020</span>
                   </div>
                   <button
                     onClick={() => setShowVolunteers(true)}
-                    className="bg-paw-yellow text-paw-navy px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-transform cursor-pointer"
+                    className="bg-paw-yellow text-paw-navy px-3 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-base flex items-center justify-center gap-1.5 sm:gap-2 hover:scale-105 transition-transform cursor-pointer whitespace-nowrap shrink-0"
                   >
-                    <Users size={20} />
-                    500+ Volunteers
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span>500+ Volunteers</span>
                   </button>
                 </div>
               </div>
@@ -1179,64 +1179,64 @@ export default function About({
           </p>
 
           {/* Partner Category Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 mt-8">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2 sm:gap-2.5 mt-8">
             <button
               onClick={() => setPartnerTab('vet')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-2.5 py-2.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer ${
                 partnerTab === 'vet'
                   ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
                   : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
               }`}
             >
-              <Stethoscope size={14} />
+              <Stethoscope size={13} className="shrink-0 sm:w-3.5 sm:h-3.5" />
               <span>Veterinary Partners</span>
             </button>
 
             <button
               onClick={() => setPartnerTab('food')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-2.5 py-2.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer ${
                 partnerTab === 'food'
                   ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
                   : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
               }`}
             >
-              <Package size={14} />
+              <Package size={13} className="shrink-0 sm:w-3.5 sm:h-3.5" />
               <span>Food & Supply Partners</span>
             </button>
 
             <button
               onClick={() => setPartnerTab('audit')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-2.5 py-2.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer ${
                 partnerTab === 'audit'
                   ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
                   : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
               }`}
             >
-              <ShieldCheck size={14} />
+              <ShieldCheck size={13} className="shrink-0 sm:w-3.5 sm:h-3.5" />
               <span>Audit & Transparency</span>
             </button>
 
             <button
               onClick={() => setPartnerTab('collab')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-2.5 py-2.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer ${
                 partnerTab === 'collab'
                   ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
                   : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
               }`}
             >
-              <Users size={14} />
+              <Users size={13} className="shrink-0 sm:w-3.5 sm:h-3.5" />
               <span>Collaborators</span>
             </button>
 
             <button
               onClick={() => setPartnerTab('sponsor')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              className={`col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer ${
                 partnerTab === 'sponsor'
                   ? 'bg-paw-orange text-white shadow-lg shadow-paw-orange/25'
                   : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-800 hover:border-paw-orange/40'
               }`}
             >
-              <Heart size={14} />
+              <Heart size={13} className="shrink-0 sm:w-3.5 sm:h-3.5" />
               <span>Sponsors & Benefactors</span>
             </button>
           </div>
@@ -1260,7 +1260,7 @@ export default function About({
 
                 <Link
                   href="/vet"
-                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
+                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-end sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
                 >
                   <span>View All Clinics</span>
                   <ArrowRight size={14} />
@@ -1364,7 +1364,7 @@ export default function About({
 
                 <Link
                   href="/donate"
-                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
+                  className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 self-end sm:self-center transition-all shadow-md shadow-paw-orange/20 shrink-0"
                 >
                   <span>Support Feeding</span>
                   <ArrowRight size={14} />
@@ -1445,7 +1445,7 @@ export default function About({
 
                 <Link
                   href="/donate"
-                  className="px-5 py-2.5 rounded-full bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-center transition-all shadow-md shrink-0"
+                  className="px-5 py-2.5 rounded-full bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 self-end sm:self-center transition-all shadow-md shrink-0"
                 >
                   <span>Transparency Center</span>
                   <ArrowRight size={14} />
@@ -1555,7 +1555,7 @@ export default function About({
 
                 <Link 
                   href="/honor" 
-                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2 self-end sm:self-center shrink-0"
                 >
                   <span>Explore Honor Wall</span>
                   <ArrowRight size={13} />
@@ -1612,7 +1612,7 @@ export default function About({
 
                 <Link 
                   href="/honor" 
-                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-full bg-paw-navy text-white text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-2 self-end sm:self-center shrink-0"
                 >
                   <span>Honor Wall</span>
                   <ArrowRight size={13} />

@@ -34,12 +34,12 @@ export default function UserBookmarks() {
             badge={<DashboardMetricBadge icon={<Bookmark className="h-4 w-4" />} label={`${bookmarks.length} Saved`} />}
         >
             {/* Tabs */}
-            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-100 dark:border-gray-800 pb-px">
+            <div className="flex flex-nowrap sm:flex-wrap gap-1 sm:gap-2 mb-6 border-b border-gray-100 dark:border-gray-800 pb-px overflow-x-auto hide-scrollbar">
                 {(['all', 'pet', 'event', 'missingPet', 'blog'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2.5 font-bold text-xs border-b-2 transition-all capitalize -mb-px flex items-center gap-1.5 cursor-pointer ${
+                        className={`px-3 sm:px-4 py-2.5 font-bold text-xs border-b-2 transition-all capitalize -mb-px flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                             activeTab === tab
                                 ? 'border-paw-orange text-paw-orange font-extrabold'
                                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'

@@ -138,7 +138,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
         <>
             <Head title="Dashboard Overview" />
 
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8 min-w-0 overflow-x-clip">
                 {/* Greeting Section */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -178,26 +178,26 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                 {/* Metrics Grid */}
                 <Deferred data="stats" fallback={<KpiGridSkeleton count={4} />}>
                     {stats && (
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 min-w-0">
                             {/* Rescues Metric */}
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Rescues</span>
-                                    <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
-                                        <FileText className="h-5 w-5" />
+                            <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 truncate">Rescues</span>
+                                    <div className="rounded-xl bg-emerald-50 p-2 sm:p-2.5 text-emerald-600 shrink-0 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                        <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                <div className="mt-2.5 sm:mt-4">
+                                    <h3 className="font-fredoka text-2xl sm:text-3xl font-bold text-paw-navy dark:text-white">
                                         {stats.rescues.total}
                                     </h3>
-                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                    <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
                                         {stats.rescues.pending > 0 ? (
                                             <>
-                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 whitespace-nowrap dark:bg-rose-950/20 dark:text-rose-400">
                                                     {stats.rescues.pending} Pending
                                                 </span>
-                                                <span className="text-gray-400">requires attention</span>
+                                                <span className="text-gray-400 leading-tight">requires attention</span>
                                             </>
                                         ) : (
                                             <span className="font-medium text-emerald-600 dark:text-emerald-400">
@@ -209,24 +209,24 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             </div>
 
                             {/* Adoptions Metric */}
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Adoptions</span>
-                                    <div className="rounded-xl bg-rose-50 p-2.5 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                        <Heart className="h-5 w-5" />
+                            <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 truncate">Adoptions</span>
+                                    <div className="rounded-xl bg-rose-50 p-2 sm:p-2.5 text-rose-600 shrink-0 dark:bg-rose-950/20 dark:text-rose-400">
+                                        <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                <div className="mt-2.5 sm:mt-4">
+                                    <h3 className="font-fredoka text-2xl sm:text-3xl font-bold text-paw-navy dark:text-white">
                                         {stats.adoptions.total}
                                     </h3>
-                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                    <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
                                         {stats.adoptions.pending > 0 ? (
                                             <>
-                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 whitespace-nowrap dark:bg-rose-950/20 dark:text-rose-400">
                                                     {stats.adoptions.pending} Pending
                                                 </span>
-                                                <span className="text-gray-400">applications</span>
+                                                <span className="text-gray-400 leading-tight">applications</span>
                                             </>
                                         ) : (
                                             <span className="font-medium text-emerald-600 dark:text-emerald-400">
@@ -238,19 +238,19 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             </div>
 
                             {/* Donations Metric */}
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Donations (PHP)</span>
-                                    <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
-                                        <Gift className="h-5 w-5" />
+                            <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 truncate">Donations (PHP)</span>
+                                    <div className="rounded-xl bg-amber-50 p-2 sm:p-2.5 text-amber-600 shrink-0 dark:bg-amber-950/20 dark:text-amber-400">
+                                        <Gift className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white">
+                                <div className="mt-2.5 sm:mt-4">
+                                    <h3 className="font-fredoka text-lg sm:text-2xl font-bold text-paw-navy dark:text-white truncate">
                                         ₱{stats.donations.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </h3>
-                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 font-bold text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
+                                    <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
+                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 font-bold text-amber-600 whitespace-nowrap dark:bg-amber-950/20 dark:text-amber-400">
                                             {stats.donations.in_kind_count} Verified In-Kind
                                         </span>
                                     </div>
@@ -258,24 +258,24 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                             </div>
 
                             {/* Volunteers Metric */}
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Volunteers</span>
-                                    <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400">
-                                        <Users className="h-5 w-5" />
+                            <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 truncate">Volunteers</span>
+                                    <div className="rounded-xl bg-blue-50 p-2 sm:p-2.5 text-blue-600 shrink-0 dark:bg-blue-950/20 dark:text-blue-400">
+                                        <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    <h3 className="font-fredoka text-3xl font-bold text-paw-navy dark:text-white">
+                                <div className="mt-2.5 sm:mt-4">
+                                    <h3 className="font-fredoka text-2xl sm:text-3xl font-bold text-paw-navy dark:text-white">
                                         {stats.volunteers.active}
                                     </h3>
-                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                    <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
                                         {stats.volunteers.pending > 0 ? (
                                             <>
-                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
+                                                <span className="rounded-full bg-rose-50 px-2 py-0.5 font-bold text-rose-600 whitespace-nowrap dark:bg-rose-950/20 dark:text-rose-400">
                                                     {stats.volunteers.pending} Pending
                                                 </span>
-                                                <span className="text-gray-400 font-medium">applications</span>
+                                                <span className="text-gray-400 font-medium leading-tight">applications</span>
                                             </>
                                         ) : (
                                             <span className="font-medium text-emerald-600 dark:text-emerald-400">
@@ -290,11 +290,11 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                 </Deferred>
 
                 {/* Main Content Layout */}
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-3">
                     {/* Left Column: Quick Actions & Operations */}
-                    <div className="space-y-6 lg:col-span-2">
+                    <div className="min-w-0 space-y-6 lg:col-span-2">
                         {/* Quick Actions Panel */}
-                        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div>
                                 <h2 className="font-fredoka text-xl font-bold tracking-wide text-paw-navy dark:text-white">
                                     Quick Operations
@@ -304,20 +304,20 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                 </p>
                             </div>
                             <hr className="my-4 border-gray-100 dark:border-slate-800" />
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 min-w-0 gap-3 sm:gap-4 sm:grid-cols-2">
                                 {quickActions.map((action, i) => (
                                     <Link
                                         key={i}
                                         href={action.href}
-                                        className="group flex items-center justify-between rounded-2xl border border-gray-150 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-50/50 dark:border-slate-900 dark:hover:border-slate-750 dark:hover:bg-slate-800/40"
+                                        className="group flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-gray-150 p-3.5 sm:p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-250 hover:bg-gray-50/50 dark:border-slate-900 dark:hover:border-slate-750 dark:hover:bg-slate-800/40"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className={cn('rounded-xl p-3', action.color)}>
+                                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                                            <div className={cn('rounded-xl p-2.5 sm:p-3 shrink-0', action.color)}>
                                                 <action.icon className="h-5 w-5" />
                                             </div>
-                                            <div>
-                                                <div className="text-sm font-bold text-paw-navy dark:text-white flex items-center gap-1.5">
-                                                    {action.title}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-bold text-paw-navy dark:text-white flex items-center gap-1.5 flex-wrap">
+                                                    <span className="truncate">{action.title}</span>
                                                     {action.pending && action.pending > 0 ? (
                                                         <span
                                                             title={`${action.pending} pending items awaiting review`}
@@ -327,19 +327,19 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                                                         </span>
                                                     ) : null}
                                                 </div>
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                                                     {action.description}
                                                 </div>
                                             </div>
                                         </div>
-                                        <ChevronRight className="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-0.5" />
+                                        <ChevronRight className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5" />
                                     </Link>
                                 ))}
                             </div>
                         </div>
 
                         {/* Recent Activity Timeline */}
-                        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h2 className="font-fredoka text-xl font-bold tracking-wide text-paw-navy dark:text-white">
@@ -402,7 +402,7 @@ export default function AdminDashboard({ stats, recentActivities }: DashboardPro
                     </div>
 
                     {/* Right Column: Platform Summaries & Stats */}
-                    <div className="space-y-6">
+                    <div className="min-w-0 space-y-6">
                         {/* Shelter Statistics Overview */}
                         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                             <div>

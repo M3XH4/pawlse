@@ -1,8 +1,15 @@
-import { Link } from '@inertiajs/react';
-import { BellOff, X } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BellOff, BellRing, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { NotificationItem } from '@/components/dashboard/notification-item';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
+import {
+    enablePushNotifications,
+    getPushCapabilityStatus,
+    type PushCapabilityStatus,
+} from '@/lib/push-notifications';
 
 export function NotificationDropdown({
     id,
@@ -13,6 +20,7 @@ export function NotificationDropdown({
     open: boolean;
     onClose: () => void;
 }) {
+    const { auth, webPush } = usePage().props;
     const { notificationsHref } = useDashboard();
     const {
         notifications,
@@ -23,6 +31,48 @@ export function NotificationDropdown({
         markAllRead,
         deleteNotification,
     } = useDashboardNotifications();
+    const [pushStatus, setPushStatus] = useState<PushCapabilityStatus>('loading');
+    const [enablingPush, setEnablingPush] = useState(false);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        let active = true;
+        const evaluate = async () => {
+            const resolved = await getPushCapabilityStatus(
+                Boolean(auth?.user && auth.user.email_verified_at),
+                webPush,
+            );
+            if (active) {
+                setPushStatus(resolved);
+            }
+        };
+
+        void evaluate();
+
+        return () => {
+            active = false;
+        };
+    }, [open, auth?.user, webPush]);
+
+    const handleEnablePhonePush = async () => {
+        if (!webPush?.publicKey || enablingPush) {
+            return;
+        }
+
+        setEnablingPush(true);
+        const result = await enablePushNotifications(webPush.publicKey);
+        setEnablingPush(false);
+        setPushStatus(result.status);
+
+        if (result.ok) {
+            toast.success('Phone notifications enabled for your account!');
+        } else if (result.error) {
+            toast.error(result.error);
+        }
+    };
 
     const preview = notifications.slice(0, 5);
 
@@ -66,6 +116,25 @@ export function NotificationDropdown({
             </div>
 
             <div className="max-h-[min(26rem,65vh)] overflow-y-auto">
+                {pushStatus === 'prompt' && (
+                    <div className="flex items-center justify-between gap-2 border-b border-[#F1F5F9] bg-orange-50/70 px-4 py-2.5 dark:border-[#1E293B] dark:bg-orange-950/25">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <BellRing className="h-4 w-4 shrink-0 text-paw-orange" />
+                            <p className="truncate text-xs font-medium text-[#0B2340] dark:text-slate-200">
+                                Get alerts on your phone
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleEnablePhonePush}
+                            disabled={enablingPush}
+                            className="shrink-0 rounded-lg bg-paw-orange px-2.5 py-1 text-[11px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                        >
+                            {enablingPush ? 'Enabling...' : 'Enable'}
+                        </button>
+                    </div>
+                )}
+
                 {preview.length === 0 ? (
                     <div className="flex flex-col items-center justify-center px-5 py-10 text-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">

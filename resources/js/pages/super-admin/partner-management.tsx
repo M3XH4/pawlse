@@ -484,10 +484,10 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                 </div>
 
                 {/* 2. Control Toolbar */}
-                <DashboardCard className="p-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full md:max-w-md flex items-center gap-2">
-                            <div className="relative flex-1">
+                <DashboardCard className="p-3.5 sm:p-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-4 min-w-0">
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full lg:max-w-md flex items-center gap-2 min-w-0">
+                            <div className="relative flex-1 min-w-0">
                                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input
                                     type="text"
@@ -499,53 +499,55 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                             </div>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-slate-800 text-white dark:bg-slate-700 text-xs font-bold rounded-xl hover:bg-slate-900 transition-colors"
+                                className="shrink-0 whitespace-nowrap px-4 py-2 bg-slate-800 text-white dark:bg-slate-700 text-xs font-bold rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
                             >
                                 Search
                             </button>
                         </form>
 
-                        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                            {/* Category Filter */}
-                            <div className="min-w-[190px]">
-                                <ModernSelect
-                                    size="sm"
-                                    searchable={false}
-                                    value={categoryFilter}
-                                    onChange={(val) => handleCategoryChange(val)}
-                                    options={[
-                                        { value: 'all', label: 'All Categories' },
-                                        { value: 'veterinary', label: 'Veterinary Partners' },
-                                        { value: 'food_supply', label: 'Food & Supply Partners' },
-                                        { value: 'audit', label: 'Audit & Financial' },
-                                        { value: 'accounting', label: 'Accounting Partners' },
-                                        { value: 'collaborator', label: 'Collaborators' },
-                                        { value: 'sponsor', label: 'Sponsors' },
-                                    ]}
-                                />
-                            </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full lg:w-auto min-w-0">
+                            <div className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:flex sm:items-center">
+                                {/* Category Filter */}
+                                <div className="min-w-0 sm:min-w-[180px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
+                                        value={categoryFilter}
+                                        onChange={(val) => handleCategoryChange(val)}
+                                        options={[
+                                            { value: 'all', label: 'All Categories' },
+                                            { value: 'veterinary', label: 'Veterinary Partners' },
+                                            { value: 'food_supply', label: 'Food & Supply Partners' },
+                                            { value: 'audit', label: 'Audit & Financial' },
+                                            { value: 'accounting', label: 'Accounting Partners' },
+                                            { value: 'collaborator', label: 'Collaborators' },
+                                            { value: 'sponsor', label: 'Sponsors' },
+                                        ]}
+                                    />
+                                </div>
 
-                            {/* Status Filter */}
-                            <div className="min-w-[140px]">
-                                <ModernSelect
-                                    size="sm"
-                                    searchable={false}
-                                    value={statusFilter}
-                                    onChange={(val) => handleStatusChange(val)}
-                                    options={[
-                                        { value: 'all', label: 'All Status' },
-                                        { value: 'active', label: 'Active Only' },
-                                        { value: 'inactive', label: 'Inactive Only' },
-                                        { value: 'archived', label: 'Archived' },
-                                    ]}
-                                />
+                                {/* Status Filter */}
+                                <div className="min-w-0 sm:min-w-[140px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
+                                        value={statusFilter}
+                                        onChange={(val) => handleStatusChange(val)}
+                                        options={[
+                                            { value: 'all', label: 'All Status' },
+                                            { value: 'active', label: 'Active Only' },
+                                            { value: 'inactive', label: 'Inactive Only' },
+                                            { value: 'archived', label: 'Archived' },
+                                        ]}
+                                    />
+                                </div>
                             </div>
 
                             {/* Add Button */}
                             {canCreatePartner && (
                                 <button
                                     onClick={openCreateModal}
-                                    className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
+                                    className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 sm:py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
                                 >
                                     <Plus size={16} />
                                     <span>Add Partner</span>

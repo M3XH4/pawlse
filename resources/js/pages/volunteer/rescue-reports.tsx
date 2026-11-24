@@ -127,10 +127,10 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                         <button
                             type="button"
                             onClick={() => setIsMapOpen(true)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-paw-orange px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer"
+                            className="inline-flex min-h-9 sm:min-h-10 items-center gap-1.5 rounded-full bg-paw-orange px-3.5 sm:px-4 py-1 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer whitespace-nowrap shrink-0"
                         >
-                            <MapIcon className="h-3.5 w-3.5" />
-                            Open Operations Map
+                            <MapIcon className="h-4 w-4 shrink-0" />
+                            <span>Open Operations Map</span>
                         </button>
                     )}
                     <DashboardMetricBadge icon={<FileText className="h-4 w-4" />} label={`${reports?.total || 0} Assignments`} />
@@ -238,7 +238,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                                     </div>
 
                                     {report.status === 'assigned' && (
-                                        <div className="flex gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800/40">
+                                        <div className="flex flex-nowrap items-center gap-2 sm:gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800/40">
                                             <button
                                                 onClick={() => {
                                                     openConfirmModal({
@@ -251,9 +251,9 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                                                         },
                                                     });
                                                 }}
-                                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+                                                className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wide sm:tracking-widest whitespace-nowrap transition-all cursor-pointer shadow-sm"
                                             >
-                                                <CheckCircle2 size={14} /> Mark as Resolved
+                                                <CheckCircle2 size={14} className="shrink-0" /> Mark as Resolved
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -267,9 +267,9 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                                                         },
                                                     });
                                                 }}
-                                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-red-200 dark:border-red-900/55"
+                                                className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wide sm:tracking-widest whitespace-nowrap transition-all cursor-pointer border border-red-200 dark:border-red-900/55"
                                             >
-                                                <XCircle size={14} /> Cancel Rescue
+                                                <XCircle size={14} className="shrink-0" /> Cancel Rescue
                                             </button>
                                         </div>
                                     )}

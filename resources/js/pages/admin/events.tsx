@@ -506,20 +506,27 @@ export default function EventManagement({
 
                 {/* Filters and search card */}
                 <AdminCard className="p-4 mb-6">
-                    <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search events proper or feeding zones..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
-                            />
+                    <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 min-w-0">
+                        <div className="flex items-center gap-2 w-full md:contents min-w-0">
+                            <div className="relative flex-1 min-w-0 md:order-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search events proper or feeding zones..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900 rounded-xl text-sm font-semibold outline-none border border-transparent focus:border-paw-orange dark:text-white"
+                                />
+                            </div>
+
+                            <button type="submit" className="shrink-0 whitespace-nowrap px-4 sm:px-5 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition cursor-pointer md:order-3">
+                                Search
+                            </button>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <Filter size={16} className="text-gray-400" />
-                            <div className="min-w-[160px]">
+
+                        <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex md:items-center md:gap-3 md:order-2">
+                            <Filter size={16} className="hidden md:block shrink-0 text-gray-400" />
+                            <div className="min-w-0 md:min-w-[160px]">
                                 <ModernSelect
                                     size="sm"
                                     searchable={false}
@@ -535,7 +542,7 @@ export default function EventManagement({
                                 />
                             </div>
 
-                            <div className="min-w-[165px]">
+                            <div className="min-w-0 md:min-w-[165px]">
                                 <ModernSelect
                                     size="sm"
                                     searchable={false}
@@ -549,19 +556,15 @@ export default function EventManagement({
                                     ]}
                                 />
                             </div>
-
-                            <button type="submit" className="px-5 py-2.5 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-600 transition cursor-pointer">
-                                Search
-                            </button>
                         </div>
                     </form>
                 </AdminCard>
 
                 {/* Tabs */}
-                <div className="flex gap-2 border-b-2 border-gray-200 dark:border-gray-800 mb-6">
+                <div className="flex flex-nowrap gap-2 overflow-x-auto hide-scrollbar border-b-2 border-gray-200 dark:border-gray-800 mb-6">
                     <button
                         onClick={() => setActiveTab('events')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
+                        className={`shrink-0 whitespace-nowrap px-4 sm:px-6 py-3.5 sm:py-4 font-black text-sm transition-all relative cursor-pointer ${
                             activeTab === 'events' ? 'text-paw-orange border-b-2 border-paw-orange -mb-[2px]' : 'text-gray-400 hover:text-paw-navy dark:hover:text-gray-200'
                         }`}
                     >
@@ -569,7 +572,7 @@ export default function EventManagement({
                     </button>
                     <button
                         onClick={() => setActiveTab('feeding')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
+                        className={`shrink-0 whitespace-nowrap px-4 sm:px-6 py-3.5 sm:py-4 font-black text-sm transition-all relative cursor-pointer ${
                             activeTab === 'feeding' ? 'text-paw-orange border-b-2 border-paw-orange -mb-[2px]' : 'text-gray-400 hover:text-paw-navy dark:hover:text-gray-200'
                         }`}
                     >
@@ -579,8 +582,8 @@ export default function EventManagement({
 
                 {/* Events Tab */}
                 {activeTab === 'events' && (
-                    <AdminCard className="p-6">
-                        <div className="flex justify-between items-center mb-6">
+                    <AdminCard className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                             <div>
                                 <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white">Events Proper</h3>
                                 <p className="text-xs text-gray-400 font-semibold mt-0.5">
@@ -590,7 +593,7 @@ export default function EventManagement({
                             {canManageEvents && (
                             <button
                                 onClick={openEventCreate}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer"
+                                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer whitespace-nowrap shrink-0"
                             >
                                 <Plus size={14} /> Create Event
                             </button>
@@ -772,8 +775,8 @@ export default function EventManagement({
 
                 {/* Feeding Schedules Tab */}
                 {activeTab === 'feeding' && (
-                    <AdminCard className="p-6">
-                        <div className="flex justify-between items-center mb-6">
+                    <AdminCard className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                             <div>
                                 <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white">Feeding Schedules & Zones</h3>
                                 <p className="text-xs text-gray-400 font-semibold mt-0.5">
@@ -783,7 +786,7 @@ export default function EventManagement({
                             {canManageEvents && (
                             <button
                                 onClick={openFeedingCreate}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer"
+                                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-md shadow-orange-500/20 cursor-pointer whitespace-nowrap shrink-0"
                             >
                                 <Plus size={14} /> Create Feeding Route
                             </button>

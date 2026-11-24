@@ -379,34 +379,46 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
             <Head title="Animal Master Records - Admin" />
 
             {/* TOP ACTIONS & HEADER BAR */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-paw-orange/10 text-paw-orange dark:bg-paw-orange/20">
-                            <PawPrint className="h-5 w-5" />
-                        </span>
-                        <h2 className="text-xl font-bold font-fredoka text-[#0B2340] dark:text-[#F8FAFC]">
-                            All Registered Animals ({animals.total})
-                        </h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paw-orange/10 text-paw-orange dark:bg-paw-orange/20">
+                                <PawPrint className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </span>
+                            <h2 className="text-lg sm:text-xl font-bold font-fredoka text-[#0B2340] dark:text-[#F8FAFC] truncate">
+                                All Registered Animals ({animals.total})
+                            </h2>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Viewing page {animals.current_page} of {animals.last_page} • Updated live with real-time status & placement updates
+                        </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Viewing page {animals.current_page} of {animals.last_page} • Updated live with real-time status & placement updates
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
                     <button
+                        type="button"
                         onClick={resetFilters}
                         title="Refresh & Reset Filters"
-                        className="p-2.5 text-gray-500 hover:text-paw-orange bg-white dark:bg-[#0B1527] border border-gray-200 dark:border-gray-800 rounded-xl transition-colors hover:border-paw-orange/40"
+                        className="sm:hidden p-2.5 shrink-0 text-gray-500 hover:text-paw-orange bg-white dark:bg-[#0B1527] border border-gray-200 dark:border-gray-800 rounded-xl transition-colors hover:border-paw-orange/40"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+                    <button
+                        type="button"
+                        onClick={resetFilters}
+                        title="Refresh & Reset Filters"
+                        className="hidden sm:inline-flex p-2.5 text-gray-500 hover:text-paw-orange bg-white dark:bg-[#0B1527] border border-gray-200 dark:border-gray-800 rounded-xl transition-colors hover:border-paw-orange/40"
                     >
                         <RefreshCw className="h-4 w-4" />
                     </button>
 
                     {canCreateAnimal && (
                     <button
+                        type="button"
                         onClick={() => setIsAddAnimalOpen(true)}
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-paw-orange/25 active:scale-95"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-wider whitespace-nowrap transition-all shadow-md shadow-paw-orange/25 active:scale-95"
                     >
                         <Plus className="h-4 w-4 stroke-[3]" /> Register New Animal
                     </button>
@@ -415,145 +427,151 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
             </div>
 
             {/* STATUS BAR / KPI METRICS CARDS */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 min-w-0">
                 {/* Total */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('all')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'all'
                             ? 'border-paw-orange bg-orange-50/50 shadow-sm dark:bg-orange-950/20 dark:border-paw-orange/60'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
-                        <span>Total Records</span>
-                        <PawPrint className="h-4 w-4 text-paw-orange" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">Total Records</span>
+                        <PawPrint className="h-4 w-4 shrink-0 text-paw-orange" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-[#0B2340] dark:text-[#F8FAFC]">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-[#0B2340] dark:text-[#F8FAFC]">
                         {statusBar.total}
                     </div>
-                    <div className="mt-1 text-[11px] text-gray-400 flex items-center gap-1.5">
+                    <div className="mt-1 text-[11px] text-gray-400 flex items-center gap-1.5 truncate">
                         <span>Dogs: {statusBar.dogs}</span> • <span>Cats: {statusBar.cats}</span>
                     </div>
                 </button>
 
                 {/* Available */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('available')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'available'
                             ? 'border-emerald-500 bg-emerald-50/60 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-500'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-emerald-300 dark:hover:border-emerald-900'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">
-                        <span>Available</span>
-                        <Sparkles className="h-4 w-4 text-emerald-500" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">Available</span>
+                        <Sparkles className="h-4 w-4 shrink-0 text-emerald-500" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-emerald-700 dark:text-emerald-300">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-emerald-700 dark:text-emerald-300">
                         {statusBar.available}
                     </div>
-                    <div className="mt-1 text-[11px] text-emerald-600/80 dark:text-emerald-400">
+                    <div className="mt-1 text-[11px] text-emerald-600/80 dark:text-emerald-400 truncate">
                         Ready for adoption
                     </div>
                 </button>
 
                 {/* Foster Care */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('foster')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'foster'
                             ? 'border-amber-500 bg-amber-50/60 shadow-sm dark:bg-amber-950/30 dark:border-amber-500'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-amber-300 dark:hover:border-amber-900'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">
-                        <span>In Foster</span>
-                        <Home className="h-4 w-4 text-amber-500" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">In Foster</span>
+                        <Home className="h-4 w-4 shrink-0 text-amber-500" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-amber-700 dark:text-amber-300">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-amber-700 dark:text-amber-300">
                         {statusBar.foster}
                     </div>
-                    <div className="mt-1 text-[11px] text-amber-600/80 dark:text-amber-400">
+                    <div className="mt-1 text-[11px] text-amber-600/80 dark:text-amber-400 truncate">
                         In foster homes
                     </div>
                 </button>
 
                 {/* Adopted */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('adopted')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'adopted'
                             ? 'border-purple-500 bg-purple-50/60 shadow-sm dark:bg-purple-950/30 dark:border-purple-500'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-purple-300 dark:hover:border-purple-900'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-purple-700 dark:text-purple-400 font-bold uppercase tracking-wider">
-                        <span>Adopted</span>
-                        <HeartHandshake className="h-4 w-4 text-purple-500" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-purple-700 dark:text-purple-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">Adopted</span>
+                        <HeartHandshake className="h-4 w-4 shrink-0 text-purple-500" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-purple-700 dark:text-purple-300">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-purple-700 dark:text-purple-300">
                         {statusBar.adopted}
                     </div>
-                    <div className="mt-1 text-[11px] text-purple-600/80 dark:text-purple-400">
+                    <div className="mt-1 text-[11px] text-purple-600/80 dark:text-purple-400 truncate">
                         Loving forever homes
                     </div>
                 </button>
 
                 {/* Medical / Treatment */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('treatment')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'treatment'
                             ? 'border-rose-500 bg-rose-50/60 shadow-sm dark:bg-rose-950/30 dark:border-rose-500'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-rose-300 dark:hover:border-rose-900'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">
-                        <span>Treatment</span>
-                        <Stethoscope className="h-4 w-4 text-rose-500" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">Treatment</span>
+                        <Stethoscope className="h-4 w-4 shrink-0 text-rose-500" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-rose-700 dark:text-rose-300">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-rose-700 dark:text-rose-300">
                         {statusBar.treatment + statusBar.quarantine}
                     </div>
-                    <div className="mt-1 text-[11px] text-rose-600/80 dark:text-rose-400">
-                        Medical & quarantine
+                    <div className="mt-1 text-[11px] text-rose-600/80 dark:text-rose-400 truncate">
+                        Medical &amp; quarantine
                     </div>
                 </button>
 
                 {/* Vaccination Status & Deceased */}
                 <button
+                    type="button"
                     onClick={() => handleStatusCardClick('deceased')}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`min-w-0 p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                         statusFilter === 'deceased'
                             ? 'border-gray-500 bg-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-400'
                             : 'bg-white dark:bg-[#0B1527] border-gray-200/80 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-700'
                     }`}
                 >
-                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 font-bold uppercase tracking-wider">
-                        <span>Deceased</span>
-                        <Ribbon className="h-4 w-4 text-gray-500" />
+                    <div className="flex items-center justify-between gap-1 text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 font-bold uppercase tracking-wider">
+                        <span className="truncate">Deceased</span>
+                        <Ribbon className="h-4 w-4 shrink-0 text-gray-500" />
                     </div>
-                    <div className="mt-2 text-2xl font-black font-fredoka text-gray-700 dark:text-gray-300">
+                    <div className="mt-1.5 sm:mt-2 text-2xl font-black font-fredoka text-gray-700 dark:text-gray-300">
                         {statusBar.deceased}
                     </div>
-                    <div className="mt-1 text-[11px] text-gray-500">
+                    <div className="mt-1 text-[11px] text-gray-500 truncate">
                         Vaccinated: {statusBar.vaccination_rate}% ({statusBar.vaccinated_count})
                     </div>
                 </button>
             </div>
 
             {/* SEARCH AND FILTERS TOOLBAR */}
-            <div className="bg-white dark:bg-[#0B1527] p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm space-y-3">
-                <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-3">
-                    <div className="relative flex-1">
+            <div className="bg-white dark:bg-[#0B1527] p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm space-y-3">
+                <form onSubmit={handleSearchSubmit} className="flex flex-nowrap items-center gap-2 sm:gap-3">
+                    <div className="relative flex-1 min-w-0">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by ID (#ANM-001), name, breed, color, or location..."
-                            className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:border-paw-orange dark:text-white"
+                            placeholder="Search ID, name, breed..."
+                            className="w-full pl-9 sm:pl-10 pr-8 py-2 text-xs sm:text-sm bg-gray-50 dark:bg-[#070e1c] border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:border-paw-orange dark:text-white"
                         />
                         {search && (
                             <button
@@ -562,7 +580,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                     setSearch('');
                                     applyFilters({ search: undefined });
                                 }}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -571,14 +589,14 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
                     <button
                         type="submit"
-                        className="px-5 py-2 bg-paw-orange text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-orange-600 transition-colors"
+                        className="shrink-0 whitespace-nowrap px-4 sm:px-5 py-2 bg-paw-orange text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-orange-600 transition-colors"
                     >
                         Search
                     </button>
                 </form>
 
                 {/* Filter selects row */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-1">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 pt-1">
                     {/* Species */}
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Species</label>
@@ -662,7 +680,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                     </div>
 
                     {/* Vaccination */}
-                    <div>
+                    <div className="col-span-2 md:col-span-1">
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Vaccinated</label>
                         <ModernSelect
                             size="sm"
@@ -941,32 +959,32 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         </div>
 
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <h3 className="font-bold text-base text-[#0B2340] dark:text-[#F8FAFC] truncate">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <h3 className="font-bold text-base text-[#0B2340] dark:text-[#F8FAFC] leading-snug">
                                                     {animal.name}
                                                 </h3>
-                                                <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[10px] font-bold border capitalize ${getStatusBadge(animal.status)}`}>
+                                                <span className={`inline-flex shrink-0 items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border capitalize ${getStatusBadge(animal.status)}`}>
                                                     {animal.status_label}
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-                                                <span className="font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-[10px]">
+                                            <div className="flex items-center gap-1.5 mt-1.5 text-xs flex-wrap">
+                                                <span className="font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md text-[10px]">
                                                     {animal.code}
                                                 </span>
                                                 {animal.is_rescued !== false && (
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300">
-                                                        <ShieldCheck className="h-2.5 w-2.5" />
-                                                        {animal.rescued_tag || 'Rescued • In Shelter'}
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                        <ShieldCheck className="h-3 w-3 shrink-0" />
+                                                        <span>{animal.rescued_tag || 'Rescued • In Shelter'}</span>
                                                     </span>
                                                 )}
-                                                <span>•</span>
-                                                <span>{animal.species}</span>
-                                                <span>•</span>
-                                                <span className="truncate max-w-[120px]">{animal.breed}</span>
                                             </div>
 
-                                            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                <span className="font-medium text-gray-700 dark:text-gray-300">{animal.species}</span>
+                                                <span>•</span>
+                                                <span className="truncate max-w-[140px]">{animal.breed}</span>
+                                                <span>•</span>
                                                 <span className={`font-bold ${
                                                     animal.gender.toLowerCase() === 'male'
                                                         ? 'text-blue-600 dark:text-blue-400'
@@ -1056,13 +1074,13 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                         onClick={() => setSelectedAnimal(null)}
                     />
 
-                    <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-                        <div className="w-screen max-w-2xl lg:max-w-3xl bg-white dark:bg-[#0B1527] shadow-2xl flex flex-col h-full border-l border-gray-200 dark:border-gray-800 animate-in slide-in-from-right duration-300">
+                    <div className="fixed inset-y-0 right-0 w-full sm:w-auto sm:max-w-full flex sm:pl-10">
+                        <div className="w-full sm:w-screen sm:max-w-2xl lg:max-w-3xl min-w-0 overflow-x-hidden bg-white dark:bg-[#0B1527] shadow-2xl flex flex-col h-full border-l border-gray-200 dark:border-gray-800 animate-in slide-in-from-right duration-300">
                             {/* Panel Header */}
-                            <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#070e1c]/50">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative h-16 w-16 rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-gray-100 dark:bg-gray-800 shrink-0 shadow-md">
+                            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#070e1c]/50 min-w-0">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                                        <div className="relative h-14 w-14 sm:h-16 sm:w-16 rounded-2xl overflow-hidden border-2 border-paw-orange/40 bg-gray-100 dark:bg-gray-800 shrink-0 shadow-md">
                                             <ImageWithFallback
                                                 src={formatPhotoUrl(selectedAnimal.photo_url, selectedAnimal.type)}
                                                 alt={selectedAnimal.name}
@@ -1070,8 +1088,8 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                             />
                                         </div>
 
-                                        <div>
-                                            <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                                 <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-paw-orange/15 text-paw-orange dark:bg-paw-orange/20">
                                                     {selectedAnimal.code}
                                                 </span>
@@ -1079,14 +1097,14 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                     {selectedAnimal.status_label}
                                                 </span>
                                                 {selectedAnimal.is_rescued !== false && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
-                                                        <ShieldCheck className="h-3.5 w-3.5" />
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                                        <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                                                         <span>{selectedAnimal.rescued_tag || 'Rescued • In Shelter Care'}</span>
                                                     </span>
                                                 )}
                                             </div>
 
-                                            <h3 className="text-2xl font-black font-fredoka text-[#0B2340] dark:text-[#F8FAFC] mt-1">
+                                            <h3 className="text-xl sm:text-2xl font-black font-fredoka text-[#0B2340] dark:text-[#F8FAFC] mt-1.5">
                                                 {selectedAnimal.name}
                                             </h3>
 
@@ -1096,7 +1114,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                         <button
                                             onClick={() => handleStartEdit(selectedAnimal)}
                                             className="p-2 text-gray-500 hover:text-paw-orange bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-paw-orange transition-colors"
@@ -1114,20 +1132,20 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 </div>
 
                                 {/* Location banner */}
-                                <div className="mt-4 flex items-center justify-between p-2.5 bg-white dark:bg-[#070e1c] rounded-xl border border-gray-200/80 dark:border-gray-800 text-xs">
-                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium">
+                                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 p-2.5 bg-white dark:bg-[#070e1c] rounded-xl border border-gray-200/80 dark:border-gray-800 text-xs min-w-0">
+                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium min-w-0">
                                         <MapPin className="h-4 w-4 text-paw-orange shrink-0" />
-                                        <span>Current Location: <strong className="text-[#0B2340] dark:text-white">{selectedAnimal.current_location}</strong></span>
+                                        <span className="truncate">Current Location: <strong className="text-[#0B2340] dark:text-white">{selectedAnimal.current_location}</strong></span>
                                     </div>
                                     {selectedAnimal.has_active_condition && (
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 flex items-center gap-1 border border-rose-200 dark:border-rose-900">
-                                            <AlertTriangle className="h-3 w-3" /> Medical Attention
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 flex items-center gap-1 border border-rose-200 dark:border-rose-900 shrink-0">
+                                            <AlertTriangle className="h-3 w-3 shrink-0" /> Medical Attention
                                         </span>
                                     )}
                                 </div>
 
                                 {/* SECTION TABS */}
-                                <div className="flex items-center gap-1 mt-4 overflow-x-auto pb-1 scrollbar-none border-b border-gray-200 dark:border-gray-800">
+                                <div className="flex items-center gap-1 mt-4 overflow-x-auto hide-scrollbar pb-1 border-b border-gray-200 dark:border-gray-800">
                                     {[
                                         { id: 'details', label: 'Details', icon: Info },
                                         { id: 'medical', label: `Medical & Vaccines (${selectedAnimal.medical_history.total_records_count})`, icon: Syringe },
@@ -1157,7 +1175,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                             </div>
 
                             {/* Panel Body Content */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-6 min-w-0">
                                 {/* TAB 1: DETAILS */}
                                 {sidePanelTab === 'details' && (
                                     <div className="space-y-6">
@@ -1364,7 +1382,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                 {sidePanelTab === 'medical' && (
                                     <div className="space-y-6">
                                         {/* Vaccination Status Summary Banner */}
-                                        <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+                                        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
                                             selectedAnimal.vaccinated
                                                 ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800'
                                                 : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800'
@@ -1383,7 +1401,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <button
                                                     onClick={() => handleStartMedical(selectedAnimal, 'injury')}
                                                     className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
@@ -1969,27 +1987,27 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
                             </div>
 
                             {/* Panel Footer */}
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-[#070e1c]/80 flex items-center justify-between">
-                                <div className="text-xs text-gray-400">
+                            <div className="p-3.5 sm:p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-[#070e1c]/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                                <div className="text-[11px] sm:text-xs text-gray-400">
                                     Animal ID: #{selectedAnimal.id} • Registered on {selectedAnimal.admitted_at_human}
                                 </div>
                                 {canEditAnimal && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                                     <button
                                         onClick={() => handleStartMedical(selectedAnimal, 'injury')}
-                                        className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs"
+                                        className="flex-1 sm:flex-initial justify-center px-2.5 sm:px-3 py-2 sm:py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center gap-1 shadow-xs whitespace-nowrap"
                                     >
-                                        <AlertTriangle className="h-3 w-3" /> Log Injury / Disease
+                                        <AlertTriangle className="h-3 w-3 shrink-0" /> Log Injury
                                     </button>
                                     <button
                                         onClick={() => handleStartMedical(selectedAnimal, 'vaccination')}
-                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs"
+                                        className="flex-1 sm:flex-initial justify-center px-2.5 sm:px-3 py-2 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center gap-1 shadow-xs whitespace-nowrap"
                                     >
-                                        <Plus className="h-3 w-3 stroke-[3]" /> Add Medical
+                                        <Plus className="h-3 w-3 stroke-[3] shrink-0" /> Add Medical
                                     </button>
                                     <button
                                         onClick={() => handleStartEdit(selectedAnimal)}
-                                        className="px-3.5 py-1.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-bold"
+                                        className="flex-1 sm:flex-initial justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center shadow-xs whitespace-nowrap"
                                     >
                                         Edit Details
                                     </button>

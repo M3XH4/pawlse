@@ -35,9 +35,9 @@ export default function Login({
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-[9px] md:text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Email address</Label>
+                        <div className="grid gap-5">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="email" className="text-[11px] md:text-xs font-black uppercase tracking-widest text-gray-500">Email address</Label>
                                 <div className="relative">
                                     <Input
                                         id="email"
@@ -48,20 +48,20 @@ export default function Login({
                                         tabIndex={1}
                                         autoComplete="email"
                                         placeholder="name@example.com"
-                                        className="w-full bg-background p-3 md:p-4 lg:p-7 pr-12 md:pr-14 lg:pr-16 rounded-xl md:rounded-2xl border-2 border-foreground-100 focus:border-paw-blue outline-none transition-all font-bold shadow-sm text-sm md:text-base"
+                                        className="w-full h-12 md:h-14 bg-gray-50/70 focus:bg-white px-4 pr-11 rounded-xl md:rounded-2xl border-2 border-gray-200 focus:border-paw-blue outline-none transition-all font-bold shadow-xs text-sm md:text-base"
                                     />
-                                    <Mail size={20} className="absolute right-3 md:right-4 lg:right-5 top-1/2 -translate-y-1/2 text-gray-200 md:w-6 md:h-6" />
+                                    <Mail size={18} className="absolute right-3.5 md:right-4 top-1/2 -translate-y-1/2 text-gray-400 md:w-5 md:h-5 pointer-events-none" />
                                 </div>
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid gap-1.5">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password" className="text-[9px] md:text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Password</Label>
+                                    <Label htmlFor="password" className="text-[11px] md:text-xs font-black uppercase tracking-widest text-gray-500">Password</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="ml-auto mb-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-paw-orange hover:underline whitespace-nowrap"
+                                            className="ml-auto text-[11px] font-black uppercase tracking-widest text-paw-orange hover:underline whitespace-nowrap"
                                             tabIndex={5}
                                         >
                                             Forgot?
@@ -75,23 +75,24 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="********"
-                                    className="w-full bg-background p-3 md:p-4 lg:p-7 pr-12 md:pr-14 lg:pr-16 rounded-xl md:rounded-2xl border-2 border-foreground-100 focus:border-paw-blue outline-none transition-all font-bold shadow-sm text-sm md:text-base"
+                                    className="w-full h-12 md:h-14 bg-gray-50/70 focus:bg-white px-4 pr-11 rounded-xl md:rounded-2xl border-2 border-gray-200 focus:border-paw-blue outline-none transition-all font-bold shadow-xs text-sm md:text-base"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2.5 pt-0.5">
                                 <Checkbox
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
+                                    className="border-gray-300 data-[state=checked]:bg-paw-orange data-[state=checked]:border-paw-orange"
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember" className="text-sm font-semibold text-gray-600 cursor-pointer">Remember me</Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className={`w-full py-4 md:py-5 lg:py-7 rounded-xl md:rounded-[2rem] font-black text-sm md:text-base lg:text-lg tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 md:gap-4 ${processing ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-paw-navy text-white hover:bg-paw-orange'}`}
+                                className={`w-full h-12 md:h-14 rounded-xl md:rounded-[2rem] font-black text-sm md:text-base tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 md:gap-3 cursor-pointer ${processing ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-paw-navy text-white hover:bg-paw-orange'}`}
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"

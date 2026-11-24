@@ -91,6 +91,7 @@ class HandleInertiaRequests extends Middleware
                     'clearAllUrl' => route('account.notifications.clear-all'),
                 ],
             'unreadNotificationCount' => $unreadNotificationCount,
+            'webPush' => fn () => $this->resolveWebPushState($request),
             'dashboardChrome' => $dashboardChrome,
             'adminNotifications' => $dashboardNotifications,
             'adminChrome' => $dashboardChrome,
@@ -193,6 +194,33 @@ class HandleInertiaRequests extends Middleware
         }
 
         return null;
+    }
+
+    private function resolveWebPushState(Request $request): array
+    {
+        $user = $request->user();
+        $isConfigured = filled(config('services.webpush.public_key')) && filled(config('services.webpush.private_key'));
+
+        if ($user === null) {
+            return [
+                'enabled' => false,
+                'publicKey' => null,
+                'hasSubscription' => false,
+                'devicesCount' => 0,
+                'testAlertEnabled' => false,
+            ];
+        }
+
+        $devicesCount = rescue(fn () => $user->pushSubscriptions()->count(), 0, false);
+        $testAlertEnabled = (bool) rescue(fn () => SystemSetting::getValue('system_settings')['push_test_alert_enabled'] ?? false, false, false);
+
+        return [
+            'enabled' => $isConfigured,
+            'publicKey' => $isConfigured ? (string) config('services.webpush.public_key') : null,
+            'hasSubscription' => $devicesCount > 0,
+            'devicesCount' => $devicesCount,
+            'testAlertEnabled' => $testAlertEnabled,
+        ];
     }
 
     private function dashboardRole(Request $request): ?string

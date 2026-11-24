@@ -242,10 +242,10 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                         <button
                             type="button"
                             onClick={() => setIsMapOpen(true)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-paw-orange px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer"
+                            className="inline-flex min-h-9 sm:min-h-10 items-center gap-1.5 rounded-full bg-paw-orange px-3.5 sm:px-4 py-1 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 cursor-pointer whitespace-nowrap shrink-0"
                         >
-                            <MapIcon className="h-3.5 w-3.5" />
-                            Open Operations Map
+                            <MapIcon className="h-4 w-4 shrink-0" />
+                            <span>Open Operations Map</span>
                         </button>
                     )}
                     <DashboardMetricBadge icon={<ClipboardList className="h-4 w-4" />} label={`${tasks?.total || 0} Tasks`} />
@@ -408,7 +408,7 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2 self-start sm:self-center flex-wrap border-t border-gray-100/80 pt-3 sm:border-t-0 sm:pt-0 dark:border-gray-800/60">
                                         {foodPickup ? (
                                             isFetched ? (
                                                 <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-black uppercase px-3 py-1.5 rounded-full">
@@ -431,7 +431,7 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCancelTask(task.id)}
-                                                        className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                                        className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
                                                         title="Cancel this assignment"
                                                     >
                                                         <Trash2 size={12} />
@@ -471,14 +471,14 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                                                         Complete Route
                                                     </button>
                                                 )}
-                                                <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1 rounded-full">
+                                                <span className="inline-flex items-center bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1.5 rounded-full whitespace-nowrap">
                                                     {task.status}
                                                 </span>
                                                 {task.status === 'pending' && (
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCancelTask(task.id)}
-                                                        className="flex cursor-pointer items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60"
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/60 whitespace-nowrap"
                                                         title="Cancel this assignment"
                                                     >
                                                         <Trash2 size={12} />

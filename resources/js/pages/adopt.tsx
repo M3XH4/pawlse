@@ -170,7 +170,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
             {/* Free Adoption Pill */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -197,7 +197,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-3 text-gray-600 text-base md:text-lg font-medium leading-relaxed max-w-2xl mb-8"
+              className="space-y-3 text-gray-600 text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto md:mx-0 mb-8"
             >
               <p>
                 ISF does not charge an adoption fee. Every application is assessed to help each animal find a suitable and responsible home.
@@ -212,24 +212,24 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-wrap items-center gap-4"
+              className="flex flex-nowrap items-center justify-center md:justify-start gap-2.5 sm:gap-4"
             >
               <button
                 type="button"
                 onClick={scrollToAnimals}
-                className="bg-[#FF9B00] hover:bg-[#e68a00] text-white px-7 py-4 rounded-2xl font-black text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 transition-all flex items-center gap-2.5 cursor-pointer active:scale-95"
+                className="flex-1 sm:flex-initial justify-center bg-[#FF9B00] hover:bg-[#e68a00] text-white px-3.5 py-3 sm:px-7 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 transition-all flex items-center gap-1.5 sm:gap-2.5 whitespace-nowrap cursor-pointer active:scale-95"
               >
-                <Heart size={18} fill="currentColor" />
-                Meet Our Animals
+                <Heart fill="currentColor" className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0" />
+                <span>Meet Our Animals</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsVisitModalOpen(true)}
-                className="bg-white hover:bg-gray-50 text-[#0B2340] px-7 py-4 rounded-2xl font-black text-base border-2 border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer active:scale-95"
+                className="flex-1 sm:flex-initial justify-center bg-white hover:bg-gray-50 text-[#0B2340] px-3.5 py-3 sm:px-7 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base border-2 border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 sm:gap-2.5 whitespace-nowrap cursor-pointer active:scale-95"
               >
-                <Building2 size={18} className="text-[#0B2340]" />
-                Visit the Shelter
+                <Building2 className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#0B2340] shrink-0" />
+                <span>Visit the Shelter</span>
               </button>
             </motion.div>
           </div>
@@ -405,7 +405,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
           </div>
 
           {/* Quick Species Filter Tabs */}
-          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 mb-6 w-full sm:w-auto">
             {[
               { id: 'All', label: 'All Animals', count: safePets.length, icon: '🐾' },
               { id: 'Dog', label: 'Dogs', count: dogCount, icon: '🐕' },
@@ -415,15 +415,15 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => setFilters((prev) => ({ ...prev, type: tab.id }))}
-                className={`px-4 py-2 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                className={`flex-1 sm:flex-initial justify-center px-2.5 py-2 sm:px-4 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
                   filters.type === tab.id
-                    ? 'bg-[#0B2340] text-white shadow-md shadow-paw-navy/20 scale-105'
+                    ? 'bg-[#0B2340] text-white shadow-md shadow-paw-navy/20 sm:scale-105'
                     : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/70'
                 }`}
               >
-                <span>{tab.icon}</span>
+                <span className="shrink-0">{tab.icon}</span>
                 <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
                   filters.type === tab.id ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {tab.count}
@@ -650,11 +650,11 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                       </h3>
 
                       <div className="flex items-center flex-wrap gap-1.5 mb-3">
-                        <span className="bg-amber-100 text-amber-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase truncate max-w-[150px]">
+                        <span className="bg-amber-100 text-amber-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase leading-snug">
                           {pet.breed}
                         </span>
                         {pet.color && (
-                          <span className="bg-sky-100 text-sky-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase truncate max-w-[130px]">
+                          <span className="bg-sky-100 text-sky-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase leading-snug">
                             {pet.color}
                           </span>
                         )}
@@ -798,7 +798,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                   <button
                     type="button"
                     onClick={() => setIsVisitModalOpen(true)}
-                    className="bg-[#FF9B00] hover:bg-[#e68a00] text-white font-black text-sm md:text-base px-8 py-4 rounded-2xl shadow-xl shadow-orange-500/20 hover:shadow-orange-500/35 transition-all inline-flex items-center gap-2.5 cursor-pointer active:scale-95"
+                    className="w-full sm:w-auto justify-center bg-[#FF9B00] hover:bg-[#e68a00] text-white font-black text-sm md:text-base px-6 sm:px-8 py-4 rounded-2xl shadow-xl shadow-orange-500/20 hover:shadow-orange-500/35 transition-all inline-flex items-center gap-2.5 cursor-pointer active:scale-95"
                   >
                     <Calendar size={18} />
                     Request a Shelter Visit

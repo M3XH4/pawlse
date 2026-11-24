@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ModernSelect } from '@/components/ui/modern-select';
 import {
     ShieldCheck,
@@ -208,10 +209,10 @@ export function TransparencyAuditModal({
         { value: 12, label: 'December' },
     ];
 
-    return (
+    const modalContent = (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-hidden">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -227,66 +228,66 @@ export function TransparencyAuditModal({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className="bg-white rounded-[32px] md:rounded-[40px] max-w-5xl w-full max-h-[92vh] overflow-hidden relative z-10 shadow-2xl flex flex-col font-quicksand border-0"
+                        className="bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[40px] max-w-5xl w-full max-h-[92vh] overflow-hidden relative z-10 shadow-2xl flex flex-col font-quicksand border-0"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header Banner with Blue Ocean Gradient */}
-                        <div className="bg-gradient-to-r from-[#0F263E] via-[#174668] to-[#0EA5E9] text-white p-6 md:p-8 relative rounded-t-[32px] md:rounded-t-[40px]">
+                        <div className="bg-gradient-to-r from-[#0F263E] via-[#174668] to-[#0EA5E9] text-white p-4 sm:p-6 md:p-8 relative rounded-t-[24px] sm:rounded-t-[32px] md:rounded-t-[40px] shrink-0">
                             {/* Top row: Title and Close button */}
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-3 md:gap-4">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner shrink-0">
-                                        <ShieldCheck size={28} className="text-white drop-shadow" />
+                            <div className="flex justify-between items-start gap-3 mb-3.5 sm:mb-6">
+                                <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner shrink-0">
+                                        <ShieldCheck className="w-5 h-5 sm:w-7 sm:h-7 text-white drop-shadow" />
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                                    <div className="min-w-0">
+                                        <h2 className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight leading-tight">
                                             Transparency Audit History
                                         </h2>
-                                        <p className="text-xs md:text-sm font-bold text-white/80 tracking-wide mt-0.5">
+                                        <p className="text-[11px] sm:text-xs md:text-sm font-bold text-white/80 tracking-wide mt-0.5">
                                             100% Accountability & Public Record
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
                                     aria-label="Close modal"
                                 >
-                                    <X size={20} strokeWidth={2.5} />
+                                    <X size={18} strokeWidth={2.5} className="sm:w-5 sm:h-5" />
                                 </button>
                             </div>
 
                             {/* 3 Metric KPI Cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 pt-1">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 pt-0.5">
                                 {/* Total Records Card */}
-                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-[11px] font-black uppercase tracking-wider text-white/80">
+                                <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-white/15 relative overflow-hidden">
+                                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/80">
                                             Total Records
                                         </span>
-                                        <span className="text-sm">🐾</span>
+                                        <span className="text-xs sm:text-sm">🐾</span>
                                     </div>
-                                    <div className="text-2xl md:text-3xl font-black text-white">
+                                    <div className="text-xl sm:text-2xl md:text-3xl font-black text-white">
                                         {totalRecordsCount}
                                     </div>
                                 </div>
 
                                 {/* Total Amount Card */}
-                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15">
-                                    <div className="text-[11px] font-black uppercase tracking-wider text-white/80 mb-1">
+                                <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-white/15">
+                                    <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/80 mb-0.5 sm:mb-1">
                                         Total Amount
                                     </div>
-                                    <div className="text-2xl md:text-3xl font-black text-white">
+                                    <div className="text-xl sm:text-2xl md:text-3xl font-black text-white truncate">
                                         ₱{totalAmount.toLocaleString()}
                                     </div>
                                 </div>
 
                                 {/* Period Card */}
-                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15">
-                                    <div className="text-[11px] font-black uppercase tracking-wider text-white/80 mb-1">
+                                <div className="col-span-2 sm:col-span-1 bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl px-3 py-2 sm:p-4 border border-white/15 flex items-center justify-between gap-2 sm:block">
+                                    <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/80 sm:mb-1 shrink-0">
                                         Period
                                     </div>
-                                    <div className="text-base md:text-lg font-black text-white truncate">
+                                    <div className="text-xs sm:text-base md:text-lg font-black text-white truncate">
                                         {dynamicPeriodText}
                                     </div>
                                 </div>
@@ -294,9 +295,9 @@ export function TransparencyAuditModal({
                         </div>
 
                         {/* Filter Bar Controls */}
-                        <div className="bg-white px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                        <div className="bg-white px-3.5 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
                             {/* Quick Period Buttons */}
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-nowrap items-center gap-1 sm:gap-2 w-full sm:w-auto">
                                 {(
                                     [
                                         { key: 'all', label: 'All Time' },
@@ -308,9 +309,9 @@ export function TransparencyAuditModal({
                                     <button
                                         key={tab.key}
                                         onClick={() => handlePeriodChange(tab.key)}
-                                        className={`px-4 py-2 rounded-full text-xs md:text-sm font-black transition-all cursor-pointer ${
+                                        className={`flex-1 sm:flex-initial justify-center px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-black transition-all whitespace-nowrap cursor-pointer ${
                                             periodFilter === tab.key
-                                                ? 'bg-[#F97316] text-white shadow-md shadow-orange-500/25 scale-[1.02]'
+                                                ? 'bg-[#F97316] text-white shadow-md shadow-orange-500/25 sm:scale-[1.02]'
                                                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200/80'
                                         }`}
                                     >
@@ -320,9 +321,9 @@ export function TransparencyAuditModal({
                             </div>
 
                             {/* Dropdowns and Export Action */}
-                            <div className="flex flex-wrap items-center gap-2 ml-auto">
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
                                 {/* Year Picker */}
-                                <div className="min-w-[100px]">
+                                <div className="min-w-0 sm:min-w-[100px]">
                                     <ModernSelect
                                         size="sm"
                                         searchable={false}
@@ -339,7 +340,7 @@ export function TransparencyAuditModal({
                                 </div>
 
                                 {/* Month Picker */}
-                                <div className="min-w-[140px]">
+                                <div className="min-w-0 sm:min-w-[140px]">
                                     <ModernSelect
                                         size="sm"
                                         searchable={false}
@@ -356,7 +357,7 @@ export function TransparencyAuditModal({
                                 </div>
 
                                 {/* Type Picker */}
-                                <div className="min-w-[140px]">
+                                <div className="min-w-0 sm:min-w-[140px]">
                                     <ModernSelect
                                         size="sm"
                                         searchable={false}
@@ -375,7 +376,7 @@ export function TransparencyAuditModal({
                                 <button
                                     onClick={handleExport}
                                     disabled={filteredRecords.length === 0}
-                                    className="bg-[#1E293B] hover:bg-[#0F172A] disabled:opacity-50 text-white px-4 py-2 rounded-2xl text-xs md:text-sm font-black flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                                    className="w-full sm:w-auto justify-center bg-[#1E293B] hover:bg-[#0F172A] disabled:opacity-50 text-white px-4 py-2 rounded-2xl text-xs md:text-sm font-black flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
                                     title="Export filtered records as CSV"
                                 >
                                     <Download size={14} />
@@ -385,7 +386,7 @@ export function TransparencyAuditModal({
                         </div>
 
                         {/* Audit Records List (Scrollable Area) */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-[#F8FAFC]">
+                        <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 md:p-6 space-y-3 sm:space-y-4 bg-[#F8FAFC]">
                             {filteredRecords.length === 0 ? (
                                 <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200 p-8">
                                     <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4 text-gray-400">
@@ -490,18 +491,18 @@ export function TransparencyAuditModal({
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white px-6 py-4 border-t border-gray-100 flex items-center justify-between rounded-b-[32px] md:rounded-b-[40px]">
-                            <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                                <span className="flex h-2.5 w-2.5 relative">
+                        <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex items-center justify-between gap-3 rounded-b-[24px] sm:rounded-b-[32px] md:rounded-b-[40px] shrink-0">
+                            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-bold text-gray-500 min-w-0">
+                                <span className="flex h-2.5 w-2.5 relative shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                 </span>
-                                <span>Updated in real-time • Last sync: Just now</span>
+                                <span className="leading-snug">Updated in real-time • Last sync: Just now</span>
                             </div>
 
                             <button
                                 onClick={onClose}
-                                className="bg-[#1E293B] hover:bg-[#0F172A] text-white px-6 py-2.5 rounded-2xl font-black text-sm transition-colors cursor-pointer shadow-sm"
+                                className="bg-[#1E293B] hover:bg-[#0F172A] text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm transition-colors cursor-pointer shadow-sm shrink-0"
                             >
                                 Close
                             </button>
@@ -511,4 +512,6 @@ export function TransparencyAuditModal({
             )}
         </AnimatePresence>
     );
+
+    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

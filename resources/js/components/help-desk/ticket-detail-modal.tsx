@@ -198,12 +198,19 @@ export function TicketDetailModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col rounded-3xl border border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-start justify-between border-b border-gray-100 p-5 dark:border-gray-800 shrink-0">
-                    <div>
-                        <div className="flex flex-wrap items-center gap-2">
+        <div
+            className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
+            <div className="relative flex h-full w-full max-w-xl flex-col border-l border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 overflow-hidden animate-in slide-in-from-right duration-200">
+                {/* Drawer Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-gray-100 p-4 sm:p-5 dark:border-gray-800 shrink-0">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                             <span className="font-mono text-xs font-bold text-gray-500 dark:text-gray-400">
                                 {ticket.ticket_number}
                             </span>
@@ -227,14 +234,14 @@ export function TicketDetailModal({
                                 {ticket.category}
                             </span>
                         </div>
-                        <h3 className="mt-2 font-fredoka text-xl font-bold text-gray-900 dark:text-white">
+                        <h3 className="mt-2 font-fredoka text-lg sm:text-xl font-bold leading-snug text-gray-900 dark:text-white">
                             {ticket.subject}
                         </h3>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+                        className="shrink-0 -mr-1 -mt-1 rounded-xl p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -242,7 +249,7 @@ export function TicketDetailModal({
 
                 {/* Sub-header info / Escalation banner */}
                 {ticket.is_escalated && (
-                    <div className="bg-purple-500/10 border-b border-purple-200/60 p-3 px-5 text-xs text-purple-900 dark:border-purple-900/40 dark:text-purple-200 flex items-start gap-2 shrink-0">
+                    <div className="bg-purple-500/10 border-b border-purple-200/60 p-3 px-4 sm:px-5 text-xs text-purple-900 dark:border-purple-900/40 dark:text-purple-200 flex items-start gap-2 shrink-0">
                         <ShieldAlert className="h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400 mt-0.5" />
                         <div>
                             <strong className="font-bold">
@@ -258,26 +265,26 @@ export function TicketDetailModal({
                 )}
 
                 {/* Scrollable conversation content */}
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 sm:space-y-4">
                     {/* Initial Ticket Description Message */}
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                        <div className="flex items-center justify-between border-b border-gray-200/50 pb-2 mb-2 dark:border-gray-700/50">
-                            <div className="flex items-center gap-2">
-                                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange font-bold text-xs">
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-3 sm:p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-gray-200/50 pb-2 mb-2 dark:border-gray-700/50">
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-paw-orange/15 text-paw-orange font-bold text-xs">
                                     {ticket.user?.name?.[0] ?? 'U'}
                                 </div>
-                                <div>
-                                    <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                    <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
                                         {ticket.user?.name ?? 'User'}
                                     </span>
                                     {ticket.user?.role && (
-                                        <span className="ml-1.5 whitespace-nowrap rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                        <span className="whitespace-nowrap rounded-md bg-gray-200/60 px-1.5 py-0.2 text-[10px] font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                                             {formatPillLabel(ticket.user.role)}
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <span className="text-[11px] text-gray-400">
+                            <span className="text-[10px] sm:text-[11px] text-gray-400 shrink-0">
                                 {new Date(ticket.created_at).toLocaleString()}
                             </span>
                         </div>
@@ -288,7 +295,7 @@ export function TicketDetailModal({
 
                     {/* Replies Timeline */}
                     {ticket.replies && ticket.replies.length > 0 && (
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-3 pt-1">
                             {ticket.replies.map((reply) => {
                                 const isAuthor = reply.user_id === ticket.user_id;
                                 const isInternal = reply.is_internal_note;
@@ -297,7 +304,7 @@ export function TicketDetailModal({
                                     <div
                                         key={reply.id}
                                         className={cn(
-                                            'rounded-2xl p-4 transition-all',
+                                            'rounded-2xl p-3 sm:p-4 transition-all',
                                             isInternal
                                                 ? 'border-2 border-dashed border-amber-300 bg-amber-50/70 dark:border-amber-700/60 dark:bg-amber-950/20'
                                                 : isAuthor
@@ -305,11 +312,11 @@ export function TicketDetailModal({
                                                 : 'border border-blue-100 bg-blue-50/40 dark:border-blue-900/40 dark:bg-blue-950/20'
                                         )}
                                     >
-                                        <div className="flex items-center justify-between border-b border-gray-200/40 pb-2 mb-2 dark:border-gray-700/40">
-                                            <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-gray-200/40 pb-2 mb-2 dark:border-gray-700/40">
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
                                                 <div
                                                     className={cn(
-                                                        'flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold',
+                                                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold',
                                                         isInternal
                                                             ? 'bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                                                             : isAuthor
@@ -319,7 +326,7 @@ export function TicketDetailModal({
                                                 >
                                                     {reply.user?.name?.[0] ?? 'S'}
                                                 </div>
-                                                <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                                <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
                                                     {reply.user?.name ?? 'Staff'}
                                                 </span>
                                                 {reply.user?.role && (
@@ -334,7 +341,7 @@ export function TicketDetailModal({
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[11px] text-gray-400">
+                                            <span className="text-[10px] sm:text-[11px] text-gray-400 shrink-0">
                                                 {new Date(reply.created_at).toLocaleString()}
                                             </span>
                                         </div>
@@ -349,10 +356,10 @@ export function TicketDetailModal({
                 </div>
 
                 {/* Footer Staff Controls & Reply Form */}
-                <div className="border-t border-gray-100 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/70 shrink-0 space-y-3">
+                <div className="border-t border-gray-100 bg-gray-50/60 p-3.5 sm:p-4 dark:border-gray-800 dark:bg-gray-900/70 shrink-0 space-y-2.5 sm:space-y-3">
                     {/* Admin Actions Bar (Status updates, Escalate to Super Admin, Canned fixes) */}
                     {isStaff && (
-                        <div className="space-y-2.5 border-b border-gray-200/50 pb-3 dark:border-gray-800">
+                        <div className="space-y-2.5 border-b border-gray-200/50 pb-2.5 sm:pb-3 dark:border-gray-800">
                             {/* Canned solution custom UI dropdown */}
                             {frequentProblems.length > 0 && (
                                 <div ref={cannedMenuRef} className="relative w-full">
@@ -363,21 +370,21 @@ export function TicketDetailModal({
                                             setCannedSearch('');
                                         }}
                                         className={cn(
-                                            'group flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2 text-left text-xs font-semibold shadow-xs transition-all cursor-pointer',
+                                            'group flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold shadow-xs transition-all cursor-pointer',
                                             cannedMenuOpen
                                                 ? 'border-amber-400 bg-amber-50/90 ring-2 ring-amber-400/25 dark:border-amber-500 dark:bg-amber-950/40 dark:ring-amber-900/50'
                                                 : 'border-amber-300/80 bg-amber-50/50 hover:border-amber-400 hover:bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20 dark:hover:border-amber-800'
                                         )}
                                     >
-                                        <div className="flex items-center gap-2 truncate">
+                                        <div className="flex items-center gap-2 min-w-0">
                                             <Sparkles className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" />
                                             <span className="font-bold text-gray-800 dark:text-gray-100 truncate">
-                                                ⚡ Insert Canned Solution / Knowledge Base...
+                                                Insert Canned Solution
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[10px] font-extrabold text-amber-900 dark:bg-amber-900/70 dark:text-amber-200">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                            <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[10px] font-extrabold text-amber-900 dark:bg-amber-900/70 dark:text-amber-200 whitespace-nowrap">
                                                 {frequentProblems.length} available
                                             </span>
                                             <ChevronDown
@@ -462,10 +469,10 @@ export function TicketDetailModal({
                             )}
 
                             {/* Status Quick Select & Escalation */}
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Status:</span>
-                                    <div className="min-w-[160px]">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 shrink-0">Status:</span>
+                                    <div className="flex-1 sm:flex-initial sm:min-w-[165px]">
                                         <ModernSelect
                                             size="sm"
                                             searchable={false}
@@ -487,10 +494,10 @@ export function TicketDetailModal({
                                     <button
                                         type="button"
                                         onClick={() => setIsEscalating(!isEscalating)}
-                                        className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-extrabold text-purple-700 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-300 transition-colors cursor-pointer"
+                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 sm:py-1.5 text-xs font-extrabold text-purple-700 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-300 transition-colors cursor-pointer"
                                     >
-                                        <ArrowUpRight className="h-3.5 w-3.5" />
-                                        Ask Super Admin / Escalate
+                                        <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                                        <span>Ask Super Admin / Escalate</span>
                                     </button>
                                 )}
                             </div>
@@ -504,7 +511,7 @@ export function TicketDetailModal({
                             className="rounded-2xl border border-purple-200 bg-purple-50/70 p-3.5 dark:border-purple-800 dark:bg-purple-950/40 space-y-2 animate-in fade-in"
                         >
                             <div className="flex items-center gap-2 text-xs font-bold text-purple-900 dark:text-purple-200">
-                                <ShieldAlert className="h-4 w-4 text-purple-600" />
+                                <ShieldAlert className="h-4 w-4 text-purple-600 shrink-0" />
                                 <span>Question or Reason for Super Admin:</span>
                             </div>
                             <textarea
@@ -512,20 +519,20 @@ export function TicketDetailModal({
                                 value={escalationReason}
                                 onChange={(e) => setEscalationReason(e.target.value)}
                                 placeholder="Explain why super admin guidance or intervention is required..."
-                                className="w-full rounded-xl border border-purple-300 bg-white p-2.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 dark:bg-gray-900 dark:text-gray-100"
+                                className="w-full rounded-lg sm:rounded-xl border border-purple-300 bg-white p-2.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 dark:bg-gray-900 dark:text-gray-100"
                                 required
                             />
                             <div className="flex justify-end gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsEscalating(false)}
-                                    className="rounded-lg px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-200 dark:text-gray-300 cursor-pointer"
+                                    className="rounded-lg px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 dark:text-gray-300 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-lg bg-purple-600 px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-purple-700 cursor-pointer"
+                                    className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-purple-700 cursor-pointer"
                                 >
                                     Send to Super Admin
                                 </button>
@@ -536,7 +543,7 @@ export function TicketDetailModal({
                     {/* Reply Form */}
                     <form onSubmit={handleReplySubmit} className="space-y-2.5">
                         <textarea
-                            rows={3}
+                            rows={2}
                             value={String(replyForm.data.message || '')}
                             onChange={(e) => replyForm.setData('message', e.target.value)}
                             placeholder={
@@ -545,7 +552,7 @@ export function TicketDetailModal({
                                     : 'Type your reply message...'
                             }
                             className={cn(
-                                'w-full rounded-2xl border p-3 text-xs font-medium shadow-xs focus:outline-none focus:ring-2 transition-all',
+                                'w-full sm:min-h-[78px] rounded-lg sm:rounded-xl border px-3.5 py-2.5 text-xs font-medium shadow-xs focus:outline-none focus:ring-2 transition-all',
                                 replyForm.data.is_internal_note
                                     ? 'border-amber-300 bg-amber-50/50 text-amber-950 placeholder-amber-400 focus:border-amber-400 focus:ring-amber-200 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-100'
                                     : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-paw-orange focus:ring-paw-orange/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100'
@@ -553,19 +560,19 @@ export function TicketDetailModal({
                             required
                         />
 
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                             {/* Checkbox for internal note (Staff only) */}
                             {isStaff ? (
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <label className="flex items-start sm:items-center gap-2 cursor-pointer select-none">
                                     <input
                                         type="checkbox"
                                         checked={replyForm.data.is_internal_note}
                                         onChange={(e) =>
                                             replyForm.setData('is_internal_note', e.target.checked)
                                         }
-                                        className="h-4 w-4 rounded-md border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                        className="mt-0.5 sm:mt-0 h-4 w-4 shrink-0 rounded-md border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                                     />
-                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                    <span className="text-[11px] sm:text-xs font-bold leading-snug text-gray-700 dark:text-gray-300">
                                         Private Staff Note (Admins & Super Admin only)
                                     </span>
                                 </label>
@@ -575,7 +582,7 @@ export function TicketDetailModal({
                                 </span>
                             )}
 
-                            <div className="flex items-center gap-2 ml-auto">
+                            <div className="w-full sm:w-auto sm:ml-auto">
                                 <button
                                     type="submit"
                                     disabled={
@@ -583,7 +590,7 @@ export function TicketDetailModal({
                                         !String(replyForm.data.message || '').trim()
                                     }
                                     className={cn(
-                                        'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer',
+                                        'w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 sm:py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer',
                                         replyForm.data.is_internal_note
                                             ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/25'
                                             : 'bg-paw-orange hover:bg-paw-orange-hover shadow-paw-orange/25',
@@ -592,12 +599,14 @@ export function TicketDetailModal({
                                             'opacity-60 cursor-not-allowed'
                                     )}
                                 >
-                                    <Send className="h-3.5 w-3.5" />
-                                    {replyForm.processing
-                                        ? 'Sending...'
-                                        : replyForm.data.is_internal_note
-                                        ? 'Post Internal Note'
-                                        : 'Post Reply'}
+                                    <Send className="h-3.5 w-3.5 shrink-0" />
+                                    <span>
+                                        {replyForm.processing
+                                            ? 'Sending...'
+                                            : replyForm.data.is_internal_note
+                                            ? 'Post Internal Note'
+                                            : 'Post Reply'}
+                                    </span>
                                 </button>
                             </div>
                         </div>

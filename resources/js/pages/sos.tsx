@@ -650,7 +650,7 @@ export default function SOS({
                                             Urgency Level{' '}
                                             <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
                                             {[
                                                 {
                                                     id: 'high',
@@ -686,7 +686,7 @@ export default function SOS({
                                                             urgency: level.id,
                                                         })
                                                     }
-                                                    className={`rounded-2xl border-4 p-6 transition-all ${
+                                                    className={`flex items-center gap-3.5 rounded-2xl border-4 p-3.5 text-left transition-all sm:block sm:p-5 md:p-6 sm:text-center cursor-pointer ${
                                                         formData.urgency ===
                                                         level.id
                                                             ? level.activeClasses
@@ -694,14 +694,16 @@ export default function SOS({
                                                     }`}
                                                 >
                                                     <div
-                                                        className={`h-4 w-4 rounded-full ${level.dotClass} mx-auto mb-2`}
+                                                        className={`h-4 w-4 shrink-0 rounded-full ${level.dotClass} sm:mx-auto sm:mb-2`}
                                                     ></div>
-                                                    <p className="text-sm font-black tracking-widest text-gray-900 uppercase">
-                                                        {level.label}
-                                                    </p>
-                                                    <p className="mt-1 text-xs font-bold text-gray-500">
-                                                        {level.desc}
-                                                    </p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-black tracking-widest text-gray-900 uppercase">
+                                                            {level.label}
+                                                        </p>
+                                                        <p className="mt-0.5 text-xs font-bold text-gray-500 sm:mt-1">
+                                                            {level.desc}
+                                                        </p>
+                                                    </div>
                                                 </button>
                                             ))}
                                         </div>
@@ -951,7 +953,7 @@ export default function SOS({
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex w-full items-center justify-center gap-3 rounded-[24px] bg-red-600 py-6 text-2xl font-black tracking-tight text-white uppercase shadow-2xl shadow-red-600/40 transition-all hover:bg-red-700 disabled:opacity-50"
+                                        className="flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-2xl sm:rounded-[24px] bg-red-600 px-4 sm:px-6 py-4 sm:py-6 text-base sm:text-xl md:text-2xl font-black tracking-tight text-white uppercase shadow-2xl shadow-red-600/40 transition-all hover:bg-red-700 disabled:opacity-50 text-center cursor-pointer"
                                     >
                                         {submitting ? (
                                             <LoadingTimeUI
@@ -961,15 +963,14 @@ export default function SOS({
                                                 label="SENDING EMERGENCY REPORT..."
                                                 showProgress
                                                 showTime={false}
-                                                className="text-lg text-white sm:text-xl"
+                                                className="text-base sm:text-xl text-white"
                                             />
                                         ) : (
                                             <>
                                                 <Siren
-                                                    size={28}
-                                                    className="animate-bounce"
+                                                    className="w-5 h-5 sm:w-7 sm:h-7 shrink-0 animate-bounce"
                                                 />
-                                                <span>
+                                                <span className="leading-tight">
                                                     SEND EMERGENCY REPORT
                                                 </span>
                                             </>

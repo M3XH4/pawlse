@@ -37,11 +37,11 @@ export default function Register() {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
+                        <div className="grid gap-4 sm:gap-5">
                             {/* Full Name separated into First Name, Middle Initial, Last Name */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                                <div className="sm:col-span-5 grid gap-2">
-                                    <Label htmlFor="first_name">
+                            <div className="grid grid-cols-12 gap-2.5 sm:gap-3">
+                                <div className="col-span-8 sm:col-span-5 grid gap-1.5">
+                                    <Label htmlFor="first_name" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500">
                                         First Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
@@ -53,13 +53,14 @@ export default function Register() {
                                         autoComplete="given-name"
                                         name="first_name"
                                         placeholder="e.g. Juan"
+                                        className="h-11 sm:h-12 px-3.5 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm"
                                     />
                                     <InputError message={errors.first_name} />
                                 </div>
 
-                                <div className="sm:col-span-2 grid gap-2">
-                                    <Label htmlFor="middle_initial">
-                                        M.I. <span className="text-[10px] text-gray-400 font-normal">(Optional)</span>
+                                <div className="col-span-4 sm:col-span-2 grid gap-1.5">
+                                    <Label htmlFor="middle_initial" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500 whitespace-nowrap">
+                                        M.I. <span className="text-[9px] text-gray-400 font-semibold normal-case">(Opt.)</span>
                                     </Label>
                                     <Input
                                         id="middle_initial"
@@ -69,13 +70,13 @@ export default function Register() {
                                         autoComplete="additional-name"
                                         name="middle_initial"
                                         placeholder="M.I."
-                                        className="uppercase text-center"
+                                        className="h-11 sm:h-12 px-2 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm uppercase text-center"
                                     />
                                     <InputError message={errors.middle_initial} />
                                 </div>
 
-                                <div className="sm:col-span-5 grid gap-2">
-                                    <Label htmlFor="last_name">
+                                <div className="col-span-12 sm:col-span-5 grid gap-1.5">
+                                    <Label htmlFor="last_name" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500">
                                         Last Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
@@ -86,14 +87,15 @@ export default function Register() {
                                         autoComplete="family-name"
                                         name="last_name"
                                         placeholder="e.g. Dela Cruz"
+                                        className="h-11 sm:h-12 px-3.5 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm"
                                     />
                                     <InputError message={errors.last_name} />
                                 </div>
                             </div>
                             {errors.name && <InputError message={errors.name} />}
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="email" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500">
                                     Email address <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
@@ -104,12 +106,13 @@ export default function Register() {
                                     autoComplete="email"
                                     name="email"
                                     placeholder="email@example.com"
+                                    className="h-11 sm:h-12 px-3.5 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="password" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500">
                                     Password <span className="text-red-500">*</span>
                                 </Label>
                                 <PasswordInput
@@ -121,13 +124,14 @@ export default function Register() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Create a strong password"
+                                    className="h-11 sm:h-12 px-3.5 pr-11 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm"
                                 />
                                 <PasswordStrengthIndicator password={password} />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="password_confirmation" className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-500">
                                     Confirm password <span className="text-red-500">*</span>
                                 </Label>
                                 <PasswordInput
@@ -137,6 +141,7 @@ export default function Register() {
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
+                                    className="h-11 sm:h-12 px-3.5 pr-11 rounded-xl border-2 border-gray-200 focus:border-paw-blue bg-gray-50/70 focus:bg-white font-semibold text-sm"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -195,11 +200,11 @@ export default function Register() {
                                 tabIndex={8}
                                 data-test="register-user-button"
                                 disabled={processing}
-                                className={`w-full py-3 md:py-4 lg:py-6 rounded-xl md:rounded-[2rem] font-black text-sm md:text-base lg:text-lg tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 md:gap-4 ${processing ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-paw-navy text-white hover:bg-paw-orange'}`}
+                                className={`w-full h-12 md:h-14 rounded-xl md:rounded-[2rem] font-black text-sm md:text-base tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 md:gap-3 cursor-pointer ${processing ? 'bg-gray-300 text-white cursor-not-allowed' : 'bg-paw-navy text-white hover:bg-paw-orange'}`}
                             >
                                 {processing && <Spinner showProgress={false} />}
-                                {processing ? 'CREATING ACCOUNT...' : 'REGISTER NOW'}
-                                {!processing && <UserPlus size={20} className="md:w-6 md:h-6" />}
+                                <span>{processing ? 'CREATING ACCOUNT...' : 'REGISTER NOW'}</span>
+                                {!processing && <UserPlus size={18} className="md:w-5 md:h-5 shrink-0" />}
                             </Button>
                         </div>
 

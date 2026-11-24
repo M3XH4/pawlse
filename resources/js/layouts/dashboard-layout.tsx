@@ -144,7 +144,7 @@ export default function DashboardLayout({
                             </div>
                         </div>
                     )}
-                    <main className="flex-1 px-4 pb-8 pt-3 sm:px-6 lg:px-8">
+                    <main className="min-w-0 flex-1 overflow-x-hidden px-4 pb-8 pt-3 sm:px-6 lg:px-8">
                         {isNavigating ? <DashboardRouteSkeleton targetPath={targetPath} /> : children}
                     </main>
                 </div>

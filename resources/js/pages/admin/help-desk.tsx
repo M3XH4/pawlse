@@ -237,20 +237,20 @@ export default function AdminHelpDesk({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-px dark:border-gray-800">
+            <div className="flex flex-nowrap items-center gap-1 sm:gap-2 overflow-x-auto hide-scrollbar border-b border-gray-100 pb-px dark:border-gray-800">
                 <button
                     type="button"
                     onClick={() => setActiveTab('incoming')}
                     className={cn(
-                        'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
+                        'shrink-0 whitespace-nowrap flex items-center gap-2 border-b-2 px-3.5 sm:px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'incoming'
                             ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400'
                             : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     )}
                 >
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageSquare className="h-4 w-4 shrink-0" />
                     <span>Incoming Tickets</span>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                         {tickets.total}
                     </span>
                 </button>
@@ -259,15 +259,15 @@ export default function AdminHelpDesk({
                     type="button"
                     onClick={() => setActiveTab('escalated')}
                     className={cn(
-                        'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
+                        'shrink-0 whitespace-nowrap flex items-center gap-2 border-b-2 px-3.5 sm:px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'escalated'
                             ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
                             : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     )}
                 >
-                    <ShieldAlert className="h-4 w-4" />
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
                     <span>Ask Super Admin & Escalations</span>
-                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                    <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
                         {stats.escalated}
                     </span>
                 </button>
@@ -276,15 +276,15 @@ export default function AdminHelpDesk({
                     type="button"
                     onClick={() => setActiveTab('faqs')}
                     className={cn(
-                        'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
+                        'shrink-0 whitespace-nowrap flex items-center gap-2 border-b-2 px-3.5 sm:px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
                         activeTab === 'faqs'
                             ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400'
                             : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     )}
                 >
-                    <BookOpen className="h-4 w-4" />
+                    <BookOpen className="h-4 w-4 shrink-0" />
                     <span>Frequent Problems & Solutions</span>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                         {frequentProblems.length}
                     </span>
                 </button>

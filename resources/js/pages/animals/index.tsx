@@ -243,8 +243,8 @@ export default function AnimalOverview({
       <main className="flex-1 py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Top Banner Header */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 md:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 mb-8 relative overflow-hidden">
-            <div className="max-w-3xl">
+          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-10 md:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 mb-8 relative overflow-hidden">
+            <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-orange-600 text-xs font-black uppercase tracking-wider mb-4">
                 <Sparkles size={13} />
                 ANIMAL MASTER REGISTRY
@@ -258,29 +258,29 @@ export default function AnimalOverview({
                 A public registry of all animals currently under ISF care. Here you can follow their recovery journeys, check health records, view foster placements, and explore adoptable pets.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-nowrap items-center justify-center md:justify-start gap-2 sm:gap-3">
                 <Link
                   href="/adopt"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                  className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] sm:text-xs whitespace-nowrap shadow-md shadow-amber-500/20 transition-all cursor-pointer"
                 >
-                  <Heart size={14} fill="currentColor" />
-                  View Adoptable Pets Page
+                  <Heart size={13} fill="currentColor" className="shrink-0 sm:w-3.5 sm:h-3.5" />
+                  <span>View Adoptable Pets<span className="hidden sm:inline"> Page</span></span>
                 </Link>
 
                 <Link
                   href="/donate"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs transition-all cursor-pointer"
+                  className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-[11px] sm:text-xs whitespace-nowrap transition-all cursor-pointer"
                 >
-                  <Building2 size={14} className="text-slate-500" />
-                  Sponsor Shelter Care
+                  <Building2 size={13} className="text-slate-500 shrink-0 sm:w-3.5 sm:h-3.5" />
+                  <span>Sponsor Shelter Care</span>
                 </Link>
               </div>
             </div>
           </div>
 
           {/* Metric Summary Status Boxes with Big Background Lucide Icons */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
-            {statusBoxes.map((stat) => {
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
+            {statusBoxes.map((stat, idx) => {
               const isSelected = statusFilter === stat.status;
               const IconComponent = stat.icon;
               return (
@@ -289,6 +289,8 @@ export default function AnimalOverview({
                   type="button"
                   onClick={() => setStatusFilter(stat.status)}
                   className={`relative overflow-hidden p-4 sm:p-5 rounded-2xl border transition-all text-left cursor-pointer group flex flex-col justify-end min-h-[105px] ${
+                    idx === 0 ? 'col-span-2 sm:col-span-3 lg:col-span-1' : ''
+                  } ${
                     isSelected
                       ? `${stat.activeBorder} bg-white shadow-md scale-[1.02]`
                       : `border-slate-100/90 hover:border-slate-300 shadow-2xs hover:shadow-xs ${stat.bg}`
@@ -406,7 +408,7 @@ export default function AnimalOverview({
 
             {/* Row 2: Status Filter Tabs with Lucide Icons & Counts */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+              <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar py-1">
                 {[
                   { key: 'all', label: 'All Statuses', icon: PawPrint, count: counts.all },
                   { key: 'rescued_shelter', label: 'Rescued', icon: ShieldCheck, count: computedRescuedShelterCount },

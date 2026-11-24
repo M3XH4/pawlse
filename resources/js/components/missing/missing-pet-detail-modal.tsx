@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X,
     MapPin,
@@ -45,13 +46,13 @@ export function MissingPetDetailModal({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!isOpen || !pet) return null;
+    if (!isOpen || !pet || typeof document === 'undefined') return null;
 
     const isFound = pet.status.toUpperCase() === 'FOUND' || pet.rawStatus === 'resolved';
 
-    return (
+    return createPortal(
         <AnimatePresence>
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-3 sm:p-4">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -65,41 +66,34 @@ export function MissingPetDetailModal({
                     animate={{ scale: 1, y: 0, opacity: 1 }}
                     exit={{ scale: 0.92, y: 20, opacity: 0 }}
                     transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                    className="bg-white rounded-[3.5rem] max-w-4xl w-full shadow-2xl max-h-[92vh] overflow-hidden flex flex-col relative z-10"
+                    className="bg-white rounded-[2rem] sm:rounded-[3.5rem] max-w-4xl w-full shadow-2xl max-h-[92vh] overflow-hidden flex flex-col relative z-10"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="p-8 md:p-10 border-b border-gray-100 shrink-0">
-                        <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-6 items-center min-w-0">
-                                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-paw-orange/20 shrink-0 relative bg-gray-100">
-                                    <ImageWithFallback
-                                        src={pet.img}
-                                        alt={pet.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="inline-flex items-center gap-2 bg-paw-blue/10 px-3 py-1.5 rounded-full mb-2 border border-paw-blue/20">
-                                        <Search size={14} className="text-paw-blue" />
-                                        <span className="text-[10px] font-black tracking-widest uppercase text-paw-blue">
-                                            {pet.status}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-paw-navy truncate pe-2">
-                                        {pet.name}
-                                    </h3>
-                                    <p className="text-sm font-bold text-gray-500 mt-1 truncate">
-                                        {pet.type} • {pet.breed}
-                                    </p>
+                    <div className="p-4 sm:p-8 md:p-10 border-b border-gray-100 shrink-0">
+                        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3.5 gap-y-2.5 sm:gap-x-6 sm:gap-y-1.5">
+                            <div className="row-start-2 col-start-1 sm:row-start-1 sm:row-span-2 sm:self-center w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-paw-orange/20 shrink-0 relative bg-gray-100">
+                                <ImageWithFallback
+                                    src={pet.img}
+                                    alt={pet.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            <div className="row-start-1 col-start-1 col-span-2 sm:col-start-2 sm:col-span-1 justify-self-start self-center">
+                                <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-paw-blue/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-paw-blue/20">
+                                    <Search size={12} className="text-paw-blue shrink-0 sm:w-3.5 sm:h-3.5" />
+                                    <span className="text-[10px] font-black tracking-widest uppercase text-paw-blue whitespace-nowrap">
+                                        {pet.status}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="row-start-1 col-start-3 sm:self-start justify-self-end flex items-center gap-2 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => onShare(pet)}
-                                    className="h-10 px-4 rounded-xl bg-orange-50 hover:bg-orange-100 text-paw-orange flex items-center gap-2 font-black text-xs uppercase tracking-wider transition-colors shadow-sm"
+                                    className="h-9 sm:h-10 px-2.5 sm:px-4 rounded-xl bg-orange-50 hover:bg-orange-100 text-paw-orange flex items-center gap-2 font-black text-xs uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
                                     title="Share Missing Pet Alert"
                                 >
                                     <Share2 size={16} />
@@ -108,17 +102,26 @@ export function MissingPetDetailModal({
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors"
+                                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-paw-navy transition-colors cursor-pointer"
                                     title="Close (Esc)"
                                 >
-                                    <X size={20} />
+                                    <X size={18} className="sm:w-5 sm:h-5" />
                                 </button>
+                            </div>
+
+                            <div className="row-start-2 col-start-2 col-span-2 sm:col-start-2 sm:col-span-2 min-w-0">
+                                <h3 className="text-xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight text-paw-navy leading-tight break-words">
+                                    {pet.name}
+                                </h3>
+                                <p className="text-xs sm:text-sm font-bold text-gray-500 mt-0.5 sm:mt-1 break-words">
+                                    {pet.type} • {pet.breed}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Scrollable Content */}
-                    <div className="p-8 md:p-10 overflow-y-auto contact-modal-scroll flex-1 space-y-8">
+                    <div className="p-4 sm:p-8 md:p-10 overflow-y-auto contact-modal-scroll flex-1 space-y-6 sm:space-y-8">
                         {/* Reward Banner */}
                         {pet.reward && (
                             <div className="bg-gradient-to-r from-paw-yellow via-orange-400 to-paw-orange rounded-3xl p-6 shadow-xl text-white">
@@ -150,34 +153,34 @@ export function MissingPetDetailModal({
 
                         {/* Pet Traits Grid */}
                         <div>
-                            <h4 className="text-lg font-black text-paw-navy uppercase tracking-tight mb-4 flex items-center gap-2">
-                                <PawPrint size={20} className="text-paw-orange" />
+                            <h4 className="text-base sm:text-lg font-black text-paw-navy uppercase tracking-tight mb-3 sm:mb-4 flex items-center gap-2">
+                                <PawPrint size={18} className="text-paw-orange sm:w-5 sm:h-5" />
                                 Pet Details
                             </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div className="bg-gradient-to-br from-paw-orange/10 to-paw-orange/5 rounded-2xl p-4 border border-paw-orange/20">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
+                                <div className="bg-gradient-to-br from-paw-orange/10 to-paw-orange/5 rounded-2xl p-3 sm:p-4 border border-paw-orange/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Breed</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.breed}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.breed}</p>
                                 </div>
-                                <div className="bg-gradient-to-br from-paw-blue/10 to-paw-blue/5 rounded-2xl p-4 border border-paw-blue/20">
+                                <div className="bg-gradient-to-br from-paw-blue/10 to-paw-blue/5 rounded-2xl p-3 sm:p-4 border border-paw-blue/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Age</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.age}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.age}</p>
                                 </div>
-                                <div className="bg-gradient-to-br from-paw-green/10 to-paw-green/5 rounded-2xl p-4 border border-paw-green/20">
+                                <div className="bg-gradient-to-br from-paw-green/10 to-paw-green/5 rounded-2xl p-3 sm:p-4 border border-paw-green/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gender</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.gender}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.gender}</p>
                                 </div>
-                                <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-2xl p-4 border border-purple-500/20">
+                                <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-2xl p-3 sm:p-4 border border-purple-500/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Color</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.color}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.color}</p>
                                 </div>
-                                <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-2xl p-4 border border-pink-500/20">
+                                <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-2xl p-3 sm:p-4 border border-pink-500/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Size</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.size}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.size}</p>
                                 </div>
-                                <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-2xl p-4 border border-red-500/20">
+                                <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-2xl p-3 sm:p-4 border border-red-500/20">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
-                                    <p className="text-sm font-black text-paw-navy truncate">{pet.type}</p>
+                                    <p className="text-xs sm:text-sm font-black text-paw-navy truncate">{pet.type}</p>
                                 </div>
                             </div>
                         </div>
@@ -325,37 +328,37 @@ export function MissingPetDetailModal({
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-8 md:p-10 border-t border-gray-100 bg-gray-50 shrink-0">
-                        <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="p-4 sm:p-6 md:p-10 border-t border-gray-100 bg-gray-50 shrink-0">
+                        <div className="flex flex-row items-center gap-2 sm:gap-3">
                             {!isFound ? (
                                 <>
                                     <a
                                         href={`tel:${pet.owner.phone}`}
-                                        className="flex-1 bg-paw-green text-white py-4 md:py-5 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2"
+                                        className="flex-1 min-w-0 bg-paw-green text-white py-3 sm:py-4 md:py-5 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-black text-[11px] sm:text-sm tracking-wide sm:tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap"
                                     >
-                                        <Phone size={18} />
-                                        CALL NOW
+                                        <Phone size={15} className="shrink-0 sm:w-[18px] sm:h-[18px]" />
+                                        <span>CALL NOW</span>
                                     </a>
                                     {pet.owner.email && pet.owner.email !== 'N/A' && (
                                         <a
                                             href={`mailto:${pet.owner.email}`}
-                                            className="flex-1 bg-paw-orange text-white py-4 md:py-5 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2"
+                                            className="flex-1 min-w-0 bg-paw-orange text-white py-3 sm:py-4 md:py-5 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-black text-[11px] sm:text-sm tracking-wide sm:tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap"
                                         >
-                                            <Mail size={18} />
-                                            SEND EMAIL
+                                            <Mail size={15} className="shrink-0 sm:w-[18px] sm:h-[18px]" />
+                                            <span>SEND EMAIL</span>
                                         </a>
                                     )}
                                     <button
                                         type="button"
                                         onClick={() => onShare(pet)}
-                                        className="sm:w-auto px-6 bg-paw-navy text-white py-4 md:py-5 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-paw-orange transition-all shadow-xl flex items-center justify-center gap-2"
+                                        className="shrink-0 sm:w-auto px-3 sm:px-6 bg-paw-navy text-white py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-2xl font-black text-[11px] sm:text-sm tracking-wide sm:tracking-widest uppercase hover:bg-paw-orange transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer"
                                     >
-                                        <Share2 size={18} />
+                                        <Share2 size={15} className="shrink-0 sm:w-[18px] sm:h-[18px]" />
                                         <span>SHARE</span>
                                     </button>
                                 </>
                             ) : (
-                                <div className="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 py-4 md:py-5 rounded-2xl font-black text-sm tracking-widest uppercase">
+                                <div className="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 py-3.5 sm:py-4 md:py-5 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm tracking-wider sm:tracking-widest uppercase">
                                     <PawPrint size={18} />
                                     PET SAFELY REUNITED WITH FAMILY
                                 </div>
@@ -364,6 +367,7 @@ export function MissingPetDetailModal({
                     </div>
                 </motion.div>
             </div>
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
     );
 }

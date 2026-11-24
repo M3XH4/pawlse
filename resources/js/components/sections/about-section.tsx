@@ -2,6 +2,7 @@
 import { Users, ArrowRight, User, MapPin, Sparkles, X } from 'lucide-react';
 import { motion, AnimatePresence, useAnimationFrame } from 'motion/react';
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 const teamMembers = [
@@ -240,114 +241,118 @@ export function AboutSections() {
     }
   });
 
+  const memberModal = (
+    <AnimatePresence>
+      {selectedMember && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-paw-navy/70 backdrop-blur-md z-[120] flex items-center justify-center p-3 sm:p-6"
+          onClick={() => setSelectedMember(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.94, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.94, opacity: 0, y: 16 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="bg-white rounded-[2rem] sm:rounded-[2.5rem] max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Fixed Header */}
+            <div className="p-4 sm:p-8 border-b border-gray-100 bg-white flex items-start justify-between gap-3 sm:gap-4 shrink-0">
+              <div className="flex gap-3.5 sm:gap-6 items-center min-w-0">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-md border-2 border-paw-green/30 shrink-0">
+                  <ImageWithFallback
+                    src={selectedMember.img}
+                    alt={selectedMember.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-1.5 bg-paw-green/10 text-paw-green px-2.5 sm:px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1.5 border border-paw-green/20">
+                    <Users size={12} />
+                    <span>{selectedMember.role}</span>
+                  </div>
+                  <h3 className="text-xl sm:text-3xl font-black italic uppercase tracking-tight text-paw-navy leading-tight">
+                    {selectedMember.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 text-xs font-bold text-gray-500">
+                    <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                      <User size={13} className="text-paw-blue shrink-0" />
+                      <span>{selectedMember.yearsActive}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                      <MapPin size={13} className="text-paw-orange shrink-0" />
+                      <span>{selectedMember.rescues}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedMember(null)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+                title="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable Content Body with subtle customized scrollbar */}
+            <div className="p-4 sm:p-8 overflow-y-auto flex-1 space-y-5 sm:space-y-6 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+              <div className="bg-gradient-to-br from-paw-green/5 via-blue-50/20 to-white rounded-3xl p-5 sm:p-7 border border-paw-green/15 shadow-xs">
+                <h4 className="text-sm sm:text-base font-black text-paw-navy uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
+                  <Sparkles size={18} className="text-paw-green shrink-0" />
+                  <span>My Journey to Iligan Stray Feeders</span>
+                </h4>
+                <div className="space-y-4 text-sm sm:text-base text-gray-700 font-medium leading-relaxed">
+                  {selectedMember.story.split('\n\n').map((paragraph, i) => (
+                    <p key={i}>
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-paw-navy text-white rounded-3xl p-5 sm:p-7 shadow-lg relative overflow-hidden">
+                <div className="absolute top-2 right-4 text-8xl font-serif text-white/5 pointer-events-none select-none">
+                  "
+                </div>
+                <div className="relative z-10">
+                  <p className="text-base sm:text-lg font-bold italic leading-relaxed text-white/95 mb-3">
+                    "{selectedMember.quote}"
+                  </p>
+                  <p className="text-xs font-black text-paw-yellow uppercase tracking-widest">
+                    — {selectedMember.name}, <span className="text-white/70">{selectedMember.role}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Fixed Footer */}
+            <div className="px-4 sm:px-8 py-3.5 sm:py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-3 shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold text-gray-500 leading-snug min-w-0">
+                Iligan Stray Feeders Volunteer Network
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedMember(null)}
+                className="px-4 sm:px-5 py-2 rounded-xl bg-paw-navy hover:bg-paw-orange text-white text-xs font-black tracking-wider uppercase transition shadow-xs cursor-pointer shrink-0"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <>
-      <AnimatePresence>
-        {selectedMember && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-paw-navy/70 backdrop-blur-md z-[60] flex items-center justify-center p-4 sm:p-6"
-            onClick={() => setSelectedMember(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.94, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0, y: 16 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white rounded-[2.5rem] max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Fixed Header */}
-              <div className="p-6 sm:p-8 border-b border-gray-100 bg-white flex items-start justify-between gap-4 shrink-0">
-                <div className="flex gap-5 sm:gap-6 items-center">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-md border-2 border-paw-green/30 shrink-0">
-                    <ImageWithFallback
-                      src={selectedMember.img}
-                      alt={selectedMember.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 bg-paw-green/10 text-paw-green px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1.5 border border-paw-green/20">
-                      <Users size={12} />
-                      <span>{selectedMember.role}</span>
-                    </div>
-                    <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tight text-paw-navy">
-                      {selectedMember.name}
-                    </h3>
-                    <div className="flex flex-wrap gap-3 mt-2 text-xs font-bold text-gray-500">
-                      <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
-                        <User size={13} className="text-paw-blue shrink-0" />
-                        <span>{selectedMember.yearsActive}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
-                        <MapPin size={13} className="text-paw-orange shrink-0" />
-                        <span>{selectedMember.rescues}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedMember(null)}
-                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
-                  title="Close modal"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* Scrollable Content Body with subtle customized scrollbar */}
-              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-                <div className="bg-gradient-to-br from-paw-green/5 via-blue-50/20 to-white rounded-3xl p-6 sm:p-7 border border-paw-green/15 shadow-xs">
-                  <h4 className="text-base font-black text-paw-navy uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Sparkles size={18} className="text-paw-green" />
-                    My Journey to Iligan Stray Feeders
-                  </h4>
-                  <div className="space-y-4 text-sm sm:text-base text-gray-700 font-medium leading-relaxed">
-                    {selectedMember.story.split('\n\n').map((paragraph, i) => (
-                      <p key={i}>
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-paw-navy text-white rounded-3xl p-6 sm:p-7 shadow-lg relative overflow-hidden">
-                  <div className="absolute top-2 right-4 text-8xl font-serif text-white/5 pointer-events-none select-none">
-                    "
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-base sm:text-lg font-bold italic leading-relaxed text-white/95 mb-3">
-                      "{selectedMember.quote}"
-                    </p>
-                    <p className="text-xs font-black text-paw-yellow uppercase tracking-widest">
-                      — {selectedMember.name}, <span className="text-white/70">{selectedMember.role}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fixed Footer */}
-              <div className="px-6 sm:px-8 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between shrink-0">
-                <span className="text-xs font-bold text-gray-400">
-                  Iligan Stray Feeders Volunteer Network
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMember(null)}
-                  className="px-5 py-2 rounded-xl bg-paw-navy hover:bg-paw-orange text-white text-xs font-black tracking-wider uppercase transition shadow-xs cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {typeof document !== 'undefined' ? createPortal(memberModal, document.body) : memberModal}
 
       <div className="max-w-7xl mx-auto overflow-hidden px-4 py-16">
       {/* Founder Story */}
@@ -381,9 +386,9 @@ export function AboutSections() {
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
                 onClick={() => setSelectedMember(member)}
-                className="bg-white p-6 sm:p-8 rounded-3xl sm:rounded-[3.5rem] shadow-2xl border border-gray-50 group text-center cursor-pointer flex-shrink-0 w-[270px] sm:w-[320px]"
+                className="bg-white p-6 sm:p-8 rounded-3xl sm:rounded-[3.5rem] shadow-2xl border border-gray-50 group text-center cursor-pointer shrink-0 w-[270px] sm:w-[320px] flex flex-col"
               >
-                <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-6 border-8 border-gray-50 group-hover:border-paw-green transition-all shadow-xl">
+                <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-6 border-8 border-gray-50 group-hover:border-paw-green transition-all shadow-xl shrink-0">
                   <ImageWithFallback src={member.img} alt={member.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                 </div>
                 <h3 className="text-xl font-black text-paw-navy italic uppercase tracking-tighter mb-1 leading-tight">{member.name}</h3>
@@ -395,10 +400,10 @@ export function AboutSections() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 justify-center text-[10px] font-bold text-gray-400 mb-6">
-                  <MapPin size={12} className="text-paw-orange" />
+                  <MapPin size={12} className="text-paw-orange shrink-0" />
                   <span className="line-clamp-1">{member.rescues}</span>
                 </div>
-                <button className="w-full bg-gray-50 text-paw-navy py-3 rounded-xl font-black text-xs tracking-widest uppercase hover:bg-paw-green hover:text-white transition-all group-hover:bg-paw-green group-hover:text-white flex items-center justify-center gap-2">
+                <button className="mt-auto w-full bg-gray-50 text-paw-navy py-3 rounded-xl font-black text-xs tracking-widest uppercase hover:bg-paw-green hover:text-white transition-all group-hover:bg-paw-green group-hover:text-white flex items-center justify-center gap-2 shrink-0">
                   READ STORY
                   <ArrowRight size={14} />
                 </button>

@@ -2,6 +2,7 @@ import { Form, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bell,
     BellOff,
+    BellRing,
     Camera,
     Check,
     CheckCircle2,
@@ -15,8 +16,10 @@ import {
     Monitor,
     Moon,
     Phone,
+    Send,
     Shield,
     ShieldCheck,
+    Smartphone,
     Sparkles,
     Sun,
     Trash2,
@@ -40,6 +43,13 @@ import { Label } from '@/components/ui/label';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
+import {
+    disablePushNotifications,
+    enablePushNotifications,
+    getPushCapabilityStatus,
+    sendTestPushNotification,
+    type PushCapabilityStatus,
+} from '@/lib/push-notifications';
 import { cn } from '@/lib/utils';
 import { send } from '@/routes/verification';
 import { disable, enable } from '@/routes/two-factor';
@@ -61,7 +71,7 @@ export default function SharedAccountSettings({
     requiresConfirmation = false,
     twoFactorEnabled = false,
 }: SharedAccountSettingsProps) {
-    const { auth } = usePage().props;
+    const { auth, webPush } = usePage().props;
     const user = auth.user;
 
     const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
@@ -130,7 +140,93 @@ export default function SharedAccountSettings({
         digest: true,
         security: true,
     });
+    const [suppressWhenVisible, setSuppressWhenVisible] = useState<boolean>(
+        () => user?.push_suppress_when_visible ?? true,
+    );
+    const [pushStatus, setPushStatus] = useState<PushCapabilityStatus>('loading');
+    const [pushBusy, setPushBusy] = useState(false);
+    const [pushTestBusy, setPushTestBusy] = useState(false);
     const [isSavingNotifs, setIsSavingNotifs] = useState(false);
+
+    useEffect(() => {
+        if (typeof user?.push_suppress_when_visible === 'boolean') {
+            setSuppressWhenVisible(user.push_suppress_when_visible);
+        }
+    }, [user?.push_suppress_when_visible]);
+
+    useEffect(() => {
+        let active = true;
+
+        const evaluatePush = async () => {
+            const resolved = await getPushCapabilityStatus(
+                Boolean(user && user.email_verified_at),
+                webPush,
+            );
+            if (active) {
+                setPushStatus(resolved);
+            }
+        };
+
+        void evaluatePush();
+
+        const handleStatusChange = () => {
+            void evaluatePush();
+        };
+
+        window.addEventListener('pawlse:push-status-changed', handleStatusChange);
+
+        return () => {
+            active = false;
+            window.removeEventListener('pawlse:push-status-changed', handleStatusChange);
+        };
+    }, [user, webPush]);
+
+    const handleEnableDevicePush = async () => {
+        if (!webPush?.publicKey || pushBusy) {
+            return;
+        }
+
+        setPushBusy(true);
+        const result = await enablePushNotifications(webPush.publicKey);
+        setPushBusy(false);
+        setPushStatus(result.status);
+
+        if (result.ok) {
+            toast.success('Phone notifications enabled for this device!');
+            router.reload({ only: ['webPush'] });
+        } else if (result.error) {
+            toast.error(result.error);
+        }
+    };
+
+    const handleDisableDevicePush = async () => {
+        if (pushBusy) {
+            return;
+        }
+
+        setPushBusy(true);
+        await disablePushNotifications();
+        setPushBusy(false);
+        setPushStatus('prompt');
+        toast.success('Phone notifications disabled for this device.');
+        router.reload({ only: ['webPush'] });
+    };
+
+    const handleSendTestPush = async () => {
+        if (pushTestBusy) {
+            return;
+        }
+
+        setPushTestBusy(true);
+        const result = await sendTestPushNotification();
+        setPushTestBusy(false);
+
+        if (result.ok) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
+        }
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem('pawlse-notif-prefs');
@@ -155,7 +251,10 @@ export default function SharedAccountSettings({
 
         router.patch(
             '/settings/notifications',
-            { sidebar_notification_style: sidebarNotifStyle },
+            {
+                sidebar_notification_style: sidebarNotifStyle,
+                push_suppress_when_visible: suppressWhenVisible,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -694,6 +793,133 @@ export default function SharedAccountSettings({
                             <h3 className="font-fredoka text-xl font-bold text-paw-navy dark:text-white">Notification Preferences</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Configure how and where you receive notifications across the platform.</p>
                         </div>
+                        <hr className="border-gray-100 dark:border-slate-800" />
+
+                        {/* Mobile & Browser Push Notifications */}
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold text-paw-navy dark:text-white flex items-center gap-2">
+                                    <Smartphone className="h-4 w-4 text-paw-orange" />
+                                    Mobile App &amp; Phone Push Notifications
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Receive native notifications on your installed mobile app or browser. Alerts are linked strictly to your signed-in account and automatically turn off when you sign out.
+                                </p>
+                            </div>
+
+                            <div className="max-w-2xl rounded-2xl border border-gray-200 bg-gray-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-start gap-3">
+                                        <span
+                                            className={cn(
+                                                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                                                pushStatus === 'subscribed'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                                    : pushStatus === 'denied'
+                                                      ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400'
+                                                      : 'bg-orange-100 text-paw-orange dark:bg-orange-950/50',
+                                            )}
+                                        >
+                                            <BellRing className="h-5 w-5" />
+                                        </span>
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="text-sm font-semibold text-[#0B2340] dark:text-white">
+                                                    {pushStatus === 'subscribed' && 'Active on this device'}
+                                                    {pushStatus === 'prompt' && 'Not enabled on this device'}
+                                                    {pushStatus === 'denied' && 'Blocked in browser or phone settings'}
+                                                    {pushStatus === 'ios-install-required' && 'Add to Home Screen required (iOS)'}
+                                                    {pushStatus === 'unsupported' && 'Not supported in this browser'}
+                                                    {pushStatus === 'unconfigured' && 'Push service unavailable'}
+                                                    {pushStatus === 'unauthenticated' && 'Verify your email to enable push alerts'}
+                                                    {pushStatus === 'loading' && 'Checking device support...'}
+                                                </p>
+                                                {webPush && webPush.devicesCount > 0 && (
+                                                    <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                        {webPush.devicesCount} {webPush.devicesCount === 1 ? 'device' : 'devices'} linked
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                {pushStatus === 'subscribed' &&
+                                                    'Your phone or browser will receive PAWLSE notifications while signed in.'}
+                                                {pushStatus === 'prompt' &&
+                                                    'Tap Enable Phone Notifications to receive real-time alerts even when the app is closed.'}
+                                                {pushStatus === 'denied' &&
+                                                    'Open your browser or phone site settings for PAWLSE and set Notifications to Allow.'}
+                                                {pushStatus === 'ios-install-required' &&
+                                                    'On iPhone or iPad, tap Share → Add to Home Screen, then open the installed PAWLSE app to enable alerts.'}
+                                                {pushStatus === 'unsupported' &&
+                                                    'Web Push requires HTTPS and a modern browser (Android Chrome, iOS 16.4+ Home Screen PWA, or desktop).'}
+                                                {pushStatus === 'unconfigured' &&
+                                                    'Server VAPID keys are not configured yet.'}
+                                                {pushStatus === 'unauthenticated' &&
+                                                    'Only verified signed-in accounts can link a device for push notifications.'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+                                        {pushStatus === 'prompt' && (
+                                            <Button
+                                                type="button"
+                                                onClick={handleEnableDevicePush}
+                                                disabled={pushBusy}
+                                                className="w-full sm:w-auto rounded-xl bg-paw-orange text-white hover:bg-paw-orange/90"
+                                            >
+                                                {pushBusy ? 'Enabling...' : 'Enable Phone Notifications'}
+                                            </Button>
+                                        )}
+
+                                        {pushStatus === 'subscribed' && (
+                                            <>
+                                                {webPush?.testAlertEnabled && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={handleSendTestPush}
+                                                        disabled={pushTestBusy || pushBusy}
+                                                        className="flex-1 sm:flex-none rounded-xl"
+                                                    >
+                                                        <Send className="mr-1.5 h-3.5 w-3.5" />
+                                                        {pushTestBusy ? 'Sending...' : 'Test Alert'}
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={handleDisableDevicePush}
+                                                    disabled={pushBusy}
+                                                    className="flex-1 sm:flex-none rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                                                >
+                                                    {pushBusy ? 'Disabling...' : 'Disable'}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 border-t border-gray-200/80 pt-3.5 dark:border-slate-800">
+                                    <div className="flex items-start gap-3">
+                                        <Checkbox
+                                            id="notif-suppress-foreground"
+                                            checked={suppressWhenVisible}
+                                            onCheckedChange={(checked) => setSuppressWhenVisible(!!checked)}
+                                            className="mt-0.5"
+                                        />
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor="notif-suppress-foreground" className="text-xs font-semibold cursor-pointer text-[#0B2340] dark:text-white">
+                                                Suppress phone banner while PAWLSE is open and visible
+                                            </Label>
+                                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                Avoids duplicate OS popups when you are actively viewing the app (click Save Notification Preferences below to persist).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <hr className="border-gray-100 dark:border-slate-800" />
 
                         {/* Sidebar Tab Notification Style Section */}

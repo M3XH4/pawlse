@@ -50,7 +50,7 @@ export default function Welcome({ pets = [], stories = [], missingPets = [], eve
 
             <Header />
 
-            <main className="relative z-0 overflow-y-hidden overflow-x-hidden">
+            <main className="relative overflow-y-hidden overflow-x-hidden">
                 <Hero stats={impactStats} />    
 
                 <ImpactStats stats={impactStats} />

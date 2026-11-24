@@ -381,7 +381,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
     };
 
     return (
-        <div className="min-h-screen bg-paw-bg font-quicksand">
+        <div className="min-h-screen bg-paw-bg font-quicksand overflow-x-hidden">
             <Header />
 
             <main className="py-12 pb-24">
@@ -1340,19 +1340,19 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                     </div>
 
                     {/* Information Cards Below Form - Matching ISF Volunteer Community UI */}
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="max-w-2xl"
+                            className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left min-w-0"
                         >
-                            <h2 className="text-4xl md:text-5xl font-black text-paw-navy mb-8 leading-tight">Join the ISF Volunteer Community</h2>
-                            <p className="text-gray-500 font-bold text-lg leading-relaxed mb-10">
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-paw-navy mb-6 sm:mb-8 leading-tight">Join the ISF Volunteer Community</h2>
+                            <p className="text-gray-500 font-bold text-base sm:text-lg leading-relaxed mb-8 sm:mb-10">
                                 Our volunteers are the heartbeat of ISF. From feeding runs and rescue operations to foster care and community events — every act of service makes a difference.
                             </p>
-                            <div className="flex flex-wrap gap-8">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-14 h-14 bg-paw-orange rounded-2xl flex items-center justify-center text-white shadow-xl shadow-paw-orange/30">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-6 sm:gap-8 justify-items-center lg:justify-start">
+                                <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 text-center sm:text-left">
+                                    <div className="w-14 h-14 bg-paw-orange rounded-2xl flex items-center justify-center text-white shadow-xl shadow-paw-orange/30 shrink-0">
                                         <Users size={26} />
                                     </div>
                                     <div>
@@ -1360,8 +1360,8 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                         <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest leading-none">ORGANIZATIONAL CORE</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-14 h-14 bg-paw-blue rounded-2xl flex items-center justify-center text-white shadow-xl shadow-paw-blue/30">
+                                <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 text-center sm:text-left">
+                                    <div className="w-14 h-14 bg-paw-blue rounded-2xl flex items-center justify-center text-white shadow-xl shadow-paw-blue/30 shrink-0">
                                         <Award size={26} />
                                     </div>
                                     <div>
@@ -1372,7 +1372,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                             </div>
                         </motion.div>
 
-                        <div className="relative">
+                        <div className="relative min-w-0">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                                 {VOLUNTEER_ROLES.map((role, i) => (
                                     <motion.div
@@ -1380,9 +1380,9 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.08 }}
-                                        className="bg-white p-6 rounded-[32px] shadow-xl shadow-paw-navy/5 border-2 border-gray-100/80 hover:border-paw-orange/30 transition-all group"
+                                        className="bg-white p-6 rounded-[32px] shadow-xl shadow-paw-navy/5 border-2 border-gray-100/80 hover:border-paw-orange/30 transition-all group text-center sm:text-left"
                                     >
-                                        <div className={`w-12 h-12 ${role.color} rounded-2xl flex items-center justify-center text-white mb-4 shadow-md shadow-black/5 group-hover:scale-110 transition-transform`}>
+                                        <div className={`w-12 h-12 ${role.color} rounded-2xl flex items-center justify-center text-white mb-4 shadow-md shadow-black/5 group-hover:scale-110 transition-transform mx-auto sm:mx-0`}>
                                             {role.icon}
                                         </div>
                                         <h3 className="text-lg font-black text-paw-navy mb-1.5 leading-tight">{role.title}</h3>
@@ -1390,7 +1390,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                     </motion.div>
                                 ))}
                             </div>
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-paw-orange/5 rounded-full blur-[100px] pointer-events-none" />
+                            <div className="absolute inset-0 bg-paw-orange/5 rounded-full blur-[100px] pointer-events-none" />
                         </div>
                     </div>
                 </div>

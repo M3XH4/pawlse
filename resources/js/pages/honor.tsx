@@ -143,7 +143,7 @@ export default function HonorPage({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="flex flex-wrap items-center justify-center gap-2 pt-6"
+                            className="flex flex-nowrap items-center justify-start sm:justify-center gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar pt-6 pb-1"
                         >
                             {tabs.map((tab) => {
                                 const isActive = selectedTab === tab.id;
@@ -151,7 +151,7 @@ export default function HonorPage({
                                     <button
                                         key={tab.id}
                                         onClick={() => setSelectedTab(tab.id)}
-                                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                                             isActive
                                                 ? 'bg-[#FFAE33] text-slate-900 shadow-md font-black shadow-amber-500/20'
                                                 : 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700'

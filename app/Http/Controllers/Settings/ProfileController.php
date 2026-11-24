@@ -72,11 +72,18 @@ class ProfileController extends Controller
     {
         $validated = $request->validate([
             'sidebar_notification_style' => ['required', 'string', Rule::in(['count', 'dot', 'none'])],
+            'push_suppress_when_visible' => ['sometimes', 'boolean'],
         ]);
 
-        $request->user()->update([
+        $attributes = [
             'sidebar_notification_style' => $validated['sidebar_notification_style'],
-        ]);
+        ];
+
+        if (array_key_exists('push_suppress_when_visible', $validated)) {
+            $attributes['push_suppress_when_visible'] = (bool) $validated['push_suppress_when_visible'];
+        }
+
+        $request->user()->update($attributes);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Notification preferences updated successfully!')]);
 

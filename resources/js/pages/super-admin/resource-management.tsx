@@ -212,63 +212,63 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
 
             <div className="space-y-6">
                 {/* 1. Metrics Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-black">
-                            <FolderDown size={20} />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                    <DashboardCard className="col-span-2 sm:col-span-1 p-3.5 sm:p-4 flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-black">
+                            <FolderDown size={18} />
                         </div>
-                        <div>
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.total}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Total Files</p>
-                        </div>
-                    </DashboardCard>
-
-                    <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black">
-                            <Download size={20} />
-                        </div>
-                        <div>
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.downloads}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Downloads</p>
+                        <div className="min-w-0">
+                            <span className="text-lg sm:text-xl font-black text-slate-800 dark:text-white leading-tight block">{stats.total}</span>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase truncate">Total Files</p>
                         </div>
                     </DashboardCard>
 
-                    <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black">
-                            <BookOpen size={20} />
+                    <DashboardCard className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black">
+                            <Download size={18} />
                         </div>
-                        <div>
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.boarding}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Boarding Lists</p>
-                        </div>
-                    </DashboardCard>
-
-                    <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-600 flex items-center justify-center font-black">
-                            <FileText size={20} />
-                        </div>
-                        <div>
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.guides}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Care Guides</p>
+                        <div className="min-w-0">
+                            <span className="text-lg sm:text-xl font-black text-slate-800 dark:text-white leading-tight block">{stats.downloads}</span>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase truncate">Downloads</p>
                         </div>
                     </DashboardCard>
 
-                    <DashboardCard className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gray-500/10 text-gray-600 flex items-center justify-center font-black">
-                            <RotateCcw size={20} />
+                    <DashboardCard className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black">
+                            <BookOpen size={18} />
                         </div>
-                        <div>
-                            <span className="text-xl font-black text-slate-800 dark:text-white">{stats.archived}</span>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase">Archived</p>
+                        <div className="min-w-0">
+                            <span className="text-lg sm:text-xl font-black text-slate-800 dark:text-white leading-tight block">{stats.boarding}</span>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase truncate">Boarding Lists</p>
+                        </div>
+                    </DashboardCard>
+
+                    <DashboardCard className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-cyan-500/10 text-cyan-600 flex items-center justify-center font-black">
+                            <FileText size={18} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-lg sm:text-xl font-black text-slate-800 dark:text-white leading-tight block">{stats.guides}</span>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase truncate">Care Guides</p>
+                        </div>
+                    </DashboardCard>
+
+                    <DashboardCard className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-gray-500/10 text-gray-600 flex items-center justify-center font-black">
+                            <RotateCcw size={18} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-lg sm:text-xl font-black text-slate-800 dark:text-white leading-tight block">{stats.archived}</span>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase truncate">Archived</p>
                         </div>
                     </DashboardCard>
                 </div>
 
                 {/* 2. Control Bar */}
-                <DashboardCard className="p-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full md:max-w-md flex items-center gap-2">
-                            <div className="relative flex-1">
+                <DashboardCard className="p-3.5 sm:p-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-4 min-w-0">
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full lg:max-w-md flex items-center gap-2 min-w-0">
+                            <div className="relative flex-1 min-w-0">
                                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input
                                     type="text"
@@ -280,52 +280,54 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                             </div>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-slate-800 text-white dark:bg-slate-700 text-xs font-bold rounded-xl hover:bg-slate-900 transition-colors"
+                                className="shrink-0 whitespace-nowrap px-4 py-2 bg-slate-800 text-white dark:bg-slate-700 text-xs font-bold rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
                             >
                                 Search
                             </button>
                         </form>
 
-                        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                            <div className="min-w-[180px]">
-                                <ModernSelect
-                                    size="sm"
-                                    value={categoryFilter}
-                                    onChange={(val) => handleCategoryChange(val)}
-                                    options={[
-                                        { value: 'all', label: 'All Categories' },
-                                        { value: 'boarding', label: 'Boarding Lists' },
-                                        { value: 'insurance', label: 'Pet Insurance' },
-                                        { value: 'training', label: 'Pet Training' },
-                                        { value: 'memorial', label: 'Pet Memorial' },
-                                        { value: 'portrait', label: 'Pet Portraits' },
-                                        { value: 'emergency_protocol', label: 'Emergency Protocols' },
-                                        { value: 'care_guide', label: 'Care Guides' },
-                                        { value: 'audit_report', label: 'Audit Reports' },
-                                        { value: 'financial_audit', label: 'Financial Documents' },
-                                    ]}
-                                />
-                            </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full lg:w-auto min-w-0">
+                            <div className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:flex sm:items-center">
+                                <div className="min-w-0 sm:min-w-[180px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        value={categoryFilter}
+                                        onChange={(val) => handleCategoryChange(val)}
+                                        options={[
+                                            { value: 'all', label: 'All Categories' },
+                                            { value: 'boarding', label: 'Boarding Lists' },
+                                            { value: 'insurance', label: 'Pet Insurance' },
+                                            { value: 'training', label: 'Pet Training' },
+                                            { value: 'memorial', label: 'Pet Memorial' },
+                                            { value: 'portrait', label: 'Pet Portraits' },
+                                            { value: 'emergency_protocol', label: 'Emergency Protocols' },
+                                            { value: 'care_guide', label: 'Care Guides' },
+                                            { value: 'audit_report', label: 'Audit Reports' },
+                                            { value: 'financial_audit', label: 'Financial Documents' },
+                                        ]}
+                                    />
+                                </div>
 
-                            <div className="min-w-[140px]">
-                                <ModernSelect
-                                    size="sm"
-                                    searchable={false}
-                                    value={statusFilter}
-                                    onChange={(val) => handleStatusChange(val)}
-                                    options={[
-                                        { value: 'all', label: 'All Status' },
-                                        { value: 'active', label: 'Active Only' },
-                                        { value: 'inactive', label: 'Inactive Only' },
-                                        { value: 'archived', label: 'Archived' },
-                                    ]}
-                                />
+                                <div className="min-w-0 sm:min-w-[140px]">
+                                    <ModernSelect
+                                        size="sm"
+                                        searchable={false}
+                                        value={statusFilter}
+                                        onChange={(val) => handleStatusChange(val)}
+                                        options={[
+                                            { value: 'all', label: 'All Status' },
+                                            { value: 'active', label: 'Active Only' },
+                                            { value: 'inactive', label: 'Inactive Only' },
+                                            { value: 'archived', label: 'Archived' },
+                                        ]}
+                                    />
+                                </div>
                             </div>
 
                             {canCreateResource && (
                                 <button
                                     onClick={openCreateModal}
-                                    className="px-4 py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
+                                    className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 sm:py-2 rounded-xl bg-paw-orange text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-paw-orange/20 hover:bg-orange-600 transition-colors cursor-pointer"
                                 >
                                     <Plus size={16} />
                                     <span>Add Resource</span>

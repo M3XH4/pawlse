@@ -246,9 +246,9 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-600 dark:text-gray-300">
-              <span className={`w-2 h-2 rounded-full ${configData.is_accepting_visits ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-600 dark:text-gray-300 whitespace-nowrap">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${configData.is_accepting_visits ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               <span>{configData.is_accepting_visits ? 'Accepting Visits' : 'Visits Paused'}</span>
               <span className="text-gray-300 dark:text-gray-600">•</span>
               <span>Cap: {configData.max_visitors_per_slot}/slot</span>
@@ -257,10 +257,10 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
             <button
               type="button"
               onClick={() => setIsConfigOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-sm hover:shadow cursor-pointer active:scale-95"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-paw-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 whitespace-nowrap transition-all shadow-sm hover:shadow cursor-pointer active:scale-95"
             >
-              <Settings2 size={15} />
-              <span>Configure Capacity & Days</span>
+              <Settings2 size={15} className="shrink-0" />
+              <span>Configure Capacity &amp; Days</span>
             </button>
           </div>
         </div>
@@ -278,7 +278,7 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
             />
           </div>
 
-          <div className="min-w-[165px]">
+          <div className="w-full md:w-auto md:min-w-[165px]">
             <ModernSelect
               size="sm"
               searchable={false}

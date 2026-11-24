@@ -646,7 +646,7 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
       </AnimatePresence>
 
       <section className="max-w-7xl mx-auto overflow-hidden px-4 py-20">
-      <div className="flex flex-col md:flex-row justify-between md:items-end items-center  mb-16 gap-10">
+      <div className="flex flex-col lg:flex-row justify-between lg:items-end items-center mb-16 gap-8 lg:gap-10">
         <div className="text-center lg:text-left">
           <div className="inline-flex items-center gap-2 bg-paw-green/10 px-4 py-2 rounded-full mb-6 border border-paw-green/20">
             <ShieldCheck size={18} className="text-paw-green" />
@@ -656,27 +656,27 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
           <p className="text-lg text-gray-500 font-bold max-w-xl font-quicksand mt-4">We believe in radical transparency. Track every peso donated and see exactly how it's used to save lives in Iligan.</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="w-full lg:w-auto shrink-0 grid grid-cols-3 gap-1.5 sm:gap-3 lg:gap-4">
           <button 
             onClick={() => setActiveTab('TRANS')}
-            className={`w-full px-8 py-4 rounded-2xl font-black text-xs tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 lg:justify-start ${activeTab === 'TRANS' ? 'bg-paw-navy text-white scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
+            className={`w-full min-w-0 px-2 sm:px-5 lg:px-7 py-3 sm:py-3.5 lg:py-4 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-xs tracking-tight sm:tracking-widest uppercase transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${activeTab === 'TRANS' ? 'bg-paw-navy text-white sm:scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
           >
-            <TrendingUp size={18} />
-            TRANSPARENCY
+            <TrendingUp className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />
+            <span className="truncate">TRANSPARENCY</span>
           </button>
           <button 
             onClick={() => setActiveTab('NEEDS')}
-            className={`w-full lg:max-w-none px-8 py-4 rounded-2xl font-black text-xs tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 lg:justify-start ${activeTab === 'NEEDS' ? 'bg-paw-navy text-white scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
+            className={`w-full min-w-0 px-2 sm:px-5 lg:px-7 py-3 sm:py-3.5 lg:py-4 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-xs tracking-tight sm:tracking-widest uppercase transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${activeTab === 'NEEDS' ? 'bg-paw-navy text-white sm:scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
           >
-            <Wallet size={18} />
-            MONTHLY NEEDS
+            <Wallet className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />
+            <span className="truncate">MONTHLY NEEDS</span>
           </button>
           <button 
             onClick={() => setActiveTab('HISTORY')}
-            className={`w-full lg:max-w-none px-8 py-4 rounded-2xl font-black text-xs tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 lg:justify-start ${activeTab === 'HISTORY' ? 'bg-paw-navy text-white scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
+            className={`w-full min-w-0 px-2 sm:px-5 lg:px-7 py-3 sm:py-3.5 lg:py-4 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-xs tracking-tight sm:tracking-widest uppercase transition-all shadow-lg sm:shadow-xl flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-paw-navy text-white sm:scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
           >
-            <History size={18} />
-            DONOR HISTORY
+            <History className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />
+            <span className="truncate">DONOR HISTORY</span>
           </button>
         </div>
       </div>

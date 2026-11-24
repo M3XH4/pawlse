@@ -75,9 +75,9 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-[1440px] w-full mx-auto relative z-10 flex flex-col lg:flex-row items-center lg:items-start justify-center px-4 sm:px-8 lg:px-[85px] pt-10 pb-48 sm:pt-16 sm:pb-60 lg:py-0 lg:justify-between">
+      <div className="flex-1 max-w-[1440px] w-full mx-auto relative z-10 flex flex-col lg:flex-row items-center lg:items-start justify-center px-4 sm:px-8 lg:px-[85px] pt-10 pb-64 sm:pt-16 sm:pb-80 lg:py-0 lg:justify-between">
         <motion.div
-          className="lg:w-1/2 text-white mb-4 lg:mb-0 relative z-[60] text-center lg:text-left order-1 max-w-[600px] lg:self-center"
+          className="lg:w-1/2 text-white mb-4 lg:mb-0 relative z-20 text-center lg:text-left order-1 max-w-[600px] lg:self-center"
           style={{ y: textY }}
         >
           <motion.div className="mx-auto flex flex-col items-center lg:items-start max-w-xl pb-10"
@@ -176,7 +176,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
       </div>
 
       {/* Overlapping Hero Image - Desktop */}
-      <div className="hidden lg:block absolute bottom-0 right-[-8%] xl:right-[-5%] 2xl:right-[0%] z-[100] pointer-events-none"
+      <div className="hidden lg:block absolute bottom-0 right-[-8%] xl:right-[-5%] 2xl:right-[0%] z-30 pointer-events-none"
         style={{
           transform: 'translateY(32%)'
         }}
@@ -216,9 +216,9 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
       </div>
 
       {/* Overlapping Hero Image - Mobile */}
-      <div className="lg:hidden absolute bottom-0 left-1/2 z-[100] pointer-events-none"
+      <div className="lg:hidden absolute bottom-0 left-1/2 z-30 pointer-events-none"
         style={{
-          transform: 'translateX(-50%) translateY(28%)'
+          transform: 'translateX(-50%) translateY(40%)'
         }}
       >
         <motion.div
@@ -226,7 +226,7 @@ export function Hero({ stats }: { stats?: { rescued: number; adopted: number; vo
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <div className="relative w-[88vw] max-w-[420px] sm:max-w-[500px]">
+          <div className="relative w-[84vw] max-w-[380px] sm:max-w-[420px]">
             <picture>
               <source srcSet="/images/hero-image.webp" type="image/webp" />
               <img

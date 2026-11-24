@@ -197,8 +197,8 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+        <div className="col-span-2 md:col-span-1 bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <p className="text-xs font-black uppercase tracking-wider text-gray-400">Total Requests</p>
           <div className="flex items-center justify-between mt-2">
             <h3 className="text-2xl font-black text-paw-navy dark:text-white">{rehomingRequests.length}</h3>

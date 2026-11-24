@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { EventShareDropdown } from '@/components/events/event-share-dropdown';
 import { Footer } from '@/components/footer';
@@ -576,17 +577,17 @@ export default function Events({
                     </div>
 
                     {/* Section Switcher Tabs */}
-                    <div className="mb-6 flex gap-4 border-b-2 border-gray-200">
+                    <div className="mb-6 grid grid-cols-2 border-b-2 border-gray-200 sm:flex sm:gap-4">
                         <button
                             onClick={() => setActiveTab('events')}
-                            className={`relative flex cursor-pointer items-center gap-2 px-6 py-4 text-base font-black transition-all md:text-lg ${
+                            className={`relative flex cursor-pointer items-center justify-center gap-1.5 px-2 py-3 text-xs font-black whitespace-nowrap transition-all sm:justify-start sm:gap-2 sm:px-6 sm:py-4 sm:text-base md:text-lg ${
                                 activeTab === 'events'
                                     ? 'text-paw-orange'
                                     : 'text-gray-400 hover:text-paw-navy'
                             }`}
                         >
-                            <Calendar size={20} />
-                            EVENT PROPER
+                            <Calendar size={16} className="shrink-0 sm:h-5 sm:w-5" />
+                            <span>EVENT PROPER</span>
                             {activeTab === 'events' && (
                                 <motion.div
                                     layoutId="activeTab"
@@ -596,14 +597,14 @@ export default function Events({
                         </button>
                         <button
                             onClick={() => setActiveTab('feeding')}
-                            className={`relative flex cursor-pointer items-center gap-2 px-6 py-4 text-base font-black transition-all md:text-lg ${
+                            className={`relative flex cursor-pointer items-center justify-center gap-1.5 px-2 py-3 text-xs font-black whitespace-nowrap transition-all sm:justify-start sm:gap-2 sm:px-6 sm:py-4 sm:text-base md:text-lg ${
                                 activeTab === 'feeding'
                                     ? 'text-paw-orange'
                                     : 'text-gray-400 hover:text-paw-navy'
                             }`}
                         >
-                            <Utensils size={20} />
-                            FEEDING SCHEDULE
+                            <Utensils size={16} className="shrink-0 sm:h-5 sm:w-5" />
+                            <span>FEEDING SCHEDULE</span>
                             {activeTab === 'feeding' && (
                                 <motion.div
                                     layoutId="activeTab"
@@ -622,7 +623,7 @@ export default function Events({
                         }`}
                     >
                         {activeTab === 'events' && (
-                            <div className="flex flex-wrap items-center gap-2.5 py-1 md:gap-3">
+                            <div className="hide-scrollbar flex flex-nowrap items-center gap-2 overflow-x-auto py-1 sm:flex-wrap md:gap-3">
                                 {[
                                     'All',
                                     'Feeding',
@@ -641,7 +642,7 @@ export default function Events({
                                             onClick={() =>
                                                 handleCategoryChange(f)
                                             }
-                                            className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-black whitespace-nowrap shadow-sm transition-all md:px-5 md:py-3 md:text-sm ${
+                                            className={`shrink-0 cursor-pointer rounded-2xl px-3.5 py-2 text-xs font-black whitespace-nowrap shadow-sm transition-all sm:px-4 sm:py-2.5 md:px-5 md:py-3 md:text-sm ${
                                                 isSelected
                                                     ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25'
                                                     : 'border border-gray-100 bg-white text-paw-navy hover:border-paw-orange/30 hover:bg-paw-orange/10'
@@ -1260,9 +1261,11 @@ export default function Events({
             </main>
 
             {/* Event Details Expanded Modal */}
-            <AnimatePresence>
-                {selectedEvent && (
-                    <div className="modal-scroll-area fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
+            {typeof document !== 'undefined' &&
+                createPortal(
+                    <AnimatePresence>
+                        {selectedEvent && (
+                            <div className="modal-scroll-area fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -1325,14 +1328,14 @@ export default function Events({
                             <div className="modal-scroll-area flex min-h-0 flex-1 flex-col justify-between overflow-y-auto bg-white p-5 sm:p-7 md:w-7/12 md:p-8">
                                 <div>
                                     {/* Header Row: Information Tag + Spots Badge + Close Button */}
-                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="flex items-center gap-1.5 rounded-full bg-paw-orange/10 px-2.5 py-1 text-[11px] font-black tracking-widest text-paw-orange uppercase">
-                                                <Sparkles size={12} />
+                                    <div className="mb-3 flex items-center justify-between gap-2">
+                                        <div className="flex min-w-0 flex-nowrap items-center gap-1.5 sm:gap-2">
+                                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-paw-orange/10 px-2 py-0.5 text-[10px] font-black tracking-wider whitespace-nowrap text-paw-orange uppercase sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px] sm:tracking-widest">
+                                                <Sparkles size={11} className="shrink-0 sm:h-3 sm:w-3" />
                                                 Event Information
                                             </span>
                                             {selectedEvent.spots !== null && (
-                                                <span className="rounded-full border border-red-200/80 bg-red-50 px-2.5 py-0.5 text-[11px] font-black tracking-wider whitespace-nowrap text-red-600 uppercase">
+                                                <span className="shrink-0 rounded-full border border-red-200/80 bg-red-50 px-2 py-0.5 text-[10px] font-black tracking-wide whitespace-nowrap text-red-600 uppercase sm:px-2.5 sm:text-[11px] sm:tracking-wider">
                                                     {selectedEvent.spots} Spots
                                                     Left
                                                 </span>
@@ -1344,7 +1347,7 @@ export default function Events({
                                             onClick={() =>
                                                 setSelectedEvent(null)
                                             }
-                                            className="shrink-0 cursor-pointer rounded-full p-2 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90"
+                                            className="shrink-0 cursor-pointer rounded-full p-1.5 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90 sm:p-2"
                                             aria-label="Close modal"
                                         >
                                             <X size={20} />
@@ -1554,7 +1557,9 @@ export default function Events({
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>,
+                    document.body,
+                )}
 
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}

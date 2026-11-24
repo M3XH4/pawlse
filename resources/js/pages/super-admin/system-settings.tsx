@@ -4,6 +4,7 @@ import {
     Settings, 
     Save, 
     AlertOctagon, 
+    BellRing,
     UserPlus, 
     ShieldAlert, 
     Power, 
@@ -43,6 +44,7 @@ interface SystemSettingsProps {
         sandbox_mode?: boolean;
         sos_gps_enabled?: boolean;
         volunteer_map_enabled?: boolean;
+        push_test_alert_enabled?: boolean;
     };
 }
 
@@ -61,6 +63,7 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         sandbox_mode: settings.sandbox_mode ?? false,
         sos_gps_enabled: settings.sos_gps_enabled ?? true,
         volunteer_map_enabled: settings.volunteer_map_enabled ?? true,
+        push_test_alert_enabled: settings.push_test_alert_enabled ?? false,
     });
 
     // Quick toggle modal state
@@ -117,22 +120,22 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                 {/* Dedicated Maintenance Control Panel */}
                 <DashboardCard className={data.maintenance_mode ? 'border-amber-400/80 bg-amber-50/20 dark:border-amber-600/40 dark:bg-amber-950/20' : ''}>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">
+                        <div className="space-y-1 min-w-0">
+                            <div className="flex items-center justify-between sm:justify-start gap-2">
+                                <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-800 dark:text-white leading-snug">
                                     Platform Maintenance Control
                                 </h3>
                                 {data.maintenance_mode ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                                        <span className="relative flex h-2 w-2">
+                                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-amber-900 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                        <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 shrink-0">
                                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                                            <span className="relative inline-flex h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-amber-500" />
                                         </span>
                                         Active
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-                                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                        <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-500 shrink-0" />
                                         Normal / Live
                                     </span>
                                 )}
@@ -359,6 +362,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                 </div>
                             </div>
 
+                            <div className="flex items-start gap-3 border border-orange-200 bg-orange-50/30 dark:border-orange-950/40 dark:bg-orange-950/20 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="push_test_alert_enabled"
+                                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mt-1"
+                                    checked={data.push_test_alert_enabled}
+                                    onChange={(e) => setData('push_test_alert_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="push_test_alert_enabled"
+                                        className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"
+                                    >
+                                        <BellRing className="h-4 w-4 text-orange-500" />
+                                        Enable Push Notification Test Alert
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, signed-in users see a &quot;Test Alert&quot; button in Account Settings → Notifications to test phone/browser push delivery.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="flex items-start gap-3 border border-violet-200 bg-violet-50/30 dark:border-violet-900/40 dark:bg-violet-950/20 p-4 rounded-xl">
                                 <input
                                     type="checkbox"
@@ -425,13 +450,13 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                         </div>
                     </DashboardCard>
 
-                    <div className="flex justify-end gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
                         <button
                             type="submit"
                             disabled={processing}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 transition disabled:opacity-50"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 transition disabled:opacity-50 cursor-pointer"
                         >
-                            <Save className="h-4 w-4" />
+                            <Save className="h-4 w-4 shrink-0" />
                             <span>{processing ? 'Saving Settings...' : 'Save Configuration'}</span>
                         </button>
                     </div>

@@ -89,58 +89,58 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
         >
             <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Successful Logins</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-emerald-600">{stats.success_count}</h3>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Successful Logins</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-emerald-600">{stats.success_count}</h3>
                         </div>
-                        <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                        <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Failed Attempts</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-amber-500">{stats.failed_count}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Failed Attempts</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-amber-500">{stats.failed_count}</h3>
                         </div>
-                        <AlertCircle className="h-6 w-6 text-amber-500" />
+                        <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Suspicious Logins</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-rose-600">{stats.suspicious_count}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Suspicious Logins</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-rose-600">{stats.suspicious_count}</h3>
                         </div>
-                        <ShieldAlert className="h-6 w-6 text-rose-500" />
+                        <ShieldAlert className="h-5 w-5 sm:h-6 sm:w-6 text-rose-500 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Unique IP Addresses</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.unique_ips}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 leading-snug">Unique IPs</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.unique_ips}</h3>
                         </div>
-                        <Globe className="h-6 w-6 text-indigo-500" />
+                        <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-500 shrink-0" />
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-                            {/* Search */}
-                            <div className="relative flex-1">
-                                <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by email or IP address..."
-                                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+                <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between min-w-0">
+                        {/* Search */}
+                        <div className="relative flex-1 min-w-0">
+                            <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by email or IP address..."
+                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:border-slate-900 dark:bg-slate-900 dark:text-white"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
 
+                        <div className="flex items-center justify-between gap-2.5 w-full lg:w-auto min-w-0">
                             {/* Status Filter */}
-                            <div className="min-w-[150px]">
+                            <div className="flex-1 sm:flex-initial min-w-0 sm:min-w-[150px]">
                                 <ModernSelect
                                     size="sm"
                                     searchable={false}
@@ -153,20 +153,21 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                                     ]}
                                 />
                             </div>
-                        </div>
 
-                        {/* Suspicious Checkbox */}
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="suspicious"
-                                className="rounded border-gray-300 text-rose-600 focus:ring-rose-500"
-                                checked={suspiciousOnly}
-                                onChange={handleSuspiciousChange}
-                            />
-                            <label htmlFor="suspicious" className="text-xs font-bold text-rose-600 flex items-center gap-1 cursor-pointer">
-                                <ShieldAlert className="h-4 w-4" />
-                                Suspicious Attacks Only
+                            {/* Suspicious Checkbox */}
+                            <label
+                                htmlFor="suspicious"
+                                className="inline-flex shrink-0 items-center gap-1.5 sm:gap-2 rounded-xl border border-rose-200/80 bg-rose-50/50 px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-bold text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400 cursor-pointer whitespace-nowrap"
+                            >
+                                <input
+                                    type="checkbox"
+                                    id="suspicious"
+                                    className="rounded border-gray-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                                    checked={suspiciousOnly}
+                                    onChange={handleSuspiciousChange}
+                                />
+                                <ShieldAlert className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                <span>Suspicious Only</span>
                             </label>
                         </div>
                     </div>

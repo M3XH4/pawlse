@@ -188,28 +188,28 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
         >
             <div className="space-y-6">
                 {/* AI Master Feature Control Card */}
-                <div className={`rounded-2xl border p-6 shadow-xs transition-all ${
+                <div className={`rounded-2xl border p-4 sm:p-6 shadow-xs transition-all ${
                     data.ai_enabled
                         ? 'border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20'
                         : 'border-rose-200 bg-rose-50/30 dark:border-rose-900/40 dark:bg-rose-950/20'
                 }`}>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2.5">
-                                <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">
+                        <div className="space-y-1 min-w-0">
+                            <div className="flex items-center justify-between sm:justify-start gap-2">
+                                <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-800 dark:text-white leading-snug">
                                     AI Feature Master Switch
                                 </h3>
                                 {data.ai_enabled ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                                        <span className="relative flex h-2 w-2">
+                                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                        <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 shrink-0">
                                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                                            <span className="relative inline-flex h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-500" />
                                         </span>
                                         Enabled & Active
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800 dark:border-rose-800 dark:bg-rose-900/50 dark:text-rose-300">
-                                        <span className="h-2 w-2 rounded-full bg-rose-500" />
+                                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-100 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-rose-800 dark:border-rose-800 dark:bg-rose-900/50 dark:text-rose-300">
+                                        <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-rose-500 shrink-0" />
                                         Disabled
                                     </span>
                                 )}
@@ -225,13 +225,13 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                             type="button"
                             disabled={isToggling}
                             onClick={handleQuickToggleAi}
-                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-50 ${
+                            className={`w-full sm:w-auto shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-50 cursor-pointer ${
                                 data.ai_enabled
                                     ? 'bg-rose-600 text-white hover:bg-rose-500 shadow-rose-600/20'
                                     : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/20'
                             }`}
                         >
-                            <Power className={`h-4 w-4 ${isToggling ? 'animate-spin' : ''}`} />
+                            <Power className={`h-4 w-4 shrink-0 ${isToggling ? 'animate-spin' : ''}`} />
                             <span>
                                 {isToggling
                                     ? 'Updating...'
@@ -243,77 +243,77 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                     </div>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-6 lg:grid-cols-3 min-w-0">
                 {/* Left Columns: Config Panel & Logs */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6 min-w-0">
                     {/* Settings Form */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="rounded-2xl border border-gray-150 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 overflow-hidden">
                         <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">Predictive Model Rules</h3>
                         <p className="text-xs text-gray-500 mb-4">Toggle features and change score thresholds</p>
                         
                         <form onSubmit={handleSaveConfig} className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="flex items-center gap-2 border dark:border-slate-800 p-3 rounded-xl">
+                            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                                <div className="flex items-center gap-2.5 border dark:border-slate-800 p-3 rounded-xl min-w-0">
                                     <input
                                         type="checkbox"
                                         id="ai_enabled"
-                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        className="shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                         checked={data.ai_enabled}
                                         onChange={(e) => setData('ai_enabled', e.target.checked)}
                                     />
-                                    <label htmlFor="ai_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <label htmlFor="ai_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer leading-snug">
                                         Enable AI Integrations (Global)
                                     </label>
                                 </div>
 
-                                <div className="flex items-center gap-2 border dark:border-slate-800 p-3 rounded-xl">
+                                <div className="flex items-center gap-2.5 border dark:border-slate-800 p-3 rounded-xl min-w-0">
                                     <input
                                         type="checkbox"
                                         id="ai_reporting_enabled"
                                         disabled={!data.ai_enabled}
-                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                        className="shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
                                         checked={data.ai_reporting_enabled}
                                         onChange={(e) => setData('ai_reporting_enabled', e.target.checked)}
                                     />
-                                    <label htmlFor="ai_reporting_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <label htmlFor="ai_reporting_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer leading-snug">
                                         AI Pet Reports Validation
                                     </label>
                                 </div>
 
-                                <div className="flex items-center gap-2 border dark:border-slate-800 p-3 rounded-xl">
+                                <div className="flex items-center gap-2.5 border dark:border-slate-800 p-3 rounded-xl min-w-0">
                                     <input
                                         type="checkbox"
                                         id="ai_identifying_enabled"
                                         disabled={!data.ai_enabled}
-                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                        className="shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
                                         checked={data.ai_identifying_enabled}
                                         onChange={(e) => setData('ai_identifying_enabled', e.target.checked)}
                                     />
-                                    <label htmlFor="ai_identifying_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <label htmlFor="ai_identifying_enabled" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer leading-snug">
                                         AI Breed & Species Identification
                                     </label>
                                 </div>
 
-                                <div className="flex items-center gap-2 border dark:border-slate-800 p-3 rounded-xl">
+                                <div className="flex items-center gap-2.5 border dark:border-slate-800 p-3 rounded-xl min-w-0">
                                     <input
                                         type="checkbox"
                                         id="ai_auto_validation"
                                         disabled={!data.ai_enabled}
-                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                        className="shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
                                         checked={data.ai_auto_validation}
                                         onChange={(e) => setData('ai_auto_validation', e.target.checked)}
                                     />
-                                    <label htmlFor="ai_auto_validation" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <label htmlFor="ai_auto_validation" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer leading-snug">
                                         Auto-approve High Confidence Reports
                                     </label>
                                 </div>
                             </div>
 
                             {data.ai_enabled && (
-                                <div className="border dark:border-slate-800 p-4 rounded-xl">
-                                    <div className="flex justify-between items-center mb-2">
+                                <div className="border dark:border-slate-800 p-3.5 sm:p-4 rounded-xl min-w-0">
+                                    <div className="flex justify-between items-center gap-2 mb-2">
                                         <label className="block text-xs font-semibold text-gray-500">Confidence Score Threshold</label>
-                                        <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">
+                                        <span className="shrink-0 text-xs font-black text-indigo-600 dark:text-indigo-400">
                                             {Math.round(data.ai_confidence_threshold * 100)}%
                                         </span>
                                     </div>
@@ -326,7 +326,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                                         value={data.ai_confidence_threshold}
                                         onChange={(e: any) => setData('ai_confidence_threshold', parseFloat(e.target.value))}
                                     />
-                                    <p className="text-[10px] text-gray-400 mt-2">
+                                    <p className="text-[11px] sm:text-[10px] text-gray-400 mt-2 leading-relaxed">
                                         Reports with AI confidence above this setting can bypass manual review if Auto-approve is enabled.
                                     </p>
                                 </div>
@@ -335,16 +335,16 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition cursor-pointer"
                             >
-                                <Sparkles className="h-4 w-4" />
+                                <Sparkles className="h-4 w-4 shrink-0" />
                                 <span>Save Rules Configuration</span>
                             </button>
                         </form>
                     </div>
 
                     {/* AI Prediction logs */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="rounded-2xl border border-gray-150 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 overflow-hidden">
                         <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">AI Log Calibration</h3>
                         <p className="text-xs text-gray-500 mb-4">Validate predictions manually to calibrate platform accuracy stats</p>
                         
@@ -440,7 +440,7 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                 </div>
 
                 {/* Right Column: Service Health & Stats Overview */}
-                <div className="space-y-6">
+                <div className="space-y-6 min-w-0">
                     {/* Live AI Microservice Health Widget */}
                     <div className={`rounded-2xl border p-5 shadow-xs transition-all ${
                         health?.is_healthy

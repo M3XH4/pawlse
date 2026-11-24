@@ -205,17 +205,17 @@ export function SustainabilityAdminTab({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={() => setShowHistoryModal(true)}
-                            className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+                            className="px-3 sm:px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-[11px] sm:text-xs font-black uppercase tracking-wider whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                            <History size={15} />
-                            Calculation History ({history.length})
+                            <History size={14} className="shrink-0" />
+                            <span>History ({history.length})</span>
                         </button>
 
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wider uppercase border ${theme.badgeClass}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider uppercase border whitespace-nowrap shrink-0 ${theme.badgeClass}`}>
                             <AlertTriangle size={13} className="shrink-0" />
                             {theme.badgeText}
                         </span>
@@ -394,24 +394,24 @@ export function SustainabilityAdminTab({
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <div className="flex flex-nowrap items-center gap-2 sm:gap-3 pt-2 w-full sm:w-auto">
                         <button
                             type="button"
                             disabled={isSubmitting}
                             onClick={handleSaveAndRecalculate}
-                            className="px-6 py-3.5 rounded-2xl bg-[#ff9800] hover:bg-[#f57c00] text-white font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 whitespace-nowrap transition-transform active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
+                            className="flex-1 sm:flex-initial px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-[#ff9800] hover:bg-[#f57c00] text-white font-black text-[11px] sm:text-xs uppercase tracking-wide sm:tracking-wider shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition-transform active:scale-95 cursor-pointer disabled:opacity-50"
                         >
-                            <TrendingUp size={16} className="shrink-0" />
-                            <span>Save & Recalculate</span>
+                            <TrendingUp size={15} className="shrink-0" />
+                            <span>Save &amp; Recalculate</span>
                         </button>
 
                         <button
                             type="button"
                             disabled={isSubmitting}
                             onClick={handleSaveConfigOnly}
-                            className="px-6 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 whitespace-nowrap transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                            className="flex-1 sm:flex-initial px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-black text-[11px] sm:text-xs uppercase tracking-wide sm:tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition-colors cursor-pointer disabled:opacity-50"
                         >
-                            <Save size={16} className="shrink-0" />
+                            <Save size={15} className="shrink-0" />
                             <span>Save Config Only</span>
                         </button>
                     </div>

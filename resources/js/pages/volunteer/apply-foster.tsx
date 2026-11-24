@@ -226,24 +226,28 @@ export default function ApplyFoster({ fosterParent }: ApplyFosterProps) {
                             />
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+                        <div className="flex flex-nowrap items-center justify-between gap-2 sm:gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
                             <Link
                                 href="/account/volunteer/status"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-4 py-2.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-gray-300 px-3 sm:px-4 py-2.5 text-xs font-bold text-gray-700 whitespace-nowrap transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                             >
-                                <ArrowLeft size={14} /> Back to Volunteer Status
+                                <ArrowLeft size={14} className="shrink-0" />
+                                <span className="sm:hidden">Back</span>
+                                <span className="hidden sm:inline">Back to Volunteer Status</span>
                             </Link>
                             <button
                                 type="submit"
                                 disabled={submitting || !location.trim()}
-                                className="inline-flex items-center gap-2 rounded-xl bg-paw-orange px-5 py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-paw-orange/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-paw-orange px-3.5 sm:px-5 py-2.5 text-xs font-bold text-white whitespace-nowrap shadow-xs transition-colors hover:bg-paw-orange/90 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                <CheckCircle2 size={15} />
-                                {submitting
-                                    ? 'Submitting Application...'
-                                    : isPending
-                                      ? 'Update Foster Application'
-                                      : 'Submit Foster Application'}
+                                <CheckCircle2 size={15} className="shrink-0" />
+                                <span>
+                                    {submitting
+                                        ? 'Submitting...'
+                                        : isPending
+                                          ? 'Update Foster Application'
+                                          : 'Submit Foster Application'}
+                                </span>
                             </button>
                         </div>
                     </form>

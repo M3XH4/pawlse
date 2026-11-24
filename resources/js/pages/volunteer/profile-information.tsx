@@ -72,13 +72,17 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
                 {!isEditing ? (
                     <div className="space-y-6">
                         <DashboardCard className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">Personal & Contact Details</h3>
+                            <div className="flex flex-nowrap justify-between items-center gap-2 mb-6">
+                                <h3 className="font-fredoka text-lg sm:text-xl font-bold text-[#0B2340] dark:text-white min-w-0 truncate">Personal & Contact Details</h3>
                                 <button
+                                    type="button"
                                     onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer"
+                                    title="Edit Profile"
+                                    aria-label="Edit Profile"
+                                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-4 py-2 bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest whitespace-nowrap shrink-0 transition-all cursor-pointer"
                                 >
-                                    <Edit size={14} /> Edit Profile
+                                    <Edit size={15} className="shrink-0" />
+                                    <span className="hidden sm:inline">Edit Profile</span>
                                 </button>
                             </div>
 

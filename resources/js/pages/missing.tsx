@@ -497,12 +497,12 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-12">
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 sm:gap-3 md:gap-4 mb-8 sm:mb-12 w-full sm:w-auto">
             {['All', 'Missing', 'Searching', 'Found'].map((f) => (
               <button 
                 key={f}
                 onClick={() => handleFilterChange(f)}
-                className={`px-8 py-3 rounded-2xl font-black transition-all ${statusFilter === f ? 'bg-paw-orange text-white shadow-xl shadow-paw-orange/20 scale-105' : 'bg-white text-paw-navy hover:bg-paw-orange/10'}`}
+                className={`flex-1 sm:flex-initial justify-center px-2 py-2.5 sm:px-7 sm:py-3 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base whitespace-nowrap transition-all cursor-pointer ${statusFilter === f ? 'bg-paw-orange text-white shadow-xl shadow-paw-orange/20 sm:scale-105' : 'bg-white text-paw-navy hover:bg-paw-orange/10'}`}
               >
                 {f.toUpperCase()}
               </button>

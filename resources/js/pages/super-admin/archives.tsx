@@ -122,42 +122,42 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
         >
             <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Total Archives</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.total}</h3>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Total Archives</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.total}</h3>
                         </div>
-                        <Archive className="h-6 w-6 text-gray-400" />
+                        <Archive className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Archived Users</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.users}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Archived Users</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.users}</h3>
                         </div>
-                        <Users className="h-6 w-6 text-indigo-400" />
+                        <Users className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-400 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Archived Pets</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.pets}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Archived Pets</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.pets}</h3>
                         </div>
-                        <Heart className="h-6 w-6 text-rose-400" />
+                        <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-rose-400 shrink-0" />
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-gray-500">Archived Reports</span>
-                            <h3 className="font-fredoka text-2xl font-bold mt-1 text-slate-800 dark:text-white">{stats.rescues}</h3>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0">
+                            <span className="block text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Archived Reports</span>
+                            <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 text-slate-800 dark:text-white">{stats.rescues}</h3>
                         </div>
-                        <FileText className="h-6 w-6 text-emerald-400" />
+                        <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400 shrink-0" />
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         {/* Search */}
                         <div className="relative flex-1">

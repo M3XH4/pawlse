@@ -45,6 +45,32 @@
             })();
         </script>
 
+        {{-- Detect installed PWA standalone launch before first paint --}}
+        <script>
+            (function() {
+                try {
+                    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                    const navEntry = window.performance && window.performance.getEntriesByType
+                        ? window.performance.getEntriesByType('navigation')[0]
+                        : null;
+                    const isBackForward = navEntry && navEntry.type === 'back_forward';
+                    const isSameOriginReferrer = Boolean(document.referrer && document.referrer.indexOf(window.location.origin) === 0);
+                    const skipUntil = Number(localStorage.getItem('pawlse_skip_splash_until') || '0');
+                    const isSkipActive = skipUntil > Date.now();
+                    if (isSkipActive) {
+                        localStorage.removeItem('pawlse_skip_splash_until');
+                    }
+
+                    if (isStandalone && !sessionStorage.getItem('pawlse_splash_shown') && !isBackForward && !isSameOriginReferrer && !isSkipActive) {
+                        document.documentElement.classList.add('pawlse-standalone-splash');
+                        window.__pawlseSplashShownAt = Date.now();
+                    } else if (isStandalone) {
+                        sessionStorage.setItem('pawlse_splash_shown', '1');
+                    }
+                } catch (e) {}
+            })();
+        </script>
+
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
@@ -54,10 +80,212 @@
             html.dark {
                 background-color: oklch(0.145 0 0);
             }
+
+            html.pawlse-standalone-splash,
+            html.pawlse-standalone-splash.dark {
+                background-color: #FFFDF8;
+            }
+
+            html.pawlse-standalone-splash body {
+                overflow: hidden;
+            }
+
+            #pawlse-splash {
+                display: none;
+            }
+
+            html.pawlse-standalone-splash #pawlse-splash {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: space-between;
+                padding: max(2.5rem, env(safe-area-inset-top)) 1.5rem max(2.25rem, env(safe-area-inset-bottom));
+                background:
+                    radial-gradient(circle at 50% 28%, rgba(251, 191, 36, 0.20) 0%, rgba(255, 253, 248, 0) 58%),
+                    radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.12) 0%, rgba(255, 253, 248, 0) 48%),
+                    linear-gradient(180deg, #FFFDF8 0%, #FFFBEB 55%, #FEF3C7 100%);
+                color: #1F2937;
+                font-family: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+                opacity: 1;
+                transition: opacity 0.36s ease-out, transform 0.36s ease-out;
+            }
+
+            #pawlse-splash.is-hiding {
+                opacity: 0;
+                transform: scale(1.02);
+                pointer-events: none;
+            }
+
+            .pawlse-splash-center {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                margin: auto 0;
+                animation: pawlseSplashFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+
+            .pawlse-splash-logo-wrap {
+                position: relative;
+                width: 156px;
+                height: 156px;
+                padding: 14px;
+                border-radius: 36px;
+                background: #FFFFFF;
+                box-shadow:
+                    0 20px 45px -15px rgba(245, 158, 11, 0.28),
+                    0 8px 20px -8px rgba(31, 41, 55, 0.10),
+                    0 0 0 1px rgba(245, 158, 11, 0.18);
+                margin-bottom: 1.5rem;
+            }
+
+            .pawlse-splash-logo-wrap::after {
+                content: '';
+                position: absolute;
+                inset: -8px;
+                border-radius: 42px;
+                border: 2px solid rgba(245, 158, 11, 0.22);
+                animation: pawlsePulseRing 2.2s ease-in-out infinite;
+                pointer-events: none;
+            }
+
+            .pawlse-splash-logo {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+                border-radius: 24px;
+            }
+
+            .pawlse-splash-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.375rem;
+                padding: 0.35rem 0.85rem;
+                border-radius: 9999px;
+                background: rgba(245, 158, 11, 0.12);
+                border: 1px solid rgba(245, 158, 11, 0.28);
+                color: #B45309;
+                font-size: 0.6875rem;
+                font-weight: 800;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                margin-bottom: 0.625rem;
+            }
+
+            .pawlse-splash-title {
+                margin: 0;
+                font-size: 2rem;
+                font-weight: 900;
+                letter-spacing: -0.03em;
+                line-height: 1.1;
+                color: #1F2937;
+            }
+
+            .pawlse-splash-tagline {
+                margin: 0.45rem 0 0;
+                max-width: 18rem;
+                font-size: 0.875rem;
+                font-weight: 500;
+                line-height: 1.45;
+                color: #64748B;
+            }
+
+            .pawlse-splash-footer {
+                width: 100%;
+                max-width: 14rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.65rem;
+            }
+
+            .pawlse-splash-track {
+                width: 100%;
+                height: 4px;
+                border-radius: 9999px;
+                background: rgba(31, 41, 55, 0.08);
+                overflow: hidden;
+                position: relative;
+            }
+
+            .pawlse-splash-bar {
+                position: absolute;
+                inset: 0 auto 0 0;
+                width: 45%;
+                border-radius: 9999px;
+                background: linear-gradient(90deg, #F59E0B 0%, #FBBF24 100%);
+                animation: pawlseLoadingBar 1.2s ease-in-out infinite;
+            }
+
+            .pawlse-splash-meta {
+                font-size: 0.72rem;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                color: #94A3B8;
+                text-transform: uppercase;
+            }
+
+            @keyframes pawlseSplashFadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px) scale(0.97);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes pawlsePulseRing {
+                0%, 100% {
+                    opacity: 0.45;
+                    transform: scale(1);
+                }
+                50% {
+                    opacity: 0.9;
+                    transform: scale(1.03);
+                }
+            }
+
+            @keyframes pawlseLoadingBar {
+                0% {
+                    transform: translateX(-100%);
+                }
+                100% {
+                    transform: translateX(260%);
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .pawlse-splash-center,
+                .pawlse-splash-logo-wrap::after,
+                .pawlse-splash-bar {
+                    animation: none;
+                }
+                .pawlse-splash-bar {
+                    width: 100%;
+                }
+                #pawlse-splash {
+                    transition: opacity 0.15s ease-out;
+                }
+            }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" href="/favicon.ico?v=isf" sizes="any">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=isf">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=isf">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#1F2937">
+        <meta name="application-name" content="PAWLSE">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="PAWLSE">
 
         @fonts
 
@@ -214,6 +442,101 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
+        <div id="pawlse-splash" role="status" aria-live="polite" aria-label="Loading PAWLSE">
+            <div aria-hidden="true"></div>
+            <div class="pawlse-splash-center">
+                <div class="pawlse-splash-logo-wrap">
+                    <img
+                        src="/images/pwa/icon-512x512.png"
+                        alt="PAWLSE"
+                        class="pawlse-splash-logo"
+                        width="128"
+                        height="128"
+                    >
+                </div>
+                <span class="pawlse-splash-badge">Iligan Stray Feeders</span>
+                <h1 class="pawlse-splash-title">PAWLSE</h1>
+                <p class="pawlse-splash-tagline">In Service to the Hungry and Weak</p>
+            </div>
+            <div class="pawlse-splash-footer">
+                <div class="pawlse-splash-track" aria-hidden="true">
+                    <div class="pawlse-splash-bar"></div>
+                </div>
+                <span class="pawlse-splash-meta">Iligan City &bull; Rescue &amp; Care Hub</span>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                let dismissed = false;
+
+                function performHide() {
+                    if (dismissed) {
+                        return;
+                    }
+                    dismissed = true;
+
+                    try {
+                        sessionStorage.setItem('pawlse_splash_shown', '1');
+                    } catch (e) {}
+
+                    const el = document.getElementById('pawlse-splash');
+                    if (!el) {
+                        document.documentElement.classList.remove('pawlse-standalone-splash');
+                        return;
+                    }
+
+                    el.classList.add('is-hiding');
+                    setTimeout(function() {
+                        document.documentElement.classList.remove('pawlse-standalone-splash');
+                        if (el.parentNode) {
+                            el.parentNode.removeChild(el);
+                        }
+                    }, 360);
+                }
+
+                window.__pawlseHideSplash = function() {
+                    if (!document.documentElement.classList.contains('pawlse-standalone-splash')) {
+                        return;
+                    }
+                    const shownAt = window.__pawlseSplashShownAt || Date.now();
+                    const remaining = Math.max(0, 950 - (Date.now() - shownAt));
+                    setTimeout(performHide, remaining);
+                };
+
+                if (document.documentElement.classList.contains('pawlse-standalone-splash')) {
+                    setTimeout(performHide, 3200);
+                }
+
+                function markSkipNextSplash() {
+                    try {
+                        localStorage.setItem('pawlse_skip_splash_until', String(Date.now() + 180000));
+                    } catch (e) {}
+                }
+
+                if (typeof window.open === 'function') {
+                    const origOpen = window.open;
+                    window.open = function() {
+                        markSkipNextSplash();
+                        return origOpen.apply(window, arguments);
+                    };
+                }
+
+                document.addEventListener('click', function(event) {
+                    const anchor = event.target && event.target.closest ? event.target.closest('a[target="_blank"]') : null;
+                    if (anchor) {
+                        markSkipNextSplash();
+                    }
+                }, true);
+
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', function() {
+                        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function() {});
+                    });
+                }
+            })();
+        </script>
+
         <x-inertia::app />
     </body>
 </html>

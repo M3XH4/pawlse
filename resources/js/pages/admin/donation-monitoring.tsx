@@ -614,46 +614,46 @@ export default function DonationMonitoring({
             <Head title="Admin Donation & Inventory Monitoring" />
 
             {/* Stats row */}
-            <div className="grid gap-4 md:grid-cols-4">
-                <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-                    <div className="p-4 bg-green-50 dark:bg-green-950/20 text-green-600 rounded-2xl">
-                        <Heart size={28} />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <div className="min-w-0 bg-white dark:bg-[#111827] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4">
+                    <div className="p-2.5 sm:p-4 bg-green-50 dark:bg-green-950/20 text-green-600 rounded-xl sm:rounded-2xl shrink-0">
+                        <Heart className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Cash Received</p>
-                        <h4 className="text-2xl font-black text-paw-navy dark:text-white mt-1">₱{stats.totalCash.toLocaleString()}</h4>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-600 rounded-2xl">
-                        <Gift size={28} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending In-Kind Drops</p>
-                        <h4 className="text-2xl font-black text-paw-navy dark:text-white mt-1">{stats.pendingInKindCount} Drops</h4>
+                    <div className="min-w-0 w-full">
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Total Cash Received</p>
+                        <h4 className="text-lg sm:text-2xl font-black text-paw-navy dark:text-white mt-0.5 sm:mt-1 truncate">₱{stats.totalCash.toLocaleString()}</h4>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-                    <div className="p-4 bg-amber-50 dark:bg-amber-950/20 text-amber-600 rounded-2xl">
-                        <CalendarDays size={28} />
+                <div className="min-w-0 bg-white dark:bg-[#111827] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4">
+                    <div className="p-2.5 sm:p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-600 rounded-xl sm:rounded-2xl shrink-0">
+                        <Gift className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Expiring Soon (30d)</p>
-                        <h4 className="text-2xl font-black text-paw-navy dark:text-white mt-1">
+                    <div className="min-w-0 w-full">
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Pending In-Kind</p>
+                        <h4 className="text-lg sm:text-2xl font-black text-paw-navy dark:text-white mt-0.5 sm:mt-1 truncate">{stats.pendingInKindCount} Drops</h4>
+                    </div>
+                </div>
+
+                <div className="min-w-0 bg-white dark:bg-[#111827] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4">
+                    <div className="p-2.5 sm:p-4 bg-amber-50 dark:bg-amber-950/20 text-amber-600 rounded-xl sm:rounded-2xl shrink-0">
+                        <CalendarDays className="h-5 w-5 sm:h-7 sm:w-7" />
+                    </div>
+                    <div className="min-w-0 w-full">
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Expiring Soon (30d)</p>
+                        <h4 className="text-lg sm:text-2xl font-black text-paw-navy dark:text-white mt-0.5 sm:mt-1 truncate">
                             {inventoryStats?.expiringSoonCount ?? 0} Batches
                         </h4>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-                    <div className="p-4 bg-red-50 dark:bg-red-950/20 text-red-600 rounded-2xl">
-                        <AlertTriangle size={28} />
+                <div className="min-w-0 bg-white dark:bg-[#111827] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4">
+                    <div className="p-2.5 sm:p-4 bg-red-50 dark:bg-red-950/20 text-red-600 rounded-xl sm:rounded-2xl shrink-0">
+                        <AlertTriangle className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Expired / Write-Off</p>
-                        <h4 className="text-2xl font-black text-paw-navy dark:text-white mt-1">
+                    <div className="min-w-0 w-full">
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Expired / Write-Off</p>
+                        <h4 className="text-lg sm:text-2xl font-black text-paw-navy dark:text-white mt-0.5 sm:mt-1 truncate">
                             {inventoryStats?.expiredCount ?? 0} Batches
                         </h4>
                     </div>

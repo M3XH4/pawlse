@@ -155,7 +155,7 @@ export default function UserRehomingRequests({
             title="My Rehoming Requests"
             description="Track your community pet rehoming assistance requests, social cross-postings, and shelter intake updates."
             badge={
-                <div className="flex flex-row items-center gap-2.5 sm:gap-3 shrink-0 flex-nowrap">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <DashboardMetricBadge
                         icon={<RefreshCw className="h-4 w-4" />}
                         label={`${pendingCount + activeScreeningCount} Active`}
@@ -163,9 +163,9 @@ export default function UserRehomingRequests({
                     <button
                         type="button"
                         onClick={() => setIsRehomingModalOpen(true)}
-                        className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full bg-sky-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-sky-700 cursor-pointer shrink-0"
+                        className="inline-flex min-h-9 sm:min-h-10 flex-1 sm:flex-initial items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-full bg-sky-600 px-3.5 sm:px-5 text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-sky-700 cursor-pointer shrink-0"
                     >
-                        <Plus size={16} /> Request Rehoming Assistance
+                        <Plus size={15} className="shrink-0" /> Request Rehoming Assistance
                     </button>
                 </div>
             }
@@ -203,7 +203,7 @@ export default function UserRehomingRequests({
             </div>
 
             {/* Filter Pills */}
-            <div className="mb-5 flex flex-wrap items-center gap-2">
+            <div className="mb-5 flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
                 {[
                     { key: 'all', label: 'All Requests', count: rehomingRequests.length },
                     { key: 'pending', label: 'Pending', count: pendingCount },
@@ -238,7 +238,7 @@ export default function UserRehomingRequests({
                         key={tab.key}
                         type="button"
                         onClick={() => setStatusFilter(tab.key)}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                             statusFilter === tab.key
                                 ? 'bg-slate-900 text-white shadow-xs dark:bg-sky-600 dark:text-white'
                                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'

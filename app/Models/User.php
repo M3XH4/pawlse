@@ -24,7 +24,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Contracts\Permission as PermissionContract;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'first_name', 'middle_initial', 'last_name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style', 'revoked_permissions'])]
+#[Fillable(['name', 'first_name', 'middle_initial', 'last_name', 'email', 'password', 'phone', 'location', 'avatar_path', 'sidebar_notification_style', 'push_suppress_when_visible', 'revoked_permissions'])]
 #[Hidden(['password', 'email_verification_otp_hash', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -55,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
      */
     protected $attributes = [
         'sidebar_notification_style' => 'count',
+        'push_suppress_when_visible' => true,
     ];
 
     /**
@@ -91,6 +92,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'email_verification_otp_sent_at' => 'datetime',
             'email_verification_otp_attempts' => 'integer',
             'password' => 'hashed',
+            'push_suppress_when_visible' => 'boolean',
             'revoked_permissions' => 'array',
             'two_factor_confirmed_at' => 'datetime',
         ];
@@ -242,6 +244,14 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function petReports(): HasMany
     {
         return $this->hasMany(PetReport::class);
+    }
+
+    /**
+     * @return HasMany<PushSubscription, $this>
+     */
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
     }
 
     /**

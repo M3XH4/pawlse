@@ -89,14 +89,14 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
     return (
         <section className="py-24 bg-paw-bg relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 relative z-10">
-                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-10">
-                    <div className="max-w-2xl">
+                <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-10">
+                    <div className="max-w-2xl text-center md:text-left">
                         <div className="inline-flex items-center gap-2 bg-red-500/10 px-4 py-2 rounded-full mb-6 border border-red-500/20">
                             <Search size={18} className="text-red-500" />
                             <span className="text-xs font-black tracking-widest uppercase text-red-500">Iligan Missing Pet Network</span>
                         </div>
                         <h2 className="text-5xl md:text-6xl font-black text-paw-navy leading-tight italic">Help Them <span className="text-red-500 not-italic underline decoration-8 decoration-red-500/30 underline-offset-4">Return Home</span></h2>
-                        <p className="text-lg text-gray-500 font-bold max-w-xl font-quicksand mt-4">Browse our database of reported missing and found pets. Every second counts in bringing them back to their families.</p>
+                        <p className="text-lg text-gray-500 font-bold max-w-xl font-quicksand mt-4 mx-auto md:mx-0">Browse our database of reported missing and found pets. Every second counts in bringing them back to their families.</p>
                     </div>
 
                     <div className="flex flex-col gap-4 w-full md:w-auto">
@@ -155,12 +155,12 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
                                 )}
                             </AnimatePresence>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-nowrap items-center justify-center md:justify-start gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar py-1 -my-1">
                             {['ALL', 'STILL SEARCHING', 'FOUND', 'LAST SEEN'].map((f) => (
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
-                                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all shadow-md ${filter === f ? 'bg-paw-navy text-white scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
+                                    className={`shrink-0 whitespace-nowrap px-2.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black tracking-wider sm:tracking-widest uppercase transition-all shadow-md ${filter === f ? 'bg-paw-navy text-white scale-105' : 'bg-white text-paw-navy/60 hover:bg-gray-50'}`}
                                 >
                                     {f}
                                 </button>

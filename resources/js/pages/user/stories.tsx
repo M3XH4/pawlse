@@ -331,11 +331,11 @@ export default function UserStories({
             title="My Testimonials"
             description="Share your heartwarming journey or community testimonial to inspire others. Submissions are reviewed by our team before publishing to the blog."
             badge={
-                <div className="flex flex-row items-center gap-2.5 sm:gap-3 shrink-0 flex-nowrap">
+                <div className="flex flex-nowrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                     <button
                         type="button"
                         onClick={() => openCreateModal('testimonial')}
-                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal-600 px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-teal-600/25 transition-all hover:bg-teal-700 hover:shadow-md active:scale-95 cursor-pointer"
+                        className="inline-flex flex-1 sm:flex-initial h-10 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-xl bg-teal-600 px-3 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-teal-600/25 transition-all hover:bg-teal-700 hover:shadow-md active:scale-95 cursor-pointer"
                     >
                         <MessageSquareQuote size={16} className="shrink-0" />
                         <span>Write Testimonial</span>
@@ -343,7 +343,7 @@ export default function UserStories({
                     <button
                         type="button"
                         onClick={() => openCreateModal('adoption_success')}
-                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-paw-orange px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-paw-orange/25 transition-all hover:bg-paw-orange/90 hover:shadow-md active:scale-95 cursor-pointer"
+                        className="inline-flex flex-1 sm:flex-initial h-10 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-xl bg-paw-orange px-3 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-sm shadow-paw-orange/25 transition-all hover:bg-paw-orange/90 hover:shadow-md active:scale-95 cursor-pointer"
                     >
                         <Plus size={16} className="shrink-0" />
                         <span>Adoption Story</span>
@@ -421,7 +421,7 @@ export default function UserStories({
             <DashboardCard className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     {/* Status Tabs */}
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
                         {[
                             { key: 'all', label: 'All Stories', count: metrics.total },
                             { key: 'pending', label: 'Pending Review', count: metrics.pending },
@@ -433,7 +433,7 @@ export default function UserStories({
                                 <button
                                     key={tab.key}
                                     onClick={() => handleStatusTab(tab.key)}
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                                         active
                                             ? 'bg-paw-orange text-white shadow-sm'
                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
@@ -471,8 +471,8 @@ export default function UserStories({
                 </div>
 
                 {/* Category / Content Type Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
-                    <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
+                <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
+                    <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <Filter size={12} /> Type:
                     </span>
                     {[
@@ -486,7 +486,7 @@ export default function UserStories({
                             <button
                                 key={pill.key}
                                 onClick={() => handleCategoryPill(pill.key)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer border whitespace-nowrap shrink-0 ${
                                     active
                                         ? 'bg-paw-navy text-white border-paw-navy dark:bg-paw-orange dark:border-paw-orange shadow-xs'
                                         : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'

@@ -38,7 +38,7 @@ export function ImpactStats({ stats: propsStats }: { stats?: { rescued: number; 
   };
 
   return (
-    <section className="w-full bg-[#111111] overflow-hidden font-quicksand relative z-10 pt-[220px] md:pt-[260px] lg:pt-[350px] pb-[50px] px-4 md:px-[70px]">
+    <section className="w-full bg-[#111111] overflow-hidden font-quicksand relative z-10 pt-[220px] sm:pt-[260px] lg:pt-[350px] pb-[50px] px-4 md:px-[70px]">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

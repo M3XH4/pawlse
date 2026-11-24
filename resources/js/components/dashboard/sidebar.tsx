@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ChevronDown, LogOut, Menu, User, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
@@ -6,6 +6,7 @@ import { DashboardNavLink } from '@/components/dashboard/nav-link';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
 import { usePermissions } from '@/hooks/use-permissions';
 import { dashboardThemes } from '@/lib/dashboard-theme';
+import { preparePushLogout } from '@/lib/push-notifications';
 import { getTabNotificationCount } from '@/lib/tab-notification-matcher';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
@@ -398,13 +399,15 @@ export function DashboardSidebar({
                     </div>
                 </div>
 
-                <Link
-                    href={logout()}
-                    method="post"
-                    as="button"
+                <button
+                    type="button"
+                    onClick={async () => {
+                        await preparePushLogout();
+                        router.post(logout().url);
+                    }}
                     title="Sign Out"
                     className={cn(
-                        'flex min-h-[44px] w-full items-center gap-3 rounded-xl px-1 py-2 text-sm font-semibold text-[#64748B] transition-[padding,gap,color] duration-300 ease-out hover:text-[#0B2340] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]',
+                        'flex min-h-[44px] w-full items-center gap-3 rounded-xl px-1 py-2 text-sm font-semibold text-[#64748B] transition-[padding,gap,color] duration-300 ease-out hover:text-[#0B2340] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dashboard-ring)]/50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer',
                         collapsed && 'lg:gap-0 lg:px-[calc((5.5rem-1.25rem)/2)]',
                     )}
                 >
@@ -417,7 +420,7 @@ export function DashboardSidebar({
                     >
                         Sign Out
                     </span>
-                </Link>
+                </button>
             </div>
         </aside>
     );

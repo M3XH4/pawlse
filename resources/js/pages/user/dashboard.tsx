@@ -363,9 +363,9 @@ export default function UserDashboard({
 
                     <Link
                         href="/donate"
-                        className="inline-flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95"
+                        className="inline-flex w-full lg:w-auto items-center justify-center gap-1.5 lg:self-auto rounded-xl bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95"
                     >
-                        <Gift className="h-4 w-4" />
+                        <Gift className="h-4 w-4 shrink-0" />
                         <span>Support Shelter Care</span>
                     </Link>
                 </div>
@@ -448,10 +448,10 @@ export default function UserDashboard({
 
                         <Link
                             href="/missing"
-                            className="inline-flex items-center gap-1.5 self-start rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 sm:self-auto rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
                         >
                             <span>View Missing Pet Board</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                         </Link>
                     </div>
 
@@ -495,8 +495,8 @@ export default function UserDashboard({
             {/* 5. Getting Started Guide & Volunteer / Foster Invite */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <DashboardCard className="p-5 sm:p-6">
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
                             <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                 Your Next Steps
                             </h3>
@@ -504,7 +504,7 @@ export default function UserDashboard({
                                 Simple ways to get the most out of your Pawlse account.
                             </p>
                         </div>
-                        <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                             {completedChecklistCount}/{checklistItems.length} Done
                         </span>
                     </div>
@@ -542,7 +542,7 @@ export default function UserDashboard({
                     </div>
                 </DashboardCard>
 
-                <DashboardCard className="flex flex-col justify-between border-sky-200/80 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/70 p-5 sm:p-6 dark:border-sky-900/40 dark:from-[#0F172A] dark:via-[#111827] dark:to-sky-950/30">
+                <DashboardCard className="flex flex-col justify-between border-sky-200/80 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/70 p-4 sm:p-6 dark:border-sky-900/40 dark:from-[#0F172A] dark:via-[#111827] dark:to-sky-950/30">
                     <div>
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-3 py-1 text-xs font-bold text-sky-700 dark:text-sky-300">
                             {volunteerInvite.isVolunteer ? (
@@ -574,23 +574,23 @@ export default function UserDashboard({
                         </p>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <div className="mt-5 flex flex-nowrap items-center gap-1.5 sm:gap-3">
                         {volunteerInvite.isVolunteer ? (
                             <Link
                                 href="/volunteer/switch"
                                 method="post"
                                 as="button"
-                                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-700"
+                                className="flex-1 sm:flex-initial justify-center inline-flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl bg-sky-600 px-2.5 sm:px-4 py-2.5 text-[11px] sm:text-xs font-bold tracking-tight sm:tracking-normal whitespace-nowrap text-white shadow-sm transition hover:bg-sky-700"
                             >
-                                <Zap className="h-4 w-4" />
-                                <span>Switch to Volunteer Dashboard</span>
+                                <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                <span>Switch to Volunteer<span className="hidden sm:inline"> Dashboard</span></span>
                             </Link>
                         ) : (
                             <Link
                                 href="/volunteer"
-                                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-700"
+                                className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-sky-600 px-2.5 sm:px-4 py-2.5 text-[11px] sm:text-xs font-bold tracking-tight sm:tracking-normal whitespace-nowrap text-white shadow-sm transition hover:bg-sky-700"
                             >
-                                <Zap className="h-4 w-4" />
+                                <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                                 <span>
                                     {volunteerInvite.applicationStatus === 'pending'
                                         ? 'View Volunteer Program'
@@ -601,10 +601,10 @@ export default function UserDashboard({
 
                         <Link
                             href="/account/user/volunteer-status"
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-xs font-bold text-[#0B2340] transition hover:bg-[#F8FAFC] dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]"
+                            className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-2.5 sm:px-4 py-2.5 text-[11px] sm:text-xs font-bold tracking-tight sm:tracking-normal whitespace-nowrap text-[#0B2340] transition hover:bg-[#F8FAFC] dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]"
                         >
                             <span>Check Volunteer Status</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                         </Link>
                     </div>
                 </DashboardCard>
@@ -629,10 +629,10 @@ export default function UserDashboard({
 
                         <Link
                             href="/adopt"
-                            className="inline-flex items-center gap-1.5 self-start rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] transition hover:border-rose-300 hover:text-rose-600 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:hover:text-rose-400"
+                            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 sm:self-auto rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] transition hover:border-rose-300 hover:text-rose-600 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:hover:text-rose-400"
                         >
                             <span>See All Adoptable Pets</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                         </Link>
                     </div>
 
@@ -700,13 +700,13 @@ export default function UserDashboard({
             {/* 7. Lower Two-Column Grid: Row-aligned so left & right card heights match */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <DashboardCard className="flex h-full flex-col p-5 sm:p-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                    <div className="flex items-center justify-between gap-2">
+                        <h3 className="min-w-0 font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                             Your Recent Updates
                         </h3>
                         <Link
                             href="/account/user/notifications"
-                            className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                            className="shrink-0 whitespace-nowrap text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                         >
                             Notifications
                         </Link>
@@ -722,9 +722,9 @@ export default function UserDashboard({
                                 <Link
                                     key={item.id}
                                     href={item.href}
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 transition hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
+                                    className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 sm:px-4 py-3 transition hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
                                 >
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                             {item.title}
                                         </p>
@@ -743,7 +743,7 @@ export default function UserDashboard({
 
                 <DashboardCard className="flex h-full flex-col p-5 sm:p-6">
                     <div className="flex items-center gap-2">
-                        <Compass className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        <Compass className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                         <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                             Ways to Help Today
                         </h3>
@@ -760,7 +760,7 @@ export default function UserDashboard({
                                 <Link
                                     key={action.title}
                                     href={action.href}
-                                    className="group flex h-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:-translate-y-0.5 hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
+                                    className="group flex h-full min-w-0 items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:-translate-y-0.5 hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
                                 >
                                     <div
                                         className={cn(
@@ -770,7 +770,7 @@ export default function UserDashboard({
                                     >
                                         <Icon className="h-5 w-5" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-sm font-bold text-[#0B2340] group-hover:text-emerald-700 dark:text-[#F8FAFC] dark:group-hover:text-emerald-300">
                                             {action.title}
                                         </p>
@@ -785,13 +785,13 @@ export default function UserDashboard({
                 </DashboardCard>
 
                 <DashboardCard className="flex h-full flex-col p-5 sm:p-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                    <div className="flex items-center justify-between gap-2">
+                        <h3 className="min-w-0 font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                             Upcoming Community Events
                         </h3>
                         <Link
                             href="/events"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                         >
                             <span>All Events</span>
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -808,20 +808,20 @@ export default function UserDashboard({
                                 <Link
                                     key={event.id}
                                     href="/events"
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 transition hover:border-sky-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
+                                    className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 sm:px-4 py-3 transition hover:border-sky-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
                                 >
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                             {event.title}
                                         </p>
-                                        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
-                                            <span className="inline-flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
+                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
+                                            <span className="inline-flex items-center gap-1 shrink-0">
+                                                <Calendar className="h-3 w-3 shrink-0" />
                                                 {event.date || 'TBA'}
                                             </span>
-                                            <span className="inline-flex items-center gap-1">
-                                                <MapPin className="h-3 w-3" />
-                                                {event.location}
+                                            <span className="inline-flex min-w-0 items-center gap-1">
+                                                <MapPin className="h-3 w-3 shrink-0" />
+                                                <span className="truncate">{event.location}</span>
                                             </span>
                                         </p>
                                     </div>
@@ -833,16 +833,16 @@ export default function UserDashboard({
                 </DashboardCard>
 
                 <DashboardCard className="flex h-full flex-col p-5 sm:p-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Bookmark className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                            <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <Bookmark className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            <h3 className="truncate font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                 Saved Bookmarks
                             </h3>
                         </div>
                         <Link
                             href="/account/user/bookmark"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                         >
                             <span>View All ({bookmarks.length})</span>
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -859,9 +859,9 @@ export default function UserDashboard({
                                 <Link
                                     key={`${item.type}-${item.id}`}
                                     href="/account/user/bookmark"
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 transition hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
+                                    className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 sm:px-4 py-2.5 transition hover:border-emerald-300 dark:border-[#1E293B] dark:bg-[#0F172A]"
                                 >
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                             {item.title}
                                         </p>

@@ -21,14 +21,14 @@ export function AdminPageShell({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 overflow-x-clip">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                     <h1 className="font-fredoka text-3xl font-bold tracking-normal text-[#0B2340] dark:text-[#F8FAFC]">{title}</h1>
                     {description && <p className="mt-1 text-sm font-medium text-[#64748B] dark:text-[#94A3B8]">{description}</p>}
                 </div>
                 {headerActions && (
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="w-full sm:w-auto flex items-center gap-2.5 shrink-0">
                         {headerActions}
                     </div>
                 )}

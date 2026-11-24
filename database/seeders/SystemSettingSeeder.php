@@ -18,6 +18,7 @@ class SystemSettingSeeder extends Seeder
             'contact_phone' => '09123456789',
             'registration_enabled' => true,
             'maintenance_mode' => false,
+            'payment_simulation_enabled' => false,
         ]);
 
         SystemSetting::setValue('ai_settings', [

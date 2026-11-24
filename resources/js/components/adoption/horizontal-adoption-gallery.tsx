@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/react';
 import { Dog, Cat, Heart, ArrowRight, MapPin, Clock, CheckCircle2, X, Sparkles, ChevronLeft, ChevronRight, ShieldCheck, Images } from 'lucide-react';
 import { motion, useAnimationFrame, AnimatePresence } from 'motion/react';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
@@ -249,28 +249,49 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
   const [activePhotoIndexByPet, setActivePhotoIndexByPet] = useState<Record<number, number>>({});
   const [isPaused, setIsPaused] = useState(false);
   const [xPos, setXPos] = useState(0);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 639px)');
+    const updateIsMobile = () => {
+      const mobile = mediaQuery.matches;
+      setIsMobile(mobile);
+
+      if (mobile) {
+        setXPos(0);
+      }
+    };
+
+    updateIsMobile();
+    mediaQuery.addEventListener('change', updateIsMobile);
+
+    return () => mediaQuery.removeEventListener('change', updateIsMobile);
+  }, []);
 
   // Filter pets
   const filteredPets = selectedFilter === 'All'
     ? displayPets
     : displayPets.filter(pet => pet.category === selectedFilter);
 
-  // Duplicate pets array for seamless infinite loop
+  // Duplicate pets array for seamless infinite loop on larger screens
   const loopPets = [...filteredPets, ...filteredPets];
+  const galleryPets = isMobile ? filteredPets : loopPets;
 
-  // Auto-scroll animation
-  useAnimationFrame((t, delta) => {
-    if (!isPaused && !flippedCard && !applyingPet) {
+  // Auto-scroll animation (disabled on mobile so users can swipe snapped cards cleanly)
+  useAnimationFrame(() => {
+    if (!isMobile && !isPaused && !flippedCard && !applyingPet) {
       const speed = 0.3; // pixels per frame
       setXPos(prev => {
-        const cardWidth = 400;
+        const cardWidth = window.innerWidth < 768 ? 340 : 400;
         const gap = 32;
         const singleSetWidth = filteredPets.length * (cardWidth + gap);
         const newPos = prev - speed;
 
         // Reset position when first set completely scrolls off
-        if (Math.abs(newPos) >= singleSetWidth) {
+        if (singleSetWidth > 0 && Math.abs(newPos) >= singleSetWidth) {
           return 0;
         }
 
@@ -334,19 +355,19 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
         </motion.div>
       </div>
 
-      {/* Horizontal Scroll Container - Infinite Loop */}
-      <div className="relative h-[500px] sm:h-[580px] md:h-[650px] flex items-center overflow-hidden">
+      {/* Horizontal Scroll Container - Snap Swipe on Mobile, Infinite Loop on Tablet/Desktop */}
+      <div className="relative min-h-[510px] sm:h-[580px] md:h-[650px] flex items-center overflow-x-auto sm:overflow-hidden snap-x snap-mandatory sm:snap-none hide-scrollbar">
         <motion.div
-          animate={{ x: xPos }}
-          className="flex gap-5 sm:gap-8 px-4 py-8 will-change-transform"
+          animate={{ x: isMobile ? 0 : xPos }}
+          className="flex w-max gap-4 sm:gap-8 px-[8vw] sm:px-4 py-6 sm:py-8 will-change-transform"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          {loopPets.map((pet, index) => (
+          {galleryPets.map((pet, index) => (
             <motion.div
               key={`${pet.id}-${index}`}
-              whileHover={{ scale: 1.03, y: -8 }}
-              className="relative shrink-0 w-[280px] sm:w-[340px] md:w-[400px] h-[450px] sm:h-[530px] md:h-[600px] perspective-1000"
+              whileHover={isMobile ? undefined : { scale: 1.03, y: -8 }}
+              className="relative shrink-0 snap-center w-[84vw] max-w-[330px] sm:w-[340px] md:w-[400px] h-[480px] sm:h-[540px] md:h-[600px] perspective-1000"
             >
               <motion.div
                 className="relative w-full h-full"
@@ -356,11 +377,11 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
               >
                 {/* Front of Card */}
                 <div
-                  className="absolute inset-0 backface-hidden rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-white cursor-pointer hover:shadow-[0_20px_60px_rgba(245,158,11,0.3)] transition-shadow duration-300"
+                  className="absolute inset-0 backface-hidden rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-white cursor-pointer hover:shadow-[0_20px_60px_rgba(245,158,11,0.3)] transition-shadow duration-300 flex flex-col"
                   style={{ backfaceVisibility: 'hidden' }}
                   onClick={() => setFlippedCard(pet.id)}
                 >
-                  <div className="relative h-[70%] group/img">
+                  <div className="relative flex-1 min-h-0 group/img">
                     {(() => {
                       const photos: string[] = pet.photos && pet.photos.length > 0 ? pet.photos : [pet.mainImg];
                       const currentIdx = (activePhotoIndexByPet[pet.id] ?? 0) % photos.length;
@@ -374,29 +395,33 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
                             className="w-full h-full object-cover"
                           />
 
-                          {/* Rescued & In Shelter Tag or Applied Badge */}
-                          {pet.has_applied ? (
-                            <div className="absolute top-4 left-4 bg-emerald-600/95 text-white backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
-                              <CheckCircle2 size={14} className="shrink-0" />
-                              <span className="text-[10px] font-black uppercase tracking-wider">
-                                Applied
-                              </span>
-                            </div>
-                          ) : pet.isRescued !== false && (
-                            <div className="absolute top-4 left-4 bg-emerald-600/95 text-white backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
-                              <ShieldCheck size={14} className="shrink-0" />
-                              <span className="text-[10px] font-black uppercase tracking-wider">
-                                {pet.rescuedTag || 'Rescued • In Shelter'}
-                              </span>
-                            </div>
-                          )}
+                          {/* Top Badges Bar (prevent collision on narrow mobile cards) */}
+                          <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex items-center justify-between gap-2 pointer-events-none">
+                            {pet.has_applied ? (
+                              <div className="min-w-0 max-w-[65%] bg-emerald-600/95 text-white backdrop-blur-sm px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
+                                <CheckCircle2 size={14} className="shrink-0" />
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider truncate">
+                                  Applied
+                                </span>
+                              </div>
+                            ) : pet.isRescued !== false ? (
+                              <div className="min-w-0 max-w-[65%] bg-emerald-600/95 text-white backdrop-blur-sm px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-lg flex items-center gap-1.5 border border-emerald-400/40">
+                                <ShieldCheck size={14} className="shrink-0" />
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider truncate">
+                                  {pet.rescuedTag || 'Rescued • In Shelter'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span />
+                            )}
 
-                          {/* Species Pill */}
-                          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-                            <span className="text-xs font-black uppercase tracking-widest text-paw-navy">
-                              {pet.type === 'Dog' ? <Dog size={16} className="inline mr-1" /> : <Cat size={16} className="inline mr-1" />}
-                              {pet.type}
-                            </span>
+                            {/* Species Pill */}
+                            <div className="shrink-0 bg-white/95 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg">
+                              <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-paw-navy flex items-center">
+                                {pet.type === 'Dog' ? <Dog size={14} className="inline mr-1 sm:w-4 sm:h-4" /> : <Cat size={14} className="inline mr-1 sm:w-4 sm:h-4" />}
+                                {pet.type}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
@@ -459,10 +484,10 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
                     })()}
                   </div>
                   
-                  <div className="p-6 h-[30%] flex flex-col justify-between">
+                  <div className="p-4 sm:p-6 shrink-0 flex flex-col justify-between gap-3 sm:gap-4 bg-white">
                     <div>
-                      <h3 className="text-3xl font-black text-paw-navy mb-2 italic">{pet.name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                      <h3 className="text-2xl sm:text-3xl font-black text-paw-navy mb-1 sm:mb-2 italic truncate">{pet.name}</h3>
+                      <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Clock size={14} />
                           <span className="font-bold">{pet.estimatedAge}</span>
@@ -479,7 +504,7 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
                         e.stopPropagation();
                         setFlippedCard(pet.id);
                       }}
-                      className="w-full bg-paw-orange text-white py-4 rounded-2xl font-black text-sm tracking-widest uppercase hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2"
+                      className="w-full bg-paw-orange text-white py-3 sm:py-4 rounded-2xl font-black text-xs sm:text-sm tracking-widest uppercase hover:scale-[1.02] sm:hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2"
                     >
                       VIEW STORY <ArrowRight size={18} />
                     </button>
@@ -488,7 +513,7 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
 
                 {/* Back of Card */}
                 <div
-                  className="absolute inset-0 backface-hidden rounded-[3rem] overflow-hidden shadow-2xl bg-white p-2 flex flex-col"
+                  className="absolute inset-0 backface-hidden rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-white p-2 flex flex-col"
                   style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
                   <button

@@ -368,16 +368,16 @@ export function HonorWallTab({
                 </div>
             )}
 
-            {/* 3. Category Filter Tabs & Search Bar (Full Width & In One Line) */}
+            {/* 3. Category Filter Tabs & Search Bar */}
             <div className="space-y-3.5 w-full pt-1">
-                {/* 4 Pills in One Single Line Occupying Whole Parent Width */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full">
+                {/* 4 Pills: 2x2 Grid on Mobile, 4-Column Row on sm+ */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full">
                     <button
                         type="button"
                         onClick={() => { setSelectedCategory('all'); setActiveBadgeFilter(null); }}
-                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
+                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'all' && !activeBadgeFilter
-                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 scale-[1.01]'
+                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
                                 : 'bg-white border border-gray-200/90 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
                         }`}
                         title={`All Supporters (${counts.all})`}
@@ -389,9 +389,9 @@ export function HonorWallTab({
                     <button
                         type="button"
                         onClick={() => { setSelectedCategory('recurring'); setActiveBadgeFilter(null); }}
-                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
+                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'recurring'
-                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 scale-[1.01]'
+                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
                                 : 'bg-white border border-gray-200/90 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
                         }`}
                         title={`Recurring Supporters (${counts.recurring})`}
@@ -403,9 +403,9 @@ export function HonorWallTab({
                     <button
                         type="button"
                         onClick={() => { setSelectedCategory('donor'); setActiveBadgeFilter(null); }}
-                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
+                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'donor'
-                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 scale-[1.01]'
+                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
                                 : 'bg-white border border-gray-200/90 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
                         }`}
                         title={`Major Donors (${counts.donors})`}
@@ -417,9 +417,9 @@ export function HonorWallTab({
                     <button
                         type="button"
                         onClick={() => { setSelectedCategory('volunteer'); setActiveBadgeFilter(null); }}
-                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
+                        className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'volunteer'
-                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 scale-[1.01]'
+                                ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
                                 : 'bg-white border border-gray-200/90 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
                         }`}
                         title={`Active Volunteers (${counts.volunteers})`}

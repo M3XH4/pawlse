@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
     X, 
@@ -196,11 +197,11 @@ export function InKindWishlistModal({
         setUrgentOnly(false);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || typeof document === 'undefined') return null;
 
-    return (
+    return createPortal(
         <AnimatePresence>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5">
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5">
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -320,11 +321,11 @@ export function InKindWishlistModal({
                         </div>
 
                         {/* Filter Badges */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex flex-nowrap items-center gap-1 sm:gap-1.5 w-full sm:w-auto overflow-x-auto hide-scrollbar">
                             <button
                                 type="button"
                                 onClick={() => setTypeFilter('all')}
-                                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                className={`text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                                     typeFilter === 'all'
                                         ? 'bg-paw-navy text-white'
                                         : 'bg-white text-gray-600 hover:bg-gray-100'
@@ -335,7 +336,7 @@ export function InKindWishlistModal({
                             <button
                                 type="button"
                                 onClick={() => setTypeFilter('dog')}
-                                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                className={`text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                                     typeFilter === 'dog'
                                         ? 'bg-paw-orange text-white'
                                         : 'bg-white text-gray-600 hover:bg-gray-100'
@@ -346,7 +347,7 @@ export function InKindWishlistModal({
                             <button
                                 type="button"
                                 onClick={() => setTypeFilter('cat')}
-                                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                className={`text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                                     typeFilter === 'cat'
                                         ? 'bg-paw-blue text-white'
                                         : 'bg-white text-gray-600 hover:bg-gray-100'
@@ -358,21 +359,21 @@ export function InKindWishlistModal({
                             <button
                                 type="button"
                                 onClick={() => setUrgentOnly(!urgentOnly)}
-                                className={`text-[11px] font-black px-2.5 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
+                                className={`text-[10px] sm:text-[11px] font-black px-2 sm:px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
                                     urgentOnly
                                         ? 'bg-red-500 text-white'
                                         : 'bg-red-50 text-red-700 hover:bg-red-100'
                                 }`}
                             >
-                                <Flame size={11} className={urgentOnly ? 'text-white' : 'text-red-500'} />
-                                Urgent Only ({counts.urgentCount})
+                                <Flame size={11} className={`shrink-0 ${urgentOnly ? 'text-white' : 'text-red-500'}`} />
+                                <span>Urgent Only ({counts.urgentCount})</span>
                             </button>
 
                             {hasActiveFilters && (
                                 <button
                                     type="button"
                                     onClick={handleResetFilters}
-                                    className="text-[11px] font-bold text-gray-400 hover:text-paw-orange flex items-center gap-0.5 ml-1 transition-colors cursor-pointer"
+                                    className="text-[10px] sm:text-[11px] font-bold text-gray-400 hover:text-paw-orange flex items-center gap-0.5 ml-1 whitespace-nowrap shrink-0 transition-colors cursor-pointer"
                                 >
                                     <RotateCcw size={11} /> Reset
                                 </button>
@@ -523,6 +524,7 @@ export function InKindWishlistModal({
                     </div>
                 </motion.div>
             </div>
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
     );
 }

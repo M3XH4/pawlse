@@ -538,32 +538,32 @@ function HighlightKpiCard({
     isInverse?: boolean;
 }) {
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between">
-                <div>
-                    <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+        <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                    <span className="block text-[10px] sm:text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400 leading-snug">
                         {label}
                     </span>
-                    <p className="mt-2 font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
+                    <p className="mt-1 sm:mt-2 font-fredoka text-lg sm:text-2xl xl:text-3xl font-bold leading-tight text-slate-900 dark:text-white truncate">
                         {value}
                     </p>
                 </div>
-                <div className={cn('rounded-xl p-3 shadow-inner text-white', color)}>
-                    <Icon className="h-5 w-5" />
+                <div className={cn('shrink-0 rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-inner text-white', color)}>
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-slate-800/80">
+            <div className="mt-2.5 sm:mt-4 flex flex-wrap items-center justify-between gap-1.5 border-t border-gray-100 pt-2 sm:pt-3 text-[11px] sm:text-xs dark:border-slate-800/80">
                 {delta !== undefined ? (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                         <DeltaBadge delta={delta} isInverse={isInverse} />
-                        <span className="text-gray-400">vs prev period</span>
+                        <span className="hidden sm:inline text-gray-400">vs prev period</span>
                     </div>
                 ) : (
                     <span className="text-gray-400">Active metrics</span>
                 )}
                 {subValue && (
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-[10px] sm:text-xs text-slate-700 dark:text-slate-300 truncate">
                         {subValue}
                     </span>
                 )}
@@ -654,10 +654,12 @@ export default function SuperAdminAdvancedAnalytics() {
     const [isSilentUpdating, setIsSilentUpdating] = useState(false);
     const [secondsAgo, setSecondsAgo] = useState(0);
 
+    const isCustomRangeValid = Boolean(customStart && customEnd && customEnd >= customStart);
+
     const buildQueryParams = useCallback(() => {
         const params = new URLSearchParams({ period });
 
-        if (period === 'custom' && customStart && customEnd) {
+        if (period === 'custom' && customStart && customEnd && customEnd >= customStart) {
             params.set('start_date', customStart);
             params.set('end_date', customEnd);
         }
@@ -666,7 +668,7 @@ export default function SuperAdminAdvancedAnalytics() {
     }, [period, customStart, customEnd]);
 
     const fetchAnalytics = useCallback(async (silent = false) => {
-        if (period === 'custom' && (!customStart || !customEnd)) {
+        if (period === 'custom' && (!customStart || !customEnd || customEnd < customStart)) {
             return;
         }
 
@@ -787,15 +789,15 @@ export default function SuperAdminAdvancedAnalytics() {
             badge={<DashboardMetricBadge icon={<BarChart3 className="h-4 w-4" />} label="Super Admin Intelligence" />}
         >
             {/* ── Control Header ── */}
-            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="mb-6 flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between min-w-0">
                 {/* Period Selector (Single Line) */}
-                <div className="inline-flex shrink-0 flex-nowrap items-center gap-1 overflow-x-auto rounded-2xl bg-gray-100/80 p-1 dark:bg-slate-800/80">
+                <div className="flex w-full lg:w-auto flex-nowrap items-center justify-between lg:justify-start gap-1 overflow-x-auto hide-scrollbar rounded-2xl bg-gray-100/80 p-1 dark:bg-slate-800/80">
                     {periodOptions.map((p) => (
                         <button
                             key={p.key}
                             onClick={() => setPeriod(p.key)}
                             className={cn(
-                                'whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer',
+                                'flex-1 lg:flex-initial shrink-0 whitespace-nowrap rounded-xl px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer',
                                 period === p.key
                                     ? 'bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-indigo-400'
                                     : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
@@ -807,7 +809,7 @@ export default function SuperAdminAdvancedAnalytics() {
                 </div>
 
                 {/* Live + Icon-Only Refresh Pill (Last, Single Line) */}
-                <div className="inline-flex shrink-0 flex-nowrap items-center gap-2 self-start whitespace-nowrap rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs shadow-2xs lg:self-auto dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex w-full lg:w-auto shrink-0 flex-nowrap items-center justify-between gap-2 whitespace-nowrap rounded-xl border border-gray-200 bg-white px-3 py-2 lg:py-1.5 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900">
                     <button
                         type="button"
                         onClick={() => setIsLiveMode(!isLiveMode)}
@@ -824,21 +826,23 @@ export default function SuperAdminAdvancedAnalytics() {
                             {isLiveMode ? 'Live (30s)' : 'Paused'}
                         </span>
                     </button>
-                    <span className="text-gray-300 dark:text-gray-700">|</span>
-                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        {isSilentUpdating ? 'Syncing...' : secondsAgo < 5 ? 'Just now' : `${secondsAgo}s ago`}
-                    </span>
-                    <span className="text-gray-300 dark:text-gray-700">|</span>
-                    <button
-                        type="button"
-                        onClick={() => fetchAnalytics(false)}
-                        disabled={loading || isSilentUpdating}
-                        aria-label="Refresh analytics"
-                        title="Refresh analytics"
-                        className="inline-flex items-center justify-center rounded-lg p-1 text-gray-600 transition-colors hover:bg-gray-100 hover:text-indigo-600 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-800 cursor-pointer"
-                    >
-                        <RefreshCw className={cn('h-3.5 w-3.5', (loading || isSilentUpdating) && 'animate-spin text-indigo-500')} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="hidden lg:inline text-gray-300 dark:text-gray-700">|</span>
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                            {isSilentUpdating ? 'Syncing...' : secondsAgo < 5 ? 'Just now' : `${secondsAgo}s ago`}
+                        </span>
+                        <span className="text-gray-300 dark:text-gray-700">|</span>
+                        <button
+                            type="button"
+                            onClick={() => fetchAnalytics(false)}
+                            disabled={loading || isSilentUpdating}
+                            aria-label="Refresh analytics"
+                            title="Refresh analytics"
+                            className="inline-flex items-center justify-center rounded-lg p-1 text-gray-600 transition-colors hover:bg-gray-100 hover:text-indigo-600 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-800 cursor-pointer"
+                        >
+                            <RefreshCw className={cn('h-3.5 w-3.5', (loading || isSilentUpdating) && 'animate-spin text-indigo-500')} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -849,8 +853,13 @@ export default function SuperAdminAdvancedAnalytics() {
                         <ModernDatePicker
                             label="Start Date"
                             value={customStart}
-                            onChange={setCustomStart}
-                            maxDate={customEnd || todayIso}
+                            onChange={(nextStart) => {
+                                setCustomStart(nextStart);
+                                if (customEnd && nextStart > customEnd) {
+                                    setCustomEnd(nextStart);
+                                }
+                            }}
+                            maxDate={todayIso}
                             variant="input"
                             allowPast={true}
                             showPresets={true}
@@ -865,7 +874,11 @@ export default function SuperAdminAdvancedAnalytics() {
                         <ModernDatePicker
                             label="End Date"
                             value={customEnd}
-                            onChange={setCustomEnd}
+                            onChange={(nextEnd) => {
+                                if (!customStart || nextEnd >= customStart) {
+                                    setCustomEnd(nextEnd);
+                                }
+                            }}
                             minDate={customStart || undefined}
                             maxDate={todayIso}
                             variant="input"
@@ -882,7 +895,7 @@ export default function SuperAdminAdvancedAnalytics() {
                         <button
                             type="button"
                             onClick={() => fetchAnalytics(false)}
-                            disabled={!customStart || !customEnd || loading}
+                            disabled={!isCustomRangeValid || loading}
                             className="inline-flex h-[46px] shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-5 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300 dark:disabled:bg-indigo-900/50 cursor-pointer"
                         >
                             Apply Range
@@ -922,7 +935,7 @@ export default function SuperAdminAdvancedAnalytics() {
             {data && (
                 <div className="space-y-6">
                     {/* ── Top Executive KPI Cards ── */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                         <HighlightKpiCard
                             label="Total Verified Donations"
                             value={formatCurrency(data.stats.donations_amount)}
@@ -3138,7 +3151,7 @@ export default function SuperAdminAdvancedAnalytics() {
                                                 <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.title}</div>
                                                 <div className="text-[11px] text-gray-500 dark:text-gray-400">{item.desc}</div>
                                             </div>
-                                            <div className="flex shrink-0 items-center gap-2">
+                                            <div className="flex shrink-0 items-center justify-end gap-2 self-end sm:self-auto">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleExportPdf(item.key, false)}

@@ -1,4 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { PushPermissionBanner } from '@/components/push-permission-banner';
 import { HttpExceptionModal } from '@/components/ui/http-exception-modal';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -10,9 +12,25 @@ import SettingsLayout from '@/layouts/settings/layout';
 import SuperAdminLayout from '@/layouts/super-admin-layout';
 import UserLayout from '@/layouts/user-layout';
 import VolunteerLayout from '@/layouts/volunteer-layout';
+import { initializePushLifecycle } from '@/lib/push-notifications';
 import AuthSplitLayout from './layouts/auth/auth-split-layout';
 import '@/echo';
 import '@/lib/notification-store';
+
+declare global {
+    interface Window {
+        __pawlseHideSplash?: () => void;
+    }
+}
+
+function SplashDismiss() {
+    useEffect(() => {
+        window.__pawlseHideSplash?.();
+        initializePushLifecycle();
+    }, []);
+
+    return null;
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const NULL_PAGES = new Set([
@@ -72,7 +90,9 @@ createInertiaApp({
         return (
             <BookmarkProvider>
                 <TooltipProvider delayDuration={0}>
+                    <SplashDismiss />
                     {app}
+                    <PushPermissionBanner />
                     <Toaster />
                     <HttpExceptionModal />
                 </TooltipProvider>

@@ -308,10 +308,10 @@ export default function AdoptionManagement({
         </div>
 
         {/* Tab Controls */}
-        <div className="flex flex-wrap border-b border-gray-200 dark:border-gray-800 gap-1">
+        <div className="flex flex-nowrap sm:flex-wrap border-b border-gray-200 dark:border-gray-800 gap-1 overflow-x-auto hide-scrollbar">
           <button
             onClick={() => setActiveTab('applications')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'applications'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -321,7 +321,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('follow-ups')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'follow-ups'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -331,7 +331,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('shelter-visits')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'shelter-visits'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -341,7 +341,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('rehoming')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'rehoming'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -351,7 +351,7 @@ export default function AdoptionManagement({
           </button>
           <button
             onClick={() => setActiveTab('pets')}
-            className={`px-5 py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 font-black text-xs sm:text-sm tracking-wider uppercase border-b-4 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'pets'
                 ? 'border-paw-orange text-paw-orange'
                 : 'border-transparent text-gray-500 hover:text-paw-navy dark:hover:text-white'
@@ -548,8 +548,8 @@ export default function AdoptionManagement({
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-paw-orange outline-none rounded-2xl transition-colors font-bold text-sm text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                <div className="min-w-[140px]">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full md:w-auto">
+                <div className="min-w-0 sm:min-w-[140px]">
                   <ModernSelect
                     searchable={false}
                     value={petTypeFilter}
@@ -562,7 +562,7 @@ export default function AdoptionManagement({
                     ]}
                   />
                 </div>
-                <div className="min-w-[155px]">
+                <div className="min-w-0 sm:min-w-[155px]">
                   <ModernSelect
                     searchable={false}
                     value={petStatusFilter}
@@ -585,9 +585,9 @@ export default function AdoptionManagement({
                 <p className="font-bold">No animals found matching criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
                 {filteredPets.map(pet => (
-                  <div key={pet.id} className="bg-paw-bg dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between">
+                  <div key={pet.id} className="min-w-0 bg-paw-bg dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between">
                     <div>
                       <div className="aspect-square relative overflow-hidden bg-gray-100">
                         {pet.img ? (
@@ -603,28 +603,28 @@ export default function AdoptionManagement({
                           {pet.status}
                         </span>
                       </div>
-                      <div className="p-4 pb-2">
-                        <h4 className="font-black text-paw-navy dark:text-white text-base truncate">{pet.name}</h4>
-                        <p className="text-xs text-gray-400 font-bold mb-2 uppercase">{pet.breed}</p>
-                        <div className="flex gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-3">
+                      <div className="p-3 sm:p-4 pb-2">
+                        <h4 className="font-black text-paw-navy dark:text-white text-sm sm:text-base truncate">{pet.name}</h4>
+                        <p className="text-[11px] sm:text-xs text-gray-400 font-bold mb-1.5 sm:mb-2 uppercase truncate">{pet.breed}</p>
+                        <div className="flex gap-1.5 sm:gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-2.5 sm:mb-3">
                           <span>{pet.gender}</span>
                           <span>•</span>
                           <span>{pet.age}</span>
                         </div>
 
                         {/* Wishlist Needs Preview */}
-                        <div className="mb-2 min-h-[46px]">
+                        <div className="mb-1.5 sm:mb-2 min-h-[38px] sm:min-h-[46px]">
                           {pet.needs && pet.needs.length > 0 ? (
                             <div className="space-y-1">
                               {pet.needs.slice(0, 2).map((need) => {
                                 const normPriority = normalizePriority(need.priority);
                                 const isFulfilled = (need.status || '').toLowerCase() === 'fulfilled';
                                 return (
-                                  <div key={need.id} className="flex items-center justify-between text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700">
-                                    <span className={`truncate max-w-[90px] ${isFulfilled ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300 font-bold'}`}>
+                                  <div key={need.id} className="flex items-center justify-between gap-1 text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700 min-w-0">
+                                    <span className={`truncate flex-1 min-w-0 ${isFulfilled ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300 font-bold'}`}>
                                       {need.item}
                                     </span>
-                                    <span className={`text-[8px] font-black uppercase px-1 py-0.5 rounded ml-1 shrink-0 ${
+                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 ${
                                       normPriority === 'Urgent' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
                                       normPriority === 'High' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
                                       'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
@@ -645,7 +645,7 @@ export default function AdoptionManagement({
                       </div>
                     </div>
 
-                    <div className="p-4 pt-0">
+                    <div className="p-3 sm:p-4 pt-0">
                       {/* Wishlist / Needs Button */}
                       {canManageAdoptions && (
                       <button
@@ -654,13 +654,13 @@ export default function AdoptionManagement({
                           setEditingNeed(null);
                           setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
                         }}
-                        className={`w-full py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`w-full py-2 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-normal sm:tracking-wider whitespace-nowrap flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                           pet.needs && pet.needs.length > 0
                             ? 'bg-paw-orange/10 text-paw-orange hover:bg-paw-orange hover:text-white'
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-paw-orange hover:text-white'
                         }`}
                       >
-                        <Gift size={13} />
+                        <Gift size={13} className="shrink-0" />
                         <span>{pet.needs?.length ? `Wishlist (${pet.needs.length})` : '+ Add Needs'}</span>
                       </button>
                       )}

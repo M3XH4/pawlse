@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Events\NotificationPushed;
+use App\Jobs\SendWebPushNotification;
 use App\Listeners\DispatchN8nPlatformWebhooks;
 use App\Listeners\DispatchN8nVolunteerWebhook;
 use App\Listeners\LinkGuestRecordsOnLogin;
@@ -13,6 +14,7 @@ use App\Listeners\LogSuccessfulLogin;
 use App\Models\User;
 use App\Observers\RealtimeActivityObserver;
 use App\Services\NotificationPayloadFormatter;
+use App\Services\WebPushNotificationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -70,6 +72,15 @@ class AppServiceProvider extends ServiceProvider
                 $formatted = NotificationPayloadFormatter::format($notification);
                 $unreadCount = $notification->notifiable->unreadNotifications()->count();
                 rescue(fn () => event(new NotificationPushed($notification->notifiable->getKey(), $formatted, $unreadCount)), report: false);
+                rescue(function () use ($notification, $formatted, $unreadCount): void {
+                    if (app(WebPushNotificationService::class)->isConfigured()) {
+                        SendWebPushNotification::dispatch(
+                            $notification->notifiable->getKey(),
+                            $formatted,
+                            $unreadCount,
+                        )->afterCommit();
+                    }
+                }, report: false);
             }
         });
 

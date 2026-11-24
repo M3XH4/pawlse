@@ -187,17 +187,17 @@ export function BlogCarousel({
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex w-full sm:w-auto items-center justify-between gap-2">
                     <Link
                         href="/blog"
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] transition hover:border-emerald-400 hover:text-emerald-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+                        className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-bold text-[#0B2340] transition hover:border-emerald-400 hover:text-emerald-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:hover:border-emerald-500 dark:hover:text-emerald-300"
                     >
                         <span>Browse All Stories</span>
-                        <ArrowRight className="h-3.5 w-3.5" />
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                     </Link>
 
                     {filteredPosts.length > itemsPerView && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex shrink-0 items-center gap-1.5">
                             <button
                                 type="button"
                                 onClick={handlePrev}
@@ -221,12 +221,12 @@ export function BlogCarousel({
 
             {/* Category Filter Pills */}
             {availableCategories.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
                     <button
                         type="button"
                         onClick={() => setSelectedCategory('all')}
                         className={cn(
-                            'cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition',
+                            'shrink-0 whitespace-nowrap cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition',
                             selectedCategory === 'all'
                                 ? 'bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] text-white shadow-sm'
                                 : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155]',
@@ -240,7 +240,7 @@ export function BlogCarousel({
                             type="button"
                             onClick={() => setSelectedCategory(key)}
                             className={cn(
-                                'cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition',
+                                'shrink-0 whitespace-nowrap cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition',
                                 selectedCategory === key
                                     ? 'bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] text-white shadow-sm'
                                     : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155]',

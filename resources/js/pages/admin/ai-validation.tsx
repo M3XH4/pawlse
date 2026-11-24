@@ -321,10 +321,10 @@ export default function AiValidation({
           <button
             type="button"
             onClick={openGeneralBreedGuide}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-paw-orange/20 active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider whitespace-nowrap transition-all shadow-md shadow-paw-orange/20 active:scale-95 cursor-pointer"
             title="Open Dog & Cat Breed Reference Handbook"
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="h-4 w-4 shrink-0" />
             <span>Breed Reference Handbook</span>
           </button>
         ) : undefined

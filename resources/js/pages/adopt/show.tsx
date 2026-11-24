@@ -424,31 +424,31 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                 <div>
                   {isAvailable ? (
                     <div>
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-nowrap items-center gap-2 sm:gap-3">
                         {pet.has_applied ? (
-                          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-bold px-6 py-3.5 rounded-2xl flex items-center gap-2 text-sm shadow-xs">
-                            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                            <span>Application Already Submitted</span>
+                          <div className="flex-1 sm:flex-initial justify-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-bold px-3 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap shadow-xs">
+                            <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>Application Submitted</span>
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setIsWizardOpen(true)}
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all text-sm group"
+                            className="flex-1 sm:flex-initial bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-3 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer transition-all text-xs sm:text-sm group"
                           >
-                            <Heart size={16} fill="currentColor" />
-                            Apply to Adopt
-                            <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                            <Heart size={15} fill="currentColor" className="shrink-0 sm:w-4 sm:h-4" />
+                            <span>Apply to Adopt</span>
+                            <ChevronRight size={15} className="shrink-0 transition-transform group-hover:translate-x-0.5 sm:w-4 sm:h-4" />
                           </button>
                         )}
 
                         <button
                           type="button"
                           onClick={() => setIsVisitOpen(true)}
-                          className="bg-white hover:bg-slate-50 text-slate-700 font-bold px-5 py-3.5 rounded-2xl border border-slate-200/90 transition-all text-sm flex items-center gap-2 cursor-pointer"
+                          className="flex-1 sm:flex-initial justify-center bg-white hover:bg-slate-50 text-slate-700 font-bold px-3 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-slate-200/90 transition-all text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer"
                         >
-                          <Building2 size={15} className="text-slate-500" />
-                          Schedule Visit
+                          <Building2 size={15} className="text-slate-500 shrink-0" />
+                          <span>Schedule Visit</span>
                         </button>
                       </div>
                       <p className="text-xs text-slate-400 font-medium mt-2">
@@ -457,28 +457,30 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                     </div>
                   ) : (
                     <div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200/80 text-slate-700 font-bold px-4 py-3 rounded-2xl text-xs sm:text-sm">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200/80 text-slate-700 font-bold px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm">
                           <AlertCircle size={16} className="text-amber-500 shrink-0" />
                           <span>Not Open for Adoption</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setIsVisitOpen(true)}
-                          className="bg-white hover:bg-slate-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border border-slate-200/90 transition-all text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
-                        >
-                          <Building2 size={15} className="text-slate-500" />
-                          Inquire / Shelter Visit
-                        </button>
+                        <div className="flex flex-nowrap items-center gap-2 w-full sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={() => setIsVisitOpen(true)}
+                            className="flex-1 sm:flex-initial justify-center bg-white hover:bg-slate-50 text-slate-700 font-bold px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200/90 transition-all text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer"
+                          >
+                            <Building2 size={15} className="text-slate-500 shrink-0" />
+                            <span>Schedule Visit</span>
+                          </button>
 
-                        <Link
-                          href="/donate"
-                          className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-3 rounded-2xl transition-all text-xs sm:text-sm flex items-center gap-2 cursor-pointer shadow-md shadow-amber-500/20"
-                        >
-                          <Heart size={15} fill="currentColor" />
-                          Sponsor Care
-                        </Link>
+                          <Link
+                            href="/donate"
+                            className="flex-1 sm:flex-initial justify-center bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer shadow-md shadow-amber-500/20"
+                          >
+                            <Heart size={15} fill="currentColor" className="shrink-0" />
+                            <span>Sponsor Care</span>
+                          </Link>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-400 font-medium mt-2">
                         Currently undergoing rehabilitation, specialized shelter care, or foster placement.
@@ -491,7 +493,7 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
           </div>
 
           {/* Tab Navigation Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto py-2 no-scrollbar mb-8">
+          <div className="flex flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto hide-scrollbar py-2 mb-8">
             {availableTabs.map((tab: TabType) => {
               const isActive = activeTab === tab;
               return (
@@ -499,7 +501,7 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`px-5 sm:px-6 py-2.5 rounded-full font-bold text-sm transition-all whitespace-nowrap cursor-pointer ${
+                  className={`shrink-0 px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                     isActive
                       ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
                       : 'bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'

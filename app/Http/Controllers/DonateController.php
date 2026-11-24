@@ -496,7 +496,7 @@ class DonateController extends Controller
         $donation = Donation::with(['payments', 'feedingSponsorship', 'proofs'])->where('public_reference', $ref)->firstOrFail();
 
         $systemSettings = SystemSetting::getValue('system_settings', []);
-        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? (config('services.payment.simulation_enabled') || app()->environment(['local', 'testing'])));
+        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? config('services.payment.simulation_enabled', false));
 
         $latestProof = $donation->proofs->last();
 
@@ -696,7 +696,7 @@ class DonateController extends Controller
         $payment = $donation->payments->first();
 
         $systemSettings = SystemSetting::getValue('system_settings', []);
-        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? (config('services.payment.simulation_enabled') || app()->environment(['local', 'testing'])));
+        $simulationEnabled = (bool) ($systemSettings['payment_simulation_enabled'] ?? config('services.payment.simulation_enabled', false));
 
         // Guard against unauthorized simulation when simulation is disabled
         if (! $simulationEnabled && ! (auth()->check() && auth()->user()->hasRole([Role::Admin->value, Role::SuperAdmin->value]))) {

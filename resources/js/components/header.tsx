@@ -2,9 +2,11 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Phone, Mail, Search, Menu, User, ChevronDown, Facebook, ChevronRight, X, Settings, LogOut, MessageCircle, Video, UserCircle, Siren, Instagram, Stethoscope, Zap, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { CareTimerDrawer } from '@/components/care-sustainability/care-timer-drawer';
+import { preparePushLogout } from '@/lib/push-notifications';
 
 
 // Nav link preview images
@@ -109,9 +111,10 @@ export function Header() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setProfileMenuOpen(false);
     setMobileMenuOpen(false);
+    await preparePushLogout();
     router.post('/logout', {}, {
       onSuccess: () => {
         toast.success('Logged out successfully');
@@ -160,6 +163,7 @@ export function Header() {
   };
 
   return (
+    <>
     <header className="w-full relative z-[100] font-quicksand">
       {/* Top Info Bar */}
       <div className="bg-paw-navy text-white text-[10px] md:text-xs py-1.5 sm:py-2 px-3 sm:px-4 md:px-6 flex flex-row justify-between items-center border-b border-white/5 w-full whitespace-nowrap overflow-hidden">
@@ -473,75 +477,82 @@ export function Header() {
           </div>
         </div>
       </nav>
+    </header>
 
       {/* Search Modal */}
-      <AnimatePresence>
-        {searchOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-start justify-center pt-16 sm:pt-32 px-4"
-            onClick={() => setSearchOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: -20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: -20 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-2xl w-full shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-black text-paw-navy dark:text-white">Search</h3>
-                <button
-                  onClick={() => setSearchOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {searchOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-start justify-center pt-16 sm:pt-32 px-4"
+                onClick={() => setSearchOpen(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, y: -20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: -20 }}
+                  className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-2xl w-full shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <X size={24} className="text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search for pets, events, articles..."
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-paw-orange outline-none transition-colors"
-                    autoFocus
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full mt-4 bg-paw-orange text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-orange-600 transition-colors"
-                >
-                  Search
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-black text-paw-navy dark:text-white">Search</h3>
+                    <button
+                      onClick={() => setSearchOpen(false)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+                    >
+                      <X size={24} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                  <form onSubmit={handleSearch}>
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search for pets, events, articles..."
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-paw-orange outline-none transition-colors"
+                        autoFocus
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full mt-4 bg-paw-orange text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-orange-600 transition-colors"
+                    >
+                      Search
+                    </button>
+                  </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
 
       {/* Mobile Menu Drawer */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] xl:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-[201] shadow-2xl overflow-y-auto xl:hidden"
-            >
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] xl:hidden"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                  className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-[201] shadow-2xl overflow-y-auto xl:hidden"
+                >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-2xl font-black text-paw-navy dark:text-white">Menu</h2>
@@ -660,85 +671,105 @@ export function Header() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-3">
-                    <div className="flex items-center gap-3 px-2 py-1">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border border-white shadow-sm shrink-0">
-                        <img
-                          src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=FF750F&color=fff&bold=true`}
-                          alt={user?.name || 'User'}
-                          className="w-full h-full object-cover"
-                        />
+                  <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-800">
+                    <div className="rounded-2xl border border-gray-200/80 dark:border-gray-700/70 bg-white/95 dark:bg-gray-800/80 shadow-xs overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/70">
+                      {/* User Header */}
+                      <div className="flex items-center gap-3 p-3.5 bg-gray-50/80 dark:bg-gray-800/90">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-paw-orange to-paw-yellow overflow-hidden border-2 border-white shadow-sm shrink-0">
+                          <img
+                            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=FF750F&color=fff&bold=true`}
+                            alt={user?.name || 'User'}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-black text-sm text-paw-navy dark:text-white truncate">{user?.name}</p>
+                          <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-paw-orange/15 text-paw-orange text-[10px] font-black uppercase tracking-wider">
+                            {user?.role}
+                          </span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-black text-sm text-paw-navy dark:text-white truncate">{user?.name}</p>
-                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
-                      </div>
+
+                      {/* Account Links */}
+                      <Link
+                        href={getAccountPath()}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-between px-4 py-3 font-black text-paw-navy dark:text-white hover:bg-orange-50/50 dark:hover:bg-gray-700/60 transition-colors uppercase text-xs tracking-wider"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <User size={15} className="text-paw-orange shrink-0" />
+                          <span>Dashboard</span>
+                        </span>
+                        <ChevronRight size={16} className="text-gray-400 shrink-0" />
+                      </Link>
+
+                      {user?.role === 'volunteer' && (
+                        <button
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            router.post('/volunteer/switch-user');
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-3 font-bold text-xs text-paw-orange bg-orange-50/40 dark:bg-gray-800/40 hover:bg-orange-100/60 dark:hover:bg-gray-700/60 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <UserCheck size={15} className="shrink-0" />
+                            <span>Switch to User Mode</span>
+                          </span>
+                          <ChevronRight size={15} className="opacity-60 shrink-0" />
+                        </button>
+                      )}
+
+                      {user?.role === 'user' && canSwitchToVolunteer && (
+                        <button
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            router.post('/volunteer/switch');
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-3 font-bold text-xs text-paw-orange bg-orange-50/40 dark:bg-gray-800/40 hover:bg-orange-100/60 dark:hover:bg-gray-700/60 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <Zap size={15} className="shrink-0" />
+                            <span>Switch to Volunteer Mode</span>
+                          </span>
+                          <ChevronRight size={15} className="opacity-60 shrink-0" />
+                        </button>
+                      )}
+
+                      <Link
+                        href={getAccountSettingsPath()}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-between px-4 py-3 font-bold text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Settings size={15} className="text-gray-400 shrink-0" />
+                          <span>Account Settings</span>
+                        </span>
+                        <ChevronRight size={15} className="text-gray-400 shrink-0" />
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 font-black text-red-600 dark:text-red-400 bg-red-50/60 dark:bg-red-950/20 hover:bg-red-100/80 dark:hover:bg-red-900/30 transition-colors text-xs uppercase tracking-wider cursor-pointer"
+                      >
+                        <LogOut size={15} />
+                        <span>Log Out</span>
+                      </button>
                     </div>
-
-                    <Link
-                      href={getAccountPath()}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between px-4 py-3 rounded-xl font-black text-paw-navy dark:text-white bg-paw-bg dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-700 transition-colors uppercase text-xs tracking-wider"
-                    >
-                      <span>Dashboard</span>
-                      <ChevronRight size={16} className="text-gray-400" />
-                    </Link>
-
-                    {user?.role === 'volunteer' && (
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          router.post('/volunteer/switch-user');
-                        }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-paw-orange hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors text-left"
-                      >
-                        <UserCheck size={16} />
-                        <span>Switch to User Mode</span>
-                      </button>
-                    )}
-
-                    {user?.role === 'user' && canSwitchToVolunteer && (
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          router.post('/volunteer/switch');
-                        }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-paw-orange hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors text-left"
-                      >
-                        <Zap size={16} />
-                        <span>Switch to Volunteer Mode</span>
-                      </button>
-                    )}
-
-                    <Link
-                      href={getAccountSettingsPath()}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Settings size={16} className="text-gray-400" />
-                      <span>Account Settings</span>
-                    </Link>
-
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-xs uppercase tracking-wider cursor-pointer"
-                    >
-                      <LogOut size={16} />
-                      <span>Log Out</span>
-                    </button>
                   </div>
                 )}
               </div>
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+          </AnimatePresence>,
+          document.body,
+        )}
 
       {/* Global Bottom-Left Care Timer Drawer */}
       <CareTimerDrawer />
-    </header>
+    </>
   );
 }

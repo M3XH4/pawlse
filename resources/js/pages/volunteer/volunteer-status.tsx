@@ -123,22 +123,23 @@ export default function VolunteerStatus({ application, fosterParent, stats }: Vo
                 {/* Foster Home Caretaker Standing */}
                 <DashboardCard className="p-6 flex flex-col justify-between">
                     <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white flex items-center gap-2">
-                                <HeartHandshake className="text-paw-orange h-5 w-5" /> Foster Care Standing
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                            <h3 className="font-fredoka text-base sm:text-xl font-bold text-[#0B2340] dark:text-white flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                <HeartHandshake className="text-paw-orange h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                                <span className="truncate">Foster Care Standing</span>
                             </h3>
                             {fosterParent?.status === 'approved' && (
-                                <span className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 text-xs px-2.5 py-0.5 rounded font-black uppercase">
+                                <span className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-black uppercase whitespace-nowrap shrink-0">
                                     Approved Foster Home
                                 </span>
                             )}
                             {fosterParent?.status === 'pending' && (
-                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs px-2.5 py-0.5 rounded font-black uppercase animate-pulse">
+                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-black uppercase animate-pulse whitespace-nowrap shrink-0">
                                     Application Pending
                                 </span>
                             )}
                             {(!fosterParent || fosterParent.status === 'inactive') && (
-                                <span className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-xs px-2.5 py-0.5 rounded font-black uppercase">
+                                <span className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-black uppercase whitespace-nowrap shrink-0">
                                     Not Registered
                                 </span>
                             )}

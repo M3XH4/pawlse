@@ -714,8 +714,8 @@ export function AchievementsView({
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-nowrap items-center gap-1 sm:gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto hide-scrollbar">
                     {(
                         [
                             ['all', 'All'],
@@ -729,10 +729,10 @@ export function AchievementsView({
                             type="button"
                             onClick={() => setStatusFilter(key)}
                             className={cn(
-                                'cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold transition-all',
+                                'cursor-pointer -mb-px border-b-2 px-3 sm:px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all',
                                 statusFilter === key
-                                    ? 'bg-[#0B2340] text-white shadow-sm dark:bg-[#FF750F]'
-                                    : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800',
+                                    ? 'border-[#FF750F] text-[#FF750F] font-extrabold'
+                                    : 'border-transparent text-slate-500 hover:text-[#0B2340] dark:text-slate-400 dark:hover:text-white',
                             )}
                         >
                             {label}
@@ -740,17 +740,17 @@ export function AchievementsView({
                     ))}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto hide-scrollbar pb-0.5 sm:pb-0">
                     {categories.map((cat) => (
                         <button
                             key={cat}
                             type="button"
                             onClick={() => setCategoryFilter(cat)}
                             className={cn(
-                                'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
+                                'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all',
                                 categoryFilter === cat
-                                    ? 'bg-orange-100 text-[#FF750F] dark:bg-orange-950/50 dark:text-orange-300'
-                                    : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800',
+                                    ? 'bg-[#FF750F] text-white shadow-sm ring-1 ring-[#FF750F] dark:bg-[#FF750F] dark:text-white'
+                                    : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800 dark:hover:bg-slate-800',
                             )}
                         >
                             {CATEGORY_LABELS[cat] ?? cat}

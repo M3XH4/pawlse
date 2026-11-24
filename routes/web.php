@@ -34,6 +34,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\PetReportController;
 use App\Http\Controllers\PublicTrackingController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RehomingRequestController;
 use App\Http\Controllers\ResourceDownloadController;
 use App\Http\Controllers\SearchController;
@@ -151,6 +152,18 @@ Route::prefix('account/notifications')->name('account.notifications.')->middlewa
     Route::delete('clear-all', [UserNotificationController::class, 'clearAll'])->name('clear-all');
     Route::patch('{notification}/read', [UserNotificationController::class, 'read'])->name('read');
     Route::delete('{notification}', [UserNotificationController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('account/push-subscriptions')->name('account.push-subscriptions.')->group(function () {
+    Route::post('/', [PushSubscriptionController::class, 'store'])
+        ->middleware(['auth', 'verified'])
+        ->name('store');
+    Route::delete('/', [PushSubscriptionController::class, 'destroy'])
+        ->middleware(['auth'])
+        ->name('destroy');
+    Route::post('/test', [PushSubscriptionController::class, 'test'])
+        ->middleware(['auth', 'verified'])
+        ->name('test');
 });
 
 Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {

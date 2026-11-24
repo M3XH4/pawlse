@@ -625,11 +625,11 @@ export default function BlogIndex({
                                     </p>
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
+                                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+                                    <div className="flex items-center gap-2 sm:gap-3">
                                         <button
                                             onClick={(e) => handleReact(e, featuredPost.id, 'heart')}
-                                            className="flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 transition bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900 cursor-pointer"
+                                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 transition bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900 cursor-pointer"
                                             title="React Love"
                                         >
                                             <Heart size={14} className={featuredPost.user_reactions?.includes('heart') ? 'fill-rose-500 text-rose-500' : ''} />
@@ -638,7 +638,7 @@ export default function BlogIndex({
 
                                         <button
                                             onClick={(e) => handleToggleBookmark(e, featuredPost)}
-                                            className={`flex items-center gap-1.5 text-xs font-bold transition px-3 py-1.5 rounded-xl border cursor-pointer ${
+                                            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 text-xs font-bold transition px-3 py-1.5 rounded-xl border cursor-pointer ${
                                                 isBookmarked(featuredPost.id, 'blog')
                                                     ? 'bg-paw-orange/15 text-paw-orange border-paw-orange/40'
                                                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-paw-orange border-transparent'
@@ -651,7 +651,7 @@ export default function BlogIndex({
 
                                         <button
                                             onClick={(e) => handleOpenShare(e, featuredPost)}
-                                            className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-paw-navy dark:hover:text-white transition bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl cursor-pointer"
+                                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 text-xs font-bold text-gray-500 hover:text-paw-navy dark:hover:text-white transition bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl cursor-pointer"
                                             title="Share Post"
                                         >
                                             <Share2 size={14} />
@@ -661,9 +661,9 @@ export default function BlogIndex({
 
                                     <Link
                                         href={`/blog/${featuredPost.slug}`}
-                                        className="inline-flex items-center gap-1.5 text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider group-hover:translate-x-1 transition"
+                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:p-0 rounded-xl sm:rounded-none bg-paw-orange/10 sm:bg-transparent text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider whitespace-nowrap sm:group-hover:translate-x-1 transition"
                                     >
-                                        Read Story <ArrowRight size={14} />
+                                        <span>Read Story</span> <ArrowRight size={14} className="shrink-0" />
                                     </Link>
                                 </div>
                             </div>

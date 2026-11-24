@@ -517,97 +517,101 @@ export default function FosterManagement({
             <Head title="Foster Home Management - Admin" />
 
             {/* Overview Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <AdminCard className="p-4 border-l-4 border-l-paw-orange">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <AdminCard className="col-span-2 lg:col-span-1 p-3.5 sm:p-4 border-l-4 border-l-paw-orange">
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Placements</p>
-                        <span className="p-1.5 rounded-xl border bg-orange-50 border-orange-200 text-paw-orange dark:bg-orange-950/40 dark:border-orange-900/40 dark:text-orange-400">
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Placements</p>
+                        <span className="p-1.5 rounded-xl border bg-orange-50 border-orange-200 text-paw-orange shrink-0 dark:bg-orange-950/40 dark:border-orange-900/40 dark:text-orange-400">
                             <HeartHandshake size={16} />
                         </span>
                     </div>
-                    <p className="mt-2 text-3xl font-black text-paw-orange">{metrics.active_placements_count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Shelter pets in foster care</p>
+                    <p className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-black text-paw-orange">{metrics.active_placements_count}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Shelter pets in foster care</p>
                 </AdminCard>
 
-                <AdminCard className="p-4 border-l-4 border-l-emerald-500">
+                <AdminCard className="p-3.5 sm:p-4 border-l-4 border-l-emerald-500">
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Awaiting Foster</p>
-                        <span className="p-1.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400">
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Awaiting Foster</p>
+                        <span className="p-1.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-600 shrink-0 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400">
                             <Heart size={16} />
                         </span>
                     </div>
-                    <p className="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{metrics.available_pets_count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Available shelter animals</p>
+                    <p className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">{metrics.available_pets_count}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Available shelter animals</p>
                 </AdminCard>
 
-                <AdminCard className="p-4 border-l-4 border-l-blue-500">
+                <AdminCard className="p-3.5 sm:p-4 border-l-4 border-l-blue-500">
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Approved Homes</p>
-                        <span className="p-1.5 rounded-xl border bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-400">
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Approved Homes</p>
+                        <span className="p-1.5 rounded-xl border bg-blue-50 border-blue-200 text-blue-600 shrink-0 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-400">
                             <Home size={16} />
                         </span>
                     </div>
-                    <p className="mt-2 text-3xl font-black text-blue-600 dark:text-blue-400">{metrics.approved_foster_parents_count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Verified foster parents</p>
+                    <p className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">{metrics.approved_foster_parents_count}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Verified foster parents</p>
                 </AdminCard>
 
-                <AdminCard className="p-4 border-l-4 border-l-purple-500">
+                <AdminCard className="p-3.5 sm:p-4 border-l-4 border-l-purple-500">
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">At Capacity</p>
-                        <span className="p-1.5 rounded-xl border bg-purple-50 border-purple-200 text-purple-600 dark:bg-purple-950/40 dark:border-purple-900/40 dark:text-purple-400">
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">At Capacity</p>
+                        <span className="p-1.5 rounded-xl border bg-purple-50 border-purple-200 text-purple-600 shrink-0 dark:bg-purple-950/40 dark:border-purple-900/40 dark:text-purple-400">
                             <Users size={16} />
                         </span>
                     </div>
-                    <p className="mt-2 text-3xl font-black text-purple-600 dark:text-purple-400">{metrics.parents_at_capacity_count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Homes with full slots</p>
+                    <p className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400">{metrics.parents_at_capacity_count}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Homes with full slots</p>
                 </AdminCard>
 
-                <AdminCard className={`p-4 border-l-4 ${metrics.needs_attention_count > 0 ? 'border-l-red-500 bg-red-50/20 dark:bg-red-950/20' : 'border-l-amber-500'}`}>
+                <AdminCard className={`p-3.5 sm:p-4 border-l-4 ${metrics.needs_attention_count > 0 ? 'border-l-red-500 bg-red-50/20 dark:bg-red-950/20' : 'border-l-amber-500'}`}>
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Needs Attention</p>
-                        <span className={`p-1.5 rounded-xl border ${metrics.needs_attention_count > 0 ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-950/40 dark:border-red-900/40 dark:text-red-400' : 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-950/40 dark:border-amber-900/40 dark:text-amber-400'}`}>
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Needs Attention</p>
+                        <span className={`p-1.5 rounded-xl border shrink-0 ${metrics.needs_attention_count > 0 ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-950/40 dark:border-red-900/40 dark:text-red-400' : 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-950/40 dark:border-amber-900/40 dark:text-amber-400'}`}>
                             <AlertTriangle size={16} />
                         </span>
                     </div>
-                    <p className={`mt-2 text-3xl font-black ${metrics.needs_attention_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>{metrics.needs_attention_count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Reviews overdue / urgent alerts</p>
+                    <p className={`mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-black ${metrics.needs_attention_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>{metrics.needs_attention_count}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Reviews overdue / alerts</p>
                 </AdminCard>
             </div>
 
             {/* Action Bar & Quick Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
                 {canManageFoster && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                         type="button"
                         onClick={() => setShowAssignModal(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-paw-orange text-white shadow-sm hover:bg-paw-orange/90 transition-colors"
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold bg-paw-orange text-white shadow-sm hover:bg-paw-orange/90 whitespace-nowrap transition-colors"
                     >
-                        <Plus size={16} /> Assign Shelter Pet to Foster
+                        <Plus size={15} className="shrink-0" />
+                        <span className="sm:hidden">Assign Pet</span>
+                        <span className="hidden sm:inline">Assign Shelter Pet to Foster</span>
                     </button>
                     <button
                         type="button"
                         onClick={() => setShowAuthorizeModal(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0B2340] dark:bg-gray-800 text-white shadow-sm hover:bg-opacity-90 transition-colors"
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold bg-[#0B2340] dark:bg-gray-800 text-white shadow-sm hover:bg-opacity-90 whitespace-nowrap transition-colors"
                     >
-                        <UserCheck size={16} /> Authorize New Foster Parent
+                        <UserCheck size={15} className="shrink-0" />
+                        <span className="sm:hidden">Authorize Parent</span>
+                        <span className="hidden sm:inline">Authorize New Foster Parent</span>
                     </button>
                 </div>
                 )}
 
                 {/* Filter and Search */}
-                <form onSubmit={handleSearch} className="flex items-center gap-2">
-                    <div className="relative">
+                <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto min-w-0">
+                    <div className="relative w-full sm:w-64 min-w-0">
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search pet or foster parent..."
-                            className="pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0B2340] dark:text-white w-64"
+                            className="pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0B2340] dark:text-white w-full"
                         />
                     </div>
-                    <div className="min-w-[190px]">
+                    <div className="w-full sm:w-auto sm:min-w-[190px] min-w-0">
                         <ModernSelect
                             size="sm"
                             searchable={false}

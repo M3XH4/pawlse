@@ -32,7 +32,6 @@ import {
     BarChart,
     CartesianGrid,
     Cell,
-    Legend,
     Pie,
     PieChart,
     ResponsiveContainer,
@@ -420,16 +419,16 @@ export default function ReportsAnalytics({
                         </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto">
+                    <div className="flex w-full lg:w-auto shrink-0 items-center justify-between gap-2 min-w-0">
                         {/* Reporting Window Selector */}
-                        <div className="inline-flex shrink-0 flex-nowrap items-center rounded-xl bg-gray-100 p-1 dark:bg-slate-800">
+                        <div className="inline-flex flex-1 min-w-0 lg:flex-initial items-center rounded-xl bg-gray-100 p-1 overflow-x-auto hide-scrollbar dark:bg-slate-800">
                             {periodOptions.map((opt) => (
                                 <button
                                     key={opt.key}
                                     type="button"
                                     onClick={() => applyPeriod(opt.key)}
                                     className={cn(
-                                        'whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer',
+                                        'shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] sm:text-xs font-bold transition-all cursor-pointer',
                                         selectedPeriod === opt.key
                                             ? 'bg-white text-paw-navy shadow-xs dark:bg-slate-900 dark:text-white'
                                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
@@ -444,89 +443,100 @@ export default function ReportsAnalytics({
                             type="button"
                             onClick={() => applyPeriod(selectedPeriod, true)}
                             disabled={isRefreshing}
-                            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 shadow-xs transition hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-200 dark:hover:bg-slate-800 cursor-pointer"
+                            aria-label="Refresh"
+                            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 sm:px-3 py-2 text-xs font-bold text-gray-700 shadow-xs transition hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-200 dark:hover:bg-slate-800 cursor-pointer"
                         >
                             <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin text-teal-600')} />
-                            Refresh
+                            <span className="hidden sm:inline">Refresh</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Top Executive KPI Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
-                                    <Percent className="h-5 w-5" />
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 min-w-0">
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="rounded-xl bg-emerald-50 p-2 sm:p-3 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 shrink-0">
+                                    <Percent className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                <div>
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Rescue Resolution</span>
-                                    <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white mt-0.5">
-                                        {rescueResolutionRate}%
-                                    </h3>
-                                </div>
+                                <DeltaBadge delta={kpis?.rescues_delta} />
                             </div>
-                            <DeltaBadge delta={kpis?.rescues_delta} />
+                            <div className="mt-2.5 sm:mt-3">
+                                <span className="block text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">
+                                    Rescue Resolution
+                                </span>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold text-paw-navy dark:text-white mt-0.5 leading-tight">
+                                    {rescueResolutionRate}%
+                                </h3>
+                            </div>
                         </div>
-                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                             {summary.rescues.resolved} of {summary.rescues.total} resolved ({kpis?.period_rescues ?? 0} in window).
                         </p>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-xl bg-rose-50 p-3 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400">
-                                    <TrendingUp className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="rounded-xl bg-rose-50 p-2 sm:p-3 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400 shrink-0">
+                                    <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                <div>
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Adoption Success</span>
-                                    <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white mt-0.5">
-                                        {adoptionApprovalRate}%
-                                    </h3>
-                                </div>
+                                <DeltaBadge delta={kpis?.adoptions_delta} />
                             </div>
-                            <DeltaBadge delta={kpis?.adoptions_delta} />
+                            <div className="mt-2.5 sm:mt-3">
+                                <span className="block text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">
+                                    Adoption Success
+                                </span>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold text-paw-navy dark:text-white mt-0.5 leading-tight">
+                                    {adoptionApprovalRate}%
+                                </h3>
+                            </div>
                         </div>
-                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                             {summary.adoptions.approved} of {summary.adoptions.total} approved ({kpis?.period_adoptions ?? 0} in window).
                         </p>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-xl bg-amber-50 p-3 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400">
-                                    <Gift className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="rounded-xl bg-amber-50 p-2 sm:p-3 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400 shrink-0">
+                                    <Gift className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                <div>
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Avg Cash Donation</span>
-                                    <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white mt-0.5">
-                                        ₱{averageDonation.toLocaleString()}
-                                    </h3>
-                                </div>
+                                <DeltaBadge delta={kpis?.donations_delta} />
                             </div>
-                            <DeltaBadge delta={kpis?.donations_delta} />
+                            <div className="mt-2.5 sm:mt-3">
+                                <span className="block text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">
+                                    Avg Cash Donation
+                                </span>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold text-paw-navy dark:text-white mt-0.5 leading-tight">
+                                    ₱{averageDonation.toLocaleString()}
+                                </h3>
+                            </div>
                         </div>
-                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                             ₱{(kpis?.period_donations_amount ?? summary.donations.total_cash).toLocaleString()} raised in period.
                         </p>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-blue-50 p-3 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400">
-                                <Users className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="rounded-xl bg-blue-50 p-2 sm:p-3 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 shrink-0">
+                                    <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Volunteers</span>
-                                <h3 className="font-fredoka text-2xl font-bold text-paw-navy dark:text-white mt-0.5">
+                            <div className="mt-2.5 sm:mt-3">
+                                <span className="block text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">
+                                    Active Volunteers
+                                </span>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold text-paw-navy dark:text-white mt-0.5 leading-tight">
                                     {summary.volunteers.total}
                                 </h3>
                             </div>
                         </div>
-                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                             {volunteerImpact ? `${volunteerImpact.hours_logged} hrs logged • ` : ''}
                             {summary.volunteers.pending_apps} pending applications.
                         </p>
@@ -534,7 +544,7 @@ export default function ReportsAnalytics({
                 </div>
 
                 {/* Section Navigation Tabs */}
-                <div className="flex flex-nowrap items-center gap-2 overflow-x-auto rounded-2xl border border-gray-100 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar rounded-2xl border border-gray-100 bg-white p-2.5 sm:p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.key;
@@ -562,21 +572,31 @@ export default function ReportsAnalytics({
                 {activeTab === 'overview' && (
                     <div className="space-y-6">
                         <div className="grid gap-6 lg:grid-cols-2">
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
+                            <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                                    <div className="min-w-0">
                                         <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                                             Rescues vs Adoptions
                                         </h3>
                                         <p className="text-[11px] text-gray-500">Comparative operational volume trends</p>
                                     </div>
-                                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                         {chartFilter.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="h-72 w-full text-slate-800 dark:text-slate-200">
+                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mb-3 text-xs font-semibold">
+                                    <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-[#10B981] shrink-0" />
+                                        Rescues Reported
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 text-rose-500 dark:text-rose-400">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-[#F43F5E] shrink-0" />
+                                        Adoptions Applied
+                                    </span>
+                                </div>
+                                <div className="h-64 sm:h-72 w-full text-slate-800 dark:text-slate-200">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                                        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorRescues" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
@@ -588,8 +608,8 @@ export default function ReportsAnalytics({
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" className="dark:stroke-slate-800" />
-                                            <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} stroke="#94A3B8" />
-                                            <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="#94A3B8" />
+                                            <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} stroke="#94A3B8" interval="preserveStartEnd" />
+                                            <YAxis width={28} fontSize={10} tickLine={false} axisLine={false} stroke="#94A3B8" allowDecimals={false} />
                                             <Tooltip
                                                 contentStyle={{
                                                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -600,7 +620,6 @@ export default function ReportsAnalytics({
                                                 }}
                                                 labelStyle={{ fontWeight: 'bold' }}
                                             />
-                                            <Legend verticalAlign="top" height={36} iconType="circle" />
                                             <Area type="monotone" dataKey="Rescues" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRescues)" name="Rescues Reported" />
                                             <Area type="monotone" dataKey="Adoptions" stroke="#F43F5E" strokeWidth={2.5} fillOpacity={1} fill="url(#colorAdoptions)" name="Adoptions Applied" />
                                         </AreaChart>
@@ -608,21 +627,21 @@ export default function ReportsAnalytics({
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
+                            <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                                    <div className="min-w-0">
                                         <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                                             Cash Raised (PHP)
                                         </h3>
                                         <p className="text-[11px] text-gray-500">Verified donation revenue levels</p>
                                     </div>
-                                    <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                    <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
                                         PHP ₱
                                     </span>
                                 </div>
-                                <div className="h-72 w-full">
+                                <div className="h-64 sm:h-72 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                                        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorDonations" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.85} />
@@ -630,8 +649,8 @@ export default function ReportsAnalytics({
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" className="dark:stroke-slate-800" />
-                                            <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} stroke="#94A3B8" />
-                                            <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="#94A3B8" tickFormatter={(v) => `₱${v >= 1000 ? v / 1000 + 'k' : v}`} />
+                                            <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} stroke="#94A3B8" interval="preserveStartEnd" />
+                                            <YAxis width={42} fontSize={10} tickLine={false} axisLine={false} stroke="#94A3B8" tickFormatter={(v) => `₱${v >= 1000 ? v / 1000 + 'k' : v}`} />
                                             <Tooltip
                                                 formatter={(value: any) => [`₱${Number(value).toLocaleString()}`, 'Raised']}
                                                 contentStyle={{
@@ -851,7 +870,7 @@ export default function ReportsAnalytics({
 
                         {adminInsights && (
                             <div className="grid gap-6 lg:grid-cols-2">
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
                                     <h3 className="font-fredoka text-lg font-bold text-paw-navy dark:text-white">
                                         Adoption Pipeline Stages
                                     </h3>
@@ -860,10 +879,10 @@ export default function ReportsAnalytics({
                                     </p>
                                     <div className="h-56 w-full">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={adminInsights.adoptionPipeline.stages} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <BarChart data={adminInsights.adoptionPipeline.stages} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                <XAxis dataKey="name" fontSize={11} />
-                                                <YAxis fontSize={11} allowDecimals={false} />
+                                                <XAxis dataKey="name" fontSize={10} interval="preserveStartEnd" />
+                                                <YAxis width={28} fontSize={10} allowDecimals={false} />
                                                 <Tooltip />
                                                 <Bar dataKey="value" name="Applications" fill="#F43F5E" radius={[6, 6, 0, 0]} />
                                             </BarChart>
@@ -885,7 +904,7 @@ export default function ReportsAnalytics({
                                     </div>
                                 </div>
 
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
                                     <h3 className="font-fredoka text-lg font-bold text-paw-navy dark:text-white">
                                         Rescue Urgency &amp; Admin Queues
                                     </h3>
@@ -900,11 +919,11 @@ export default function ReportsAnalytics({
                                                         ? adminInsights.rescueFunnel.urgency_breakdown
                                                         : adminInsights.rescueFunnel.status_breakdown
                                                 }
-                                                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                                margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                <XAxis dataKey="name" fontSize={11} />
-                                                <YAxis fontSize={11} allowDecimals={false} />
+                                                <XAxis dataKey="name" fontSize={10} interval="preserveStartEnd" />
+                                                <YAxis width={28} fontSize={10} allowDecimals={false} />
                                                 <Tooltip />
                                                 <Bar dataKey="value" name="Reports" fill="#10B981" radius={[6, 6, 0, 0]} />
                                             </BarChart>
@@ -967,17 +986,17 @@ export default function ReportsAnalytics({
                         </div>
 
                         <div className="grid gap-6 lg:grid-cols-2">
-                            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                            <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
                                 <h3 className="font-fredoka text-lg font-bold text-paw-navy dark:text-white">
                                     Shelter Animal Population by Status
                                 </h3>
                                 <p className="text-xs text-gray-500 mb-4">Distribution across adoption, foster, and clinical care</p>
                                 <div className="h-64 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={shelterCensus.status_breakdown} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <BarChart data={shelterCensus.status_breakdown} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                            <XAxis dataKey="name" fontSize={11} />
-                                            <YAxis fontSize={11} allowDecimals={false} />
+                                            <XAxis dataKey="name" fontSize={10} interval="preserveStartEnd" />
+                                            <YAxis width={28} fontSize={10} allowDecimals={false} />
                                             <Tooltip />
                                             <Bar dataKey="value" name="Animals" fill="#0D9488" radius={[6, 6, 0, 0]} />
                                         </BarChart>

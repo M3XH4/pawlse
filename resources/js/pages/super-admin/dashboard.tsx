@@ -235,20 +235,20 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                 )}
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                     {/* User Card */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total System Users</span>
-                            <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400">
-                                <Users className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-150 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-2">
+                            <span className="text-[11px] sm:text-sm font-semibold leading-snug text-gray-500 dark:text-gray-400">Total System Users</span>
+                            <div className="shrink-0 rounded-lg sm:rounded-xl bg-indigo-50 p-1.5 sm:p-2.5 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400">
+                                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
+                        <div className="mt-2 sm:mt-4">
+                            <h3 className="font-fredoka text-xl sm:text-3xl font-bold leading-tight text-slate-900 dark:text-white">
                                 {stats.total_users}
                             </h3>
-                            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+                            <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs text-gray-400">
                                 <span className="font-bold text-indigo-600 dark:text-indigo-400">{stats.total_admins} Admins</span>
                                 <span>•</span>
                                 <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.total_volunteers} Volunteers</span>
@@ -257,63 +257,63 @@ export default function SuperAdminDashboard({ stats, recentActivities }: Dashboa
                     </div>
 
                     {/* Database Card */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Database Capacity</span>
-                            <div className="rounded-xl bg-cyan-50 p-2.5 text-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400">
-                                <HardDrive className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-150 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-2">
+                            <span className="text-[11px] sm:text-sm font-semibold leading-snug text-gray-500 dark:text-gray-400">Database Capacity</span>
+                            <div className="shrink-0 rounded-lg sm:rounded-xl bg-cyan-50 p-1.5 sm:p-2.5 text-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400">
+                                <HardDrive className="h-4 w-4 sm:h-5 sm:w-5" />
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
+                        <div className="mt-2 sm:mt-4">
+                            <h3 className="font-fredoka text-xl sm:text-3xl font-bold leading-tight text-slate-900 dark:text-white">
                                 {stats.database_size}
                             </h3>
-                            <div className="mt-2 text-xs text-gray-400 font-medium">
-                                Database type: {import.meta.env.VITE_DB_CONNECTION || 'MySQL'}
+                            <div className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-gray-400 font-medium truncate">
+                                Type: {import.meta.env.VITE_DB_CONNECTION || 'MySQL'}
                             </div>
                         </div>
                     </div>
 
                     {/* Backups Card */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Saved Backups</span>
-                            <div className="rounded-xl bg-violet-50 p-2.5 text-violet-600 dark:bg-violet-950/20 dark:text-violet-400">
-                                <DatabaseBackup className="h-5 w-5" />
+                    <div className="rounded-2xl border border-gray-150 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-2">
+                            <span className="text-[11px] sm:text-sm font-semibold leading-snug text-gray-500 dark:text-gray-400">Saved Backups</span>
+                            <div className="shrink-0 rounded-lg sm:rounded-xl bg-violet-50 p-1.5 sm:p-2.5 text-violet-600 dark:bg-violet-950/20 dark:text-violet-400">
+                                <DatabaseBackup className="h-4 w-4 sm:h-5 sm:w-5" />
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <h3 className="font-fredoka text-3xl font-bold text-slate-900 dark:text-white">
+                        <div className="mt-2 sm:mt-4">
+                            <h3 className="font-fredoka text-xl sm:text-3xl font-bold leading-tight text-slate-900 dark:text-white">
                                 {stats.backups_count} Completed
                             </h3>
-                            <div className="mt-2 text-xs text-gray-400 font-medium">
-                                Backups are safely stored in local disk
+                            <div className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-gray-400 font-medium leading-snug line-clamp-2">
+                                Safely stored in local disk
                             </div>
                         </div>
                     </div>
 
                     {/* Alarms Card */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Security Threats (24h)</span>
+                    <div className="rounded-2xl border border-gray-150 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-2">
+                            <span className="text-[11px] sm:text-sm font-semibold leading-snug text-gray-500 dark:text-gray-400">Security Threats (24h)</span>
                             <div className={cn(
-                                'rounded-xl p-2.5',
+                                'shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5',
                                 stats.recent_alarms > 0
                                     ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400'
                                     : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400'
                             )}>
-                                <ShieldAlert className="h-5 w-5" />
+                                <ShieldAlert className="h-4 w-4 sm:h-5 sm:w-5" />
                             </div>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-2 sm:mt-4">
                             <h3 className={cn(
-                                'font-fredoka text-3xl font-bold',
+                                'font-fredoka text-xl sm:text-3xl font-bold leading-tight',
                                 stats.recent_alarms > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
                             )}>
                                 {stats.recent_alarms} Suspicious
                             </h3>
-                            <div className="mt-2 text-xs text-gray-400 font-medium">
-                                {stats.recent_alarms > 0 ? 'Review suspicious login attempts immediately' : 'No suspicious login attempts'}
+                            <div className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-gray-400 font-medium leading-snug line-clamp-2">
+                                {stats.recent_alarms > 0 ? 'Review suspicious login attempts' : 'No suspicious login attempts'}
                             </div>
                         </div>
                     </div>

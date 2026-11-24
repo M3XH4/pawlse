@@ -12,6 +12,7 @@ export type User = {
     location?: string | null;
     email_verified_at: string | null;
     sidebar_notification_style?: 'count' | 'dot' | 'none';
+    push_suppress_when_visible?: boolean;
     two_factor_enabled?: boolean;
     roles?: string[];
     permissions?: string[];

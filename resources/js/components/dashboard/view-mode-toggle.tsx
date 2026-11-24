@@ -78,7 +78,7 @@ export function ViewModeToggle({
                 type="button"
                 onClick={() => onChange('table')}
                 aria-pressed={mode === 'table'}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all ${
+                className={`inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
                     mode === 'table'
                         ? 'bg-white text-[#0B2340] shadow-xs dark:bg-slate-800 dark:text-white'
                         : 'text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200'
@@ -91,7 +91,7 @@ export function ViewModeToggle({
                 type="button"
                 onClick={() => onChange('cards')}
                 aria-pressed={mode === 'cards'}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all ${
+                className={`inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
                     mode === 'cards'
                         ? 'bg-white text-[#0B2340] shadow-xs dark:bg-slate-800 dark:text-white'
                         : 'text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200'

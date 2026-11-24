@@ -642,51 +642,51 @@ export default function VolunteerManagement({
                 </AdminCard>
 
                 {/* Navigation Tabs */}
-                <div className="flex gap-2 border-b-2 border-gray-200 dark:border-gray-800 mb-6">
+                <div className="flex flex-nowrap items-center gap-1 sm:gap-2 border-b-2 border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto hide-scrollbar">
                     <button
                         onClick={() => setActiveTab('applications')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'applications' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer ${
+                            activeTab === 'applications' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Applications ({applications.total})
                     </button>
                     <button
                         onClick={() => setActiveTab('volunteers')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'volunteers' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer ${
+                            activeTab === 'volunteers' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Active Volunteers ({volunteers.total})
                     </button>
                     <button
                         onClick={() => setActiveTab('tasks')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'tasks' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer ${
+                            activeTab === 'tasks' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Assigned Tasks ({tasks.total})
                     </button>
                     <button
                         onClick={() => setActiveTab('groups')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'groups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer ${
+                            activeTab === 'groups' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Field Groups ({fieldGroups.length})
                     </button>
                     <button
                         onClick={() => setActiveTab('food_pickups')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer ${
-                            activeTab === 'food_pickups' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer ${
+                            activeTab === 'food_pickups' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         Daily Food Pickups ({foodPickups.total})
                     </button>
                     <button
                         onClick={() => setActiveTab('injuries')}
-                        className={`px-6 py-4 font-black text-sm transition-all relative cursor-pointer inline-flex items-center gap-2 ${
-                            activeTab === 'injuries' ? 'text-paw-orange' : 'text-gray-400 hover:text-paw-navy dark:hover:text-white'
+                        className={`px-4 sm:px-6 py-3 sm:py-4 font-black text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 -mb-[2px] transition-all cursor-pointer inline-flex items-center gap-2 ${
+                            activeTab === 'injuries' ? 'border-paw-orange text-paw-orange' : 'border-transparent text-gray-400 hover:text-paw-navy dark:hover:text-white'
                         }`}
                     >
                         <span>Injury Reports ({injuryReports.total})</span>

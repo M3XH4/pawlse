@@ -65,10 +65,10 @@ export function AdminHeader({
                     </button>
 
                     <div className="min-w-0">
-                        <h1 className="truncate font-fredoka text-lg font-bold leading-tight tracking-tight text-[#0B2340] sm:text-xl dark:text-[#F8FAFC]">
+                        <h1 className="hidden sm:block truncate font-fredoka text-lg font-bold leading-tight tracking-tight text-[#0B2340] sm:text-xl dark:text-[#F8FAFC]">
                             {greeting}, {adminName}
                         </h1>
-                        <p className="text-xs font-medium leading-tight text-[#64748B] dark:text-[#94A3B8] sm:text-sm">
+                        <p className="text-xs font-bold leading-tight text-[#0B2340] dark:text-[#F8FAFC] sm:text-sm sm:font-medium sm:text-[#64748B] dark:sm:text-[#94A3B8]">
                             {dateLabel}
                         </p>
                     </div>

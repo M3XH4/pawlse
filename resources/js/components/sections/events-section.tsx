@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Calendar, MapPin, Clock, ArrowRight, Star, Heart, UserPlus, ShieldPlus, Plus, Mail, Phone, User, Bookmark, Sparkles, X, CheckCircle2, Trash2, CalendarPlus, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
@@ -223,11 +224,10 @@ export function Events({
         }
     };
 
-    return (
-        <>
-            <AnimatePresence>
-                {bookingEvent && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
+    const eventModal = (
+        <AnimatePresence>
+            {bookingEvent && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-6">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -287,14 +287,14 @@ export function Events({
                             <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto bg-white p-5 sm:p-7 md:w-7/12 md:p-8">
                                 <div>
                                     {/* Header Row: Information Tag + Spots Badge + Close Button */}
-                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="flex items-center gap-1.5 rounded-full bg-paw-orange/10 px-2.5 py-1 text-[11px] font-black tracking-widest text-paw-orange uppercase">
-                                                <Sparkles size={12} />
+                                    <div className="mb-3 flex items-center justify-between gap-2">
+                                        <div className="flex min-w-0 flex-nowrap items-center gap-1.5 sm:gap-2">
+                                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-paw-orange/10 px-2 py-0.5 text-[10px] font-black tracking-wider whitespace-nowrap text-paw-orange uppercase sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px] sm:tracking-widest">
+                                                <Sparkles size={11} className="shrink-0 sm:h-3 sm:w-3" />
                                                 Event Information
                                             </span>
                                             {bookingEvent.spots !== undefined && (
-                                                <span className="rounded-full border border-red-200/80 bg-red-50 px-2.5 py-0.5 text-[11px] font-black tracking-wider whitespace-nowrap text-red-600 uppercase">
+                                                <span className="shrink-0 rounded-full border border-red-200/80 bg-red-50 px-2 py-0.5 text-[10px] font-black tracking-wide whitespace-nowrap text-red-600 uppercase sm:px-2.5 sm:text-[11px] sm:tracking-wider">
                                                     {bookingEvent.spots || 20} Spots Left
                                                 </span>
                                             )}
@@ -303,7 +303,7 @@ export function Events({
                                         <button
                                             type="button"
                                             onClick={() => setBookingEvent(null)}
-                                            className="shrink-0 cursor-pointer rounded-full p-2 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90"
+                                            className="shrink-0 cursor-pointer rounded-full p-1.5 text-gray-400 transition-all hover:bg-gray-100 hover:text-paw-navy active:scale-90 sm:p-2"
                                             aria-label="Close modal"
                                         >
                                             <X size={20} />
@@ -491,18 +491,23 @@ export function Events({
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+        </AnimatePresence>
+    );
+
+    return (
+        <>
+            {typeof document !== 'undefined' ? createPortal(eventModal, document.body) : eventModal}
 
             <section className="bg-paw-bg relative py-20">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
-                        <div className="max-w-2xl">
+                    <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6">
+                        <div className="max-w-2xl text-center md:text-left">
                             <div className="inline-flex items-center gap-2 bg-paw-yellow/10 px-4 py-2 rounded-full mb-4 border border-paw-yellow/20">
                                 <Calendar size={18} className="text-paw-yellow" />
                                 <span className="text-xs font-black tracking-widest uppercase text-paw-yellow">Community Calendar</span>
                             </div>
                             <h2 className="text-5xl md:text-6xl font-black text-paw-navy leading-tight mb-4 italic">Upcoming <span className="text-paw-yellow not-italic underline decoration-8 decoration-paw-yellow/30 underline-offset-4">Events</span></h2>
-                            <p className="text-lg text-gray-500 font-bold max-w-xl">Every event is a step closer to a stray-free Iligan. Join us in our mission to protect and love our furry friends.</p>
+                            <p className="text-lg text-gray-500 font-bold max-w-xl mx-auto md:mx-0">Every event is a step closer to a stray-free Iligan. Join us in our mission to protect and love our furry friends.</p>
                         </div>
                         <Link
                             href="/events"

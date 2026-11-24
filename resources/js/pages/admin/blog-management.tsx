@@ -445,63 +445,67 @@ export default function BlogManagement({
                 </div>
 
                 {/* Filters, Search & Action Bar */}
-                <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
-                    <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex items-center gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search articles by title or content..."
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-paw-orange"
-                            />
+                <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 min-w-0">
+                    <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex flex-col lg:flex-row lg:items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="flex items-center gap-2 w-full lg:contents min-w-0">
+                            <div className="relative flex-1 min-w-0 lg:order-1">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search articles by title or content..."
+                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-paw-orange"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="shrink-0 whitespace-nowrap px-4 py-2 bg-paw-navy dark:bg-gray-700 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition lg:order-4 cursor-pointer"
+                            >
+                                Filter
+                            </button>
                         </div>
 
-                        <div className="min-w-[175px]">
-                            <ModernSelect
-                                size="sm"
-                                value={categoryFilter}
-                                onChange={(val) => handleFilterChange(val, statusFilter)}
-                                options={[
-                                    { value: 'all', label: 'All Categories' },
-                                    ...Object.entries(categories).map(([k, l]) => ({
-                                        value: k,
-                                        label: l,
-                                    })),
-                                ]}
-                            />
-                        </div>
+                        <div className="grid grid-cols-2 gap-2.5 w-full lg:w-auto lg:flex lg:items-center lg:gap-3 lg:order-2">
+                            <div className="min-w-0 lg:min-w-[175px]">
+                                <ModernSelect
+                                    size="sm"
+                                    value={categoryFilter}
+                                    onChange={(val) => handleFilterChange(val, statusFilter)}
+                                    options={[
+                                        { value: 'all', label: 'All Categories' },
+                                        ...Object.entries(categories).map(([k, l]) => ({
+                                            value: k,
+                                            label: l,
+                                        })),
+                                    ]}
+                                />
+                            </div>
 
-                        <div className="min-w-[165px]">
-                            <ModernSelect
-                                size="sm"
-                                searchable={false}
-                                value={statusFilter}
-                                onChange={(val) => handleFilterChange(categoryFilter, val)}
-                                options={[
-                                    { value: 'all', label: 'All Statuses' },
-                                    { value: 'pending', label: 'Pending Review' },
-                                    { value: 'published', label: 'Published' },
-                                    { value: 'draft', label: 'Draft' },
-                                    { value: 'rejected', label: 'Rejected' },
-                                    { value: 'archived', label: 'Archived' },
-                                ]}
-                            />
+                            <div className="min-w-0 lg:min-w-[165px]">
+                                <ModernSelect
+                                    size="sm"
+                                    searchable={false}
+                                    value={statusFilter}
+                                    onChange={(val) => handleFilterChange(categoryFilter, val)}
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        { value: 'pending', label: 'Pending Review' },
+                                        { value: 'published', label: 'Published' },
+                                        { value: 'draft', label: 'Draft' },
+                                        { value: 'rejected', label: 'Rejected' },
+                                        { value: 'archived', label: 'Archived' },
+                                    ]}
+                                />
+                            </div>
                         </div>
-
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-paw-navy dark:bg-gray-700 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition"
-                        >
-                            Filter
-                        </button>
                     </form>
 
                     {canCreateBlog && (
                     <button
                         onClick={openCreateModal}
-                        className="w-full lg:w-auto px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-paw-orange/20 transition cursor-pointer"
+                        className="w-full lg:w-auto shrink-0 whitespace-nowrap px-5 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-paw-orange/20 transition cursor-pointer"
                     >
                         <Plus size={16} /> New Article
                     </button>

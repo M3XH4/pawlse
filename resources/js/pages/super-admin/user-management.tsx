@@ -476,18 +476,18 @@ export default function UserManagement({
         >
             <div className="space-y-6">
                 {/* Navigation Tabs */}
-                <div className="flex border-b border-gray-200 dark:border-slate-800">
+                <div className="flex flex-nowrap items-center gap-1 sm:gap-2 overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-slate-800">
                     <button
                         onClick={() => handleTabChange('users')}
-                        className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors cursor-pointer ${
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 sm:gap-2 border-b-2 px-2.5 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-colors cursor-pointer ${
                             activeTab === 'users'
                                 ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                         }`}
                     >
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                         <span>User Accounts</span>
-                        <span className="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-gray-300">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-gray-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-gray-300">
                             {stats.total}
                         </span>
                     </button>
@@ -495,15 +495,15 @@ export default function UserManagement({
                     {canManageRoles && (
                         <button
                             onClick={() => handleTabChange('roles-permissions')}
-                            className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-colors cursor-pointer ${
+                            className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 sm:gap-2 border-b-2 px-2.5 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-colors cursor-pointer ${
                                 activeTab === 'roles-permissions'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                             }`}
                         >
-                            <ShieldCheck className="h-4 w-4" />
+                            <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                             <span>Roles & Permissions</span>
-                            <span className="ml-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                            <span className="shrink-0 whitespace-nowrap rounded-full bg-indigo-50 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
                                 {stats.total_roles} Roles
                             </span>
                         </button>
@@ -514,46 +514,46 @@ export default function UserManagement({
                 {activeTab === 'users' && (
                     <div className="space-y-6">
                         {/* Stats Cards */}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Total Users</span>
-                                    <Users className="h-5 w-5 text-indigo-500" />
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Total Users</span>
+                                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.total}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.total}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Administrators</span>
-                                    <Shield className="h-5 w-5 text-rose-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Administrators</span>
+                                    <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-rose-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.admins}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.admins}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Volunteers</span>
-                                    <UserCheck className="h-5 w-5 text-emerald-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Volunteers</span>
+                                    <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.volunteers}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.volunteers}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Unverified Accounts</span>
-                                    <Clock className="h-5 w-5 text-amber-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Unverified</span>
+                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.unverified}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.unverified}</h3>
                             </div>
                         </div>
 
                         {/* Filters & Actions Bar */}
-                        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between min-w-0">
+                                <div className="flex flex-1 flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center min-w-0">
                                     {/* Search */}
-                                    <div className="relative flex-1">
+                                    <div className="relative flex-1 min-w-0">
                                         <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                                         <input
                                             type="text"
@@ -564,46 +564,50 @@ export default function UserManagement({
                                         />
                                     </div>
 
-                                    {/* Role Filter */}
-                                    <div className="min-w-[140px]">
-                                        <ModernSelect
-                                            size="sm"
-                                            searchable={false}
-                                            value={selectedRole}
-                                            onChange={handleRoleChange}
-                                            options={[
-                                                { value: '', label: 'All Roles' },
-                                                ...roles.map((r) => ({ value: r, label: r })),
-                                            ]}
-                                        />
-                                    </div>
+                                    <div className="grid grid-cols-2 gap-2.5 w-full lg:w-auto lg:flex lg:items-center">
+                                        {/* Role Filter */}
+                                        <div className="min-w-0 lg:min-w-[140px]">
+                                            <ModernSelect
+                                                size="sm"
+                                                searchable={false}
+                                                value={selectedRole}
+                                                onChange={handleRoleChange}
+                                                options={[
+                                                    { value: '', label: 'All Roles' },
+                                                    ...roles.map((r) => ({ value: r, label: r })),
+                                                ]}
+                                            />
+                                        </div>
 
-                                    {/* Verification Status Filter */}
-                                    <div className="min-w-[160px]">
-                                        <ModernSelect
-                                            size="sm"
-                                            searchable={false}
-                                            value={selectedStatus}
-                                            onChange={handleStatusChange}
-                                            options={[
-                                                { value: '', label: 'All Verification' },
-                                                { value: 'verified', label: 'Verified Only' },
-                                                { value: 'unverified', label: 'Unverified Only' },
-                                            ]}
-                                        />
+                                        {/* Verification Status Filter */}
+                                        <div className="min-w-0 lg:min-w-[160px]">
+                                            <ModernSelect
+                                                size="sm"
+                                                searchable={false}
+                                                value={selectedStatus}
+                                                onChange={handleStatusChange}
+                                                options={[
+                                                    { value: '', label: 'All Verification' },
+                                                    { value: 'verified', label: 'Verified Only' },
+                                                    { value: 'unverified', label: 'Unverified Only' },
+                                                ]}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {canCreateUser && (
-                                    <button
-                                        onClick={openCreateDrawer}
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-indigo-500 transition cursor-pointer"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        <span>Add User</span>
-                                    </button>
-                                )}
-                                <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+                                <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full lg:w-auto">
+                                    {canCreateUser && (
+                                        <button
+                                            onClick={openCreateDrawer}
+                                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-indigo-500 transition cursor-pointer"
+                                        >
+                                            <Plus className="h-4 w-4 shrink-0" />
+                                            <span>Add User</span>
+                                        </button>
+                                    )}
+                                    <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+                                </div>
                             </div>
                         </div>
 
@@ -804,37 +808,37 @@ export default function UserManagement({
                 {activeTab === 'roles-permissions' && (
                     <div className="space-y-6">
                         {/* Roles Header Stats */}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Total System Roles</span>
-                                    <ShieldCheck className="h-5 w-5 text-indigo-500" />
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Total Roles</span>
+                                    <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.total_roles}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.total_roles}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Total Permissions</span>
-                                    <Key className="h-5 w-5 text-emerald-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Total Permissions</span>
+                                    <Key className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.total_permissions}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.total_permissions}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Security Modules</span>
-                                    <Layers className="h-5 w-5 text-violet-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Security Modules</span>
+                                    <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-violet-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{permission_catalog.length}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{permission_catalog.length}</h3>
                             </div>
 
-                            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-gray-500">Admins & Elevated Roles</span>
-                                    <Lock className="h-5 w-5 text-rose-500" />
+                            <div className="rounded-2xl border border-gray-100 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">Elevated Roles</span>
+                                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-rose-500 shrink-0" />
                                 </div>
-                                <h3 className="font-fredoka text-2xl font-bold mt-2 text-slate-800 dark:text-white">{stats.admins}</h3>
+                                <h3 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5 sm:mt-2 text-slate-800 dark:text-white">{stats.admins}</h3>
                             </div>
                         </div>
 
@@ -909,14 +913,14 @@ export default function UserManagement({
                         </div>
 
                         {/* Permission Matrix Editor for Selected Role */}
-                        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-gray-100 dark:border-slate-800">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-fredoka text-xl font-bold text-slate-800 dark:text-white">
+                        <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex flex-col gap-3.5 sm:gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-5 border-b border-gray-100 dark:border-slate-800">
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                                        <h3 className="font-fredoka text-lg sm:text-xl font-bold leading-snug text-slate-800 dark:text-white">
                                             Permission Scope for <span className="text-indigo-600 dark:text-indigo-400">{formatPillLabel(selectedMatrixRole)}</span>
                                         </h3>
-                                        <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        <span className="shrink-0 whitespace-nowrap rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
                                             {matrixPermissions.length} enabled
                                         </span>
                                     </div>
@@ -925,36 +929,38 @@ export default function UserManagement({
                                     </p>
                                 </div>
 
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const allPermNames: string[] = [];
-                                            permission_catalog.forEach(cat => cat.permissions.forEach(p => allPermNames.push(p.name)));
-                                            setMatrixPermissions(allPermNames);
-                                        }}
-                                        className="text-xs font-bold text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                                    >
-                                        Select All
-                                    </button>
-                                    <span className="text-gray-300 dark:text-gray-700">|</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setMatrixPermissions([])}
-                                        className="text-xs font-bold text-gray-600 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-400"
-                                    >
-                                        Clear All
-                                    </button>
+                                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0">
+                                    <div className="flex items-center gap-2.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const allPermNames: string[] = [];
+                                                permission_catalog.forEach(cat => cat.permissions.forEach(p => allPermNames.push(p.name)));
+                                                setMatrixPermissions(allPermNames);
+                                            }}
+                                            className="whitespace-nowrap text-xs font-bold text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 cursor-pointer"
+                                        >
+                                            Select All
+                                        </button>
+                                        <span className="text-gray-300 dark:text-gray-700">|</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMatrixPermissions([])}
+                                            className="whitespace-nowrap text-xs font-bold text-gray-600 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-400 cursor-pointer"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
                                     <button
                                         onClick={handleSaveRolePermissions}
                                         disabled={isSavingRolePerms}
-                                        className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
+                                        className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-indigo-600 px-3.5 sm:px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition cursor-pointer shrink-0"
                                     >
                                         {isSavingRolePerms ? (
                                             <Spinner size="xs" showProgress label="Saving..." />
                                         ) : (
                                             <>
-                                                <Check className="h-3.5 w-3.5" />
+                                                <Check className="h-3.5 w-3.5 shrink-0" />
                                                 <span>Save Permissions</span>
                                             </>
                                         )}
@@ -963,21 +969,21 @@ export default function UserManagement({
                             </div>
 
                             {/* Categorized Permissions Grid */}
-                            <div className="space-y-6 pt-6">
+                            <div className="space-y-4 sm:space-y-6 pt-4 sm:pt-6">
                                 {permission_catalog.map((category) => {
                                     const catPermNames = category.permissions.map(p => p.name);
                                     const allChecked = catPermNames.every(p => matrixPermissions.includes(p));
                                     const someChecked = catPermNames.some(p => matrixPermissions.includes(p)) && !allChecked;
 
                                     return (
-                                        <div key={category.category} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/40">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Layers className="h-4 w-4 text-indigo-500" />
-                                                    <h4 className="font-fredoka text-base font-bold text-slate-800 dark:text-white">
+                                        <div key={category.category} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-3.5 sm:p-5 dark:border-slate-800 dark:bg-slate-900/40">
+                                            <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <Layers className="h-4 w-4 text-indigo-500 shrink-0" />
+                                                    <h4 className="font-fredoka text-sm sm:text-base font-bold text-slate-800 dark:text-white truncate">
                                                         {category.category}
                                                     </h4>
-                                                    <span className="text-[10px] font-bold text-gray-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border dark:border-slate-700">
+                                                    <span className="shrink-0 whitespace-nowrap text-[10px] font-bold text-gray-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border dark:border-slate-700">
                                                         {catPermNames.filter(p => matrixPermissions.includes(p)).length}/{category.permissions.length}
                                                     </span>
                                                 </div>
@@ -985,7 +991,7 @@ export default function UserManagement({
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleMatrixCategory(category.permissions, !allChecked)}
-                                                    className="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+                                                    className="shrink-0 whitespace-nowrap text-[11px] sm:text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400 cursor-pointer"
                                                 >
                                                     {allChecked ? 'Deselect Category' : 'Select Category'}
                                                 </button>

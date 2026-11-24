@@ -244,7 +244,7 @@ export function PostAdoptionTab({
               }
               setIsRecordModalOpen(true);
             }}
-            className="px-5 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer shrink-0"
+            className="w-full md:w-auto justify-center px-5 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer shrink-0"
           >
             <Plus size={16} />
             Record Follow-up
@@ -314,8 +314,8 @@ export function PostAdoptionTab({
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <div className="min-w-[155px]">
+          <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex md:items-center">
+            <div className="min-w-0 md:min-w-[155px]">
               <ModernSelect
                 size="sm"
                 searchable={false}
@@ -332,7 +332,7 @@ export function PostAdoptionTab({
               />
             </div>
 
-            <div className="min-w-[165px]">
+            <div className="min-w-0 md:min-w-[165px]">
               <ModernSelect
                 size="sm"
                 searchable={false}

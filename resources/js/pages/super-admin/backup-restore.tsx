@@ -117,25 +117,25 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
             title="Backup & Restore"
             description="Create manual database backups, configure automated scheduling, or restore system tables to a past state"
         >
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3 min-w-0">
                 {/* Left Columns: Backups List */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center justify-between">
-                            <div>
+                <div className="lg:col-span-2 space-y-6 min-w-0">
+                    <div className="rounded-2xl border border-gray-150 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="min-w-0">
                                 <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">Database Backup Files</h3>
                                 <p className="text-xs text-gray-500">History of database exports saved on disk</p>
                             </div>
                             <button
                                 onClick={triggerManualBackup}
                                 disabled={runningBackup}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition"
+                                className="w-full sm:w-auto shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 sm:py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50 transition cursor-pointer"
                             >
                                 {runningBackup ? (
                                     <Spinner showProgress label="Backing Up..." size="xs" />
                                 ) : (
                                     <>
-                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        <RefreshCw className="h-3.5 w-3.5 shrink-0" />
                                         <span>Run Backup Now</span>
                                     </>
                                 )}
@@ -226,9 +226,9 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                 </div>
 
                 {/* Right Column: Settings & Warning */}
-                <div className="space-y-6">
+                <div className="space-y-6 min-w-0">
                     {/* Schedule Form */}
-                    <div className="rounded-2xl border border-gray-150 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="rounded-2xl border border-gray-150 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
                         <h3 className="font-fredoka text-lg font-bold text-slate-800 dark:text-white">Auto Backup Schedule</h3>
                         <p className="text-xs text-gray-500 mb-4">Configure automatic database cron timing</p>
                         

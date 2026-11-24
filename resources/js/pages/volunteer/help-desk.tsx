@@ -127,18 +127,18 @@ export default function VolunteerHelpDesk({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-px dark:border-gray-800">
+            <div className="flex flex-nowrap items-center gap-1 sm:gap-2 border-b border-gray-100 pb-px dark:border-gray-800 overflow-x-auto hide-scrollbar">
                 <button
                     type="button"
                     onClick={() => setActiveTab('faqs')}
                     className={cn(
-                        'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
+                        'inline-flex items-center gap-1.5 sm:gap-2 border-b-2 px-3 sm:px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer whitespace-nowrap shrink-0',
                         activeTab === 'faqs'
                             ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                             : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     )}
                 >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4 shrink-0" />
                     <span>Volunteer Guidelines & Fixes</span>
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                         {frequentProblems.length}
@@ -149,13 +149,13 @@ export default function VolunteerHelpDesk({
                     type="button"
                     onClick={() => setActiveTab('tickets')}
                     className={cn(
-                        'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer',
+                        'inline-flex items-center gap-1.5 sm:gap-2 border-b-2 px-3 sm:px-5 py-3 text-xs font-bold transition-all -mb-px cursor-pointer whitespace-nowrap shrink-0',
                         activeTab === 'tickets'
                             ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                             : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     )}
                 >
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageSquare className="h-4 w-4 shrink-0" />
                     <span>My Volunteer Tickets</span>
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                         {tickets.total}

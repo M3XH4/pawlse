@@ -125,6 +125,10 @@ test('authenticated user can view their donations on dashboard', function () {
 });
 
 test('simulating successful payment processes the donation and schedules event', function () {
+    SystemSetting::setValue('system_settings', [
+        'payment_simulation_enabled' => true,
+    ]);
+
     $donation = Donation::create([
         'public_reference' => 'DON-GATEWAY',
         'donor_name' => 'Jane Sponsor',
@@ -279,6 +283,38 @@ test('donor can upload proof of payment which transitions donation to payment_pr
     Storage::disk('public')->assertExists($proof->path);
 });
 
+test('checkout disables simulated payment gateway by default when setting is omitted or false', function () {
+    SystemSetting::setValue('system_settings', [
+        'app_name' => 'PAWLSE',
+    ]);
+
+    $donation = Donation::create([
+        'public_reference' => 'DON-SIM-DEFAULT-OFF',
+        'donor_name' => 'Checkout Donor',
+        'donor_email' => 'checkout-off@example.com',
+        'anonymous' => false,
+        'type' => 'cash',
+        'amount' => 500,
+        'status' => DonationStatus::PendingPayment->value,
+    ]);
+
+    $this->get(route('donate.checkout', $donation->public_reference))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('checkout')
+            ->where('simulation_enabled', false));
+
+    SystemSetting::setValue('system_settings', [
+        'payment_simulation_enabled' => true,
+    ]);
+
+    $this->get(route('donate.checkout', $donation->public_reference))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('checkout')
+            ->where('simulation_enabled', true));
+});
+
 test('guest cannot simulate payment when payment simulation is disabled in system settings', function () {
     SystemSetting::setValue('system_settings', [
         'payment_simulation_enabled' => false,
@@ -378,6 +414,9 @@ test('guest can initiate sponsor feeding donation with custom event poster uploa
 
 test('completing payment for feeding sponsorship creates event with custom poster image', function () {
     Storage::fake('public');
+    SystemSetting::setValue('system_settings', [
+        'payment_simulation_enabled' => true,
+    ]);
 
     $poster = UploadedFile::fake()->image('event_banner.png', 1200, 630);
     $path = $poster->store('event-posters', 'public');

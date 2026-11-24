@@ -397,47 +397,57 @@ export default function UserAdoptionApplications({
                     {applications.map((app) => {
                         const refCode = `ADP-${String(app.id).padStart(5, '0')}`;
                         return (
-                        <DashboardCard key={app.id} className="p-6">
-                            <div className="flex flex-col md:flex-row gap-6">
-                                {/* Pet Image */}
-                                <div className="h-32 w-32 rounded-2xl bg-gray-150 overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
-                                    {app.shelter_animal?.photo_url ? (
-                                        <ImageWithFallback
-                                            src={app.shelter_animal.photo_url}
-                                            alt={app.shelter_animal.name}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="h-full w-full flex items-center justify-center bg-paw-orange/10 text-paw-orange">
-                                            <Heart size={36} />
-                                        </div>
-                                    )}
+                        <DashboardCard key={app.id} className="p-5 sm:p-6">
+                            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                                {/* Top Row on Mobile: Pet Image + Top-Right ID & Status */}
+                                <div className="flex items-start justify-between gap-3 md:contents">
+                                    {/* Pet Image */}
+                                    <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-2xl bg-gray-150 overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
+                                        {app.shelter_animal?.photo_url ? (
+                                            <ImageWithFallback
+                                                src={app.shelter_animal.photo_url}
+                                                alt={app.shelter_animal.name}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center bg-paw-orange/10 text-paw-orange">
+                                                <Heart size={36} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col items-end gap-1.5 md:hidden shrink-0">
+                                        <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                            {refCode}
+                                        </span>
+                                        {getStatusBadge(app.status, app.rejection_reason)}
+                                    </div>
                                 </div>
 
                                 {/* Application Details */}
-                                <div className="flex-1 space-y-4">
-                                    <div className="flex flex-wrap items-start justify-between gap-4">
-                                        <div>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
-                                                    Adoption Application for {app.shelter_animal?.name || 'Unnamed Pet'}
-                                                </h3>
-                                                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                                                    {refCode}
-                                                </span>
-                                            </div>
+                                <div className="flex-1 min-w-0 space-y-4">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <h3 className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
+                                                Adoption Application for {app.shelter_animal?.name || 'Unnamed Pet'}
+                                            </h3>
                                             <p className="text-xs font-bold text-gray-400 mt-1">
                                                 Applied on {new Date(app.created_at).toLocaleDateString()} • Reference: {refCode}
                                             </p>
                                         </div>
-                                        <div>{getStatusBadge(app.status, app.rejection_reason)}</div>
+                                        <div className="hidden md:flex items-center gap-2 shrink-0">
+                                            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                                {refCode}
+                                            </span>
+                                            {getStatusBadge(app.status, app.rejection_reason)}
+                                        </div>
                                     </div>
 
                                     <div className="grid gap-4 sm:grid-cols-2 text-xs font-bold text-gray-500 border-t pt-4">
                                         <div>
                                             <p className="uppercase text-[10px] tracking-wider text-gray-400">Breed / Type</p>
                                             <p className="text-sm text-[#0B2340] dark:text-white mt-0.5">
-                                                {app.shelter_animal?.breed || 'Unknown Breed'} ({app.shelter_animal?.type || 'Other'})
+                                                {app.shelter_animal?.breed || 'Unknown Breed'} ({(app.shelter_animal?.type || 'Other').replace(/\b\w/g, (c) => c.toUpperCase())})
                                             </p>
                                         </div>
                                         <div>
@@ -487,16 +497,16 @@ export default function UserAdoptionApplications({
                                     )}
 
                                     {(app.status === 'pending' || app.status === 'needs_info' || app.status === 'scheduled') && (
-                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                        <div className="flex flex-nowrap items-center justify-between gap-2 pt-1">
                                             <button
                                                 type="button"
                                                 onClick={() => openConversation(app.id)}
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 text-xs font-black text-gray-700 dark:text-gray-200 transition-all cursor-pointer"
+                                                className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 text-[11px] sm:text-xs font-black text-gray-700 dark:text-gray-200 whitespace-nowrap transition-all cursor-pointer"
                                             >
-                                                <MessageCircle size={13} className="text-paw-orange" />
+                                                <MessageCircle size={13} className="text-paw-orange shrink-0" />
                                                 <span>Open Conversation</span>
                                                 {(app.messages?.length ?? 0) > 0 && (
-                                                    <span className="ml-0.5 inline-flex items-center justify-center rounded-full bg-paw-orange/15 px-2 py-0.5 text-[10px] font-black text-paw-orange">
+                                                    <span className="ml-0.5 inline-flex items-center justify-center rounded-full bg-paw-orange/15 px-1.5 sm:px-2 py-0.5 text-[10px] font-black text-paw-orange">
                                                         {app.messages?.length}
                                                     </span>
                                                 )}
@@ -514,9 +524,9 @@ export default function UserAdoptionApplications({
                                                         },
                                                     });
                                                 }}
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-black text-red-700 uppercase tracking-wider transition-all cursor-pointer"
+                                                className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-[11px] sm:text-xs font-black text-red-700 uppercase tracking-wide sm:tracking-wider whitespace-nowrap transition-all cursor-pointer"
                                             >
-                                                <Ban size={13} /> Cancel Application
+                                                <Ban size={13} className="shrink-0" /> Cancel Application
                                             </button>
                                         </div>
                                     )}

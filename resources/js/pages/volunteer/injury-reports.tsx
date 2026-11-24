@@ -316,18 +316,18 @@ export default function VolunteerInjuryReports({
             description="Record injuries sustained during field rescues or feeding routes so shelter admins can initiate and confirm medical aid."
             badge={
                 <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setIsModalOpen(true)}
-                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-rose-700"
-                    >
-                        <Plus className="h-3.5 w-3.5" />
-                        Report Field Injury
-                    </button>
                     <DashboardMetricBadge
                         icon={<HeartPulse className="h-4 w-4" />}
                         label={`${reports?.total || 0} Reports`}
                     />
+                    <button
+                        type="button"
+                        onClick={() => setIsModalOpen(true)}
+                        className="inline-flex min-h-9 sm:min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-rose-600 px-3.5 sm:px-4 py-1 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors hover:bg-rose-700 whitespace-nowrap shrink-0"
+                    >
+                        <Plus className="h-4 w-4 shrink-0" />
+                        <span>Report Field Injury</span>
+                    </button>
                 </div>
             }
         >

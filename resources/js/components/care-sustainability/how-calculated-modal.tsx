@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calculator, ShieldCheck, Heart, Sparkles, HelpCircle, ArrowRight, Activity, Clock } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
@@ -18,14 +19,14 @@ export function HowCalculatedModal({
     estDays = '0.0',
     urgencyStatus = 'DEPLETED',
 }: HowCalculatedModalProps) {
-    if (!isOpen) return null;
+    if (!isOpen || typeof document === 'undefined') return null;
 
     const dailyCost = data?.daily_cost || 500;
     const verifiedFunds = data?.verified_funds || 0;
     const hoursRemaining = Math.max(0, Math.round(parseFloat(estDays) * 24));
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+    return createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div 
                 className="relative w-full max-w-xl bg-white dark:bg-[#121824] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden text-gray-800 dark:text-gray-100 max-h-[90vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
@@ -145,6 +146,7 @@ export function HowCalculatedModal({
                     </Link>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }

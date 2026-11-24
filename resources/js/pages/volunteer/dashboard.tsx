@@ -495,39 +495,47 @@ export default function VolunteerDashboard({
             )}
 
             {/* 1. Hero Impact Banner */}
-            <DashboardCard className="relative overflow-hidden border-emerald-200/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/70 p-6 dark:border-emerald-900/40 dark:from-[#0f241f] dark:via-[#111827] dark:to-[#0f1f24]">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0 flex-1 space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                                <Flame className="size-3.5" />
-                                {impactTier.name}
-                            </span>
-                            {shelterPulse && (
-                                <span
-                                    className={cn(
-                                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold',
-                                        pulseTone,
+            <DashboardCard className="relative overflow-hidden border-emerald-200/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/70 p-4 sm:p-6 dark:border-emerald-900/40 dark:from-[#0f241f] dark:via-[#111827] dark:to-[#0f1f24]">
+                <div className="flex flex-col gap-5">
+                    <div className="min-w-0 space-y-4">
+                        <div className="space-y-2 min-w-0">
+                            <div className="flex flex-nowrap items-center justify-between gap-1.5 sm:gap-2 min-w-0">
+                                <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 sm:gap-1.5 rounded-full bg-emerald-500/15 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                                    <Flame className="size-3 sm:size-3.5 shrink-0" />
+                                    <span>{impactTier.name}</span>
+                                </span>
+                                {shelterPulse && (
+                                    <span
+                                        className={cn(
+                                            'inline-flex min-w-0 max-w-full items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold',
+                                            pulseTone,
+                                        )}
+                                    >
+                                        <Radio className="size-3 sm:size-3.5 shrink-0" />
+                                        <span className="truncate">
+                                            Shelter: {shelterPulse.urgencyLabel} ({shelterPulse.estDays}d)
+                                        </span>
+                                    </span>
+                                )}
+                            </div>
+                            {(volunteerSummary.member_since || volunteerSummary.reference_number) && (
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    {volunteerSummary.member_since && (
+                                        <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                                            Serving since {volunteerSummary.member_since}
+                                        </span>
                                     )}
-                                >
-                                    <Radio className="size-3.5" />
-                                    Shelter: {shelterPulse.urgencyLabel} ({shelterPulse.estDays}d)
-                                </span>
-                            )}
-                            {volunteerSummary.member_since && (
-                                <span className="text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
-                                    Serving since {volunteerSummary.member_since}
-                                </span>
-                            )}
-                            {volunteerSummary.reference_number && (
-                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                    {volunteerSummary.reference_number}
-                                </span>
+                                    {volunteerSummary.reference_number && (
+                                        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                            {volunteerSummary.reference_number}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
 
                         <div>
-                            <h3 className="font-fredoka text-xl font-bold text-[#0B2340] sm:text-2xl dark:text-[#F8FAFC]">
+                            <h3 className="font-fredoka text-xl font-bold leading-snug text-[#0B2340] sm:text-2xl dark:text-[#F8FAFC]">
                                 {stats.pendingTasksCount > 0
                                     ? `You have ${stats.pendingTasksCount} active mission${stats.pendingTasksCount === 1 ? '' : 's'} ready for action.`
                                     : 'Every animal counts — thank you for making a difference.'}
@@ -539,8 +547,8 @@ export default function VolunteerDashboard({
                             </p>
                         </div>
 
-                        <div className="max-w-md space-y-1.5">
-                            <div className="flex items-center justify-between text-xs font-bold text-[#475569] dark:text-[#CBD5E1]">
+                        <div className="w-full space-y-1.5">
+                            <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-[#475569] dark:text-[#CBD5E1]">
                                 <span>Tier Progress ({impactTier.score} pts)</span>
                                 <span>{impactTier.progressPercent}%</span>
                             </div>
@@ -553,36 +561,57 @@ export default function VolunteerDashboard({
                         </div>
 
                         {communityVolunteersPulse && (
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs font-semibold text-[#475569] dark:text-[#94A3B8]">
-                                <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
-                                    <Users className="size-3.5" />
-                                    Team Pawlse this month:
-                                </span>
-                                <span>{communityVolunteersPulse.activeVolunteersCount} active volunteers</span>
-                                <span>•</span>
-                                <span>{communityVolunteersPulse.monthlyHoursLogged.toFixed(1)}h logged</span>
-                                <span>•</span>
-                                <span>{communityVolunteersPulse.monthlyMissionsCompleted} missions completed</span>
+                            <div className="w-full rounded-2xl border border-emerald-200/70 bg-white/80 p-3 sm:p-4 dark:border-emerald-900/40 dark:bg-slate-900/50">
+                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                                    <Users className="size-3.5 sm:size-4 shrink-0" />
+                                    <span>Team Pawlse This Month</span>
+                                </div>
+                                <div className="mt-2.5 grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                                    <div className="rounded-xl bg-emerald-500/5 px-2 py-2 sm:px-4 sm:py-3">
+                                        <p className="text-sm sm:text-xl font-extrabold text-[#0B2340] dark:text-white">
+                                            {communityVolunteersPulse.activeVolunteersCount}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] sm:text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                                            Active {communityVolunteersPulse.activeVolunteersCount === 1 ? 'Volunteer' : 'Volunteers'}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl bg-emerald-500/5 px-2 py-2 sm:px-4 sm:py-3">
+                                        <p className="text-sm sm:text-xl font-extrabold text-[#0B2340] dark:text-white">
+                                            {communityVolunteersPulse.monthlyHoursLogged.toFixed(1)}h
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] sm:text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                                            Hours Logged
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl bg-emerald-500/5 px-2 py-2 sm:px-4 sm:py-3">
+                                        <p className="text-sm sm:text-xl font-extrabold text-[#0B2340] dark:text-white">
+                                            {communityVolunteersPulse.monthlyMissionsCompleted}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] sm:text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                                            {communityVolunteersPulse.monthlyMissionsCompleted === 1 ? 'Mission Done' : 'Missions Done'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 shrink-0">
+                    <div className="flex flex-nowrap items-center gap-2 sm:gap-3 w-full shrink-0">
                         <Link
                             href={assignedTasks.url()}
-                            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] px-5 text-sm font-bold text-white shadow-[0_8px_22px_var(--dashboard-primary-shadow)] transition hover:opacity-95"
+                            className="inline-flex flex-1 min-h-10 sm:min-h-11 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] px-3.5 sm:px-5 text-xs sm:text-sm font-bold text-white shadow-[0_8px_22px_var(--dashboard-primary-shadow)] transition hover:opacity-95"
                         >
-                            <ClipboardList className="size-4" />
+                            <ClipboardList className="size-4 shrink-0" />
                             <span>View Missions</span>
-                            <ArrowRight className="size-4" />
+                            <ArrowRight className="size-4 shrink-0" />
                         </Link>
                         {volunteerMapEnabled && (
                             <button
                                 type="button"
                                 onClick={() => openMapWithFilter('all')}
-                                className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-bold text-[#0B2340] shadow-xs transition hover:bg-slate-50 dark:border-[#1E293B] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-slate-800"
+                                className="inline-flex flex-1 min-h-10 sm:min-h-11 cursor-pointer items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-xl border border-[#E5E7EB] bg-white px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-[#0B2340] shadow-xs transition hover:bg-slate-50 dark:border-[#1E293B] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-slate-800"
                             >
-                                <MapIcon className="size-4 text-emerald-600 dark:text-emerald-400" />
+                                <MapIcon className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 <span>Operations Map</span>
                             </button>
                         )}
@@ -591,11 +620,11 @@ export default function VolunteerDashboard({
             </DashboardCard>
 
             {/* 2. 4 Impact Stat Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     return (
-                        <Link key={card.title} href={card.href} className="group block">
+                        <Link key={card.title} href={card.href} className="group block min-w-0">
                             <DashboardCard className="h-full p-5 transition duration-200 group-hover:-translate-y-0.5 group-hover:border-emerald-300 dark:group-hover:border-emerald-700/60">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
@@ -625,32 +654,32 @@ export default function VolunteerDashboard({
             </div>
 
             {/* 3. Main Two-Column Workspace */}
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-3">
                 {/* Left 2/3: Quick Shortcuts + Foster Spotlight + Active Missions */}
-                <div className="flex flex-col gap-6 lg:col-span-2">
+                <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
                     {/* Quick Shortcuts */}
                     <DashboardCard>
                         <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                             Quick Shortcuts
                         </h3>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                        <div className="mt-4 grid grid-cols-1 min-w-0 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
                             {quickShortcuts.map((shortcut) => {
                                 const Icon = shortcut.icon;
                                 return (
                                     <Link
                                         key={shortcut.title}
                                         href={shortcut.href}
-                                        className="flex flex-col gap-2.5 rounded-xl border border-[#E5E7EB]/80 p-3.5 transition hover:border-emerald-300 dark:border-[#1E293B] dark:hover:border-emerald-800"
+                                        className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-[#E5E7EB]/80 p-3.5 transition hover:border-emerald-300 dark:border-[#1E293B] dark:hover:border-emerald-800"
                                     >
                                         <div
                                             className={cn(
-                                                'flex size-9 items-center justify-center rounded-lg',
+                                                'flex size-9 shrink-0 items-center justify-center rounded-lg',
                                                 shortcut.color,
                                             )}
                                         >
                                             <Icon className="size-4" />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <p className="text-xs font-bold text-[#0B2340] dark:text-[#F8FAFC]">
                                                 {shortcut.title}
                                             </p>
@@ -841,14 +870,14 @@ export default function VolunteerDashboard({
                         </div>
 
                         {activeMissions.length > 0 ? (
-                            <div className="mt-5 grid gap-3">
+                            <div className="mt-5 grid grid-cols-1 min-w-0 gap-3">
                                 {activeMissions.map((mission) => {
                                     const style = missionKindStyles[mission.kind];
                                     const Icon = style.icon;
                                     return (
                                         <div
                                             key={mission.id}
-                                            className="group flex flex-col gap-3 rounded-xl border border-[#E5E7EB] p-4 transition hover:border-emerald-300 hover:bg-emerald-50/30 sm:flex-row sm:items-center sm:justify-between dark:border-[#1E293B] dark:hover:border-emerald-800 dark:hover:bg-emerald-950/20"
+                                            className="group flex min-w-0 flex-col gap-3 rounded-xl border border-[#E5E7EB] p-4 transition hover:border-emerald-300 hover:bg-emerald-50/30 sm:flex-row sm:items-center sm:justify-between dark:border-[#1E293B] dark:hover:border-emerald-800 dark:hover:bg-emerald-950/20"
                                         >
                                             <Link href={mission.href} className="flex min-w-0 flex-1 items-start gap-3.5">
                                                 <div
@@ -957,7 +986,7 @@ export default function VolunteerDashboard({
                 </div>
 
                 {/* Right 1/3: Readiness Checklist, Badges */}
-                <div className="flex flex-col gap-6">
+                <div className="flex min-w-0 flex-col gap-6">
                     <DashboardCard>
                         <div className="flex items-center justify-between gap-2">
                             <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-[#F8FAFC]">
@@ -1102,11 +1131,11 @@ export default function VolunteerDashboard({
                             <ArrowRight className="size-3.5" />
                         </Link>
                     </div>
-                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    <div className="mt-4 grid grid-cols-1 min-w-0 gap-4 md:grid-cols-3">
                         {upcomingEvents.map((event) => (
                             <div
                                 key={event.id}
-                                className="flex flex-col justify-between rounded-xl border border-[#E5E7EB] p-4 transition hover:border-emerald-300 dark:border-[#1E293B] dark:hover:border-emerald-800"
+                                className="flex min-w-0 flex-col justify-between rounded-xl border border-[#E5E7EB] p-4 transition hover:border-emerald-300 dark:border-[#1E293B] dark:hover:border-emerald-800"
                             >
                                 <div>
                                     <div className="flex items-center justify-between gap-2">
@@ -1216,13 +1245,13 @@ export default function VolunteerDashboard({
                                     <X className="size-4" />
                                 </button>
                             </div>
-                            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Clock className="size-3.5 text-paw-orange" />
+                            <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400">
+                                <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
+                                    <Clock className="size-3.5 shrink-0 text-paw-orange" />
                                     {activeTeamDrawer.schedule}
                                 </span>
-                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Users className="size-3.5 text-paw-blue" />
+                                <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
+                                    <Users className="size-3.5 shrink-0 text-paw-blue" />
                                     {activeTeamDrawer.members.length} member(s)
                                 </span>
                             </div>
