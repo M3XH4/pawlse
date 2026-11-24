@@ -1,24 +1,34 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from '@inertiajs/react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Link } from '@inertiajs/react';
 import {
     AlertTriangle,
     Calendar,
+    Car,
     Clock,
     Compass,
     ExternalLink,
+    Footprints,
     HeartHandshake,
     Loader2,
     MapPin,
     Navigation,
     PawPrint,
+    Route,
     Users,
     Utensils,
     X,
 } from 'lucide-react';
-import { formatPhotoUrl } from '@/lib/utils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import {
+    fetchRoute,
+    formatTravelDistance,
+    formatTravelDuration,
+} from '@/lib/routing';
+import type { Coordinates, RouteResult, TravelMode } from '@/lib/routing';
+import { formatPhotoUrl } from '@/lib/utils';
 
 export interface MapFeedingRoutePin {
     id: string;
@@ -72,7 +82,13 @@ function createPinIcon(pin: MapPinItem, isSelected: boolean): L.DivIcon {
 
     const theme: Record<
         MapPinItem['category'],
-        { gradient: string; glow: string; badgeText: string; badgeBg: string; svg: string }
+        {
+            gradient: string;
+            glow: string;
+            badgeText: string;
+            badgeBg: string;
+            svg: string;
+        }
     > = {
         sos: {
             gradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
@@ -133,6 +149,139 @@ function createPinIcon(pin: MapPinItem, isSelected: boolean): L.DivIcon {
     });
 }
 
+interface RouteTravelPanelProps {
+    userLocation: Coordinates | null;
+    travelMode: TravelMode;
+    onTravelModeChange: (mode: TravelMode) => void;
+    routeInfo: RouteResult | null;
+    routeLoading: boolean;
+    locating: boolean;
+    onRequestLocation: () => void;
+}
+
+function RouteTravelPanel({
+    userLocation,
+    travelMode,
+    onTravelModeChange,
+    routeInfo,
+    routeLoading,
+    locating,
+    onRequestLocation,
+}: RouteTravelPanelProps) {
+    if (!userLocation) {
+        return (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 dark:border-blue-900/50 dark:bg-blue-950/30">
+                <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 rounded-lg bg-blue-100 p-1.5 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300">
+                        <Route className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-xs font-bold text-[#0B2340] dark:text-white">
+                            See in-map route &amp; distance
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-gray-600 dark:text-gray-300">
+                            Share your current GPS location to draw the walking
+                            or driving route to this pin.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={onRequestLocation}
+                            disabled={locating}
+                            className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+                        >
+                            {locating ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Navigation className="h-3.5 w-3.5" />
+                            )}
+                            Route from My Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const durationLabel = routeInfo
+        ? formatTravelDuration(routeInfo.durationSeconds)
+        : null;
+
+    return (
+        <div className="rounded-xl border border-blue-200/80 bg-blue-50/70 p-3.5 dark:border-blue-900/60 dark:bg-blue-950/30">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-black tracking-wider text-blue-800 uppercase dark:text-blue-300">
+                    <Route className="h-3.5 w-3.5" />
+                    Route &amp; Distance
+                </span>
+
+                <div
+                    className="inline-flex rounded-lg border border-blue-200 bg-white p-0.5 dark:border-blue-800 dark:bg-slate-900"
+                    role="group"
+                    aria-label="Travel mode"
+                >
+                    <button
+                        type="button"
+                        onClick={() => onTravelModeChange('walking')}
+                        className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                            travelMode === 'walking'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                        <Footprints className="h-3 w-3" />
+                        Walk
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onTravelModeChange('driving')}
+                        className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                            travelMode === 'driving'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                        <Car className="h-3 w-3" />
+                        Drive
+                    </button>
+                </div>
+            </div>
+
+            <div className="mt-2.5">
+                {routeLoading ? (
+                    <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-300">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Calculating {travelMode} route...
+                    </div>
+                ) : routeInfo ? (
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <div>
+                            <span className="font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
+                                {formatTravelDistance(routeInfo.distanceMeters)}
+                            </span>
+                            {durationLabel && (
+                                <span className="ml-2 text-xs font-bold text-blue-700 dark:text-blue-300">
+                                    ({durationLabel}{' '}
+                                    {travelMode === 'walking'
+                                        ? 'walk'
+                                        : 'drive'}
+                                    )
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-[10px] font-bold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                            {routeInfo.isFallback
+                                ? 'Straight-line estimate'
+                                : travelMode === 'walking'
+                                  ? 'Walking path'
+                                  : 'Road route'}
+                        </span>
+                    </div>
+                ) : null}
+            </div>
+        </div>
+    );
+}
+
 export function VolunteerMapModal({
     open,
     onClose,
@@ -141,43 +290,93 @@ export function VolunteerMapModal({
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markersLayerRef = useRef<L.LayerGroup | null>(null);
+    const routeLayerRef = useRef<L.LayerGroup | null>(null);
     const userMarkerRef = useRef<L.CircleMarker | null>(null);
+    const userLocationRef = useRef<Coordinates | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [feedingRoutes, setFeedingRoutes] = useState<MapFeedingRoutePin[]>([]);
+    const [feedingRoutes, setFeedingRoutes] = useState<MapFeedingRoutePin[]>(
+        [],
+    );
     const [reports, setReports] = useState<MapReportPin[]>([]);
-    const [filter, setFilter] = useState<FilterCategory>(initialFilter);
+    const [filterOverride, setFilterOverride] = useState<FilterCategory | null>(
+        null,
+    );
     const [selectedPin, setSelectedPin] = useState<MapPinItem | null>(null);
     const [locating, setLocating] = useState(false);
+    const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+    const [travelMode, setTravelMode] = useState<TravelMode>('walking');
+    const [routeOutcome, setRouteOutcome] = useState<{
+        key: string;
+        result: RouteResult | null;
+    } | null>(null);
+
+    const filter = filterOverride ?? initialFilter;
+
+    const activeRouteKey =
+        open && userLocation && selectedPin
+            ? `${userLocation.lat},${userLocation.lng}->${selectedPin.id}:${travelMode}`
+            : null;
+
+    const routeInfo =
+        activeRouteKey && routeOutcome?.key === activeRouteKey
+            ? routeOutcome.result
+            : null;
+
+    const routeLoading =
+        activeRouteKey !== null && routeOutcome?.key !== activeRouteKey;
+
+    const handleClose = useCallback(() => {
+        setFilterOverride(null);
+        setSelectedPin(null);
+        setUserLocation(null);
+        setRouteOutcome(null);
+        setTravelMode('walking');
+        onClose();
+    }, [onClose]);
+
+    useEffect(() => {
+        userLocationRef.current = userLocation;
+    }, [userLocation]);
 
     useEffect(() => {
         if (!open) {
             return;
         }
 
-        setFilter(initialFilter);
         let cancelled = false;
 
         const fetchPins = async () => {
             setLoading(true);
             setError(null);
+
             try {
                 const res = await fetch('/account/volunteer/map-pins', {
                     headers: { Accept: 'application/json' },
                 });
+
                 if (!res.ok) {
                     const body = await res.json().catch(() => ({}));
-                    throw new Error(body.message || 'Unable to load operations map pins.');
+
+                    throw new Error(
+                        body.message || 'Unable to load operations map pins.',
+                    );
                 }
+
                 const data = await res.json();
+
                 if (!cancelled) {
                     setFeedingRoutes(data.feeding_routes || []);
                     setReports(data.reports || []);
                 }
             } catch (err) {
                 if (!cancelled) {
-                    setError(err instanceof Error ? err.message : 'Failed to load map data.');
+                    setError(
+                        err instanceof Error
+                            ? err.message
+                            : 'Failed to load map data.',
+                    );
                 }
             } finally {
                 if (!cancelled) {
@@ -191,7 +390,7 @@ export function VolunteerMapModal({
         return () => {
             cancelled = true;
         };
-    }, [open, initialFilter]);
+    }, [open]);
 
     const allPins = useMemo<MapPinItem[]>(() => {
         return [...reports, ...feedingRoutes];
@@ -201,6 +400,7 @@ export function VolunteerMapModal({
         if (filter === 'all') {
             return allPins;
         }
+
         return allPins.filter((pin) => pin.category === filter);
     }, [allPins, filter]);
 
@@ -222,6 +422,7 @@ export function VolunteerMapModal({
                 maxZoom: 19,
             }).addTo(map);
 
+            routeLayerRef.current = L.layerGroup().addTo(map);
             markersLayerRef.current = L.layerGroup().addTo(map);
             mapInstanceRef.current = map;
         }
@@ -235,14 +436,14 @@ export function VolunteerMapModal({
         };
     }, [open]);
 
-    // Clean up Leaflet map when modal closes
+    // Clean up Leaflet map instance when modal closes
     useEffect(() => {
         if (!open && mapInstanceRef.current) {
             mapInstanceRef.current.remove();
             mapInstanceRef.current = null;
             markersLayerRef.current = null;
+            routeLayerRef.current = null;
             userMarkerRef.current = null;
-            setSelectedPin(null);
         }
     }, [open]);
 
@@ -250,6 +451,7 @@ export function VolunteerMapModal({
     useEffect(() => {
         const map = mapInstanceRef.current;
         const layer = markersLayerRef.current;
+
         if (!open || !map || !layer) {
             return;
         }
@@ -266,7 +468,11 @@ export function VolunteerMapModal({
             const isSelected = selectedPin?.id === pin.id;
             const marker = L.marker([pin.latitude, pin.longitude], {
                 icon: createPinIcon(pin, isSelected),
-                zIndexOffset: isSelected ? 500 : pin.category === 'sos' ? 200 : 0,
+                zIndexOffset: isSelected
+                    ? 500
+                    : pin.category === 'sos'
+                      ? 200
+                      : 0,
             });
 
             const tooltipSubtitle =
@@ -284,51 +490,171 @@ export function VolunteerMapModal({
 
             marker.on('click', () => {
                 setSelectedPin(pin);
-                map.panTo([pin.latitude, pin.longitude], { animate: true });
+
+                if (!userLocationRef.current) {
+                    map.panTo([pin.latitude, pin.longitude], { animate: true });
+                }
             });
 
             marker.addTo(layer);
             bounds.extend([pin.latitude, pin.longitude]);
         });
 
-        if (!selectedPin && bounds.isValid()) {
+        if (!selectedPin && !userLocationRef.current && bounds.isValid()) {
             map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
         }
     }, [open, filteredPins, selectedPin]);
 
-    const handleCenterOnMe = () => {
-        if (!navigator.geolocation || !mapInstanceRef.current) {
+    // Draw route and calculate distance whenever userLocation, selectedPin, or travelMode changes
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        const routeLayer = routeLayerRef.current;
+
+        if (!open || !map || !routeLayer) {
             return;
         }
+
+        routeLayer.clearLayers();
+
+        if (!userLocation || !selectedPin || !activeRouteKey) {
+            return;
+        }
+
+        const controller = new AbortController();
+        const requestKey = activeRouteKey;
+
+        const destination: Coordinates = {
+            lat: selectedPin.latitude,
+            lng: selectedPin.longitude,
+        };
+
+        fetchRoute(userLocation, destination, travelMode, controller.signal)
+            .then((result) => {
+                if (
+                    controller.signal.aborted ||
+                    !routeLayerRef.current ||
+                    !mapInstanceRef.current
+                ) {
+                    return;
+                }
+
+                routeLayerRef.current.clearLayers();
+
+                // Outer white casing for crisp contrast on street tiles
+                L.polyline(result.coordinates, {
+                    color: '#FFFFFF',
+                    weight: result.isFallback ? 6 : 8,
+                    opacity: 0.9,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    dashArray: result.isFallback ? '8, 10' : undefined,
+                }).addTo(routeLayerRef.current);
+
+                const routeColor =
+                    result.mode === 'walking' ? '#0D9488' : '#2563EB';
+
+                const primaryPolyline = L.polyline(result.coordinates, {
+                    color: routeColor,
+                    weight: result.isFallback ? 4 : 5,
+                    opacity: 0.95,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    dashArray: result.isFallback ? '8, 10' : undefined,
+                }).addTo(routeLayerRef.current);
+
+                userMarkerRef.current?.bringToFront();
+
+                const bounds = primaryPolyline.getBounds();
+
+                if (bounds.isValid()) {
+                    mapInstanceRef.current.fitBounds(bounds, {
+                        padding: [52, 52],
+                        maxZoom: 16,
+                        animate: true,
+                    });
+                }
+
+                setRouteOutcome({ key: requestKey, result });
+            })
+            .catch((err) => {
+                if (err instanceof DOMException && err.name === 'AbortError') {
+                    return;
+                }
+
+                setRouteOutcome({ key: requestKey, result: null });
+            });
+
+        return () => {
+            controller.abort();
+        };
+    }, [open, userLocation, selectedPin, travelMode, activeRouteKey]);
+
+    const handleCenterOnMe = useCallback(() => {
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser.');
+
+            return;
+        }
+
+        if (!mapInstanceRef.current) {
+            return;
+        }
+
         setLocating(true);
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const { latitude, longitude } = pos.coords;
                 const map = mapInstanceRef.current;
+
                 if (map) {
                     if (userMarkerRef.current) {
                         userMarkerRef.current.setLatLng([latitude, longitude]);
                     } else {
-                        userMarkerRef.current = L.circleMarker([latitude, longitude], {
-                            radius: 8,
-                            color: '#1D4ED8',
-                            fillColor: '#3B82F6',
-                            fillOpacity: 0.9,
-                            weight: 3,
-                        })
-                            .bindTooltip('Your Location')
+                        userMarkerRef.current = L.circleMarker(
+                            [latitude, longitude],
+                            {
+                                radius: 8,
+                                color: '#FFFFFF',
+                                fillColor: '#2563EB',
+                                fillOpacity: 1,
+                                weight: 3,
+                            },
+                        )
+                            .bindTooltip('Your Location', {
+                                direction: 'top',
+                                offset: [0, -8],
+                            })
                             .addTo(map);
                     }
-                    map.setView([latitude, longitude], 15, { animate: true });
+
+                    userMarkerRef.current.bringToFront();
+
+                    if (!selectedPin) {
+                        map.setView([latitude, longitude], 15, {
+                            animate: true,
+                        });
+                    }
                 }
+
+                setUserLocation({ lat: latitude, lng: longitude });
                 setLocating(false);
             },
-            () => {
+            (geoError) => {
                 setLocating(false);
+
+                if (geoError.code === geoError.PERMISSION_DENIED) {
+                    toast.error(
+                        'Location access was denied. Allow location permission to calculate routes.',
+                    );
+                } else if (geoError.code === geoError.TIMEOUT) {
+                    toast.error('Location lookup timed out. Please try again.');
+                } else {
+                    toast.error('Unable to determine your current location.');
+                }
             },
             { enableHighAccuracy: true, timeout: 8000 },
         );
-    };
+    }, [selectedPin]);
 
     if (!open) {
         return null;
@@ -337,6 +663,18 @@ export function VolunteerMapModal({
     const sosCount = reports.filter((r) => r.category === 'sos').length;
     const rescueCount = reports.filter((r) => r.category === 'rescue').length;
     const feedingCount = feedingRoutes.length;
+
+    const buildGoogleMapsHref = (pin: MapPinItem): string => {
+        const originParam = userLocation
+            ? `&origin=${userLocation.lat},${userLocation.lng}`
+            : '';
+
+        return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${pin.latitude},${pin.longitude}&travelmode=${travelMode}`;
+    };
+
+    const floatingDuration = routeInfo
+        ? formatTravelDuration(routeInfo.durationSeconds)
+        : null;
 
     return (
         <div
@@ -353,11 +691,12 @@ export function VolunteerMapModal({
                             <Compass className="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 className="font-fredoka text-lg font-bold text-[#0B2340] dark:text-white sm:text-xl">
+                            <h3 className="font-fredoka text-lg font-bold text-[#0B2340] sm:text-xl dark:text-white">
                                 Volunteer Operations Map
                             </h3>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Click any pin to inspect feeding route schedules, rescue reports, or SOS alerts side-by-side.
+                                Click My Location, then select any pin to view
+                                its route and travel distance.
                             </p>
                         </div>
                     </div>
@@ -367,18 +706,30 @@ export function VolunteerMapModal({
                             type="button"
                             onClick={handleCenterOnMe}
                             disabled={locating}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-[#0B2340] transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors ${
+                                userLocation
+                                    ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60'
+                                    : 'border-gray-200 bg-gray-50 text-[#0B2340] hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700'
+                            }`}
                         >
                             {locating ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                                <Navigation className="h-3.5 w-3.5 text-blue-600" />
+                                <Navigation
+                                    className={`h-3.5 w-3.5 ${
+                                        userLocation
+                                            ? 'fill-blue-600 text-blue-600 dark:fill-blue-400 dark:text-blue-400'
+                                            : 'text-blue-600'
+                                    }`}
+                                />
                             )}
-                            My Location
+                            {userLocation
+                                ? 'My Location Active'
+                                : 'My Location'}
                         </button>
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             aria-label="Close map modal"
                             className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                         >
@@ -392,13 +743,13 @@ export function VolunteerMapModal({
                     <button
                         type="button"
                         onClick={() => {
-                            setFilter('all');
+                            setFilterOverride('all');
                             setSelectedPin(null);
                         }}
                         className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
                             filter === 'all'
                                 ? 'bg-[#0B2340] text-white dark:bg-white dark:text-[#0B2340]'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
                         }`}
                     >
                         All Pins ({allPins.length})
@@ -406,13 +757,13 @@ export function VolunteerMapModal({
                     <button
                         type="button"
                         onClick={() => {
-                            setFilter('sos');
+                            setFilterOverride('sos');
                             setSelectedPin(null);
                         }}
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
                             filter === 'sos'
                                 ? 'bg-red-600 text-white'
-                                : 'bg-white text-red-700 border border-red-200 hover:bg-red-50 dark:bg-gray-800 dark:text-red-300 dark:border-red-900/50'
+                                : 'border border-red-200 bg-white text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:bg-gray-800 dark:text-red-300'
                         }`}
                     >
                         <span className="h-2 w-2 rounded-full bg-current" />
@@ -421,13 +772,13 @@ export function VolunteerMapModal({
                     <button
                         type="button"
                         onClick={() => {
-                            setFilter('rescue');
+                            setFilterOverride('rescue');
                             setSelectedPin(null);
                         }}
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
                             filter === 'rescue'
                                 ? 'bg-orange-600 text-white'
-                                : 'bg-white text-orange-700 border border-orange-200 hover:bg-orange-50 dark:bg-gray-800 dark:text-orange-300 dark:border-orange-900/50'
+                                : 'border border-orange-200 bg-white text-orange-700 hover:bg-orange-50 dark:border-orange-900/50 dark:bg-gray-800 dark:text-orange-300'
                         }`}
                     >
                         <span className="h-2 w-2 rounded-full bg-current" />
@@ -436,13 +787,13 @@ export function VolunteerMapModal({
                     <button
                         type="button"
                         onClick={() => {
-                            setFilter('feeding_route');
+                            setFilterOverride('feeding_route');
                             setSelectedPin(null);
                         }}
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
                             filter === 'feeding_route'
                                 ? 'bg-emerald-600 text-white'
-                                : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-300 dark:border-emerald-900/50'
+                                : 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-gray-800 dark:text-emerald-300'
                         }`}
                     >
                         <span className="h-2 w-2 rounded-full bg-current" />
@@ -453,7 +804,7 @@ export function VolunteerMapModal({
                 {/* Side-by-Side Map & Detail Body */}
                 <div className="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-5">
                     {/* Left: Leaflet Map */}
-                    <div className="relative min-h-[320px] border-b border-gray-100 dark:border-gray-800 lg:col-span-3 lg:min-h-[480px] lg:border-r lg:border-b-0">
+                    <div className="relative min-h-[320px] border-b border-gray-100 lg:col-span-3 lg:min-h-[480px] lg:border-r lg:border-b-0 dark:border-gray-800">
                         <style>{`
                             @keyframes pawlse-sos-pulse {
                                 0% { transform: translateX(-50%) scale(0.95); opacity: 0.85; }
@@ -461,7 +812,47 @@ export function VolunteerMapModal({
                             }
                             .pawlse-leaflet-pin { background: transparent !important; border: none !important; }
                         `}</style>
-                        <div ref={mapContainerRef} className="h-full w-full min-h-[320px] lg:min-h-[480px]" />
+                        <div
+                            ref={mapContainerRef}
+                            className="h-full min-h-[320px] w-full lg:min-h-[480px]"
+                        />
+
+                        {/* Floating Route Summary Pill */}
+                        {userLocation &&
+                            selectedPin &&
+                            (routeLoading || routeInfo) && (
+                                <div className="pointer-events-auto absolute top-3 right-3 z-[450] flex items-center gap-2 rounded-2xl border border-blue-200/80 bg-white/95 px-3.5 py-2 text-xs font-bold text-[#0B2340] shadow-lg backdrop-blur-md dark:border-blue-800/80 dark:bg-slate-900/95 dark:text-white">
+                                    {routeLoading ? (
+                                        <>
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                                            <span>Calculating route...</span>
+                                        </>
+                                    ) : routeInfo ? (
+                                        <>
+                                            {routeInfo.mode === 'walking' ? (
+                                                <Footprints className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                                            ) : (
+                                                <Car className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                            )}
+                                            <span>
+                                                {formatTravelDistance(
+                                                    routeInfo.distanceMeters,
+                                                )}
+                                            </span>
+                                            {floatingDuration && (
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    • {floatingDuration}
+                                                </span>
+                                            )}
+                                            {routeInfo.isFallback && (
+                                                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                                    Direct
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : null}
+                                </div>
+                            )}
 
                         {/* Floating Map Legend */}
                         <div className="pointer-events-auto absolute bottom-3 left-3 z-[450] flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200/80 bg-white/90 px-3 py-2 text-[11px] font-bold text-[#0B2340] shadow-lg backdrop-blur-md dark:border-gray-700/80 dark:bg-slate-900/90 dark:text-white">
@@ -498,7 +889,7 @@ export function VolunteerMapModal({
                     {/* Right: Side-by-Side Pin Detail Panel */}
                     <div className="flex flex-col overflow-y-auto p-5 lg:col-span-2">
                         {!selectedPin ? (
-                            <div className="flex flex-1 flex-col items-center justify-center text-center py-8">
+                            <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
                                 <div className="mb-3 rounded-2xl bg-orange-50 p-4 text-paw-orange dark:bg-orange-950/40">
                                     <MapPin className="h-8 w-8" />
                                 </div>
@@ -506,47 +897,75 @@ export function VolunteerMapModal({
                                     Select a Pin on the Map
                                 </h4>
                                 <p className="mt-1 max-w-xs text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    Click any <span className="font-bold text-red-600">SOS</span>,{' '}
-                                    <span className="font-bold text-orange-600">Rescue</span>, or{' '}
-                                    <span className="font-bold text-emerald-600">Feeding Route</span> marker to inspect its details and get directions.
+                                    Click any{' '}
+                                    <span className="font-bold text-red-600">
+                                        SOS
+                                    </span>
+                                    ,{' '}
+                                    <span className="font-bold text-orange-600">
+                                        Rescue
+                                    </span>
+                                    , or{' '}
+                                    <span className="font-bold text-emerald-600">
+                                        Feeding Route
+                                    </span>{' '}
+                                    marker to inspect its details
+                                    {userLocation
+                                        ? ' and open your route.'
+                                        : ' and get directions.'}
                                 </p>
 
                                 {filteredPins.length > 0 && (
                                     <div className="mt-5 w-full space-y-2 text-left">
-                                        <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
+                                        <p className="text-[11px] font-black tracking-wider text-gray-400 uppercase">
                                             Quick Jump ({filteredPins.length})
                                         </p>
                                         <div className="max-h-48 space-y-1.5 overflow-y-auto pr-1">
-                                            {filteredPins.slice(0, 6).map((pin) => (
-                                                <button
-                                                    key={pin.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedPin(pin);
-                                                        mapInstanceRef.current?.setView(
-                                                            [pin.latitude, pin.longitude],
-                                                            15,
-                                                            { animate: true },
-                                                        );
-                                                    }}
-                                                    className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2 text-left text-xs font-bold text-[#0B2340] transition-colors hover:border-paw-orange/40 hover:bg-orange-50/40 dark:border-gray-800 dark:bg-gray-800/50 dark:text-white"
-                                                >
-                                                    <span className="truncate pr-2">{pin.title}</span>
-                                                    <span
-                                                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
-                                                            pin.category === 'sos'
-                                                                ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                                                                : pin.category === 'rescue'
-                                                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
-                                                                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                                        }`}
+                                            {filteredPins
+                                                .slice(0, 6)
+                                                .map((pin) => (
+                                                    <button
+                                                        key={pin.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedPin(pin);
+
+                                                            if (!userLocation) {
+                                                                mapInstanceRef.current?.setView(
+                                                                    [
+                                                                        pin.latitude,
+                                                                        pin.longitude,
+                                                                    ],
+                                                                    15,
+                                                                    {
+                                                                        animate: true,
+                                                                    },
+                                                                );
+                                                            }
+                                                        }}
+                                                        className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2 text-left text-xs font-bold text-[#0B2340] transition-colors hover:border-paw-orange/40 hover:bg-orange-50/40 dark:border-gray-800 dark:bg-gray-800/50 dark:text-white"
                                                     >
-                                                        {pin.category === 'feeding_route'
-                                                            ? 'Feeding'
-                                                            : pin.category}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                                        <span className="truncate pr-2">
+                                                            {pin.title}
+                                                        </span>
+                                                        <span
+                                                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
+                                                                pin.category ===
+                                                                'sos'
+                                                                    ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                                                                    : pin.category ===
+                                                                        'rescue'
+                                                                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
+                                                                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                                            }`}
+                                                        >
+                                                            {pin.category ===
+                                                            'feeding_route'
+                                                                ? 'Feeding'
+                                                                : pin.category}
+                                                        </span>
+                                                    </button>
+                                                ))}
                                         </div>
                                     </div>
                                 )}
@@ -554,10 +973,11 @@ export function VolunteerMapModal({
                         ) : selectedPin.category === 'feeding_route' ? (
                             <div className="space-y-4">
                                 <div className="flex items-start justify-between gap-2">
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                                        <Utensils className="h-3.5 w-3.5" /> Feeding Route
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 uppercase dark:bg-emerald-950 dark:text-emerald-300">
+                                        <Utensils className="h-3.5 w-3.5" />{' '}
+                                        Feeding Route
                                     </span>
-                                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold uppercase text-green-700 dark:bg-green-950 dark:text-green-300">
+                                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold text-green-700 uppercase dark:bg-green-950 dark:text-green-300">
                                         {selectedPin.status}
                                     </span>
                                 </div>
@@ -567,15 +987,27 @@ export function VolunteerMapModal({
                                         {selectedPin.title}
                                     </h4>
                                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        Coordinates: {selectedPin.latitude.toFixed(5)},{' '}
+                                        Coordinates:{' '}
+                                        {selectedPin.latitude.toFixed(5)},{' '}
                                         {selectedPin.longitude.toFixed(5)}
                                     </p>
                                 </div>
 
+                                <RouteTravelPanel
+                                    userLocation={userLocation}
+                                    travelMode={travelMode}
+                                    onTravelModeChange={setTravelMode}
+                                    routeInfo={routeInfo}
+                                    routeLoading={routeLoading}
+                                    locating={locating}
+                                    onRequestLocation={handleCenterOnMe}
+                                />
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                                            <Calendar className="h-3.5 w-3.5 text-paw-orange" /> Schedule Day
+                                            <Calendar className="h-3.5 w-3.5 text-paw-orange" />{' '}
+                                            Schedule Day
                                         </div>
                                         <p className="mt-1 text-xs font-black text-[#0B2340] dark:text-white">
                                             {selectedPin.day}
@@ -583,7 +1015,8 @@ export function VolunteerMapModal({
                                     </div>
                                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                                            <Clock className="h-3.5 w-3.5 text-paw-orange" /> Time
+                                            <Clock className="h-3.5 w-3.5 text-paw-orange" />{' '}
+                                            Time
                                         </div>
                                         <p className="mt-1 text-xs font-black text-[#0B2340] dark:text-white">
                                             {selectedPin.time}
@@ -591,7 +1024,8 @@ export function VolunteerMapModal({
                                     </div>
                                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                                            <Users className="h-3.5 w-3.5 text-emerald-600" /> Volunteers Needed
+                                            <Users className="h-3.5 w-3.5 text-emerald-600" />{' '}
+                                            Volunteers Needed
                                         </div>
                                         <p className="mt-1 text-xs font-black text-[#0B2340] dark:text-white">
                                             {selectedPin.volunteers}
@@ -599,7 +1033,8 @@ export function VolunteerMapModal({
                                     </div>
                                     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                                            <PawPrint className="h-3.5 w-3.5 text-amber-600" /> Est. Strays
+                                            <PawPrint className="h-3.5 w-3.5 text-amber-600" />{' '}
+                                            Est. Strays
                                         </div>
                                         <p className="mt-1 text-xs font-black text-[#0B2340] dark:text-white">
                                             {selectedPin.strays} animals
@@ -609,12 +1044,13 @@ export function VolunteerMapModal({
 
                                 <div className="pt-2">
                                     <a
-                                        href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPin.latitude},${selectedPin.longitude}`}
+                                        href={buildGoogleMapsHref(selectedPin)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
                                     >
-                                        <ExternalLink className="h-4 w-4" /> Get Directions in Google Maps
+                                        <ExternalLink className="h-4 w-4" /> Get
+                                        Directions in Google Maps
                                     </a>
                                 </div>
                             </div>
@@ -633,16 +1069,18 @@ export function VolunteerMapModal({
                                         ) : (
                                             <HeartHandshake className="h-3.5 w-3.5" />
                                         )}
-                                        {selectedPin.category === 'sos' ? 'SOS Alert' : 'Rescue Report'}
+                                        {selectedPin.category === 'sos'
+                                            ? 'SOS Alert'
+                                            : 'Rescue Report'}
                                     </span>
 
                                     <div className="flex items-center gap-1.5">
                                         {selectedPin.urgency && (
-                                            <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-black uppercase text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900">
+                                            <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[10px] font-black text-red-700 uppercase dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
                                                 {selectedPin.urgency} urgency
                                             </span>
                                         )}
-                                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-black text-gray-700 uppercase dark:bg-gray-800 dark:text-gray-300">
                                             {selectedPin.status}
                                         </span>
                                     </div>
@@ -659,10 +1097,22 @@ export function VolunteerMapModal({
                                     )}
                                 </div>
 
+                                <RouteTravelPanel
+                                    userLocation={userLocation}
+                                    travelMode={travelMode}
+                                    onTravelModeChange={setTravelMode}
+                                    routeInfo={routeInfo}
+                                    routeLoading={routeLoading}
+                                    locating={locating}
+                                    onRequestLocation={handleCenterOnMe}
+                                />
+
                                 {selectedPin.photo_path && (
                                     <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800">
                                         <ImageWithFallback
-                                            src={formatPhotoUrl(selectedPin.photo_path)}
+                                            src={formatPhotoUrl(
+                                                selectedPin.photo_path,
+                                            )}
                                             alt={selectedPin.title}
                                             className="h-40 w-full object-cover"
                                         />
@@ -687,7 +1137,8 @@ export function VolunteerMapModal({
                                         )}
                                         {selectedPin.situation_type && (
                                             <span className="rounded-md bg-white px-2 py-0.5 dark:bg-gray-900">
-                                                Situation: {selectedPin.situation_type}
+                                                Situation:{' '}
+                                                {selectedPin.situation_type}
                                             </span>
                                         )}
                                     </div>
@@ -700,18 +1151,20 @@ export function VolunteerMapModal({
 
                                 {selectedPin.is_assigned_to_me && (
                                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-                                        This report is currently assigned to you.
+                                        This report is currently assigned to
+                                        you.
                                     </div>
                                 )}
 
                                 <div className="flex flex-col gap-2 pt-1">
                                     <a
-                                        href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPin.latitude},${selectedPin.longitude}`}
+                                        href={buildGoogleMapsHref(selectedPin)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-paw-orange px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-paw-orange/90"
                                     >
-                                        <ExternalLink className="h-4 w-4" /> Get Directions in Google Maps
+                                        <ExternalLink className="h-4 w-4" /> Get
+                                        Directions in Google Maps
                                     </a>
                                     <Link
                                         href="/account/volunteer/rescue-reports"
