@@ -14,28 +14,38 @@ export interface EventDateBadgeInfo {
  * Safely parse a date string into a Date object.
  */
 export function parseEventDate(dateString?: string | null): Date | null {
-    if (!dateString) return null;
+    if (!dateString) {
+return null;
+}
 
     // Handle "YYYY-MM-DD" or "YYYY-MM-DDT..." formats
     if (typeof dateString === 'string') {
         const cleanStr = dateString.trim();
         // If it's pure YYYY-MM-DD, construct with local components to avoid UTC shift
         const ymdMatch = cleanStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
         if (ymdMatch) {
             const year = parseInt(ymdMatch[1], 10);
             const monthIndex = parseInt(ymdMatch[2], 10) - 1;
             const day = parseInt(ymdMatch[3], 10);
             const d = new Date(year, monthIndex, day);
-            if (!isNaN(d.getTime())) return d;
+
+            if (!isNaN(d.getTime())) {
+return d;
+}
         }
 
         const parsed = new Date(cleanStr);
-        if (!isNaN(parsed.getTime())) return parsed;
+
+        if (!isNaN(parsed.getTime())) {
+return parsed;
+}
 
         // Try standard text like "SEP 22" or "SEP 22, 2026"
         const textMatch = cleanStr.match(
             /^([A-Za-z]+)\s+(\d{1,2})(?:,?\s*(\d{4}))?/,
         );
+
         if (textMatch) {
             const monthNames = [
                 'jan',
@@ -54,11 +64,13 @@ export function parseEventDate(dateString?: string | null): Date | null {
             const monthIdx = monthNames.findIndex((m) =>
                 textMatch[1].toLowerCase().startsWith(m),
             );
+
             if (monthIdx !== -1) {
                 const day = parseInt(textMatch[2], 10);
                 const year = textMatch[3]
                     ? parseInt(textMatch[3], 10)
                     : new Date().getFullYear();
+
                 return new Date(year, monthIdx, day);
             }
         }
@@ -75,10 +87,15 @@ export function formatEventDate(
     dateString?: string | null,
     format: 'full' | 'short' | 'weekday' = 'full',
 ): string {
-    if (!dateString) return 'Date TBA';
+    if (!dateString) {
+return 'Date TBA';
+}
 
     const date = parseEventDate(dateString);
-    if (!date) return String(dateString);
+
+    if (!date) {
+return String(dateString);
+}
 
     if (format === 'weekday') {
         return date.toLocaleDateString('en-US', {
@@ -176,7 +193,10 @@ export function getEventDateBadge(
  * Parses time string like "09:00 AM - 03:00 PM" into clean 12-hour format.
  */
 export function formatEventTime(timeString?: string | null): string {
-    if (!timeString || !timeString.trim()) return 'Time TBA';
+    if (!timeString || !timeString.trim()) {
+return 'Time TBA';
+}
+
     return timeString.trim();
 }
 
@@ -191,7 +211,10 @@ export function generateGoogleCalendarUrl(event: {
     desc?: string;
 }): string {
     const date = parseEventDate(event.date);
-    if (!date) return 'https://calendar.google.com';
+
+    if (!date) {
+return 'https://calendar.google.com';
+}
 
     let startTimeStr = '090000';
     let endTimeStr = '120000';
@@ -199,26 +222,42 @@ export function generateGoogleCalendarUrl(event: {
     if (event.time) {
         // Try parsing range like "09:00 AM - 03:00 PM"
         const timeParts = event.time.split('-');
+
         if (timeParts.length >= 1) {
             const parseTime = (t: string) => {
                 const match = t.trim().match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i);
+
                 if (match) {
                     let hour = parseInt(match[1], 10);
                     const minute = match[2] ? match[2] : '00';
                     const ampm = match[3] ? match[3].toUpperCase() : '';
-                    if (ampm === 'PM' && hour < 12) hour += 12;
-                    if (ampm === 'AM' && hour === 12) hour = 0;
+
+                    if (ampm === 'PM' && hour < 12) {
+hour += 12;
+}
+
+                    if (ampm === 'AM' && hour === 12) {
+hour = 0;
+}
+
                     return String(hour).padStart(2, '0') + minute + '00';
                 }
+
                 return null;
             };
 
             const parsedStart = parseTime(timeParts[0]);
-            if (parsedStart) startTimeStr = parsedStart;
+
+            if (parsedStart) {
+startTimeStr = parsedStart;
+}
 
             if (timeParts.length > 1) {
                 const parsedEnd = parseTime(timeParts[1]);
-                if (parsedEnd) endTimeStr = parsedEnd;
+
+                if (parsedEnd) {
+endTimeStr = parsedEnd;
+}
             } else {
                 // Default 2 hours later
                 const startHour = parseInt(startTimeStr.slice(0, 2), 10);
@@ -344,6 +383,7 @@ export async function shareEvent({
             } catch {
                 toast.success('Opening Facebook share...');
             }
+
             const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedFullPost}`;
             window.open(
                 fbUrl,
@@ -399,6 +439,7 @@ export async function shareEvent({
             } catch {
                 toast.info('Opening Instagram...');
             }
+
             window.open(
                 'https://www.instagram.com/',
                 '_blank',
@@ -440,6 +481,7 @@ export async function shareEvent({
                             const res = await fetch(event.img, {
                                 mode: 'cors',
                             });
+
                             if (res.ok) {
                                 const blob = await res.blob();
                                 const file = new File(
@@ -447,6 +489,7 @@ export async function shareEvent({
                                     `event-${event.id}.jpg`,
                                     { type: blob.type || 'image/jpeg' },
                                 );
+
                                 if (navigator.canShare({ files: [file] })) {
                                     shareData.files = [file];
                                 }
@@ -468,6 +511,7 @@ export async function shareEvent({
                 await navigator.clipboard.writeText(fullPost);
                 toast.success('Full event post copied to clipboard!');
             }
+
             break;
         }
 
@@ -482,6 +526,7 @@ export async function shareEvent({
             } catch (e) {
                 toast.error('Failed to copy event post.');
             }
+
             break;
         }
     }

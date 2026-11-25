@@ -1,15 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Ban, MessageCircle, Paperclip, Send, FileText, X } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
+import { Heart, Calendar, Clock, ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Building2, HeartHandshake, Sparkles, Ban, MessageCircle, Paperclip, Send, FileText, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { formatPillLabel } from '@/lib/utils';
 
@@ -178,6 +179,7 @@ export default function UserAdoptionApplications({
         };
 
         window.addEventListener('keydown', handleKeyDown);
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeConversationAppId, lightboxUrl]);
 
@@ -185,20 +187,24 @@ export default function UserAdoptionApplications({
         setReplyText('');
         setReplyFiles([]);
         setReplyError(null);
+
         if (replyFileInputRef.current) {
             replyFileInputRef.current.value = '';
         }
+
         setActiveConversationAppId(appId);
     };
 
     const handleReplySubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!activeConversationApp || isSendingReply) {
             return;
         }
 
         if (!replyText.trim() && replyFiles.length === 0) {
             setReplyError('Please enter a message or attach at least one file.');
+
             return;
         }
 
@@ -217,6 +223,7 @@ export default function UserAdoptionApplications({
                 onSuccess: () => {
                     setReplyText('');
                     setReplyFiles([]);
+
                     if (replyFileInputRef.current) {
                         replyFileInputRef.current.value = '';
                     }
@@ -266,6 +273,7 @@ export default function UserAdoptionApplications({
                         </span>
                     );
                 }
+
                 return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
                         <XCircle size={12} /> Declined
@@ -396,6 +404,7 @@ export default function UserAdoptionApplications({
 
                     {applications.map((app) => {
                         const refCode = `ADP-${String(app.id).padStart(5, '0')}`;
+
                         return (
                         <DashboardCard key={app.id} className="p-5 sm:p-6">
                             <div className="flex flex-col md:flex-row gap-4 md:gap-6">
@@ -753,6 +762,7 @@ export default function UserAdoptionApplications({
                                                                 const isImage =
                                                                     att.mime?.startsWith('image/') ||
                                                                     /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+
                                                                 return isImage ? (
                                                                     <button
                                                                         key={aIdx}

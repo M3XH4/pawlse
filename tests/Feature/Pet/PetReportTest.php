@@ -229,6 +229,8 @@ test('sos report accepts video evidence alongside photo evidence', function () {
 });
 
 test('nearby vets endpoint returns nearest veterinary clinics sorted by distance', function () {
+    config()->set('services.tomtom.api_key', null);
+    config()->set('services.google_maps.api_key', null);
     Http::fake([
         'nominatim.openstreetmap.org/*' => Http::response([
             [
@@ -263,6 +265,7 @@ test('nearby vets endpoint returns nearest veterinary clinics sorted by distance
 });
 
 test('nearby vets endpoint fetches phone and opening hours from google places when api key is configured', function () {
+    config()->set('services.tomtom.api_key', null);
     config()->set('services.google_maps.api_key', 'test-google-key');
 
     $todayIndex = now()->dayOfWeekIso - 1;
@@ -293,6 +296,48 @@ test('nearby vets endpoint fetches phone and opening hours from google places wh
         ->assertJsonPath('clinics.0.name', 'Google Vet Clinic')
         ->assertJsonPath('clinics.0.phone', '(063) 221-9999')
         ->assertJsonPath('clinics.0.operating_hours', 'Today: 8:00 AM – 6:00 PM');
+});
+
+test('nearby vets endpoint fetches phone and opening hours from tomtom when api key is configured', function () {
+    config()->set('services.tomtom.api_key', 'test-tomtom-key');
+    config()->set('services.google_maps.api_key', null);
+
+    $today = now()->toDateString();
+
+    Http::fake([
+        'api.tomtom.com/search/2/nearbySearch/*' => Http::response([
+            'results' => [
+                [
+                    'id' => 'tt-1',
+                    'poi' => [
+                        'name' => 'TomTom Vet Clinic',
+                        'phone' => '+63 88 858 8205',
+                        'openingHours' => [
+                            'timeRanges' => [
+                                [
+                                    'startTime' => ['date' => $today, 'hour' => 8, 'minute' => 0],
+                                    'endTime' => ['date' => $today, 'hour' => 17, 'minute' => 30],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'address' => [
+                        'freeformAddress' => 'Vamenta Boulevard, Carmen, Cagayan De Oro City',
+                    ],
+                    'position' => ['lat' => 8.482595, 'lon' => 124.638348],
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->getJson('/api/nearby-vets?lat=8.4542&lng=124.6319');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'clinics')
+        ->assertJsonPath('clinics.0.id', 'tomtom-tt-1')
+        ->assertJsonPath('clinics.0.name', 'TomTom Vet Clinic')
+        ->assertJsonPath('clinics.0.phone', '+63 88 858 8205')
+        ->assertJsonPath('clinics.0.operating_hours', '08:00 - 17:30');
 });
 
 test('duplicate reports are automatically flagged based on coordinates and location matching', function () {

@@ -2,11 +2,12 @@ import { Link } from '@inertiajs/react';
 import { Search, MapPin, User, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo } from 'react';
+import type {
+    MissingPetItem} from '@/components/missing';
 import {
     MissingPetCard,
     MissingPetDetailModal,
-    MissingPetShareModal,
-    MissingPetItem,
+    MissingPetShareModal
 } from '@/components/missing';
 
 const SEARCH_SUGGESTIONS = [
@@ -63,7 +64,9 @@ export function MissingPets({ pets: propsPets }: { pets?: any[] }) {
     const [sharingPet, setSharingPet] = useState<MissingPetItem | null>(null);
 
     const filteredSuggestions = useMemo(() => {
-        if (!searchQuery.trim()) return [];
+        if (!searchQuery.trim()) {
+return [];
+}
 
         const query = searchQuery.toLowerCase();
 

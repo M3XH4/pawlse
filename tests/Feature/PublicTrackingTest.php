@@ -16,6 +16,7 @@ use App\Notifications\RehomingRequestStatusUpdatedNotification;
 use App\Notifications\RescueStatusUpdatedNotification;
 use App\Notifications\ShelterVisitStatusUpdatedNotification;
 use App\Notifications\SubmissionEReceiptNotification;
+use Illuminate\Notifications\AnonymousNotifiable;
 
 test('public user can track their adoption application on unified track with reference and email', function () {
     $pet = ShelterAnimal::factory()->create(['status' => ShelterAnimalStatus::Available]);
@@ -173,11 +174,12 @@ test('notifications include reference number and one-click tracking URL', functi
     // 1. Adoption Application Status Updated Notification
     $pet = ShelterAnimal::factory()->create();
     $app = AdoptionApplication::factory()->create([
+        'user_id' => null,
         'shelter_animal_id' => $pet->id,
         'email' => 'adopter@example.com',
         'status' => AdoptionApplicationStatus::Approved,
     ]);
-    $adoptionMail = (new AdoptionApplicationStatusUpdatedNotification($app))->toMail(new User);
+    $adoptionMail = (new AdoptionApplicationStatusUpdatedNotification($app))->toMail(new AnonymousNotifiable);
     $expectedAdpRef = 'ADP-'.str_pad((string) $app->id, 5, '0', STR_PAD_LEFT);
     $expectedAdpUrl = route('track', ['reference' => $expectedAdpRef, 'email' => 'adopter@example.com']);
     expect($adoptionMail->actionUrl)->toBe($expectedAdpUrl);

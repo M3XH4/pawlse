@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardContext } from '@/components/dashboard/dashboard-context';
 import type { DashboardContextValue } from '@/components/dashboard/dashboard-context';
 import { DashboardHeader } from '@/components/dashboard/header';
@@ -31,13 +31,14 @@ export default function DashboardLayout({
     const isMaintenanceMode = Boolean(page.props.isMaintenanceMode);
     const { markTabRead } = useDashboardNotifications();
     const { isNavigating, targetPath } = useInertiaNavigationState({
-        delayMs: 120,
+        delayMs: 0,
         ignorePartial: true,
     });
 
     // Automatically mark all unread notifications matching the visited tab as read
     useEffect(() => {
         const path = page.url.split('?')[0];
+
         if (path) {
             markTabRead(path);
         }

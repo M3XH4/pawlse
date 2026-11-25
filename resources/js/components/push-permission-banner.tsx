@@ -6,10 +6,11 @@ import {
     enablePushNotifications,
     getLatestPushSharedProps,
     getPushCapabilityStatus,
-    isStandalonePwa,
-    type PushCapabilityStatus,
-    type WebPushSharedState,
+    isStandalonePwa
+    
+    
 } from '@/lib/push-notifications';
+import type {PushCapabilityStatus, WebPushSharedState} from '@/lib/push-notifications';
 
 const BANNER_DISMISS_PREFIX = 'pawlse_push_banner_dismissed_';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -34,9 +35,11 @@ function extractState(props: Record<string, unknown> | undefined): BannerPageSta
 function isDismissedForUser(userId: string | number): boolean {
     try {
         const raw = window.localStorage.getItem(`${BANNER_DISMISS_PREFIX}${userId}`);
+
         if (!raw) {
             return false;
         }
+
         const timestamp = Number(raw);
 
         return Number.isFinite(timestamp) && Date.now() - timestamp < SEVEN_DAYS_MS;
@@ -87,6 +90,7 @@ export function PushPermissionBanner() {
                 if (active) {
                     setStatus('unauthenticated');
                 }
+
                 return;
             }
 
@@ -94,11 +98,13 @@ export function PushPermissionBanner() {
                 if (active) {
                     setDismissed(true);
                 }
+
                 return;
             }
 
             setDismissed(false);
             const resolved = await getPushCapabilityStatus(true, pageState.webPush);
+
             if (active) {
                 setStatus(resolved);
             }
@@ -134,6 +140,7 @@ export function PushPermissionBanner() {
         } catch {
             // Ignore storage errors
         }
+
         setDismissed(true);
     };
 

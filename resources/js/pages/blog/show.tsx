@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
     Heart, Share2, Clock, Calendar, ArrowLeft, ArrowRight,
     Copy, Check, Shield, User, Tag, Sparkles, MessageSquareOff,
@@ -8,12 +6,14 @@ import {
     GraduationCap, Scale, Newspaper, Megaphone, PartyPopper,
     FileText, Star, MessageSquareQuote, AlertCircle, Bookmark
 } from 'lucide-react';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { BlogShareModal } from '@/components/blog/blog-share-modal';
+import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { toast } from 'sonner';
 
 interface BlogPostItem {
     id: number;
@@ -116,7 +116,10 @@ export default function BlogShow({
     };
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return 'Recently';
+        if (!dateStr) {
+return 'Recently';
+}
+
         try {
             return new Date(dateStr).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -354,6 +357,7 @@ export default function BlogShow({
                                         </h3>
                                     );
                                 }
+
                                 if (paragraph.startsWith('## ')) {
                                     return (
                                         <h2 key={idx} className="text-3xl font-black text-paw-navy dark:text-white pt-6 pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -361,8 +365,10 @@ export default function BlogShow({
                                         </h2>
                                     );
                                 }
+
                                 if (paragraph.startsWith('- ') || paragraph.startsWith('1. ')) {
                                     const items = paragraph.split('\n');
+
                                     return (
                                         <ul key={idx} className="space-y-2 my-4 list-disc pl-6 font-bold text-gray-700 dark:text-gray-300">
                                             {items.map((item, iIdx) => (
@@ -371,6 +377,7 @@ export default function BlogShow({
                                         </ul>
                                     );
                                 }
+
                                 return (
                                     <p
                                         key={idx}
@@ -541,6 +548,7 @@ export default function BlogShow({
                                 {relatedPosts.map((rel) => {
                                     const relMeta = CATEGORY_META[rel.category] || { label: rel.category, badgeBg: 'bg-gray-100 text-gray-800', icon: FileText };
                                     const RelIcon = relMeta.icon;
+
                                     return (
                                         <article
                                             key={rel.id}

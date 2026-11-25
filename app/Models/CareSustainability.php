@@ -13,7 +13,7 @@ class CareSustainability extends Model
 {
     use HasFactory;
 
-    private const CURRENT_CACHE_KEY = 'care_sustainability:current';
+    private const CURRENT_CACHE_KEY = 'care_sustainability:current:v2';
 
     protected $table = 'care_sustainabilities';
 
@@ -67,7 +67,7 @@ class CareSustainability extends Model
      */
     public static function current(): self
     {
-        return Cache::remember(self::CURRENT_CACHE_KEY, 300, function (): self {
+        $attributes = Cache::remember(self::CURRENT_CACHE_KEY, 300, function (): array {
             $current = self::first();
 
             if (! $current) {
@@ -88,8 +88,10 @@ class CareSustainability extends Model
                 ]);
             }
 
-            return $current;
+            return $current->getAttributes();
         });
+
+        return (new self)->newFromBuilder($attributes);
     }
 
     /**

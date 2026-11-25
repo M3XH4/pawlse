@@ -1,31 +1,34 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Filter, Search, X, Info, Shield, Calendar, User, FileText, Upload, Plus, Check, AlertTriangle, Eye, CheckCircle, Ban, MessageSquare, Gift, Trash2, Edit3, Sparkles, Send, Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
+import type {
+  PostAdoptionFollowUpData,
+  AdoptedPetData} from '@/components/admin/adoption/post-adoption-tab';
+import {
+  PostAdoptionTab
+} from '@/components/admin/adoption/post-adoption-tab';
+import type {
+  RehomingRequestData} from '@/components/admin/adoption/rehoming-tab';
+import {
+  RehomingTab
+} from '@/components/admin/adoption/rehoming-tab';
+import type {
+  ShelterVisitData,
+  ShelterVisitSettings} from '@/components/admin/adoption/shelter-visits-tab';
+import {
+  ShelterVisitsTab
+} from '@/components/admin/adoption/shelter-visits-tab';
 import { AdminCard } from '@/components/admin/card';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { formatPhotoUrl } from '@/lib/utils';
-import { usePermissions } from '@/hooks/use-permissions';
-import {
-  PostAdoptionTab,
-  PostAdoptionFollowUpData,
-  AdoptedPetData,
-} from '@/components/admin/adoption/post-adoption-tab';
-import {
-  ShelterVisitsTab,
-  ShelterVisitData,
-  ShelterVisitSettings,
-} from '@/components/admin/adoption/shelter-visits-tab';
-import {
-  RehomingTab,
-  RehomingRequestData,
-} from '@/components/admin/adoption/rehoming-tab';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { Spinner } from '@/components/ui/spinner';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { usePermissions } from '@/hooks/use-permissions';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface ApplicationFile {
   id: number;
@@ -149,11 +152,24 @@ interface AdoptionManagementProps {
 }
 
 function normalizePriority(priority?: string): 'Urgent' | 'High' | 'Medium' | 'Low' {
-  if (!priority) return 'Medium';
+  if (!priority) {
+return 'Medium';
+}
+
   const lower = priority.trim().toLowerCase();
-  if (lower === 'urgent') return 'Urgent';
-  if (lower === 'high') return 'High';
-  if (lower === 'low') return 'Low';
+
+  if (lower === 'urgent') {
+return 'Urgent';
+}
+
+  if (lower === 'high') {
+return 'High';
+}
+
+  if (lower === 'low') {
+return 'Low';
+}
+
   return 'Medium';
 }
 
@@ -188,6 +204,7 @@ export default function AdoptionManagement({
   useEffect(() => {
     if (selectedPetForNeeds) {
       const updated = pets.find((p) => p.id === selectedPetForNeeds.id);
+
       if (updated) {
         setSelectedPetForNeeds(updated);
       }
@@ -221,12 +238,18 @@ export default function AdoptionManagement({
   const [isSendingAdminMessage, setIsSendingAdminMessage] = useState(false);
 
   const activeSelectedApp = useMemo(() => {
-    if (!selectedApp) return null;
+    if (!selectedApp) {
+return null;
+}
+
     return applications.find((a) => a.id === selectedApp.id) || selectedApp;
   }, [applications, selectedApp]);
 
   const handleSendAdminMessage = (requestInfo: boolean) => {
-    if (!activeSelectedApp || !adminMessageText.trim()) return;
+    if (!activeSelectedApp || !adminMessageText.trim()) {
+return;
+}
+
     setIsSendingAdminMessage(true);
     router.post(
       `${basePath}/applications/${activeSelectedApp.id}/messages`,
@@ -255,6 +278,7 @@ export default function AdoptionManagement({
       const matchesSearch = app.full_name.toLowerCase().includes(appSearch.toLowerCase()) ||
                             (app.pet && app.pet.name.toLowerCase().includes(appSearch.toLowerCase()));
       const matchesStatus = appStatusFilter === 'All' || app.status === appStatusFilter.toLowerCase();
+
       return matchesSearch && matchesStatus;
     });
   }, [applications, appSearch, appStatusFilter]);
@@ -267,13 +291,16 @@ export default function AdoptionManagement({
                             (pet.color && pet.color.toLowerCase().includes(petSearch.toLowerCase()));
       const matchesType = petTypeFilter === 'All' || pet.type === petTypeFilter.toLowerCase();
       const matchesStatus = petStatusFilter === 'All' || pet.status === petStatusFilter.toLowerCase();
+
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [pets, petSearch, petTypeFilter, petStatusFilter]);
 
   // Handle application status update submission
   const handleStatusUpdate = (status: 'approved' | 'rejected' | 'scheduled') => {
-    if (!selectedApp) return;
+    if (!selectedApp) {
+return;
+}
 
     statusData.status = status;
 
@@ -619,6 +646,7 @@ export default function AdoptionManagement({
                               {pet.needs.slice(0, 2).map((need) => {
                                 const normPriority = normalizePriority(need.priority);
                                 const isFulfilled = (need.status || '').toLowerCase() === 'fulfilled';
+
                                 return (
                                   <div key={need.id} className="flex items-center justify-between gap-1 text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700 min-w-0">
                                     <span className={`truncate flex-1 min-w-0 ${isFulfilled ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300 font-bold'}`}>
@@ -883,6 +911,7 @@ export default function AdoptionManagement({
                     <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                       {activeSelectedApp.messages.map((msg) => {
                         const isAdmin = msg.sender_type === 'admin';
+
                         return (
                           <div
                             key={msg.id}
@@ -901,6 +930,7 @@ export default function AdoptionManagement({
                               <div className="flex flex-wrap gap-2 pt-1">
                                 {msg.attachments.map((att, idx) => {
                                   const isImage = att.mime?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+
                                   return isImage ? (
                                     <a
                                       key={idx}
@@ -1268,6 +1298,7 @@ export default function AdoptionManagement({
                                           const updated = selectedPetForNeeds.needs.filter((n) => n.id !== need.id);
                                           setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
                                         }
+
                                         if (editingNeed?.id === need.id) {
                                           setEditingNeed(null);
                                           setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
@@ -1322,7 +1353,11 @@ export default function AdoptionManagement({
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (!selectedPetForNeeds || needProcessing) return;
+
+                    if (!selectedPetForNeeds || needProcessing) {
+return;
+}
+
                     setNeedProcessing(true);
                     setNeedErrors({});
 
@@ -1347,6 +1382,7 @@ export default function AdoptionManagement({
                               );
                               setSelectedPetForNeeds({ ...selectedPetForNeeds, needs: updated });
                             }
+
                             setEditingNeed(null);
                             setNeedForm({ item: '', quantity: '1 unit', priority: 'Medium', status: 'open' });
                           },

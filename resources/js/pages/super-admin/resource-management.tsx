@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     FolderDown, Plus, Search, Filter, Edit2, Trash2, X, Check, 
     RotateCcw, Download, FileText, ExternalLink, Image as ImageIcon,
     Upload, Sparkles, BookOpen, AlertCircle
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
-import { DashboardPagination } from '@/components/dashboard/pagination';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ModernSelect } from '@/components/ui/modern-select';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { Spinner } from '@/components/ui/spinner';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface ResourceRecord {
     id: number;

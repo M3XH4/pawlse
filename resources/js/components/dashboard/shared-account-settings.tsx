@@ -47,12 +47,13 @@ import {
     disablePushNotifications,
     enablePushNotifications,
     getPushCapabilityStatus,
-    sendTestPushNotification,
-    type PushCapabilityStatus,
+    sendTestPushNotification
+    
 } from '@/lib/push-notifications';
+import type {PushCapabilityStatus} from '@/lib/push-notifications';
 import { cn } from '@/lib/utils';
-import { send } from '@/routes/verification';
 import { disable, enable } from '@/routes/two-factor';
+import { send } from '@/routes/verification';
 
 type SharedAccountSettingsProps = {
     mustVerifyEmail?: boolean;
@@ -99,6 +100,7 @@ export default function SharedAccountSettings({
         if (prevTwoFactorEnabled.current && !twoFactorEnabled) {
             clearTwoFactorAuthData();
         }
+
         prevTwoFactorEnabled.current = twoFactorEnabled;
     }, [twoFactorEnabled, clearTwoFactorAuthData]);
 
@@ -106,17 +108,20 @@ export default function SharedAccountSettings({
     const [sidebarNotifStyle, setSidebarNotifStyle] = useState<'count' | 'dot' | 'none'>(() => {
         try {
             const stored = localStorage.getItem('pawlse_sidebar_notif_style');
+
             if (stored === 'count' || stored === 'dot' || stored === 'none') {
                 return stored;
             }
         } catch {
             // Ignore storage read error
         }
+
         return ((user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style) || 'count';
     });
 
     useEffect(() => {
         const serverPref = (user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style;
+
         if (serverPref && (serverPref === 'count' || serverPref === 'dot' || serverPref === 'none')) {
             setSidebarNotifStyle(serverPref);
         }
@@ -124,11 +129,13 @@ export default function SharedAccountSettings({
 
     const handleStyleSelect = (style: 'count' | 'dot' | 'none') => {
         setSidebarNotifStyle(style);
+
         try {
             localStorage.setItem('pawlse_sidebar_notif_style', style);
         } catch {
             // Ignore storage write error
         }
+
         window.dispatchEvent(new CustomEvent('pawlse:sidebar-notif-style-changed', { detail: style }));
     };
 
@@ -162,6 +169,7 @@ export default function SharedAccountSettings({
                 Boolean(user && user.email_verified_at),
                 webPush,
             );
+
             if (active) {
                 setPushStatus(resolved);
             }
@@ -230,6 +238,7 @@ export default function SharedAccountSettings({
 
     useEffect(() => {
         const stored = localStorage.getItem('pawlse-notif-prefs');
+
         if (stored) {
             try {
                 setNotifPrefs(JSON.parse(stored));
@@ -241,12 +250,14 @@ export default function SharedAccountSettings({
 
     const saveNotifPrefs = () => {
         setIsSavingNotifs(true);
+
         try {
             localStorage.setItem('pawlse-notif-prefs', JSON.stringify(notifPrefs));
             localStorage.setItem('pawlse_sidebar_notif_style', sidebarNotifStyle);
         } catch {
             // Ignore storage write error
         }
+
         window.dispatchEvent(new CustomEvent('pawlse:sidebar-notif-style-changed', { detail: sidebarNotifStyle }));
 
         router.patch(
@@ -306,10 +317,14 @@ export default function SharedAccountSettings({
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         if (file.size > 2 * 1024 * 1024) {
             toast.error('Profile photo must be less than 2MB.');
+
             return;
         }
 
@@ -330,6 +345,7 @@ export default function SharedAccountSettings({
             remove_avatar: true,
         }));
         setAvatarPreview(null);
+
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -371,6 +387,7 @@ export default function SharedAccountSettings({
                         ] as const
                     ).map((tab) => {
                         const active = activeTab === tab.id;
+
                         return (
                             <button
                                 key={tab.id}
@@ -1175,6 +1192,7 @@ export default function SharedAccountSettings({
                                 ] as const
                             ).map((themeOption) => {
                                 const selected = appearance === themeOption.value;
+
                                 return (
                                     <button
                                         key={themeOption.value}

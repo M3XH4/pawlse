@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { AnimatePresence } from 'motion/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhotoUrl } from '@/lib/utils';
-import { toast } from 'sonner';
 import { 
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
   MapPin, Calendar, Camera, Info, Sparkles, Eye, Check, X,
   ArrowRight, ShieldAlert, Cpu, BookOpen
 } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { BreedGuideModal } from '@/components/admin/breed-guide-modal';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { PetBreed } from '@/data/pet-breeds';
+import type { PetBreed } from '@/data/pet-breeds';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface PaginatedData<T> {
   data: T[];
@@ -213,9 +213,12 @@ export default function AiValidation({
   };
 
   const handleApprove = () => {
-    if (!selectedReport) return;
+    if (!selectedReport) {
+return;
+}
 
     const payload: Record<string, any> = {};
+
     if (dispatchVolunteerId) {
       payload.volunteer_id = dispatchVolunteerId;
     }
@@ -232,7 +235,10 @@ export default function AiValidation({
 
   const handleRejectAndCorrect = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedReport) return;
+
+    if (!selectedReport) {
+return;
+}
 
     const payload = isCorrecting ? {
       animal_type: correctAnimalType,
@@ -254,9 +260,12 @@ export default function AiValidation({
   };
 
   const getConfidenceLevelBadge = (confidence: number | null | undefined) => {
-    if (confidence === null || confidence === undefined) return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">N/A</span>;
+    if (confidence === null || confidence === undefined) {
+return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">N/A</span>;
+}
     
     const pct = Math.round(confidence * 100);
+
     if (pct >= 80) {
       return (
         <span className="px-2.5 py-0.5 text-[10px] font-black rounded-full bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border border-green-200/50">

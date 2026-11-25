@@ -118,6 +118,7 @@ export default function VolunteerInjuryReports({
     const [incidentOccurredAt, setIncidentOccurredAt] = useState(() => {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+
         return now.toISOString().slice(0, 16);
     });
     const [description, setDescription] = useState('');
@@ -140,10 +141,13 @@ export default function VolunteerInjuryReports({
     useEffect(() => {
         if (!photoFile) {
             setPhotoPreviewUrl(null);
+
             return;
         }
+
         const objectUrl = URL.createObjectURL(photoFile);
         setPhotoPreviewUrl(objectUrl);
+
         return () => URL.revokeObjectURL(objectUrl);
     }, [photoFile]);
 
@@ -155,6 +159,7 @@ export default function VolunteerInjuryReports({
                 mapInstanceRef.current = null;
                 markerRef.current = null;
             }
+
             return;
         }
 
@@ -189,6 +194,7 @@ export default function VolunteerInjuryReports({
             setPickedCoords([lat, lng]);
             placeMarker(lat, lng);
             setIsDetectingLocation(true);
+
             try {
                 const address = await reverseGeocode(lat, lng);
                 setLocation(address);
@@ -213,6 +219,7 @@ export default function VolunteerInjuryReports({
     const handleDetectCurrentLocation = () => {
         if (!navigator.geolocation) {
             toast.error('Geolocation is not supported by your browser.');
+
             return;
         }
 
@@ -224,6 +231,7 @@ export default function VolunteerInjuryReports({
 
                 if (mapInstanceRef.current) {
                     mapInstanceRef.current.setView([latitude, longitude], 16);
+
                     if (markerRef.current) {
                         markerRef.current.setLatLng([latitude, longitude]);
                     } else {
@@ -274,23 +282,30 @@ export default function VolunteerInjuryReports({
         setIsSubmitting(true);
 
         const formData = new FormData();
+
         if (assignedTaskId) {
             formData.append('assigned_task_id', assignedTaskId);
         }
+
         formData.append('incident_type', incidentType);
         formData.append('severity', severity);
+
         if (bodyPart) {
             formData.append('body_part', bodyPart);
         }
+
         if (location) {
             formData.append('location', location);
         }
+
         formData.append('incident_occurred_at', incidentOccurredAt.replace('T', ' '));
         formData.append('description', description);
         formData.append('first_aid_applied', firstAidApplied ? '1' : '0');
+
         if (firstAidNotes) {
             formData.append('first_aid_notes', firstAidNotes);
         }
+
         if (photoFile) {
             formData.append('photo', photoFile);
         }

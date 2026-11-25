@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { router } from '@inertiajs/react';
 import {
     X,
@@ -14,8 +12,9 @@ import {
     User,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import {
     FacebookIcon,
     TwitterXIcon,
@@ -23,6 +22,7 @@ import {
     WhatsAppIcon,
     TelegramIcon,
 } from '@/components/events/event-share-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export interface BlogSharePostItem {
     id: number;
@@ -72,10 +72,13 @@ export function BlogShareModal({
         if (isOpen) {
             window.addEventListener('keydown', handleKeyDown);
         }
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!mounted || typeof document === 'undefined') return null;
+    if (!mounted || typeof document === 'undefined') {
+return null;
+}
 
     const shareUrl =
         post && typeof window !== 'undefined'
@@ -89,8 +92,13 @@ export function BlogShareModal({
     const formattedDate = post
         ? (() => {
               const raw = post.published_at || post.created_at;
-              if (!raw) return 'Recently';
+
+              if (!raw) {
+return 'Recently';
+}
+
               const d = new Date(raw);
+
               return Number.isNaN(d.getTime())
                   ? raw
                   : d.toLocaleDateString('en-US', {
@@ -118,7 +126,10 @@ export function BlogShareModal({
         typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
     const trackShare = () => {
-        if (!post) return;
+        if (!post) {
+return;
+}
+
         router.post(`/blog/${post.id}/share`, {}, { preserveScroll: true });
     };
 
@@ -159,7 +170,9 @@ export function BlogShareModal({
             | 'email'
             | 'native',
     ) => {
-        if (!post) return;
+        if (!post) {
+return;
+}
 
         const encodedUrl = encodeURIComponent(shareUrl);
         const encodedFullPost = encodeURIComponent(fullPost);
@@ -186,6 +199,7 @@ export function BlogShareModal({
                 } catch {
                     toast.success('Opening Facebook share...');
                 }
+
                 window.open(
                     `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
                     '_blank',
@@ -231,6 +245,7 @@ export function BlogShareModal({
                 } catch {
                     toast.error('Failed to copy article details.');
                 }
+
                 break;
             }
 
@@ -261,6 +276,7 @@ export function BlogShareModal({
                 } else {
                     await handleCopyCaption();
                 }
+
                 break;
             }
         }
@@ -425,6 +441,7 @@ export function BlogShareModal({
                                 <div className="grid grid-cols-6 gap-2 text-center sm:gap-3">
                                     {socialPlatforms.map((platform) => {
                                         const IconComponent = platform.icon;
+
                                         return (
                                             <button
                                                 key={platform.id}

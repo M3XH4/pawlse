@@ -1,6 +1,6 @@
+import type { WebPushSharedState } from '@/lib/push-notifications';
 import type { AdminNotification } from '@/types/admin';
 import type { Auth } from '@/types/auth';
-import type { WebPushSharedState } from '@/lib/push-notifications';
 import type {
     DashboardChrome,
     DashboardNotification,

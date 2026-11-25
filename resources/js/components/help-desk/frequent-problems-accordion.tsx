@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
     ChevronDown,
@@ -9,8 +8,9 @@ import {
     HelpCircle,
     BookOpen,
 } from 'lucide-react';
-import type { FrequentProblem } from '@/types/help-desk';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { FrequentProblem } from '@/types/help-desk';
 
 interface FrequentProblemsAccordionProps {
     problems: FrequentProblem[];
@@ -44,7 +44,9 @@ export function FrequentProblemsAccordion({
     });
 
     const handleHelpful = (problem: FrequentProblem) => {
-        if (likedIds[problem.id]) return;
+        if (likedIds[problem.id]) {
+return;
+}
 
         setLikedIds((prev) => ({ ...prev, [problem.id]: true }));
 
@@ -117,6 +119,7 @@ export function FrequentProblemsAccordion({
                 <div className="space-y-3">
                     {filtered.map((item) => {
                         const isOpen = openId === item.id;
+
                         return (
                             <div
                                 key={item.id}

@@ -1,7 +1,4 @@
-import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { toast } from 'sonner';
 import {
     Heart,
     HeartHandshake,
@@ -23,12 +20,15 @@ import {
     Scale,
     ExternalLink,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface FosterPetModel {
     id: number;
@@ -152,7 +152,10 @@ export function FosterCareView({
 
     const handleUpdateSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedPlacement) return;
+
+        if (!selectedPlacement) {
+return;
+}
 
         setSubmitting(true);
         const routeName = isAdmin

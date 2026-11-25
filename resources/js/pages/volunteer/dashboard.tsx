@@ -35,8 +35,8 @@ import {
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
-import { formatPillLabel } from '@/lib/utils';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
+import { formatPillLabel } from '@/lib/utils';
 import { cn, formatPhotoUrl } from '@/lib/utils';
 import {
     achievements,
@@ -623,6 +623,7 @@ export default function VolunteerDashboard({
             <div className="grid grid-cols-1 min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {statCards.map((card) => {
                     const Icon = card.icon;
+
                     return (
                         <Link key={card.title} href={card.href} className="group block min-w-0">
                             <DashboardCard className="h-full p-5 transition duration-200 group-hover:-translate-y-0.5 group-hover:border-emerald-300 dark:group-hover:border-emerald-700/60">
@@ -665,6 +666,7 @@ export default function VolunteerDashboard({
                         <div className="mt-4 grid grid-cols-1 min-w-0 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
                             {quickShortcuts.map((shortcut) => {
                                 const Icon = shortcut.icon;
+
                                 return (
                                     <Link
                                         key={shortcut.title}
@@ -726,6 +728,7 @@ export default function VolunteerDashboard({
                             <div className="mt-4 space-y-3">
                                 {myFieldTeams.map((team) => {
                                     const medics = team.members.filter((m) => m.is_medic);
+
                                     return (
                                         <div
                                             key={team.task_id}
@@ -874,6 +877,7 @@ export default function VolunteerDashboard({
                                 {activeMissions.map((mission) => {
                                     const style = missionKindStyles[mission.kind];
                                     const Icon = style.icon;
+
                                     return (
                                         <div
                                             key={mission.id}
@@ -1264,6 +1268,7 @@ export default function VolunteerDashboard({
                             {activeTeamDrawer.members.map((member) => {
                                 const initials = member.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
                                 const avatarSrc = member.avatar_path ? formatPhotoUrl(member.avatar_path) : null;
+
                                 return (
                                     <div
                                         key={member.id}

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { FileText, MapPin, Calendar, User, Search, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { FileText, MapPin, Calendar, User, Search, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -115,6 +115,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
 
     const getReportTitle = (report: PetReport) => {
         const animal = report.animal_type;
+
         switch (report.type) {
             case 'rescue':
                 return `Rescue Stray ${animal} ${report.breed ? `(${report.breed})` : ''}`;
@@ -184,6 +185,7 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                                     <div className="flex gap-2 shrink-0 overflow-x-auto max-w-full md:max-w-[200px]">
                                         {report.photos.map((photo) => {
                                             const isVideo = /\.(mp4|mov|avi|webm|mkv|3gp)(\?.*)?$/i.test(photo.path || '');
+
                                             return isVideo ? (
                                                 <video
                                                     key={photo.id}
@@ -255,8 +257,14 @@ export default function UserRescueReports({ reports, filters }: UserRescueReport
                         <div className="flex justify-center gap-1.5 mt-8">
                             {reports.links.map((link, idx) => {
                                 let label = link.label;
-                                if (label.includes('Previous')) label = '←';
-                                if (label.includes('Next')) label = '→';
+
+                                if (label.includes('Previous')) {
+label = '←';
+}
+
+                                if (label.includes('Next')) {
+label = '→';
+}
 
                                 return (
                                     <button

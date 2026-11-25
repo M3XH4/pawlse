@@ -1,5 +1,5 @@
-import { CheckCircle2, Clock, Calendar, Utensils, Heart, Store } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import { CheckCircle2, Clock, Calendar, Utensils, Heart, Store } from 'lucide-react';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -78,6 +78,7 @@ export default function VolunteerParticipationHistory({ history }: Participation
                         const rescueReport = item.pet_report || item.petReport;
                         const foodPickup = item.partner_food_pickup || item.partnerFoodPickup;
                         const hours = parseFloat(String(item.hours_logged || '0'));
+
                         return (
                             <DashboardCard key={item.id} className="p-5">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -128,9 +129,12 @@ export default function VolunteerParticipationHistory({ history }: Participation
                     {history.links && history.links.length > 3 && (
                         <div className="flex justify-center gap-1 mt-6">
                             {history.links.map((link, idx) => {
-                                if (link.url === null) return (
+                                if (link.url === null) {
+return (
                                     <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold" dangerouslySetInnerHTML={{ __html: link.label }} />
                                 );
+}
+
                                 return (
                                     <Link
                                         key={idx}

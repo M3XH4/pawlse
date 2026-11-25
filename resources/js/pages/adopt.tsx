@@ -1,3 +1,4 @@
+import { Head, Link } from '@inertiajs/react';
 import {
   Heart,
   Filter,
@@ -24,16 +25,17 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useRef } from 'react';
-import { Head, Link } from '@inertiajs/react';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
-import { Footer } from '@/components/footer';
-import { Header } from '@/components/header';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { PetDetailModal, AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
-import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
+import type { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
+import { PetDetailModal } from '@/components/adoption/pet-detail-modal';
 import { RehomingModal } from '@/components/adoption/rehoming-modal';
 import { ShareModal } from '@/components/adoption/share-modal';
+import type { ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
+import { ShelterVisitModal } from '@/components/adoption/shelter-visit-modal';
+import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { useBookmarks } from '@/context/bookmark-context';
 
 interface AdoptProps {
@@ -80,20 +82,42 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
   const searchSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
     safePets.forEach((pet) => {
-      if (pet?.name) suggestions.add(pet.name);
-      if (pet?.type) suggestions.add(pet.type.charAt(0).toUpperCase() + pet.type.slice(1));
-      if (pet?.breed) suggestions.add(pet.breed);
-      if (pet?.color) suggestions.add(pet.color);
-      if (pet?.gender) suggestions.add(pet.gender);
-      if (pet?.ageCategory) suggestions.add(pet.ageCategory);
+      if (pet?.name) {
+suggestions.add(pet.name);
+}
+
+      if (pet?.type) {
+suggestions.add(pet.type.charAt(0).toUpperCase() + pet.type.slice(1));
+}
+
+      if (pet?.breed) {
+suggestions.add(pet.breed);
+}
+
+      if (pet?.color) {
+suggestions.add(pet.color);
+}
+
+      if (pet?.gender) {
+suggestions.add(pet.gender);
+}
+
+      if (pet?.ageCategory) {
+suggestions.add(pet.ageCategory);
+}
     });
+
     return Array.from(suggestions);
   }, [safePets]);
 
   // Search suggestions
   const filteredSuggestions = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!searchQuery.trim()) {
+return [];
+}
+
     const query = searchQuery.toLowerCase();
+
     return searchSuggestions.filter((s) => s.toLowerCase().includes(query)).slice(0, 6);
   }, [searchQuery, searchSuggestions]);
 
@@ -290,6 +314,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
               },
             ].map((step, idx, arr) => {
               const IconComp = step.icon;
+
               return (
                 <div key={idx} className="relative flex flex-col items-center text-center group px-1">
                   {/* Icon Card & Chevron */}
@@ -572,6 +597,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                 const bookmarked = isBookmarked(pet.id, 'pet');
                 const handleToggleBookmark = (e: React.MouseEvent) => {
                   e.stopPropagation();
+
                   if (bookmarked) {
                     removeBookmark(pet.id, 'pet');
                   } else {
@@ -670,8 +696,15 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                           <span>
                             {(() => {
                               const days = Math.max(0, pet.shelterDays || 0);
-                              if (days === 0) return 'Admitted today';
-                              if (days < 30) return `${days}d in care`;
+
+                              if (days === 0) {
+return 'Admitted today';
+}
+
+                              if (days < 30) {
+return `${days}d in care`;
+}
+
                               return `${Math.floor(days / 30)}mo in care`;
                             })()}
                           </span>
@@ -902,6 +935,7 @@ export default function Adopt({ pets = [], shelterVisitSettings }: AdoptProps) {
                   },
                 ].map((step, idx) => {
                   const IconComponent = step.icon;
+
                   return (
                     <div
                       key={idx}

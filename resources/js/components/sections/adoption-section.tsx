@@ -103,6 +103,7 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
 
     const handleTouchStart = (e: React.TouchEvent, petId: number, photoCount: number) => {
         didSwipeRef.current = false;
+
         if (photoCount <= 1 || flippedCard === petId || e.touches.length !== 1) {
             touchStateRef.current = null;
 
@@ -120,6 +121,7 @@ export function AdoptionSection({ pets: propsPets }: { pets?: any[] }) {
 
     const handleTouchMove = (e: React.TouchEvent, petId: number) => {
         const currentTouch = touchStateRef.current;
+
         if (!currentTouch || currentTouch.petId !== petId || e.touches.length !== 1) {
             return;
         }

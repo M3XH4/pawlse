@@ -1,11 +1,11 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import { usePage, router } from '@inertiajs/react';
 import { MapPin, Calendar, Phone, Heart, Zap, CheckCircle2, Share2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import React from 'react';
+import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { usePage, router } from '@inertiajs/react';
-import { toast } from 'sonner';
-import { MissingPetItem } from './types';
+import type { MissingPetItem } from './types';
 
 export interface MissingPetCardProps {
     pet: MissingPetItem;
@@ -37,6 +37,7 @@ export function MissingPetCard({
                     onClick: () => router.visit('/login'),
                 },
             });
+
             return;
         }
 

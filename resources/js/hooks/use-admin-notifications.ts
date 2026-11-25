@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import type { AdminNotification } from '@/types/admin';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     getReadNotificationIds,
     markAllNotificationsRead,
     markNotificationRead,
 } from '@/lib/admin-notifications';
+import type { AdminNotification } from '@/types/admin';
 
 export function useAdminNotifications() {
     const { adminNotifications = [] } = usePage().props;

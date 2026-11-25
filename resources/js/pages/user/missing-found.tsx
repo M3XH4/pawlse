@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
-import { Search, MapPin, Calendar, CheckCircle2, Clock, XCircle, AlertCircle, Plus, ChevronRight, FileText, Share2, Eye, HeartHandshake } from 'lucide-react';
 import { router, Link } from '@inertiajs/react';
+import { Search, MapPin, Calendar, CheckCircle2, Clock, XCircle, AlertCircle, Plus, ChevronRight, FileText, Share2, Eye, HeartHandshake } from 'lucide-react';
+import React, { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
+import type {
+    MissingPetItem} from '@/components/missing';
 import {
     MissingPetDetailModal,
-    MissingPetShareModal,
-    MissingPetItem,
+    MissingPetShareModal
 } from '@/components/missing';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 
 interface PetReport {
     id: number;
@@ -76,6 +77,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
 
     const toMissingPetItem = (report: PetReport): MissingPetItem => {
         let statusText = 'STILL SEARCHING';
+
         if (report.status === 'resolved') {
             statusText = 'FOUND';
         } else if (report.status === 'assigned') {
@@ -234,6 +236,7 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                 <div className="space-y-4">
                     {reports.data.map((report) => {
                         const item = toMissingPetItem(report);
+
                         return (
                             <DashboardCard key={report.id}>
                                 <div className="flex flex-col md:flex-row gap-4 md:gap-6">
@@ -338,9 +341,11 @@ export default function UserMissingFoundReports({ reports, filters }: UserMissin
                         <div className="flex justify-center gap-1.5 mt-8">
                             {reports.links.map((link, idx) => {
                                 let label = link.label;
+
                                 if (label.includes('Previous')) {
                                     label = '←';
                                 }
+
                                 if (label.includes('Next')) {
                                     label = '→';
                                 }

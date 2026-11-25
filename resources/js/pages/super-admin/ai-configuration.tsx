@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { 
     Sparkles, Percent, Target, Zap, CheckCircle2, XCircle, RotateCcw,
     AlertCircle, Activity, Power, RefreshCw, AlertTriangle, ShieldCheck, Check
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PredictionLog {
     id: number;
@@ -110,13 +110,16 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
 
     const handleRefreshHealth = async () => {
         setCheckingHealth(true);
+
         try {
             const res = await fetch('/account/super-admin/ai-configuration/health', {
                 headers: { Accept: 'application/json' },
             });
+
             if (res.ok) {
                 const healthData: ServiceHealth = await res.json();
                 setHealth(healthData);
+
                 if (healthData.is_healthy) {
                     toast.success('AI service is online and healthy.');
                 } else {
@@ -150,34 +153,48 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
     };
 
     const formatInputData = (log: PredictionLog) => {
-        if (!log.input_data) return 'None';
+        if (!log.input_data) {
+return 'None';
+}
+
         if (log.feature === 'pet_prediction') {
             return `Image: ${log.input_data.image_name || 'Uploaded File'}`;
         }
+
         return JSON.stringify(log.input_data);
     };
 
     const formatOutputData = (log: PredictionLog) => {
-        if (!log.output_data) return 'None';
+        if (!log.output_data) {
+return 'None';
+}
+
         if (log.feature === 'pet_prediction') {
             if (log.output_data.species || log.output_data.breed) {
                 const sp = log.output_data.species ? String(log.output_data.species).toUpperCase() : 'UNKNOWN';
                 const br = log.output_data.breed || 'Unknown Breed';
                 const conf = Math.round((log.output_data.confidence || log.confidence || 0) * 100);
+
                 return `${sp}: ${br} (${conf}%)`;
             }
+
             const predictions = log.output_data.predictions || [];
+
             if (predictions.length > 0) {
                 return `Species: ${predictions[0].label || 'unknown'} (${Math.round(predictions[0].confidence * 100)}%)`;
             }
+
             return log.output_data.label 
                 ? `Species: ${log.output_data.label} (${Math.round((log.output_data.confidence || 0) * 100)}%)`
                 : JSON.stringify(log.output_data);
         }
+
         if (log.feature === 'name_generation') {
             const names = log.output_data.names || log.output_data.suggestions || [];
+
             return Array.isArray(names) ? `Generated Names: ${names.slice(0, 3).join(', ')}` : JSON.stringify(log.output_data);
         }
+
         return JSON.stringify(log.output_data);
     };
 

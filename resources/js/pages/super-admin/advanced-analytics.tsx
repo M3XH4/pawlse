@@ -855,6 +855,7 @@ export default function SuperAdminAdvancedAnalytics() {
                             value={customStart}
                             onChange={(nextStart) => {
                                 setCustomStart(nextStart);
+
                                 if (customEnd && nextStart > customEnd) {
                                     setCustomEnd(nextStart);
                                 }

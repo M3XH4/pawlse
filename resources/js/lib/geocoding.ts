@@ -24,6 +24,7 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
 
         if (response.ok) {
             const data = await response.json();
+
             if (data && data.address) {
                 const addr = data.address;
                 const building = addr.amenity || addr.building || addr.shop || addr.tourism || addr.office;
@@ -36,20 +37,40 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
                 const country = addr.country;
 
                 const parts: string[] = [];
-                if (building) parts.push(building);
-                if (street) parts.push(street);
-                if (neighborhood && !parts.includes(neighborhood)) parts.push(neighborhood);
-                if (city && !parts.includes(city)) parts.push(city);
-                if (state && !parts.includes(state)) parts.push(state);
-                if (country && !parts.includes(country)) parts.push(country);
+
+                if (building) {
+parts.push(building);
+}
+
+                if (street) {
+parts.push(street);
+}
+
+                if (neighborhood && !parts.includes(neighborhood)) {
+parts.push(neighborhood);
+}
+
+                if (city && !parts.includes(city)) {
+parts.push(city);
+}
+
+                if (state && !parts.includes(state)) {
+parts.push(state);
+}
+
+                if (country && !parts.includes(country)) {
+parts.push(country);
+}
 
                 if (parts.length > 0) {
                     const formatted = parts.join(', ');
+
                     return formatted.length > 250 ? formatted.slice(0, 247) + '...' : formatted;
                 }
 
                 if (data.display_name) {
                     const cleanDisplay = data.display_name;
+
                     return cleanDisplay.length > 250 ? cleanDisplay.slice(0, 247) + '...' : cleanDisplay;
                 }
             }
@@ -77,13 +98,26 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
         if (response.ok) {
             const data = await response.json();
             const parts: string[] = [];
-            if (data.locality) parts.push(data.locality);
-            if (data.city && !parts.includes(data.city)) parts.push(data.city);
-            if (data.principalSubdivision && !parts.includes(data.principalSubdivision)) parts.push(data.principalSubdivision);
-            if (data.countryName && !parts.includes(data.countryName)) parts.push(data.countryName);
+
+            if (data.locality) {
+parts.push(data.locality);
+}
+
+            if (data.city && !parts.includes(data.city)) {
+parts.push(data.city);
+}
+
+            if (data.principalSubdivision && !parts.includes(data.principalSubdivision)) {
+parts.push(data.principalSubdivision);
+}
+
+            if (data.countryName && !parts.includes(data.countryName)) {
+parts.push(data.countryName);
+}
 
             if (parts.length > 0) {
                 const formatted = parts.join(', ');
+
                 return formatted.length > 250 ? formatted.slice(0, 247) + '...' : formatted;
             }
         }
@@ -101,7 +135,10 @@ export async function forwardGeocode(
     query: string,
 ): Promise<{ lat: number; lng: number } | null> {
     const trimmed = query.trim();
-    if (!trimmed) return null;
+
+    if (!trimmed) {
+return null;
+}
 
     try {
         const controller = new AbortController();
@@ -121,9 +158,11 @@ export async function forwardGeocode(
 
         if (response.ok) {
             const results = await response.json();
+
             if (Array.isArray(results) && results.length > 0) {
                 const lat = parseFloat(results[0].lat);
                 const lng = parseFloat(results[0].lon);
+
                 if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
                     return { lat, lng };
                 }
@@ -168,12 +207,16 @@ export async function fetchNearbyVetClinics(
         );
         clearTimeout(timeoutId);
 
-        if (!response.ok) return [];
+        if (!response.ok) {
+return [];
+}
 
         const data = await response.json();
+
         return Array.isArray(data?.clinics) ? (data.clinics as NearbyMapVet[]) : [];
     } catch (err) {
         console.warn('Nearby vet clinics query failed:', err);
+
         return [];
     }
 }

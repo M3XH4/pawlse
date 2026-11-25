@@ -1,7 +1,7 @@
+import { Link } from '@inertiajs/react';
+import { X, Calculator, ShieldCheck, Heart, Sparkles, HelpCircle, ArrowRight, Activity, Clock } from 'lucide-react';
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calculator, ShieldCheck, Heart, Sparkles, HelpCircle, ArrowRight, Activity, Clock } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 interface HowCalculatedModalProps {
@@ -19,7 +19,9 @@ export function HowCalculatedModal({
     estDays = '0.0',
     urgencyStatus = 'DEPLETED',
 }: HowCalculatedModalProps) {
-    if (!isOpen || typeof document === 'undefined') return null;
+    if (!isOpen || typeof document === 'undefined') {
+return null;
+}
 
     const dailyCost = data?.daily_cost || 500;
     const verifiedFunds = data?.verified_funds || 0;

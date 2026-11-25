@@ -17,6 +17,7 @@ export function playNotificationChime(): void {
         }
 
         const ctx = new AudioContextClass();
+
         if (ctx.state === 'suspended') {
             void ctx.resume();
         }

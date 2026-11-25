@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     Users, Plus, Search, Filter, Edit2, Trash2, X, Check, Clock, ShieldAlert,
     AlertCircle, RotateCcw, ShieldCheck, Shield, Key, Lock, CheckCircle2,
     ChevronDown, ChevronRight, Sparkles, UserCheck, Layers, HelpCircle,
     Sliders, CheckSquare, Square, RefreshCw, AlertTriangle, User as UserIcon
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ModernSelect } from '@/components/ui/modern-select';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { Spinner } from '@/components/ui/spinner';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 import { formatPillLabel } from '@/lib/utils';
 
 interface UserRecord {
@@ -152,6 +152,7 @@ export default function UserManagement({
     // Keep matrixPermissions synced when changing selected matrix role
     useEffect(() => {
         const found = roles_detail.find(r => r.name === selectedMatrixRole);
+
         if (found) {
             setMatrixPermissions([...found.permissions]);
         }
@@ -164,6 +165,7 @@ export default function UserManagement({
                 applyFilters();
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
@@ -223,7 +225,9 @@ export default function UserManagement({
         setDrawerPermissionSearch('');
         // expand all categories by default
         const initExpanded: Record<string, boolean> = {};
-        permission_catalog.forEach(cat => { initExpanded[cat.category] = true; });
+        permission_catalog.forEach(cat => {
+ initExpanded[cat.category] = true; 
+});
         setOpenCategories(initExpanded);
         setIsDrawerOpen(true);
     };
@@ -242,7 +246,9 @@ export default function UserManagement({
         });
         setDrawerPermissionSearch('');
         const initExpanded: Record<string, boolean> = {};
-        permission_catalog.forEach(cat => { initExpanded[cat.category] = true; });
+        permission_catalog.forEach(cat => {
+ initExpanded[cat.category] = true; 
+});
         setOpenCategories(initExpanded);
         setIsDrawerOpen(true);
     };
@@ -256,23 +262,28 @@ export default function UserManagement({
     // Active role permissions for the selected role in the drawer
     const currentRolePermissions = useMemo(() => {
         const found = roles_detail.find(r => r.name === data.role);
+
         return found ? found.permissions : [];
     }, [data.role, roles_detail]);
 
     // Toggle a permission for the user inside the drawer (direct grant or role revocation)
     const toggleUserPermission = (permissionName: string) => {
         const isInherited = currentRolePermissions.includes(permissionName);
+
         if (isInherited) {
             const currentRevoked = data.revoked_permissions || [];
+
             if (currentRevoked.includes(permissionName)) {
                 setData('revoked_permissions', currentRevoked.filter(p => p !== permissionName));
             } else {
                 setData('revoked_permissions', [...currentRevoked, permissionName]);
             }
+
             return;
         }
 
         const currentDirect = data.permissions || [];
+
         if (currentDirect.includes(permissionName)) {
             setData('permissions', currentDirect.filter(p => p !== permissionName));
         } else {
@@ -360,6 +371,7 @@ export default function UserManagement({
 
     const toggleMatrixCategory = (categoryPerms: PermissionItem[], selectAll: boolean) => {
         const permNames = categoryPerms.map(p => p.name);
+
         if (selectAll) {
             setMatrixPermissions(prev => Array.from(new Set([...prev, ...permNames])));
         } else {
@@ -387,7 +399,10 @@ export default function UserManagement({
 
     const handleCreateCustomRole = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newRoleName.trim()) return;
+
+        if (!newRoleName.trim()) {
+return;
+}
 
         setIsCreatingRole(true);
         router.post(
@@ -872,6 +887,7 @@ export default function UserManagement({
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                                 {roles_detail.map((r) => {
                                     const isSelected = selectedMatrixRole === r.name;
+
                                     return (
                                         <div
                                             key={r.id}
@@ -1011,6 +1027,7 @@ export default function UserManagement({
                                             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                                 {category.permissions.map((perm) => {
                                                     const isChecked = matrixPermissions.includes(perm.name);
+
                                                     return (
                                                         <label
                                                             key={perm.name}
@@ -1179,6 +1196,7 @@ export default function UserManagement({
                                         <div className="grid gap-3 sm:grid-cols-2">
                                             {roles.map((roleOption) => {
                                                 const isSelected = data.role === roleOption;
+
                                                 return (
                                                     <div
                                                         key={roleOption}
@@ -1249,7 +1267,9 @@ export default function UserManagement({
                                                     p.description.toLowerCase().includes(drawerPermissionSearch.toLowerCase())
                                                 );
 
-                                                if (filteredPerms.length === 0) return null;
+                                                if (filteredPerms.length === 0) {
+return null;
+}
 
                                                 const isExpanded = openCategories[cat.category] !== false;
                                                 const catPermNames = filteredPerms.map(p => p.name);

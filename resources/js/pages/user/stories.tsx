@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Sparkles, Plus, Search, Heart, Star, Calendar, Clock,
@@ -7,18 +6,19 @@ import {
     UploadCloud, X, FileText, Check, MessageSquareQuote,
     HelpCircle, Filter, HeartHandshake
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
-import { toast } from 'sonner';
 import { formatPillLabel } from '@/lib/utils';
 
 interface PetOption {
@@ -154,6 +154,7 @@ export default function UserStories({
         setSummary('');
         setContent('');
         setRating(5);
+
         if (defaultCategory === 'adoption_success' && adoptedPets.length > 0) {
             setSelectedAnimalId(String(adoptedPets[0].id));
             setImagePreview(adoptedPets[0].photo_url || null);
@@ -163,6 +164,7 @@ export default function UserStories({
             setImagePreview(null);
             setFeaturedImageUrl('');
         }
+
         setFeaturedImageFile(null);
         setTagsInput(defaultCategory === 'testimonial' ? 'Testimonial, Review, Pawlse Family' : 'Adoption Story, Happy Ending');
         setIsModalOpen(true);
@@ -185,8 +187,10 @@ export default function UserStories({
 
     const handlePetSelect = (animalId: string) => {
         setSelectedAnimalId(animalId);
+
         if (animalId && !featuredImageFile) {
             const pet = availablePets.find((p) => String(p.id) === animalId);
+
             if (pet?.photo_url) {
                 setImagePreview(pet.photo_url);
                 setFeaturedImageUrl(pet.photo_url);
@@ -196,6 +200,7 @@ export default function UserStories({
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             setFeaturedImageFile(file);
             const objectUrl = URL.createObjectURL(file);
@@ -205,8 +210,10 @@ export default function UserStories({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!title.trim() || !content.trim()) {
             toast.error('Please fill in both a title and the story content.');
+
             return;
         }
 
@@ -432,6 +439,7 @@ export default function UserStories({
                             { key: 'rejected', label: 'Needs Revision', count: metrics.rejected },
                         ].map((tab) => {
                             const active = statusFilter === tab.key;
+
                             return (
                                 <button
                                     key={tab.key}
@@ -485,6 +493,7 @@ export default function UserStories({
                         { key: 'rescue_story', label: 'Rescue Stories', icon: PawPrint },
                     ].map((pill) => {
                         const active = categoryFilter === pill.key;
+
                         return (
                             <button
                                 key={pill.key}
@@ -682,6 +691,7 @@ export default function UserStories({
                 <div className="flex justify-center gap-1.5 mt-4">
                     {stories.links.map((link, idx) => {
                         const label = link.label.replace('&laquo;', '‹').replace('&raquo;', '›');
+
                         return (
                             <button
                                 key={idx}

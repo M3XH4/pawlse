@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { 
     Archive, RotateCcw, Trash2, Search, Filter, AlertTriangle, Users, Heart,
     FileText, Calendar
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
-import { ModernSelect } from '@/components/ui/modern-select';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
-import { toast } from 'sonner';
 import { formatPillLabel } from '@/lib/utils';
 
 interface TrashedRecord {
@@ -65,6 +65,7 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
                 applyFilters();
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 

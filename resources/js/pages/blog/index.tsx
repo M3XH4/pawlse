@@ -1,6 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
     Search, Sparkles, Heart, Share2, Clock, Calendar,
     Shield, Check, Copy, ArrowRight, Filter, Megaphone,
@@ -10,12 +8,14 @@ import {
     Gavel, ShieldAlert, AlertTriangle, HeartCrack, ShieldCheck, BookOpen, CheckCircle2, Info,
     MessageSquareQuote, Bookmark
 } from 'lucide-react';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { BlogShareModal } from '@/components/blog/blog-share-modal';
+import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { toast } from 'sonner';
 
 interface BlogPostItem {
     id: number;
@@ -201,6 +201,7 @@ export default function BlogIndex({
         };
 
         document.addEventListener('mousedown', handleClickOutside);
+
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
@@ -212,7 +213,10 @@ export default function BlogIndex({
     };
 
     const handleSearchSubmit = (e?: React.FormEvent, customQuery?: string) => {
-        if (e) e.preventDefault();
+        if (e) {
+e.preventDefault();
+}
+
         const queryToUse = customQuery !== undefined ? customQuery : search;
         setIsSuggestionsOpen(false);
         router.get('/blog', {
@@ -253,6 +257,7 @@ export default function BlogIndex({
     const handleToggleBookmark = (e: React.MouseEvent, post: BlogPostItem) => {
         e.preventDefault();
         e.stopPropagation();
+
         if (isBookmarked(post.id, 'blog')) {
             removeBookmark(post.id, 'blog');
         } else {
@@ -271,15 +276,20 @@ export default function BlogIndex({
         navigator.clipboard.writeText(shareUrl).then(() => {
             setCopiedUrl(true);
             toast.success('Link copied to clipboard!');
+
             if (shareModalPost) {
                 router.post(`/blog/${shareModalPost.id}/share`, {}, { preserveScroll: true });
             }
+
             setTimeout(() => setCopiedUrl(false), 2000);
         });
     };
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return 'Recently';
+        if (!dateStr) {
+return 'Recently';
+}
+
         try {
             return new Date(dateStr).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -388,6 +398,7 @@ export default function BlogIndex({
                                                  <div className="space-y-1">
                                                      {matchingPosts.map((mp) => {
                                                          const MetaIcon = CATEGORY_CONFIG[mp.category]?.icon || FileText;
+
                                                          return (
                                                              <Link
                                                                  key={mp.id}
@@ -423,6 +434,7 @@ export default function BlogIndex({
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {SEARCH_SUGGESTIONS.map((sug, sIdx) => {
                                                     const IconComponent = sug.icon;
+
                                                     return (
                                                         <button
                                                             key={sIdx}
@@ -495,6 +507,7 @@ export default function BlogIndex({
                                 const allCfg = CATEGORY_CONFIG['all'];
                                 const AllIcon = allCfg.icon;
                                 const isActive = !filters.category || filters.category === 'all';
+
                                 return (
                                     <button
                                         type="button"
@@ -597,6 +610,7 @@ export default function BlogIndex({
                                         {(() => {
                                             const cfg = CATEGORY_CONFIG[featuredPost.category] || CATEGORY_CONFIG['news_update'];
                                             const FeaturedIcon = cfg.icon;
+
                                             return (
                                                 <span className={`px-3 py-1 rounded-full border text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${cfg.cardBadge}`}>
                                                     <FeaturedIcon size={13} className="shrink-0" />
@@ -855,6 +869,7 @@ export default function BlogIndex({
                                         />
                                     );
                                 }
+
                                 return (
                                     <Link
                                         key={idx}

@@ -1,5 +1,5 @@
-import React from 'react';
 import { X, History, TrendingUp, Clock, CheckCircle2, Shield, Calendar, User } from 'lucide-react';
+import React from 'react';
 import type { CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 
 interface SustainabilityHistoryModalProps {
@@ -13,7 +13,9 @@ export function SustainabilityHistoryModal({
     onClose,
     history,
 }: SustainabilityHistoryModalProps) {
-    if (!isOpen) return null;
+    if (!isOpen) {
+return null;
+}
 
     const getActionBadge = (action: string) => {
         switch (action) {

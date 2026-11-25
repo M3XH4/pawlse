@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     Stethoscope, ShieldAlert, Phone, Clock, MapPin, ExternalLink, 
     Download, FileText, ArrowRight, Heart, Sparkles, AlertCircle, 
     ChevronRight, CheckCircle2, Siren, Share2, X, Info, Activity
 } from 'lucide-react';
-import { Header } from '@/components/header';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
 import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ScrollRevealWrapper } from '@/components/scroll-reveal-wrapper';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
@@ -82,6 +82,7 @@ export default function VetPage({
 
     const scrollToResources = () => {
         const el = document.getElementById('pet-care-resources');
+
         if (el) {
             el.scrollIntoView({ behavior: 'smooth' });
         }
@@ -89,6 +90,7 @@ export default function VetPage({
 
     const scrollToPartners = () => {
         const el = document.getElementById('clinic-directory');
+
         if (el) {
             el.scrollIntoView({ behavior: 'smooth' });
         }

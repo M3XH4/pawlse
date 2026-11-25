@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2, Map as MapIcon, Users, Play, Flag, ClipboardCheck, X } from 'lucide-react';
 import { Link, router, usePage } from '@inertiajs/react';
+import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2, Map as MapIcon, Users, Play, Flag, ClipboardCheck, X } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatPhotoUrl } from '@/lib/utils';
-import type { SharedData } from '@/types';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
-import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
+import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { formatPhotoUrl } from '@/lib/utils';
+import type { SharedData } from '@/types';
 
 interface PartnerFoodPickupModel {
     id: number;
@@ -168,7 +168,10 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
 
     const handleConfirmFetched = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!confirmingTask) return;
+
+        if (!confirmingTask) {
+return;
+}
 
         setIsSubmitting(true);
         router.post(
@@ -194,7 +197,7 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
             title: 'Complete Feeding Route',
             description: `Mark "${schedule.zone}" as completed for this run?`,
             confirmText: 'Complete Route',
-            variant: 'default',
+            variant: 'info',
             onConfirm: () => {
                 router.post(`/account/volunteer/feeding-schedules/${schedule.id}/complete`, {}, { preserveScroll: true });
             },
@@ -203,7 +206,10 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
 
     const handleRecordDistribution = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!recordingSchedule) return;
+
+        if (!recordingSchedule) {
+return;
+}
 
         setIsSubmittingDistribution(true);
         router.post(
@@ -609,9 +615,12 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                     {tasks.links && tasks.links.length > 3 && (
                         <div className="flex justify-center gap-1 mt-6">
                             {tasks.links.map((link, idx) => {
-                                if (link.url === null) return (
+                                if (link.url === null) {
+return (
                                     <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold" dangerouslySetInnerHTML={{ __html: link.label }} />
                                 );
+}
+
                                 return (
                                     <Link
                                         key={idx}
@@ -853,11 +862,22 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                                 .sort((a, b) => {
                                     const rank = (role: string) => {
                                         const lower = role.toLowerCase();
-                                        if (lower.includes('lead')) return 0;
-                                        if (lower.includes('medic')) return 1;
-                                        if (lower.includes('recorder')) return 2;
+
+                                        if (lower.includes('lead')) {
+return 0;
+}
+
+                                        if (lower.includes('medic')) {
+return 1;
+}
+
+                                        if (lower.includes('recorder')) {
+return 2;
+}
+
                                         return 3;
                                     };
+
                                     return rank(a.role) - rank(b.role);
                                 })
                                 .map((member) => {
@@ -871,6 +891,7 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
                                     const initials = name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
                                     const avatarSrc = member.user?.avatar_path ? formatPhotoUrl(member.user.avatar_path) : null;
                                     const isMe = currentUserId !== undefined && (member.user?.id === currentUserId || member.user_id === currentUserId);
+
                                     return (
                                         <div
                                             key={member.id}

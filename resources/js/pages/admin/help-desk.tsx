@@ -1,8 +1,4 @@
-import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -22,18 +18,22 @@ import {
     Trash2,
     UserCheck,
 } from 'lucide-react';
+import { useState } from 'react';
 import {
     DashboardCard,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { CreateTicketModal } from '@/components/help-desk/create-ticket-modal';
-import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
+import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { usePermissions } from '@/hooks/use-permissions';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
-import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 import { cn, formatPillLabel } from '@/lib/utils';
+import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 
 interface AdminHelpDeskProps {
     tickets: {
@@ -489,8 +489,14 @@ export default function AdminHelpDesk({
                         <div className="flex justify-center items-center gap-1.5 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-900/10">
                             {currentTicketSet.links.map((link, idx) => {
                                 let label = link.label;
-                                if (label.includes('Previous')) label = '←';
-                                if (label.includes('Next')) label = '→';
+
+                                if (label.includes('Previous')) {
+label = '←';
+}
+
+                                if (label.includes('Next')) {
+label = '→';
+}
 
                                 return (
                                     <button

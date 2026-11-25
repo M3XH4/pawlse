@@ -35,6 +35,7 @@ export default function LegalTermsModal({
         if (onAccept) {
             onAccept();
         }
+
         onOpenChange(false);
     };
 

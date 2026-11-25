@@ -1,7 +1,4 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
-import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
-import { ModernSelect } from '@/components/ui/modern-select';
 import {
   X,
   Mail,
@@ -22,6 +19,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -84,7 +84,9 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+return null;
+}
 
   return (
     <>

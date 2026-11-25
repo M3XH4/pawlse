@@ -1,6 +1,4 @@
-import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
 import {
   Search,
   Heart,
@@ -22,10 +20,12 @@ import {
   ShieldCheck,
   Images,
 } from 'lucide-react';
-import { Header } from '@/components/header';
+import React, { useState, useMemo } from 'react';
+import type { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
 import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 interface AnimalCounts {
   all: number;
@@ -61,6 +61,7 @@ export default function AnimalOverview({
     if (typeof counts.rescued_shelter === 'number') {
       return counts.rescued_shelter;
     }
+
     return animals.filter(
       (a) => a.is_rescued !== false && !['adopted', 'deceased'].includes((a.status || 'available').toLowerCase())
     ).length;
@@ -106,9 +107,11 @@ export default function AnimalOverview({
       if (sortBy === 'name') {
         return (a.name || '').localeCompare(b.name || '');
       }
+
       if (sortBy === 'longest') {
         return (b.shelterDays || 0) - (a.shelterDays || 0);
       }
+
       // default: newest
       return b.id - a.id;
     });
@@ -116,6 +119,7 @@ export default function AnimalOverview({
 
   const getStatusBadge = (status?: string | null) => {
     const st = (status || 'available').toLowerCase();
+
     switch (st) {
       case 'available':
         return {
@@ -283,6 +287,7 @@ export default function AnimalOverview({
             {statusBoxes.map((stat, idx) => {
               const isSelected = statusFilter === stat.status;
               const IconComponent = stat.icon;
+
               return (
                 <button
                   key={stat.status}
@@ -420,6 +425,7 @@ export default function AnimalOverview({
                 ].map((tab) => {
                   const isActive = statusFilter === tab.key;
                   const TabIcon = tab.icon;
+
                   return (
                     <button
                       key={tab.key}

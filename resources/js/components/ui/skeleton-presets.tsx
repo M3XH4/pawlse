@@ -269,6 +269,8 @@ export function AnalyticsPageSkeleton() {
     return (
         <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading analytics">
             <DashboardHeaderSkeleton />
+            <FilterToolbarSkeleton />
+            <TabBarSkeleton count={4} />
             <KpiGridSkeleton count={4} />
             <ChartSkeleton heightClass="h-72" />
             <div className="grid gap-6 lg:grid-cols-2">
@@ -279,10 +281,80 @@ export function AnalyticsPageSkeleton() {
     );
 }
 
-export function CardPageSkeleton() {
+export function TabBarSkeleton({ count = 3 }: { count?: number }) {
+    return (
+        <div className="flex flex-wrap gap-2">
+            {Array.from({ length: count }).map((_, idx) => (
+                <Skeleton key={idx} className="h-9 w-28 rounded-xl" />
+            ))}
+        </div>
+    );
+}
+
+export function TableManagementPageSkeleton({
+    kpiCount = 4,
+    hasTabs = false,
+    columns = 6,
+}: {
+    kpiCount?: number;
+    hasTabs?: boolean;
+    columns?: number;
+}) {
+    return (
+        <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading management table">
+            <DashboardHeaderSkeleton />
+            {hasTabs && <TabBarSkeleton count={3} />}
+            {kpiCount > 0 && <KpiGridSkeleton count={kpiCount} />}
+            <FilterToolbarSkeleton />
+            <TableSkeleton rows={6} columns={columns} />
+        </div>
+    );
+}
+
+export function HelpDeskPageSkeleton() {
+    return (
+        <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading help desk">
+            <DashboardHeaderSkeleton />
+            <TabBarSkeleton count={3} />
+            <KpiGridSkeleton count={3} />
+            <FilterToolbarSkeleton />
+            <ListTimelineSkeleton rows={5} />
+        </div>
+    );
+}
+
+export function BackupPageSkeleton() {
+    return (
+        <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading backups">
+            <DashboardHeaderSkeleton />
+            <KpiGridSkeleton count={3} />
+            <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="mt-2 h-3 w-72" />
+                <div className="mt-4 flex flex-wrap gap-3">
+                    <Skeleton className="h-10 w-40 rounded-xl" />
+                    <Skeleton className="h-10 w-36 rounded-xl" />
+                </div>
+            </div>
+            <TableSkeleton rows={5} columns={5} />
+        </div>
+    );
+}
+
+export function CardPageSkeleton({
+    hasKpis = false,
+    kpiCount = 4,
+    hasTabs = false,
+}: {
+    hasKpis?: boolean;
+    kpiCount?: number;
+    hasTabs?: boolean;
+}) {
     return (
         <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading cards">
             <DashboardHeaderSkeleton />
+            {hasTabs && <TabBarSkeleton count={3} />}
+            {hasKpis && <KpiGridSkeleton count={kpiCount} />}
             <FilterToolbarSkeleton />
             <CardGridSkeleton count={6} />
         </div>
@@ -303,10 +375,11 @@ export function NotificationsPageSkeleton() {
     );
 }
 
-export function FormPageSkeleton() {
+export function FormPageSkeleton({ hasTabs = false }: { hasTabs?: boolean } = {}) {
     return (
         <div className="space-y-6 py-2" aria-busy="true" aria-label="Loading settings">
             <DashboardHeaderSkeleton />
+            {hasTabs && <TabBarSkeleton count={3} />}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
                     <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
@@ -352,9 +425,9 @@ export function DashboardPageSkeleton({ className }: { className?: string }) {
  * Selects a skeleton layout that mirrors the target dashboard route being navigated to.
  */
 export function DashboardRouteSkeleton({ targetPath }: { targetPath: string | null }) {
-    const path = (targetPath || '').toLowerCase();
+    const path = (targetPath || '').toLowerCase().replace(/\/+$/, '');
 
-    if (path.endsWith('/dashboard')) {
+    if (path.endsWith('/dashboard') || path === '/account/user' || path === '/account/volunteer') {
         return <OverviewPageSkeleton />;
     }
 
@@ -366,34 +439,89 @@ export function DashboardRouteSkeleton({ targetPath }: { targetPath: string | nu
         return <NotificationsPageSkeleton />;
     }
 
+    if (path.includes('help-desk')) {
+        return <HelpDeskPageSkeleton />;
+    }
+
+    if (path.includes('backup-restore')) {
+        return <BackupPageSkeleton />;
+    }
+
     if (
         path.includes('account-settings') ||
         path.includes('system-settings') ||
         path.includes('ai-configuration') ||
-        path.includes('security-access') ||
-        path.includes('backup-restore') ||
         path.includes('/profile') ||
         path.includes('volunteer-status') ||
-        path.includes('help-desk')
+        path.endsWith('/status')
     ) {
-        return <FormPageSkeleton />;
+        return <FormPageSkeleton hasTabs={!path.includes('/profile') && !path.includes('volunteer-status') && !path.endsWith('/status')} />;
+    }
+
+    if (
+        path.includes('donation-monitoring') ||
+        path.includes('foster-management') ||
+        path.includes('volunteer-management') ||
+        path.includes('user-management') ||
+        path.includes('adoption-management')
+    ) {
+        return <TableManagementPageSkeleton kpiCount={4} hasTabs columns={6} />;
+    }
+
+    if (
+        path.includes('animal-records') ||
+        path.includes('rescue-management') ||
+        path.includes('ai-validation') ||
+        path.includes('/events') ||
+        path.includes('blog-management') ||
+        path.includes('community-honors') ||
+        path.includes('partners') ||
+        path.includes('resources') ||
+        path.includes('audit-logs') ||
+        path.includes('archives') ||
+        path.includes('security-access') ||
+        path.includes('/donations')
+    ) {
+        return (
+            <TableManagementPageSkeleton
+                kpiCount={path.includes('audit-logs') || path.includes('archives') || path.includes('/donations') ? 3 : 4}
+                hasTabs={path.includes('/events')}
+                columns={6}
+            />
+        );
     }
 
     if (
         path.includes('bookmark') ||
+        path.includes('adoption-applications') ||
+        path.includes('shelter-visits') ||
+        path.includes('rehoming-requests') ||
+        path.includes('rescue-reports') ||
+        path.includes('missing-found') ||
+        path.includes('joined-events') ||
         path.includes('certificates') ||
         path.includes('achievements') ||
-        path.includes('joined-events') ||
         path.includes('stories') ||
+        path.includes('assigned-tasks') ||
+        path.includes('injury-reports') ||
         path.includes('foster-care') ||
-        path.includes('my-foster-pets') ||
-        path.includes('/events') ||
-        path.includes('community-honors') ||
-        path.includes('partners') ||
-        path.includes('resources') ||
-        path.includes('blog-management')
+        path.includes('participation-history')
     ) {
-        return <CardPageSkeleton />;
+        return (
+            <CardPageSkeleton
+                hasKpis={
+                    path.includes('adoption-applications') ||
+                    path.includes('rescue-reports') ||
+                    path.includes('missing-found') ||
+                    path.includes('stories') ||
+                    path.includes('assigned-tasks') ||
+                    path.includes('injury-reports') ||
+                    path.includes('achievements')
+                }
+                kpiCount={3}
+                hasTabs={path.includes('achievements') || path.includes('foster-care') || path.includes('injury-reports')}
+            />
+        );
     }
 
     return <DashboardPageSkeleton />;

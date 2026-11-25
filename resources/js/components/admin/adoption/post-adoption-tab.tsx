@@ -1,7 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
 import { useForm } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
   Plus,
@@ -23,12 +20,15 @@ import {
   Eye,
   Trash2,
 } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhotoUrl } from '@/lib/utils';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
+import { formatPhotoUrl } from '@/lib/utils';
 
 export interface PostAdoptionFollowUpData {
   id: number;
@@ -131,6 +131,7 @@ export function PostAdoptionTab({
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (file) {
       setData('photo', file);
       setPreviewPhotoUrl(URL.createObjectURL(file));
@@ -139,9 +140,16 @@ export function PostAdoptionTab({
 
   const clearPhoto = () => {
     setData('photo', null);
-    if (previewPhotoUrl) URL.revokeObjectURL(previewPhotoUrl);
+
+    if (previewPhotoUrl) {
+URL.revokeObjectURL(previewPhotoUrl);
+}
+
     setPreviewPhotoUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -240,8 +248,10 @@ export function PostAdoptionTab({
             onClick={() => {
               if (adoptedPets.length === 0) {
                 toast.error('No adopted pets available yet to log a follow-up for.');
+
                 return;
               }
+
               setIsRecordModalOpen(true);
             }}
             className="w-full md:w-auto justify-center px-5 py-3 bg-[#FF9B00] hover:bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all cursor-pointer shrink-0"

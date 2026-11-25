@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   X,
   Share2,
@@ -13,8 +11,9 @@ import {
   PawPrint,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import {
   FacebookIcon,
   TwitterXIcon,
@@ -22,6 +21,7 @@ import {
   WhatsAppIcon,
   TelegramIcon,
 } from '@/components/events/event-share-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export interface ShareModalProps {
   isOpen: boolean;
@@ -29,13 +29,13 @@ export interface ShareModalProps {
   pet: {
     id: number;
     name: string;
-    type?: string;
-    breed?: string;
-    age?: string;
-    gender?: string;
-    color?: string;
-    story?: string;
-    rescueStory?: string;
+    type?: string | null;
+    breed?: string | null;
+    age?: string | null;
+    gender?: string | null;
+    color?: string | null;
+    story?: string | null;
+    rescueStory?: string | null;
     vaccinated?: boolean;
     img?: string | null;
     mainImg?: string | null;
@@ -61,10 +61,13 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
     }
+
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!mounted || typeof document === 'undefined') return null;
+  if (!mounted || typeof document === 'undefined') {
+return null;
+}
 
   const shareUrl =
     pet && typeof window !== 'undefined'
@@ -138,7 +141,9 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
       | 'email'
       | 'native',
   ) => {
-    if (!pet) return;
+    if (!pet) {
+return;
+}
 
     const encodedUrl = encodeURIComponent(shareUrl);
     const encodedFullPost = encodeURIComponent(fullPost);
@@ -164,6 +169,7 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
         } catch {
           toast.success('Opening Facebook share...');
         }
+
         window.open(
           `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
           '_blank',
@@ -205,6 +211,7 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
         } catch {
           toast.error('Failed to copy pet details.');
         }
+
         break;
       }
 
@@ -233,6 +240,7 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
         } else {
           await handleCopyCaption();
         }
+
         break;
       }
     }
@@ -390,6 +398,7 @@ export function ShareModal({ isOpen, onClose, pet }: ShareModalProps) {
                 <div className="grid grid-cols-6 gap-2 text-center sm:gap-3">
                   {socialPlatforms.map((platform) => {
                     const IconComponent = platform.icon;
+
                     return (
                       <button
                         key={platform.id}

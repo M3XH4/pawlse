@@ -3,10 +3,14 @@ import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 export function useCareCountdown(data?: CareSustainabilityData | null) {
     const calculateSecondsRemaining = () => {
-        if (!data?.sustainability_endpoint) return 0;
+        if (!data?.sustainability_endpoint) {
+return 0;
+}
+
         const target = new Date(data.sustainability_endpoint).getTime();
         const now = Date.now();
         const diff = Math.floor((target - now) / 1000);
+
         return Math.max(0, diff);
     };
 
@@ -16,6 +20,7 @@ export function useCareCountdown(data?: CareSustainabilityData | null) {
         if (typeof data?.seconds_remaining === 'number') {
             return data.seconds_remaining;
         }
+
         return calculateSecondsRemaining();
     });
 
@@ -23,11 +28,14 @@ export function useCareCountdown(data?: CareSustainabilityData | null) {
         // Once hydrated on client, immediately update to live client time
         setSecondsLeft(calculateSecondsRemaining());
 
-        if (!data?.sustainability_endpoint) return;
+        if (!data?.sustainability_endpoint) {
+return;
+}
 
         const interval = setInterval(() => {
             const remaining = calculateSecondsRemaining();
             setSecondsLeft(remaining);
+
             if (remaining <= 0) {
                 clearInterval(interval);
             }

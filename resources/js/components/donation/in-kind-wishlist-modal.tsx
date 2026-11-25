@@ -1,6 +1,3 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     X, 
     Search, 
@@ -19,6 +16,9 @@ import {
     ChevronDown, 
     ChevronUp
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export interface WishlistNeed {
@@ -62,7 +62,9 @@ export function InKindWishlistModal({
 
     // Close on Escape key and lock body scroll
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen) {
+return;
+}
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -99,11 +101,18 @@ export function InKindWishlistModal({
 
         wishlist.forEach((animal) => {
             const animalType = (animal.type || '').toLowerCase();
-            if (animalType.includes('dog')) dogCount++;
-            if (animalType.includes('cat')) catCount++;
+
+            if (animalType.includes('dog')) {
+dogCount++;
+}
+
+            if (animalType.includes('cat')) {
+catCount++;
+}
 
             animal.needs.forEach((need) => {
                 totalItems++;
+
                 if (need.priority?.toLowerCase() === 'urgent') {
                     urgentCount++;
                 }
@@ -130,6 +139,7 @@ export function InKindWishlistModal({
                 badgeBg: 'bg-teal-50 text-teal-700'
             };
         }
+
         if (/kibble|food|canned|treat|meat|milk|formula|puppy|kitten|beef|chicken|liver/i.test(lower)) {
             return {
                 label: 'Food',
@@ -137,6 +147,7 @@ export function InKindWishlistModal({
                 badgeBg: 'bg-amber-50 text-amber-700'
             };
         }
+
         if (/towel|blanket|bed|cage|crate|pad|mat|cushion|cloth/i.test(lower)) {
             return {
                 label: 'Bedding',
@@ -144,6 +155,7 @@ export function InKindWishlistModal({
                 badgeBg: 'bg-purple-50 text-purple-700'
             };
         }
+
         return {
             label: 'Supplies',
             icon: Gift,
@@ -163,13 +175,20 @@ export function InKindWishlistModal({
                     (typeFilter === 'dog' && animalType.includes('dog')) ||
                     (typeFilter === 'cat' && animalType.includes('cat'));
 
-                if (!matchesType) return null;
+                if (!matchesType) {
+return null;
+}
 
                 const matchingNeeds = animal.needs.filter((need) => {
                     const priorityLower = (need.priority || '').toLowerCase();
-                    if (urgentOnly && priorityLower !== 'urgent') return false;
 
-                    if (!query) return true;
+                    if (urgentOnly && priorityLower !== 'urgent') {
+return false;
+}
+
+                    if (!query) {
+return true;
+}
 
                     return (
                         need.item.toLowerCase().includes(query) ||
@@ -179,7 +198,9 @@ export function InKindWishlistModal({
                     );
                 });
 
-                if (matchingNeeds.length === 0) return null;
+                if (matchingNeeds.length === 0) {
+return null;
+}
 
                 return {
                     ...animal,
@@ -197,7 +218,9 @@ export function InKindWishlistModal({
         setUrgentOnly(false);
     };
 
-    if (!isOpen || typeof document === 'undefined') return null;
+    if (!isOpen || typeof document === 'undefined') {
+return null;
+}
 
     return createPortal(
         <AnimatePresence>

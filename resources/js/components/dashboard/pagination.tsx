@@ -72,6 +72,7 @@ export function DashboardPagination({
                 </>
             );
         }
+
         if (typeof count === 'number' && typeof total === 'number') {
             return (
                 <>
@@ -80,6 +81,7 @@ export function DashboardPagination({
                 </>
             );
         }
+
         if (typeof total === 'number') {
             return (
                 <>
@@ -87,6 +89,7 @@ export function DashboardPagination({
                 </>
             );
         }
+
         return null;
     })();
 
@@ -183,7 +186,9 @@ export function DashboardPagination({
                             preserveState={preserveState}
                             preserveScroll={preserveScroll}
                             onClick={(e) => {
-                                if (!link.url) e.preventDefault();
+                                if (!link.url) {
+e.preventDefault();
+}
                             }}
                             aria-label={isPrev ? 'Previous page' : isNext ? 'Next page' : `Page ${cleanLabel}`}
                             aria-current={link.active ? 'page' : undefined}

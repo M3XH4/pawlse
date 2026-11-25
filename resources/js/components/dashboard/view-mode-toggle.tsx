@@ -12,9 +12,11 @@ export function useResponsiveViewMode(storageKey?: string): [ViewMode, (mode: Vi
         if (typeof window === 'undefined') {
             return 'table';
         }
+
         if (storageKey) {
             try {
                 const saved = localStorage.getItem(storageKey);
+
                 if (saved === 'table' || saved === 'cards') {
                     return saved;
                 }
@@ -22,6 +24,7 @@ export function useResponsiveViewMode(storageKey?: string): [ViewMode, (mode: Vi
                 // Ignore storage errors
             }
         }
+
         return window.innerWidth < 768 ? 'cards' : 'table';
     });
 
@@ -29,6 +32,7 @@ export function useResponsiveViewMode(storageKey?: string): [ViewMode, (mode: Vi
         if (storageKey) {
             try {
                 const saved = localStorage.getItem(storageKey);
+
                 if (saved === 'table' || saved === 'cards') {
                     return;
                 }
@@ -42,11 +46,13 @@ export function useResponsiveViewMode(storageKey?: string): [ViewMode, (mode: Vi
             setMode(e.matches ? 'cards' : 'table');
         };
         mediaQuery.addEventListener('change', onChange);
+
         return () => mediaQuery.removeEventListener('change', onChange);
     }, [storageKey]);
 
     const updateMode = (next: ViewMode) => {
         setMode(next);
+
         if (storageKey) {
             try {
                 localStorage.setItem(storageKey, next);

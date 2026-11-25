@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { FileText, MapPin, Calendar, Search, CheckCircle2, Clock, XCircle, AlertCircle, Map as MapIcon } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { FileText, MapPin, Calendar, Search, CheckCircle2, Clock, XCircle, AlertCircle, Map as MapIcon } from 'lucide-react';
+import React, { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
-import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 
 interface PetReport {
     id: number;
@@ -108,6 +108,7 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
 
     const getReportTitle = (report: PetReport) => {
         const animal = report.animal_type;
+
         switch (report.type) {
             case 'rescue':
                 return `Rescue Stray ${animal} ${report.breed ? `(${report.breed})` : ''}`;
@@ -287,8 +288,14 @@ export default function VolunteerRescueReports({ reports, filters, volunteerMapE
                         <div className="flex justify-center gap-1.5 mt-8">
                             {reports.links.map((link, idx) => {
                                 let label = link.label;
-                                if (label.includes('Previous')) label = '←';
-                                if (label.includes('Next')) label = '→';
+
+                                if (label.includes('Previous')) {
+label = '←';
+}
+
+                                if (label.includes('Next')) {
+label = '→';
+}
 
                                 return (
                                     <button

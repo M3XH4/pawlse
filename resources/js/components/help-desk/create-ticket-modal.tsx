@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -8,8 +7,9 @@ import {
     X,
     Sparkles,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { cn } from '@/lib/utils';
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -39,7 +39,9 @@ export function CreateTicketModal({
         description: '',
     });
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+return null;
+}
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

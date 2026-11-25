@@ -235,12 +235,14 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
       afterImg,
       isRescued: p.is_rescued ?? true,
       rescuedTag: p.rescued_tag || 'Rescued • In Shelter Care',
+      has_applied: Boolean(p.has_applied),
     };
   }) : allPets.map(p => ({
     ...p,
     photos: [p.mainImg],
     isRescued: true,
     rescuedTag: 'Rescued • In Shelter Care',
+    has_applied: false,
   }));
 
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -303,8 +305,10 @@ export function HorizontalAdoptionGallery({ pets: propsPets }: { pets?: any[] })
   const handleApply = (pet: any) => {
     if (pet.has_applied) {
       toast.info(`You have already submitted an adoption application for ${pet.name}.`);
+
       return;
     }
+
     setApplyingPet(pet);
     setFlippedCard(null);
   };

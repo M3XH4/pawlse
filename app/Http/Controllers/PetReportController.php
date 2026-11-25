@@ -301,6 +301,15 @@ class PetReportController extends Controller
         $cacheKey = 'nearby_vets_'.round($lat, 3).'_'.round($lng, 3);
 
         $clinics = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($lat, $lng): array {
+            $tomtomKey = config('services.tomtom.api_key');
+
+            if (! empty($tomtomKey)) {
+                $tomtomResults = $this->fetchTomTomNearbyVets($lat, $lng, $tomtomKey);
+                if (! empty($tomtomResults)) {
+                    return $tomtomResults;
+                }
+            }
+
             $googleKey = config('services.google_maps.api_key');
 
             if (! empty($googleKey)) {
@@ -316,6 +325,97 @@ class PetReportController extends Controller
         return response()->json([
             'clinics' => $clinics,
         ]);
+    }
+
+    /**
+     * Query TomTom Search API for nearest veterinary clinics.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function fetchTomTomNearbyVets(float $lat, float $lng, string $apiKey): array
+    {
+        try {
+            $response = Http::timeout(8)
+                ->get('https://api.tomtom.com/search/2/nearbySearch/.json', [
+                    'key' => $apiKey,
+                    'lat' => $lat,
+                    'lon' => $lng,
+                    'radius' => 25000,
+                    'limit' => 8,
+                    'categorySet' => '9375',
+                    'openingHours' => 'nextSevenDays',
+                ]);
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $results = collect($response->json('results', []))->take(5)->values();
+            if ($results->isEmpty()) {
+                return [];
+            }
+
+            return $results
+                ->map(function (array $item) use ($lat, $lng): ?array {
+                    $pLat = $item['position']['lat'] ?? null;
+                    $pLng = $item['position']['lon'] ?? null;
+                    if (! is_numeric($pLat) || ! is_numeric($pLng)) {
+                        return null;
+                    }
+
+                    $poi = is_array($item['poi'] ?? null) ? $item['poi'] : [];
+                    $address = is_array($item['address'] ?? null) ? $item['address'] : [];
+
+                    return [
+                        'id' => 'tomtom-'.($item['id'] ?? uniqid()),
+                        'name' => $poi['name'] ?? 'Veterinary Clinic',
+                        'address' => $address['freeformAddress'] ?? 'Nearby Veterinary Clinic',
+                        'phone' => $poi['phone'] ?? null,
+                        'operating_hours' => $this->formatTomTomOpeningHours($poi['openingHours']['timeRanges'] ?? []),
+                        'latitude' => (float) $pLat,
+                        'longitude' => (float) $pLng,
+                        'distance_km' => round(PetReport::haversineDistance($lat, $lng, (float) $pLat, (float) $pLng), 2),
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Format today's TomTom opening hours from timeRanges when available.
+     *
+     * @param  array<int, array<string, mixed>>  $timeRanges
+     */
+    protected function formatTomTomOpeningHours(array $timeRanges): ?string
+    {
+        if (empty($timeRanges)) {
+            return null;
+        }
+
+        $today = now()->toDateString();
+
+        foreach ($timeRanges as $range) {
+            $start = $range['startTime'] ?? null;
+            $end = $range['endTime'] ?? null;
+            if (! is_array($start) || ! is_array($end)) {
+                continue;
+            }
+
+            if (($start['date'] ?? null) !== $today) {
+                continue;
+            }
+
+            $startFormatted = sprintf('%02d:%02d', (int) ($start['hour'] ?? 0), (int) ($start['minute'] ?? 0));
+            $endFormatted = sprintf('%02d:%02d', (int) ($end['hour'] ?? 0), (int) ($end['minute'] ?? 0));
+
+            return "{$startFormatted} - {$endFormatted}";
+        }
+
+        return null;
     }
 
     /**

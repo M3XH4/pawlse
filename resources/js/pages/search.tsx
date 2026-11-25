@@ -73,6 +73,7 @@ export default function SearchPage({ query: initialQuery = '', results, counts }
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (query.trim()) {
             router.get('/search', { q: query.trim() }, { preserveState: true });
         }
@@ -136,6 +137,7 @@ export default function SearchPage({ query: initialQuery = '', results, counts }
                         ].map((tab) => {
                             const IconComponent = tab.icon;
                             const isActive = activeTab === tab.id;
+
                             return (
                                 <button
                                     key={tab.id}

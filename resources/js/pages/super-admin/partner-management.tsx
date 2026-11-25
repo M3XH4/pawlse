@@ -1,6 +1,4 @@
-import React, { useState, useRef } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     Handshake, Plus, Search, Edit2, Trash2, X, Check, 
     RotateCcw, Stethoscope, Package, AlertCircle, Phone, MapPin, 
@@ -8,17 +6,19 @@ import {
     UploadCloud, Image as ImageIcon, ShieldCheck, Globe, Mail,
     FileText, CheckCircle2, ChevronRight, Info
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ModernSelect } from '@/components/ui/modern-select';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { Spinner } from '@/components/ui/spinner';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 import { forwardGeocode } from '@/lib/geocoding';
 
 export type PartnerCategory = 'veterinary' | 'food_supply' | 'audit' | 'accounting' | 'collaborator' | 'sponsor';
@@ -182,12 +182,16 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const handleFileSelect = (file: File) => {
         if (!file.type.startsWith('image/')) {
             toast.error('Please upload an image file (PNG, JPG, WEBP).');
+
             return;
         }
+
         if (file.size > 4 * 1024 * 1024) {
             toast.error('Image must be under 4MB.');
+
             return;
         }
+
         setData('image', file);
         const objectUrl = URL.createObjectURL(file);
         setImagePreview(objectUrl);
@@ -212,6 +216,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
+
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             handleFileSelect(e.dataTransfer.files[0]);
         }
@@ -220,6 +225,7 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const handleRemoveImage = () => {
         setData((prev) => ({ ...prev, image: null, image_url: '' }));
         setImagePreview(null);
+
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -375,44 +381,98 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const isAudit = data.category === 'audit' || data.category === 'accounting';
 
     const getServicesLabel = () => {
-        if (isVet) return 'Veterinary Services & Specialties (comma-separated)';
-        if (isFood) return 'Provisions & Supplies Provided (comma-separated)';
-        if (isAudit) return 'Audit Scope & Professional Services (comma-separated)';
+        if (isVet) {
+return 'Veterinary Services & Specialties (comma-separated)';
+}
+
+        if (isFood) {
+return 'Provisions & Supplies Provided (comma-separated)';
+}
+
+        if (isAudit) {
+return 'Audit Scope & Professional Services (comma-separated)';
+}
+
         return 'Services or Collaboration Focus (comma-separated)';
     };
 
     const getServicesPlaceholder = () => {
-        if (isVet) return 'Emergency Response, Minor/Major Surgery, Vaccinations, Confinement';
-        if (isFood) return 'Kibble Bags, Rice Sacks, Canned Food, Vitamin Supplements, Feeding Bowls';
-        if (isAudit) return 'Annual Financial Audit, Donation Fund Verification, NGO Tax Compliance, Disbursement Review';
+        if (isVet) {
+return 'Emergency Response, Minor/Major Surgery, Vaccinations, Confinement';
+}
+
+        if (isFood) {
+return 'Kibble Bags, Rice Sacks, Canned Food, Vitamin Supplements, Feeding Bowls';
+}
+
+        if (isAudit) {
+return 'Annual Financial Audit, Donation Fund Verification, NGO Tax Compliance, Disbursement Review';
+}
+
         return 'Spay/Neuter Outreach, Community Feeding Support, Rescue Transport';
     };
 
     const getHoursLabel = () => {
-        if (isVet) return 'Clinic Consultation Hours';
-        if (isFood) return 'Store Hours or Supply Schedule';
-        if (isAudit) return 'Office Business Hours';
+        if (isVet) {
+return 'Clinic Consultation Hours';
+}
+
+        if (isFood) {
+return 'Store Hours or Supply Schedule';
+}
+
+        if (isAudit) {
+return 'Office Business Hours';
+}
+
         return 'Operating Hours / Office Schedule';
     };
 
     const getHoursPlaceholder = () => {
-        if (isVet) return 'Mon - Sat: 8:00 AM – 7:00 PM | Sun: 9:00 AM – 3:00 PM';
-        if (isFood) return 'Daily: 10:00 AM – 8:00 PM or Weekly Schedule';
-        if (isAudit) return 'Mon - Fri: 8:30 AM – 5:30 PM';
+        if (isVet) {
+return 'Mon - Sat: 8:00 AM – 7:00 PM | Sun: 9:00 AM – 3:00 PM';
+}
+
+        if (isFood) {
+return 'Daily: 10:00 AM – 8:00 PM or Weekly Schedule';
+}
+
+        if (isAudit) {
+return 'Mon - Fri: 8:30 AM – 5:30 PM';
+}
+
         return 'Mon - Fri: 9:00 AM – 5:00 PM';
     };
 
     const getAddressLabel = () => {
-        if (isVet) return 'Clinic Address';
-        if (isFood) return 'Store / Supply Depot Address';
-        if (isAudit) return 'Office Address / Suite';
+        if (isVet) {
+return 'Clinic Address';
+}
+
+        if (isFood) {
+return 'Store / Supply Depot Address';
+}
+
+        if (isAudit) {
+return 'Office Address / Suite';
+}
+
         return 'Office / Physical Address';
     };
 
     const getBadgeTitlePlaceholder = () => {
-        if (isVet) return 'e.g. FREQUENTLY CONTACTED BY ISF';
-        if (isFood) return 'e.g. REGULAR FOOD SUPPORT';
-        if (isAudit) return 'e.g. INDEPENDENT AUDITING PARTNER';
+        if (isVet) {
+return 'e.g. FREQUENTLY CONTACTED BY ISF';
+}
+
+        if (isFood) {
+return 'e.g. REGULAR FOOD SUPPORT';
+}
+
+        if (isAudit) {
+return 'e.g. INDEPENDENT AUDITING PARTNER';
+}
+
         return 'e.g. OFFICIAL SUPPORTER';
     };
 
@@ -1019,12 +1079,16 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                                 type="button"
                                                 onClick={async () => {
                                                     const query = [data.address, data.city].filter(Boolean).join(', ');
+
                                                     if (!query.trim()) {
                                                         toast.error('Enter an address or city first.');
+
                                                         return;
                                                     }
+
                                                     toast.info('Looking up coordinates...', { id: 'partner-geocode' });
                                                     const coords = await forwardGeocode(query);
+
                                                     if (coords) {
                                                         setData((prev) => ({
                                                             ...prev,
@@ -1045,8 +1109,10 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                                                 onClick={() => {
                                                     if (!('geolocation' in navigator)) {
                                                         toast.error('Geolocation is not supported by your browser.');
+
                                                         return;
                                                     }
+
                                                     toast.info('Getting current GPS...', { id: 'partner-gps' });
                                                     navigator.geolocation.getCurrentPosition(
                                                         (pos) => {

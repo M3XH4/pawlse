@@ -1,21 +1,24 @@
+import { useForm, usePage, Head } from '@inertiajs/react';
 import { Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, TrendingUp, Plus, Upload, Clock, AlertCircle, Sparkles, ExternalLink, FileCheck, Info, MapPin, Star, Maximize2, Trash2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
-import { useForm, usePage, Head } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
+import { HonorWallTab    } from '@/components/donation/honor-wall-tab';
+import type {CommunityHonoree, PartnerShowcaseItem, RecognitionMetricsData} from '@/components/donation/honor-wall-tab';
+import { InKindWishlistModal   } from '@/components/donation/in-kind-wishlist-modal';
+import type {WishlistAnimal, WishlistNeed} from '@/components/donation/in-kind-wishlist-modal';
+import { ModernDatePicker } from '@/components/donation/modern-date-picker';
+import { SubmissionReceipt } from '@/components/donation/submission-receipt';
+import { TransparencyAuditModal  } from '@/components/donation/transparency-audit-modal';
+import type {AuditRecord} from '@/components/donation/transparency-audit-modal';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { TransparencyAuditModal, type AuditRecord } from '@/components/donation/transparency-audit-modal';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
-import { CareTimerBanner } from '@/components/care-sustainability/care-timer-banner';
-import type { CareSustainabilityData } from '@/types/care-sustainability';
-import { HonorWallTab, type CommunityHonoree, type PartnerShowcaseItem, type RecognitionMetricsData } from '@/components/donation/honor-wall-tab';
-import { ModernDatePicker } from '@/components/donation/modern-date-picker';
-import { InKindWishlistModal, type WishlistAnimal, type WishlistNeed } from '@/components/donation/in-kind-wishlist-modal';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
+import type { CareSustainabilityData } from '@/types/care-sustainability';
 
 export interface AuditPartner {
     id: number;
@@ -114,10 +117,13 @@ export default function Donate({
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get('tab');
+
         if (tabParam === 'honor' || tabParam === 'cash' || tabParam === 'inkind' || tabParam === 'sponsor') {
             setActiveTab(tabParam as any);
         }
+
         const amountParam = params.get('amount');
+
         if (amountParam && !isNaN(Number(amountParam))) {
             cashForm.setData('amount', amountParam);
         }
@@ -203,20 +209,27 @@ export default function Donate({
 
     const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         if (!file.type.startsWith('image/')) {
             toast.error('Please upload an image file (PNG, JPG, or WEBP).');
+
             return;
         }
+
         if (file.size > 5 * 1024 * 1024) {
             toast.error('Poster image must be smaller than 5MB.');
+
             return;
         }
 
         if (posterPreview) {
             URL.revokeObjectURL(posterPreview);
         }
+
         const previewUrl = URL.createObjectURL(file);
         setPosterPreview(previewUrl);
         sponsorForm.setData('poster', file);
@@ -227,20 +240,27 @@ export default function Donate({
         e.preventDefault();
         setIsDraggingPoster(false);
         const file = e.dataTransfer.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         if (!file.type.startsWith('image/')) {
             toast.error('Please upload an image file (PNG, JPG, or WEBP).');
+
             return;
         }
+
         if (file.size > 5 * 1024 * 1024) {
             toast.error('Poster image must be smaller than 5MB.');
+
             return;
         }
 
         if (posterPreview) {
             URL.revokeObjectURL(posterPreview);
         }
+
         const previewUrl = URL.createObjectURL(file);
         setPosterPreview(previewUrl);
         sponsorForm.setData('poster', file);
@@ -251,8 +271,10 @@ export default function Donate({
         if (posterPreview) {
             URL.revokeObjectURL(posterPreview);
         }
+
         setPosterPreview(null);
         sponsorForm.setData('poster', null);
+
         if (posterInputRef.current) {
             posterInputRef.current.value = '';
         }
@@ -335,13 +357,18 @@ export default function Donate({
     };
 
     const linkedNeedInfo = React.useMemo(() => {
-        if (!inKindForm.data.animal_donation_need_id) return null;
+        if (!inKindForm.data.animal_donation_need_id) {
+return null;
+}
+
         for (const animal of wishlist) {
             const need = animal.needs?.find(n => String(n.id) === String(inKindForm.data.animal_donation_need_id));
+
             if (need) {
                 return { animal, need };
             }
         }
+
         return null;
     }, [inKindForm.data.animal_donation_need_id, wishlist]);
 
@@ -352,22 +379,31 @@ export default function Donate({
     const submitCash = (e: React.FormEvent) => {
         e.preventDefault();
         const amt = Number(cashForm.data.amount);
+
         if (!cashForm.data.amount || isNaN(amt) || amt < 1 || !Number.isInteger(amt)) {
             toast.error('Please enter a valid whole amount of at least ₱1.');
+
             return;
         }
+
         if (amt > 10000000) {
             toast.error('Maximum donation amount per transaction is ₱10,000,000.');
+
             return;
         }
+
         if (!cashForm.data.donor_email.trim()) {
             toast.error('Please provide a valid email address for your receipt.');
+
             return;
         }
+
         if (cashForm.data.donor_mobile && !isValidPhoneNumber(cashForm.data.donor_mobile)) {
             toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+
             return;
         }
+
         cashForm.post('/donate/cash', {
             onError: (errors) => {
                 Object.values(errors).forEach(err => toast.error(err));
@@ -377,14 +413,19 @@ export default function Donate({
 
     const submitInKind = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!inKindForm.data.drop_off_date) {
             toast.error('Please select a drop-off date.');
+
             return;
         }
+
         if (!isValidPhoneNumber(inKindForm.data.donor_mobile)) {
             toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+
             return;
         }
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
         inKindForm.post('/donate/in-kind', {
             onSuccess: () => {
@@ -410,7 +451,9 @@ export default function Donate({
 
     // Close Sponsor Form on Escape key and lock body scroll
     useEffect(() => {
-        if (!showSponsorForm) return;
+        if (!showSponsorForm) {
+return;
+}
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -430,21 +473,28 @@ export default function Donate({
 
     const submitSponsor = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!sponsorForm.data.date) {
             toast.error('Please select a preferred feeding date.');
+
             return;
         }
+
         if (!isValidPhoneNumber(sponsorForm.data.mobile)) {
             toast.error('Please provide a valid 10-digit mobile number (+63 9XX XXX XXXX).');
+
             return;
         }
+
         sponsorForm.post('/donate/sponsor', {
             forceFormData: true,
             onSuccess: () => {
                 setShowSponsorForm(false);
+
                 if (posterPreview) {
                     URL.revokeObjectURL(posterPreview);
                 }
+
                 setPosterPreview(null);
             },
             onError: (errors) => {
@@ -1466,8 +1516,12 @@ export default function Donate({
                                     ) : (
                                         <div
                                             onClick={() => posterInputRef.current?.click()}
-                                            onDragOver={(e) => { e.preventDefault(); setIsDraggingPoster(true); }}
-                                            onDragLeave={(e) => { e.preventDefault(); setIsDraggingPoster(false); }}
+                                            onDragOver={(e) => {
+ e.preventDefault(); setIsDraggingPoster(true); 
+}}
+                                            onDragLeave={(e) => {
+ e.preventDefault(); setIsDraggingPoster(false); 
+}}
                                             onDrop={handlePosterDrop}
                                             className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all duration-200 ${
                                                 isDraggingPoster 

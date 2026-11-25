@@ -1,12 +1,12 @@
+import { useForm } from '@inertiajs/react';
 import { User, Mail, Phone, MapPin, Briefcase, FileText, Edit, Save, X, Home, Award, ShieldCheck } from 'lucide-react';
 import React, { useState } from 'react';
-import { useForm } from '@inertiajs/react';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 
 interface VolunteerProfileProps {
     profile: {
@@ -39,9 +39,11 @@ export default function VolunteerProfileInformation({ profile }: VolunteerProfil
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (data.mobile.trim() !== '' && !isValidPhoneNumber(data.mobile)) {
             return;
         }
+
         post('/account/volunteer/profile', {
             onSuccess: () => setIsEditing(false),
         });

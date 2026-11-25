@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, ExternalLink, Trash2, Heart, Users, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { Calendar, MapPin, Clock, ExternalLink, Trash2, Heart, Users, Sparkles, CheckCircle2, Award } from 'lucide-react';
+import React, { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 interface EventTask {
@@ -110,7 +110,10 @@ export default function UserJoinedEvents({ tasks, certificatesByEvent = {} }: Us
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {joinedTasks.map((task) => {
                         const event = task.event;
-                        if (!event) return null;
+
+                        if (!event) {
+return null;
+}
 
                         const isParticipant = task.role?.toLowerCase() === 'participant';
 
@@ -228,6 +231,7 @@ export default function UserJoinedEvents({ tasks, certificatesByEvent = {} }: Us
                                 />
                             );
                         }
+
                         return (
                             <Link
                                 key={idx}

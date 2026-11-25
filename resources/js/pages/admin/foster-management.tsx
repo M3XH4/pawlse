@@ -1,15 +1,4 @@
-import React, { useState, useMemo } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { toast } from 'sonner';
-import { ModernDatePicker } from '@/components/ui/modern-date-picker';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
-import { usePermissions } from '@/hooks/use-permissions';
-import { formatPillLabel } from '@/lib/utils';
 import {
     Heart,
     HeartHandshake,
@@ -34,6 +23,17 @@ import {
     ExternalLink,
     MapPin,
 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
+import { formatPillLabel } from '@/lib/utils';
 
 interface PaginatedData<T> {
     data: T[];
@@ -356,7 +356,11 @@ export default function FosterManagement({
 
     const submitTransfer = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedPlacement) return;
+
+        if (!selectedPlacement) {
+return;
+}
+
         setSubmitting(true);
         router.post(
             `${basePath}/placements/${selectedPlacement.id}/transfer`,
@@ -382,7 +386,11 @@ export default function FosterManagement({
 
     const submitEnd = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedPlacement) return;
+
+        if (!selectedPlacement) {
+return;
+}
+
         setSubmitting(true);
         router.post(
             `${basePath}/placements/${selectedPlacement.id}/end`,
@@ -436,7 +444,11 @@ export default function FosterManagement({
 
     const submitEditParent = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedParent) return;
+
+        if (!selectedParent) {
+return;
+}
+
         setSubmitting(true);
         router.put(
             `${basePath}/foster-parents/${selectedParent.id}`,
@@ -464,7 +476,11 @@ export default function FosterManagement({
 
     const submitInstructions = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedPlacement) return;
+
+        if (!selectedPlacement) {
+return;
+}
+
         setSubmitting(true);
         router.post(
             `${basePath}/placements/${selectedPlacement.id}/instructions`,
@@ -491,7 +507,11 @@ export default function FosterManagement({
 
     const submitAcknowledge = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedUpdate) return;
+
+        if (!selectedUpdate) {
+return;
+}
+
         setSubmitting(true);
         router.post(
             `${basePath}/updates/${selectedUpdate.id}/acknowledge`,
@@ -1158,6 +1178,7 @@ export default function FosterManagement({
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                 {(() => {
                                     const archiveList = historyPlacements?.data ?? placements.data.filter((p) => p.status !== 'active');
+
                                     if (archiveList.length === 0) {
                                         return (
                                             <tr>
@@ -1167,6 +1188,7 @@ export default function FosterManagement({
                                             </tr>
                                         );
                                     }
+
                                     return archiveList.map((p) => (
                                         <tr key={p.id}>
                                             <td className="py-3 px-4 font-mono font-bold">#{p.id}</td>

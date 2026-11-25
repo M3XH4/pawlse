@@ -7,9 +7,10 @@ import { NotificationItem } from '@/components/dashboard/notification-item';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
 import {
     enablePushNotifications,
-    getPushCapabilityStatus,
-    type PushCapabilityStatus,
+    getPushCapabilityStatus
+    
 } from '@/lib/push-notifications';
+import type {PushCapabilityStatus} from '@/lib/push-notifications';
 
 export function NotificationDropdown({
     id,
@@ -45,6 +46,7 @@ export function NotificationDropdown({
                 Boolean(auth?.user && auth.user.email_verified_at),
                 webPush,
             );
+
             if (active) {
                 setPushStatus(resolved);
             }

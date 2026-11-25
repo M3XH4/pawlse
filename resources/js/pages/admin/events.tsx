@@ -1,13 +1,4 @@
-import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
-import { usePermissions } from '@/hooks/use-permissions';
-import { toast } from 'sonner';
 import {
     Calendar,
     Search,
@@ -34,9 +25,18 @@ import {
     Eye,
     Award,
 } from 'lucide-react';
-import { ModernDatePicker } from '@/components/ui/modern-date-picker';
-import { ModernTimePicker } from '@/components/ui/modern-time-picker';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { ModernTimePicker } from '@/components/ui/modern-time-picker';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PaginatedData<T> {
     data: T[];
@@ -159,7 +159,10 @@ export default function EventManagement({
     };
 
     const handleCompleteAll = () => {
-        if (!viewingAttendeesEvent?.id) return;
+        if (!viewingAttendeesEvent?.id) {
+return;
+}
+
         setIsIssuingAll(true);
         router.post(
             `${basePath}/${viewingAttendeesEvent.id}/issue-certificates`,
@@ -331,6 +334,7 @@ export default function EventManagement({
     const handleToggleEvent = (event: EventModel) => {
         if (event.approval_status !== 'approved') {
             toast.error('Pending or rejected events cannot be opened until approved by a Super Admin.');
+
             return;
         }
 
@@ -402,7 +406,10 @@ export default function EventManagement({
 
     const handleConfirmReject = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!rejectingEvent) return;
+
+        if (!rejectingEvent) {
+return;
+}
 
         router.post(`${basePath}/${rejectingEvent.id}/reject`, {
             reason: rejectionReason,

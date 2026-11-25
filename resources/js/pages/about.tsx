@@ -374,9 +374,11 @@ export default function About({
   // Prevent background scroll when any modal is open
   useEffect(() => {
     const isModalOpen = selectedMember !== null || showVolunteers;
+
     if (isModalOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+
       return () => {
         document.body.style.overflow = originalOverflow;
       };
@@ -390,14 +392,17 @@ export default function About({
         if (selectedMember !== null) {
           setSelectedMember(null);
         }
+
         if (showVolunteers) {
           setShowVolunteers(false);
         }
       } else if (selectedMember !== null) {
         const currentIndex = TEAM_MEMBERS.findIndex(m => m.id === selectedMember);
+
         if (currentIndex === -1) {
           return;
         }
+
         if (e.key === 'ArrowLeft') {
           const prevIndex = currentIndex > 0 ? currentIndex - 1 : TEAM_MEMBERS.length - 1;
           setSelectedMember(TEAM_MEMBERS[prevIndex].id);
@@ -408,6 +413,7 @@ export default function About({
       }
     };
     window.addEventListener('keydown', handleKeyDown);
+
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedMember, showVolunteers]);
 
@@ -419,6 +425,7 @@ export default function About({
     if (currentMemberIndex === -1) {
       return;
     }
+
     if (direction === 'prev') {
       const prevIdx = currentMemberIndex > 0 ? currentMemberIndex - 1 : TEAM_MEMBERS.length - 1;
       setSelectedMember(TEAM_MEMBERS[prevIdx].id);
@@ -435,11 +442,13 @@ export default function About({
   // Filter volunteer records based on filter tab and search query
   const filteredVolunteers = useMemo(() => {
     const query = volunteerSearch.trim().toLowerCase();
+
     return VOLUNTEER_HISTORY.filter(item => {
       // Year filter match
       if (volunteerYearFilter !== 'all' && item.year !== volunteerYearFilter) {
         return false;
       }
+
       // Search query match
       if (!query) {
         return true;
@@ -449,8 +458,10 @@ export default function About({
       if (item.year.includes(query) || item.highlight.toLowerCase().includes(query)) {
         return true;
       }
+
       // Check names
       const allNames = [...item.featuredNames, ...item.additionalNames];
+
       return allNames.some(name => name.toLowerCase().includes(query));
     });
   }, [volunteerYearFilter, volunteerSearch]);
@@ -875,6 +886,7 @@ export default function About({
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 rounded-full shadow-xs">
                   {TEAM_MEMBERS.map((m) => {
                     const isActive = m.id === currentMember.id;
+
                     return (
                       <button
                         key={m.id}

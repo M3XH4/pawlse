@@ -437,16 +437,16 @@ test('super admin can upload partner image file when creating and updating partn
     Storage::disk('public')->assertExists($newStoragePath);
 });
 
-test('partner seeder seeds Valdez Accounting & Audit Partners and renders on donate transparency section', function () {
+test('partner seeder seeds Sumalinog Accounting & Outsourcing Services and renders on donate transparency section', function () {
     $this->seed(PartnerAndResourceSeeder::class);
 
     $auditPartner = Partner::where('category', 'audit')
-        ->where('slug', 'valdez-accounting-audit-partners')
+        ->where('slug', 'sumalinog-accounting-outsourcing')
         ->first();
 
     expect($auditPartner)->not->toBeNull();
-    expect($auditPartner->name)->toBe('Valdez Accounting & Audit Partners, CPAs');
-    expect($auditPartner->badge_title)->toBe('INDEPENDENT AUDITING PARTNER');
+    expect($auditPartner->name)->toBe('Sumalinog Accounting & Outsourcing Services');
+    expect($auditPartner->badge_title)->toBe('Mia Renee Sumalinog, CPA');
     expect($auditPartner->is_emergency)->toBeFalse();
 
     $this->get(route('donate'))
@@ -454,6 +454,6 @@ test('partner seeder seeds Valdez Accounting & Audit Partners and renders on don
         ->assertInertia(fn (Assert $page) => $page
             ->component('donate')
             ->has('auditPartner')
-            ->where('auditPartner.name', 'Valdez Accounting & Audit Partners, CPAs')
+            ->where('auditPartner.name', 'Sumalinog Accounting & Outsourcing Services')
         );
 });

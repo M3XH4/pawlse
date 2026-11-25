@@ -1,5 +1,3 @@
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
     X,
     MapPin,
@@ -17,8 +15,10 @@ import {
     Search,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { MissingPetItem } from './types';
+import type { MissingPetItem } from './types';
 
 export interface MissingPetDetailModalProps {
     isOpen: boolean;
@@ -43,10 +43,13 @@ export function MissingPetDetailModal({
         if (isOpen) {
             window.addEventListener('keydown', handleKeyDown);
         }
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!isOpen || !pet || typeof document === 'undefined') return null;
+    if (!isOpen || !pet || typeof document === 'undefined') {
+return null;
+}
 
     const isFound = pet.status.toUpperCase() === 'FOUND' || pet.rawStatus === 'resolved';
 

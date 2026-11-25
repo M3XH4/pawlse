@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { toast } from 'sonner';
 import { User, Users, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus, HeartPulse, Stethoscope, Trash2, Edit3, SlidersHorizontal, Calendar, Utensils } from 'lucide-react';
-import { formatPhotoUrl } from '@/lib/utils';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface PaginatedData<T> {
     data: T[];
@@ -271,21 +271,27 @@ const EVENT_ROLE_PRESETS = [
 
 function getRoleBadgeStyle(role: string): string {
     const lower = role.toLowerCase();
+
     if (lower.includes('lead')) {
         return 'bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800';
     }
+
     if (lower.includes('medic')) {
         return 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800';
     }
+
     if (lower.includes('recorder')) {
         return 'bg-paw-orange/15 text-paw-orange border border-paw-orange/30';
     }
+
     if (lower.includes('carrier')) {
         return 'bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800';
     }
+
     if (lower.includes('feeder')) {
         return 'bg-violet-100 text-violet-800 border border-violet-300 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-800';
     }
+
     return 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
 }
 
@@ -319,10 +325,12 @@ export default function VolunteerManagement({
     const [activeTab, setActiveTab] = useState<'applications' | 'volunteers' | 'tasks' | 'groups' | 'food_pickups' | 'injuries'>(() => {
         if (typeof window !== 'undefined') {
             const tab = new URLSearchParams(window.location.search).get('tab');
+
             if (tab === 'injuries' || tab === 'tasks' || tab === 'groups' || tab === 'volunteers' || tab === 'food_pickups') {
                 return tab;
             }
         }
+
         return 'applications';
     });
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -363,6 +371,7 @@ export default function VolunteerManagement({
     const [logOccurredAt, setLogOccurredAt] = useState(() => {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+
         return now.toISOString().slice(0, 16);
     });
     const [logDescription, setLogDescription] = useState('');
@@ -439,7 +448,10 @@ export default function VolunteerManagement({
 
     const handleAssignPickupSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!assigningPickup) return;
+
+        if (!assigningPickup) {
+return;
+}
 
         router.post(`${basePath}/food-pickups/${assigningPickup.id}/assign`, {
             assigned_volunteer_id: assignPickupVolunteerId,
@@ -456,7 +468,10 @@ export default function VolunteerManagement({
 
     const handleUpdatePickupStatusSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!updatingPickup) return;
+
+        if (!updatingPickup) {
+return;
+}
 
         router.post(`${basePath}/food-pickups/${updatingPickup.id}/status`, {
             status: pickupTargetStatus,
@@ -506,7 +521,10 @@ export default function VolunteerManagement({
 
     const handleRejectSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!rejectionReason.trim()) return;
+
+        if (!rejectionReason.trim()) {
+return;
+}
 
         router.post(`${basePath}/applications/${rejectingApp?.id}/reject`, {
             rejection_reason: rejectionReason
@@ -546,7 +564,10 @@ export default function VolunteerManagement({
 
     const handleCompleteSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!completingTask) return;
+
+        if (!completingTask) {
+return;
+}
 
         router.post(`${basePath}/tasks/${completingTask.id}/status`, {
             status: 'completed',
@@ -815,9 +836,18 @@ export default function VolunteerManagement({
                                 <button
                                     onClick={() => {
                                         setIsAssignOpen(true);
-                                        if (volunteers.data.length > 0) setAssignTargetUserId(String(volunteers.data[0].id));
-                                        if (events.length > 0) setAssignEventId(String(events[0].id));
-                                        if (feedingSchedules.length > 0) setAssignScheduleId(String(feedingSchedules[0].id));
+
+                                        if (volunteers.data.length > 0) {
+setAssignTargetUserId(String(volunteers.data[0].id));
+}
+
+                                        if (events.length > 0) {
+setAssignEventId(String(events[0].id));
+}
+
+                                        if (feedingSchedules.length > 0) {
+setAssignScheduleId(String(feedingSchedules[0].id));
+}
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-paw-orange text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 cursor-pointer"
                                 >
@@ -828,8 +858,14 @@ export default function VolunteerManagement({
                                 <button
                                     onClick={() => {
                                         setIsCertOpen(true);
-                                        if (volunteers.data.length > 0) setCertTargetUserId(String(volunteers.data[0].id));
-                                        if (events.length > 0) setCertTargetEventId(String(events[0].id));
+
+                                        if (volunteers.data.length > 0) {
+setCertTargetUserId(String(volunteers.data[0].id));
+}
+
+                                        if (events.length > 0) {
+setCertTargetEventId(String(events[0].id));
+}
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-paw-navy text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 cursor-pointer"
                                 >
@@ -1176,6 +1212,7 @@ export default function VolunteerManagement({
                                         <tbody className="divide-y dark:divide-gray-850">
                                             {foodPickups.data.map((pickup) => {
                                                 const isFinal = pickup.status === 'completed' || pickup.status === 'missed';
+
                                                 return (
                                                     <tr key={pickup.id} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
                                                         <td className="py-4 px-4">
@@ -1619,7 +1656,11 @@ export default function VolunteerManagement({
                                     />
                                     {(() => {
                                         const selectedRoleInfo = GROUP_ROLE_OPTIONS.find((r) => r.value === assignRole);
-                                        if (!selectedRoleInfo) return null;
+
+                                        if (!selectedRoleInfo) {
+return null;
+}
+
                                         return (
                                             <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                                                 <span className="font-black">{selectedRoleInfo.label}:</span> {selectedRoleInfo.description}
@@ -1650,7 +1691,11 @@ export default function VolunteerManagement({
                                     </div>
                                     {(() => {
                                         const selectedEventRole = EVENT_ROLE_PRESETS.find((r) => r.value === assignRole);
-                                        if (!selectedEventRole) return null;
+
+                                        if (!selectedEventRole) {
+return null;
+}
+
                                         return (
                                             <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                                                 <span className="font-black">{selectedEventRole.value}:</span> {selectedEventRole.description}
@@ -2495,6 +2540,7 @@ export default function VolunteerManagement({
                                         {activeDrawerGroup.members.map((member) => {
                                             const initials = member.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
                                             const avatarSrc = member.avatar_path ? formatPhotoUrl(member.avatar_path) : null;
+
                                             return (
                                                 <div
                                                     key={member.task_id}
@@ -2582,6 +2628,7 @@ export default function VolunteerManagement({
                                     type="button"
                                     onClick={() => {
                                         setAssignActivityType(activeDrawerGroup.type);
+
                                         if (activeDrawerGroup.type === 'feeding') {
                                             setAssignScheduleId(String(activeDrawerGroup.id));
                                             setAssignRole('Route Lead');
@@ -2589,6 +2636,7 @@ export default function VolunteerManagement({
                                             setAssignEventId(String(activeDrawerGroup.id));
                                             setAssignRole('Event Lead');
                                         }
+
                                         setAddingToGroup({
                                             type: activeDrawerGroup.type,
                                             id: activeDrawerGroup.id,
@@ -2647,7 +2695,11 @@ export default function VolunteerManagement({
                                     />
                                     {(() => {
                                         const selectedRoleInfo = GROUP_ROLE_OPTIONS.find((r) => r.value === editingMemberRole);
-                                        if (!selectedRoleInfo) return null;
+
+                                        if (!selectedRoleInfo) {
+return null;
+}
+
                                         return (
                                             <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                                                 <span className="font-black">{selectedRoleInfo.label}:</span> {selectedRoleInfo.description}
@@ -2678,7 +2730,11 @@ export default function VolunteerManagement({
                                     </div>
                                     {(() => {
                                         const selectedEventRole = EVENT_ROLE_PRESETS.find((r) => r.value === editingMemberRole);
-                                        if (!selectedEventRole) return null;
+
+                                        if (!selectedEventRole) {
+return null;
+}
+
                                         return (
                                             <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-xs font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                                                 <span className="font-black">{selectedEventRole.value}:</span> {selectedEventRole.description}

@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
 import { 
     Star, Heart, Users, Repeat, Utensils, Award, 
     Gift, Sparkles, Stethoscope, Search, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo } from 'react';
 
 export interface CommunityHonoree {
     id: number;
@@ -83,42 +83,49 @@ function getBadgeConfig(badgeName: string) {
             icon: <Repeat size={12} className="shrink-0 text-amber-600" />
         };
     }
+
     if (lower.includes('feeding') || lower.includes('food')) {
         return {
             bg: 'bg-emerald-100/90 text-emerald-800 border-emerald-200/60',
             icon: <Utensils size={12} className="shrink-0 text-emerald-600" />
         };
     }
+
     if (lower.includes('community')) {
         return {
             bg: 'bg-purple-100/90 text-purple-800 border-purple-200/60',
             icon: <Users size={12} className="shrink-0 text-purple-600" />
         };
     }
+
     if (lower.includes('kind heart') || lower.includes('heart') || lower.includes('compassion')) {
         return {
             bg: 'bg-rose-100/90 text-rose-800 border-rose-200/60',
             icon: <Heart size={12} className="shrink-0 text-rose-600" />
         };
     }
+
     if (lower.includes('in-kind') || lower.includes('supply')) {
         return {
             bg: 'bg-sky-100/90 text-sky-800 border-sky-200/60',
             icon: <Gift size={12} className="shrink-0 text-sky-600" />
         };
     }
+
     if (lower.includes('long-time') || lower.includes('champion') || lower.includes('gold')) {
         return {
             bg: 'bg-yellow-100/90 text-yellow-900 border-yellow-300/60',
             icon: <Star size={12} className="shrink-0 text-yellow-600 fill-yellow-500/20" />
         };
     }
+
     if (lower.includes('vet') || lower.includes('medical') || lower.includes('clinic')) {
         return {
             bg: 'bg-blue-100/90 text-blue-800 border-blue-200/60',
             icon: <Stethoscope size={12} className="shrink-0 text-blue-600" />
         };
     }
+
     if (lower.includes('rescue') || lower.includes('lead') || lower.includes('volunteer')) {
         return {
             bg: 'bg-orange-100/90 text-orange-800 border-orange-200/60',
@@ -214,15 +221,24 @@ export function HonorWallTab({
             if (selectedCategory === 'recurring') {
                 const isRecurring = (item.badges && item.badges.some(b => b.toLowerCase().includes('recurring'))) ||
                     item.role_title.toLowerCase().includes('recurring');
-                if (!isRecurring) return false;
+
+                if (!isRecurring) {
+return false;
+}
             } else if (selectedCategory === 'donor') {
                 const isDonor = item.category === 'donor' || 
                     (item.badges && item.badges.some(b => b.toLowerCase().includes('donor') || b.toLowerCase().includes('feeding')));
-                if (!isDonor) return false;
+
+                if (!isDonor) {
+return false;
+}
             } else if (selectedCategory === 'volunteer') {
                 const isVolunteer = item.category === 'volunteer' || 
                     (item.badges && item.badges.some(b => b.toLowerCase().includes('volunteer') || b.toLowerCase().includes('rescue')));
-                if (!isVolunteer) return false;
+
+                if (!isVolunteer) {
+return false;
+}
             }
 
             // Badge filter
@@ -230,7 +246,10 @@ export function HonorWallTab({
                 const hasBadge = item.badges && item.badges.some(
                     b => b.toLowerCase().includes(activeBadgeFilter.toLowerCase())
                 );
-                if (!hasBadge) return false;
+
+                if (!hasBadge) {
+return false;
+}
             }
 
             // Search query
@@ -240,6 +259,7 @@ export function HonorWallTab({
                 const matchRole = item.role_title.toLowerCase().includes(query);
                 const matchDesc = item.description?.toLowerCase().includes(query);
                 const matchBadges = item.badges?.some(b => b.toLowerCase().includes(query));
+
                 if (!matchName && !matchRole && !matchDesc && !matchBadges) {
                     return false;
                 }
@@ -304,6 +324,7 @@ export function HonorWallTab({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                         {featuredSupporters.map((supporter) => {
                             const avatarColors = getAvatarColorByBadges(supporter.badges, supporter.role_title);
+
                             return (
                             <div
                                 key={supporter.id}
@@ -342,6 +363,7 @@ export function HonorWallTab({
                                     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                                         {supporter.badges.map((b, i) => {
                                             const cfg = getBadgeConfig(b);
+
                                             return (
                                                 <span
                                                     key={i}
@@ -374,7 +396,9 @@ export function HonorWallTab({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full">
                     <button
                         type="button"
-                        onClick={() => { setSelectedCategory('all'); setActiveBadgeFilter(null); }}
+                        onClick={() => {
+ setSelectedCategory('all'); setActiveBadgeFilter(null); 
+}}
                         className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'all' && !activeBadgeFilter
                                 ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
@@ -388,7 +412,9 @@ export function HonorWallTab({
 
                     <button
                         type="button"
-                        onClick={() => { setSelectedCategory('recurring'); setActiveBadgeFilter(null); }}
+                        onClick={() => {
+ setSelectedCategory('recurring'); setActiveBadgeFilter(null); 
+}}
                         className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'recurring'
                                 ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
@@ -402,7 +428,9 @@ export function HonorWallTab({
 
                     <button
                         type="button"
-                        onClick={() => { setSelectedCategory('donor'); setActiveBadgeFilter(null); }}
+                        onClick={() => {
+ setSelectedCategory('donor'); setActiveBadgeFilter(null); 
+}}
                         className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'donor'
                                 ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
@@ -416,7 +444,9 @@ export function HonorWallTab({
 
                     <button
                         type="button"
-                        onClick={() => { setSelectedCategory('volunteer'); setActiveBadgeFilter(null); }}
+                        onClick={() => {
+ setSelectedCategory('volunteer'); setActiveBadgeFilter(null); 
+}}
                         className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer text-center whitespace-nowrap ${
                             selectedCategory === 'volunteer'
                                 ? 'bg-paw-orange text-white shadow-md shadow-paw-orange/25 sm:scale-[1.01]'
@@ -477,7 +507,9 @@ export function HonorWallTab({
                     <div className="bg-gray-50 rounded-3xl p-12 text-center max-w-md mx-auto">
                         <p className="text-sm font-bold text-gray-500">No supporters found matching your filters.</p>
                         <button
-                            onClick={() => { setSelectedCategory('all'); setSearchQuery(''); setActiveBadgeFilter(null); }}
+                            onClick={() => {
+ setSelectedCategory('all'); setSearchQuery(''); setActiveBadgeFilter(null); 
+}}
                             className="mt-3 text-xs font-black text-paw-orange underline uppercase cursor-pointer"
                         >
                             Reset Filters
@@ -487,6 +519,7 @@ export function HonorWallTab({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {filteredHonors.map((item) => {
                             const avatarColors = getAvatarColorByBadges(item.badges, item.role_title);
+
                             return (
                             <div
                                 key={item.id}
@@ -526,6 +559,7 @@ export function HonorWallTab({
                                     <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
                                         {item.badges.map((b, i) => {
                                             const cfg = getBadgeConfig(b);
+
                                             return (
                                                 <span
                                                     key={i}

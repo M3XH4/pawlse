@@ -72,10 +72,14 @@ export default function Profile({
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         if (file.size > 2 * 1024 * 1024) {
             toast.error('Profile photo must be less than 2MB.');
+
             return;
         }
 
@@ -96,6 +100,7 @@ export default function Profile({
             remove_avatar: true,
         }));
         setAvatarPreview(null);
+
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }

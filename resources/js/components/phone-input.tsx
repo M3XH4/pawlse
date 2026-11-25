@@ -14,10 +14,12 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     ({ value = '', onChange, onRawChange, className, placeholder = '+63 912 124 1241', onFocus, onBlur, ...props }, ref) => {
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const rawVal = e.target.value;
+
             // If user cleared everything, let it be empty
             if (rawVal === '' || rawVal === '+' || rawVal === '+6' || rawVal === '+63') {
                 onChange?.('');
                 onRawChange?.(e);
+
                 return;
             }
 
@@ -30,6 +32,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             if (!value || value.trim() === '') {
                 onChange?.('+63 ');
             }
+
             onFocus?.(e);
         };
 
@@ -37,6 +40,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             if (value.trim() === '+63' || value.trim() === '+63 ') {
                 onChange?.('');
             }
+
             onBlur?.(e);
         };
 

@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
     X,
     Share2,
@@ -13,6 +11,8 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import {
@@ -114,10 +114,13 @@ export function EventShareModal({
         if (isOpen) {
             window.addEventListener('keydown', handleKeyDown);
         }
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!mounted || typeof document === 'undefined') return null;
+    if (!mounted || typeof document === 'undefined') {
+return null;
+}
 
     const shareUrl =
         event && typeof window !== 'undefined'
@@ -165,7 +168,10 @@ export function EventShareModal({
             | 'calendar'
             | 'native',
     ) => {
-        if (!event) return;
+        if (!event) {
+return;
+}
+
         shareEvent({ platform, event, customUrl: shareUrl });
     };
 
@@ -316,6 +322,7 @@ export function EventShareModal({
                                 <div className="grid grid-cols-6 gap-2 text-center sm:gap-3">
                                     {socialPlatforms.map((platform) => {
                                         const IconComponent = platform.icon;
+
                                         return (
                                             <button
                                                 key={platform.id}

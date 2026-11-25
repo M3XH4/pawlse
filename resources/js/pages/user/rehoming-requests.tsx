@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
     RefreshCw,
@@ -15,17 +14,18 @@ import {
     Share2,
     Home,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { formatPillLabel } from '@/lib/utils';
+import { RehomingModal } from '@/components/adoption/rehoming-modal';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { RehomingModal } from '@/components/adoption/rehoming-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { formatPillLabel } from '@/lib/utils';
 
 interface RehomingRequestItem {
     id: number;

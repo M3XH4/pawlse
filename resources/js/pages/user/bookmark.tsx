@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { Bookmark, Trash2, Calendar, MapPin, Heart, ExternalLink } from 'lucide-react';
-import { useBookmarks } from '@/context/bookmark-context';
 import { Link } from '@inertiajs/react';
+import { Bookmark, Trash2, Calendar, MapPin, Heart, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { useBookmarks } from '@/context/bookmark-context';
 
 export default function UserBookmarks() {
     const { bookmarks, removeBookmark } = useBookmarks();
@@ -17,6 +17,7 @@ export default function UserBookmarks() {
         if (activeTab === 'all') {
             return true;
         }
+
         return item.type === activeTab;
     });
 
@@ -24,6 +25,7 @@ export default function UserBookmarks() {
         if (type === 'all') {
             return bookmarks.length;
         }
+
         return bookmarks.filter((item) => item.type === type).length;
     };
 

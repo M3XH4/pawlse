@@ -41,22 +41,27 @@ export function useInertiaNavigationState({
 
         const removeStartListener = router.on('start', (event) => {
             const visit = event.detail.visit;
+
             if (ignorePartial && visit.only.length > 0) {
                 return;
             }
+
             if (visit.method !== 'get') {
                 return;
             }
 
             const targetPath = visit.url.pathname;
             const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+
             if (currentPath !== null && targetPath === currentPath) {
                 return;
             }
 
             clearPendingTimer();
+
             if (delayMs <= 0) {
                 setState({ isNavigating: true, targetPath });
+
                 return;
             }
 
@@ -106,6 +111,7 @@ export function useFilteredSectionLoading({ delayMs = 60 }: { delayMs?: number }
 
         const removeStartListener = router.on('start', (event) => {
             const visit = event.detail.visit;
+
             if (visit.method !== 'get') {
                 return;
             }
@@ -120,13 +126,16 @@ export function useFilteredSectionLoading({ delayMs = 60 }: { delayMs?: number }
 
             const targetPath = visit.url.pathname;
             const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+
             if (currentPath === null || targetPath !== currentPath) {
                 return;
             }
 
             clearPendingTimer();
+
             if (delayMs <= 0) {
                 setIsFiltering(true);
+
                 return;
             }
 

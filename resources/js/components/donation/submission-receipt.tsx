@@ -50,9 +50,11 @@ export function SubmissionReceipt({
 
     const cleanItems = items.map((item) => {
         let val = item.value;
+
         if (React.isValidElement(item.value)) {
             val = item.label === 'Status' ? 'Completed & Verified' : 'Verified';
         }
+
         return {
             label: item.label,
             value: String(val),
@@ -64,6 +66,7 @@ export function SubmissionReceipt({
         const match = cleanItems.find((i) =>
             keywords.some((k) => i.label.toLowerCase().includes(k.toLowerCase())),
         );
+
         return match?.value;
     };
 
@@ -138,6 +141,7 @@ export function SubmissionReceipt({
 
     const handlePrintPdf = () => {
         const printWindow = window.open('', '_blank');
+
         if (!printWindow) {
             openConfirmModal({
                 title: 'Pop-up Blocker Enabled',
@@ -146,6 +150,7 @@ export function SubmissionReceipt({
                 variant: 'info',
                 hideCancel: true,
             });
+
             return;
         }
 

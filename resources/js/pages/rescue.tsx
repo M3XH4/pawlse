@@ -1,3 +1,4 @@
+import { router, usePage } from '@inertiajs/react';
 import {
     Siren,
     Camera,
@@ -22,18 +23,17 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
-import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { PhoneInput } from '@/components/phone-input';
-import { reverseGeocode } from '@/lib/geocoding';
 import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
-import { Spinner } from '@/components/ui/spinner';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
-import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
-import { compressImageFile } from '@/lib/image-compression';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { reverseGeocode } from '@/lib/geocoding';
+import { compressImageFile } from '@/lib/image-compression';
 
 type BreedPrediction = {
     name: string;
@@ -178,6 +178,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         speciesType: 'Dog' | 'Cat',
     ) => {
         const ag = (ageGroup || '').toLowerCase();
+
         if (speciesType === 'Dog') {
             if (
                 ag.includes('puppy') ||
@@ -186,9 +187,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             ) {
                 return 'Puppy: Birth to 6–7 months';
             }
+
             if (ag.includes('senior') || ag.includes('geriatric')) {
                 return 'Senior: 8+ years (large breeds), 11+ years (small breeds)';
             }
+
             return 'Adult: 1 to 7 years';
         } else {
             if (
@@ -198,9 +201,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             ) {
                 return 'Kitten: Birth to 6 months';
             }
+
             if (ag.includes('senior') || ag.includes('geriatric')) {
                 return 'Senior: 11 to 14 years';
             }
+
             return 'Prime (Young Adult): 3 to 6 years';
         }
     };
@@ -243,22 +248,37 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
     useEffect(() => {
         if (user) {
-            if (!contactName && user.name) setContactName(user.name);
-            if (!contactEmail && user.email) setContactEmail(user.email);
-            if (!contactPhone && user.phone) setContactPhone(user.phone);
-            if (!location && user.location) setLocation(user.location);
+            if (!contactName && user.name) {
+setContactName(user.name);
+}
+
+            if (!contactEmail && user.email) {
+setContactEmail(user.email);
+}
+
+            if (!contactPhone && user.phone) {
+setContactPhone(user.phone);
+}
+
+            if (!location && user.location) {
+setLocation(user.location);
+}
         }
     }, [user]);
 
     // Handle Escape key to close image lightbox modal
     useEffect(() => {
-        if (!lightboxUrl) return;
+        if (!lightboxUrl) {
+return;
+}
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 setLightboxUrl(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [lightboxUrl]);
 
@@ -297,15 +317,19 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         if (updates.species !== undefined) {
             setAnimalType(updates.species);
         }
+
         if (updates.breed !== undefined) {
             setBreed(updates.breed);
         }
+
         if (updates.ageCategory !== undefined) {
             setAgeCategory(updates.ageCategory);
         }
+
         if (updates.gender !== undefined) {
             setGender(updates.gender);
         }
+
         if (updates.suggestedName !== undefined) {
             setSuggestedName(updates.suggestedName);
         }
@@ -375,6 +399,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
             // Use original file object URL for maximum crisp resolution in preview & fullscreen lightbox
             let preview = '';
+
             try {
                 preview = URL.createObjectURL(file);
             } catch {
@@ -384,6 +409,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                     reader.readAsDataURL(file);
                 });
             }
+
             newPreviews.push(preview);
         }
 
@@ -393,7 +419,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const processAiFiles = async (rawFiles: File[]) => {
         const { validFiles: files, newPreviews } =
             await generateImagePreviews(rawFiles);
-        if (files.length === 0) return;
+
+        if (files.length === 0) {
+return;
+}
 
         setUploadedFiles(files);
         setFilePreviews(newPreviews);
@@ -403,6 +432,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         setIsEditing(false);
 
         const firstFile = files[0];
+
         try {
             const formData = new FormData();
             formData.append('image', firstFile);
@@ -428,6 +458,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 const errMsg =
                     errData?.message ||
                     'AI prediction failed. Please try again.';
+
                 throw new Error(errMsg);
             }
 
@@ -440,6 +471,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                 setAnimalReviews([]);
                 setImageUploaded(false);
                 setAnalyzing(false);
+
                 return;
             }
 
@@ -494,6 +526,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                               a.suggested_names?.[0] ??
                               a.neutral_names?.[0] ??
                               '';
+
                           return {
                               index: i,
                               species: sp,
@@ -568,7 +601,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length === 0) return;
+
+        if (files.length === 0) {
+return;
+}
+
         await processAiFiles(files);
         e.target.value = '';
     };
@@ -576,7 +613,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const handleManualFiles = async (rawFiles: File[]) => {
         const { validFiles: files, newPreviews } =
             await generateImagePreviews(rawFiles);
-        if (files.length === 0) return;
+
+        if (files.length === 0) {
+return;
+}
+
         setUploadedFiles(files);
         setFilePreviews(newPreviews);
     };
@@ -584,7 +625,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const handleSelectAnimal = (idx: number) => {
         setSelectedAnimalIdx(idx);
         const animal = animalReviews[idx];
-        if (!animal) return;
+
+        if (!animal) {
+return;
+}
 
         setAnimalType(animal.species);
         setBreed(animal.breed);
@@ -625,8 +669,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                     toast.info(
                         `Animal #${idx + 1} ${newIncluded ? 'included in' : 'excluded from'} report`,
                     );
+
                     return { ...item, included: newIncluded };
                 }
+
                 return item;
             }),
         );
@@ -641,6 +687,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const { latitude, longitude } = position.coords;
+
                     try {
                         const address = await reverseGeocode(
                             latitude,
@@ -680,19 +727,23 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const handleSubmit = async (modeType: string) => {
         if (!location) {
             toast.error('Location is required.');
+
             return;
         }
 
         if (!user && (!contactName.trim() || !contactPhone.trim())) {
             toast.error('Contact Name and Phone are required for guests.');
+
             return;
         }
 
         const includedAnimals = animalReviews.filter((a) => a.included);
+
         if (animalReviews.length > 0 && includedAnimals.length === 0) {
             toast.error(
                 'Please select at least one animal to include in the rescue report.',
             );
+
             return;
         }
 
@@ -714,9 +765,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
         if (reporterName) {
             formData.append('contact_name', reporterName);
         }
+
         if (reporterPhone) {
             formData.append('contact_phone', reporterPhone);
         }
+
         if (reporterEmail) {
             formData.append('contact_email', reporterEmail);
         }
@@ -803,12 +856,16 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
     const handleModeSelect = (selectedMode: ReportMode) => {
         if (selectedMode === 'ai-full' && isAiReportingDisabled) {
             toast.error(reportingDisabledMessage);
+
             return;
         }
+
         if (selectedMode === 'ai-only' && isAiIdentifyingDisabled) {
             toast.error(identifyingDisabledMessage);
+
             return;
         }
+
         resetFormFields();
         setWizardStep(1);
         setMode(selectedMode);
@@ -835,6 +892,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                             suggestedName: editedResult.suggestedName,
                         };
                     }
+
                     return item;
                 }),
             );
@@ -952,8 +1010,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         onClick={() => {
                                             if (isAiReportingDisabled) {
                                                 toast.error(reportingDisabledMessage);
+
                                                 return;
                                             }
+
                                             handleModeSelect('ai-full');
                                         }}
                                         className={`group flex flex-col rounded-[40px] border-2 p-8 shadow-xl transition-all ${
@@ -1030,8 +1090,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         onClick={() => {
                                             if (isAiIdentifyingDisabled) {
                                                 toast.error(identifyingDisabledMessage);
+
                                                 return;
                                             }
+
                                             handleModeSelect('ai-only');
                                         }}
                                         className={`group flex flex-col rounded-[40px] border-2 p-8 shadow-xl transition-all ${
@@ -1235,6 +1297,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                     onDrop={(e) => {
                                                         e.preventDefault();
                                                         setIsDragging(false);
+
                                                         if (
                                                             e.dataTransfer.files
                                                                 ?.length
@@ -1427,6 +1490,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                         ];
                                                                     const isImage =
                                                                         file?.type.startsWith('image/') || !file;
+
                                                                     return (
                                                                         <div
                                                                             key={
@@ -1973,8 +2037,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                             toast.error(
                                                                 'Please select at least one animal to include in the rescue report.',
                                                             );
+
                                                             return;
                                                         }
+
                                                         setWizardStep(3);
                                                     }}
                                                     className="flex flex-1 items-center justify-center gap-3 rounded-2xl bg-paw-orange py-5 font-black text-white shadow-xl transition-all hover:bg-orange-600"
@@ -2472,6 +2538,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                         onDrop={(e) => {
                                             e.preventDefault();
                                             setIsDragging(false);
+
                                             if (e.dataTransfer.files?.length) {
                                                 processAiFiles(
                                                     Array.from(
@@ -2627,6 +2694,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                                     ];
                                                                 const isImage =
                                                                     file?.type.startsWith('image/') || !file;
+
                                                                 return (
                                                                     <div
                                                                         key={index}
@@ -2932,8 +3000,10 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                         toast.info(
                                                             'AI-Assisted Reporting is disabled; switched to Manual Entry with your animal details pre-filled.',
                                                         );
+
                                                         return;
                                                     }
+
                                                     setMode('ai-full');
                                                     setWizardStep(2);
                                                     toast.info(
@@ -3030,8 +3100,11 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                               e.target.files,
                                                           )
                                                         : [];
-                                                    if (files.length === 0)
-                                                        return;
+
+                                                    if (files.length === 0) {
+return;
+}
+
                                                     await handleManualFiles(
                                                         files,
                                                     );
@@ -3051,6 +3124,7 @@ export default function RescuePage({ aiStatus }: RescuePageProps = {}) {
                                                 onDrop={async (e) => {
                                                     e.preventDefault();
                                                     setIsDragging(false);
+
                                                     if (
                                                         e.dataTransfer.files
                                                             ?.length

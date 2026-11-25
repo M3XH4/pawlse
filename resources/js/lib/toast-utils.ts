@@ -25,6 +25,7 @@ export function isRedundant(title: string, description?: string): boolean {
     if (!description) {
         return true;
     }
+
     const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cleanDesc = description.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -60,6 +61,7 @@ function toTitleCase(str: string): string {
             if (/^(and|or|for|of|the|in|to|with|a|an)$/i.test(word)) {
                 return word.toLowerCase();
             }
+
             return word.charAt(0).toUpperCase() + word.slice(1);
         })
         .join(' ');
@@ -151,9 +153,11 @@ export function formatToastPayload(
     // 3. Failures & errors
     if (lower.startsWith('failed to ') || lower.startsWith('unable to ')) {
         const sentences = trimmed.split(/\.\s+/);
+
         if (sentences.length > 1) {
             const first = sentences[0].trim();
             const rest = sentences.slice(1).join('. ').trim();
+
             return {
                 title: first.charAt(0).toUpperCase() + first.slice(1),
                 description: rest,
@@ -221,7 +225,7 @@ export function setupSonnerInterception(): void {
         const orig = original[type];
         const toastType: ToastType = type === 'message' ? 'default' : type;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (sonnerToast as any)[type] = (message: any, options?: any) => {
             if (typeof message === 'string') {
                 const { title, description } = formatToastPayload(
@@ -237,6 +241,7 @@ export function setupSonnerInterception(): void {
                 recentToasts.set(dedupeKey, now);
 
                 let id = options?.id;
+
                 if (!id && now - lastTime < 1500) {
                     id = dedupeKey;
                 }
@@ -253,7 +258,7 @@ export function setupSonnerInterception(): void {
     });
 
     // Custom loading toast with progress animation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (sonnerToast as any).loading = (message: any, options?: any) => {
         const { title, description } = formatToastPayload(
             'loading',

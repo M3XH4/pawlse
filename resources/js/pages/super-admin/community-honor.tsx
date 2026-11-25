@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     Award, Plus, Search, Filter, Edit2, Trash2, X, Check, 
     RotateCcw, Heart, Users, Star, Gift, CheckCircle2, Sliders,
     Sparkles, ShieldCheck
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ModernSelect } from '@/components/ui/modern-select';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface CommunityHonorRecord {
     id: number;

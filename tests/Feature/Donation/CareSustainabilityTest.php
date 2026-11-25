@@ -9,9 +9,11 @@ use App\Models\Donation;
 use App\Models\InKindDonation;
 use App\Models\InventoryItem;
 use App\Models\Payment;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -205,6 +207,7 @@ test('verifying cash donation in donation monitoring automatically extends care 
 });
 
 test('completing payment at checkout automatically extends care timer', function () {
+    SystemSetting::setValue('system_settings', ['payment_simulation_enabled' => true]);
     $current = CareSustainability::current();
     $initialFunds = $current->verified_funds;
 
@@ -395,4 +398,25 @@ test('inventory item daily_usage_rate calculates days of supply', function () {
     expect((float) $item->daily_usage_rate)->toBe(10.0);
     // 50 kg / 10 kg/day = 5.0 days of supply
     expect((float) $item->estimated_days_of_supply)->toBe(5.0);
+});
+
+test('care sustainability and home cache round-trip cleanly with database cache and serializable_classes disabled', function () {
+    config([
+        'cache.default' => 'database',
+        'cache.serializable_classes' => false,
+    ]);
+
+    Cache::store('database')->flush();
+
+    // First call populates database cache; second call unserializes from database cache
+    $first = CareSustainability::current();
+    $second = CareSustainability::current();
+
+    expect($second)->toBeInstanceOf(CareSustainability::class);
+    expect($second->id)->toBe($first->id);
+    expect($second->toPublicArray())->toHaveKeys(['est_days', 'urgency_status', 'resource_category']);
+
+    // Home route twice to verify wishlist/public payload serialization
+    $this->get(route('home'))->assertOk();
+    $this->get(route('home'))->assertOk();
 });

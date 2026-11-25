@@ -112,6 +112,7 @@ async function getReadyRegistration(): Promise<ServiceWorkerRegistration | null>
 
     try {
         const existing = await window.navigator.serviceWorker.getRegistration('/');
+
         if (!existing) {
             await window.navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
@@ -128,6 +129,7 @@ export async function getCurrentPushSubscription(): Promise<PushSubscription | n
     }
 
     const registration = await getReadyRegistration();
+
     if (!registration?.pushManager) {
         return null;
     }
@@ -164,6 +166,7 @@ export async function getPushCapabilityStatus(
     }
 
     const subscription = await getCurrentPushSubscription();
+
     if (subscription && Notification.permission === 'granted') {
         return 'subscribed';
     }
@@ -264,6 +267,7 @@ export async function enablePushNotifications(publicKey: string): Promise<{
     }
 
     const registration = await getReadyRegistration();
+
     if (!registration?.pushManager) {
         return {
             ok: false,
@@ -274,6 +278,7 @@ export async function enablePushNotifications(publicKey: string): Promise<{
 
     try {
         let subscription = await registration.pushManager.getSubscription();
+
         if (!subscription) {
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -282,6 +287,7 @@ export async function enablePushNotifications(publicKey: string): Promise<{
         }
 
         const saved = await postSubscriptionToServer(subscription);
+
         if (!saved) {
             return {
                 ok: false,
@@ -326,6 +332,7 @@ export async function preparePushLogout(): Promise<void> {
 
     if (subscription) {
         await deleteSubscriptionFromServer(subscription.endpoint, true);
+
         try {
             await subscription.unsubscribe();
         } catch {
@@ -334,6 +341,7 @@ export async function preparePushLogout(): Promise<void> {
     }
 
     const nav = typeof window !== 'undefined' ? (window.navigator as Navigator & { clearAppBadge?: () => Promise<void> }) : null;
+
     if (nav && typeof nav.clearAppBadge === 'function') {
         nav.clearAppBadge().catch(() => {});
     }
@@ -376,6 +384,7 @@ export async function sendTestPushNotification(): Promise<{ ok: boolean; message
 
 async function cleanupGuestPushSubscription(): Promise<void> {
     const subscription = await getCurrentPushSubscription();
+
     if (subscription) {
         try {
             await subscription.unsubscribe();
@@ -385,6 +394,7 @@ async function cleanupGuestPushSubscription(): Promise<void> {
     }
 
     const nav = typeof window !== 'undefined' ? (window.navigator as Navigator & { clearAppBadge?: () => Promise<void> }) : null;
+
     if (nav && typeof nav.clearAppBadge === 'function') {
         nav.clearAppBadge().catch(() => {});
     }
@@ -403,6 +413,7 @@ export async function syncPushWithAuthProps(props: Record<string, unknown> | und
         lastSyncedUserId = null;
         await cleanupGuestPushSubscription();
         window.dispatchEvent(new CustomEvent('pawlse:push-status-changed'));
+
         return;
     }
 
@@ -422,11 +433,13 @@ export async function syncPushWithAuthProps(props: Record<string, unknown> | und
 
     try {
         const registration = await getReadyRegistration();
+
         if (!registration?.pushManager) {
             return;
         }
 
         let subscription = await registration.pushManager.getSubscription();
+
         if (!subscription) {
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -454,6 +467,7 @@ export function getLatestPushSharedProps(): Record<string, unknown> | undefined 
 
     try {
         const raw = document.getElementById('app')?.getAttribute('data-page');
+
         if (raw) {
             const parsed = JSON.parse(raw) as { props?: Record<string, unknown> };
             latestSharedProps = parsed?.props;
@@ -476,23 +490,28 @@ export function initializePushLifecycle(): void {
 
     router.on('navigate', (event) => {
         const props = (event.detail?.page as { props?: Record<string, unknown> } | undefined)?.props;
+
         if (props) {
             latestSharedProps = props;
         }
+
         void syncPushWithAuthProps(props);
     });
 
     router.on('success', (event) => {
         const props = (event.detail?.page as { props?: Record<string, unknown> } | undefined)?.props;
+
         if (props) {
             latestSharedProps = props;
         }
+
         void syncPushWithAuthProps(props);
     });
 
     if ('serviceWorker' in window.navigator) {
         window.navigator.serviceWorker.addEventListener('message', (event: MessageEvent) => {
             const data = event.data as { type?: string; subscription?: PushSubscriptionJSON } | undefined;
+
             if (!data?.type) {
                 return;
             }
@@ -500,6 +519,7 @@ export function initializePushLifecycle(): void {
             if (data.type === 'PAWLSE_PUSH_SUBSCRIPTION_CHANGED' && data.subscription) {
                 const currentProps = getLatestPushSharedProps();
                 const auth = currentProps?.auth as { user?: { id?: string | number } | null } | undefined;
+
                 if (auth?.user?.id && !hasManualDisableFlag()) {
                     void postSubscriptionToServer(data.subscription);
                 }

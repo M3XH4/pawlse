@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
 import { 
   X, Search, BookOpen, Sparkles, Filter, Check, 
   HelpCircle, ArrowRight, Dog, Cat, Eye, Layers, ChevronRight, CheckCircle2
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import React, { useState, useMemo } from 'react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import type { 
+  PetBreed} from '@/data/pet-breeds';
 import { 
-  PetBreed, 
   PET_BREEDS_CATALOG, 
   findClosestBreeds, 
   filterBreeds 
@@ -58,10 +59,13 @@ export function BreedGuideModal({
 
   // Compute closest breeds for context report (if any)
   const closestBreeds = useMemo(() => {
-    if (!contextReport) return [];
+    if (!contextReport) {
+return [];
+}
 
     const target = contextReport.ai_predicted_breed || contextReport.breed;
     const species = contextReport.ai_predicted_species || contextReport.animal_type;
+
     return findClosestBreeds(target, species, 4);
   }, [contextReport]);
 
@@ -75,7 +79,9 @@ export function BreedGuideModal({
     });
   }, [selectedSpecies, searchQuery, selectedSize, selectedCoat]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+return null;
+}
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">

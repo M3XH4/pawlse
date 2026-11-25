@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { 
     Wrench, 
@@ -11,6 +10,7 @@ import {
     Clock, 
     HeartHandshake 
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface MaintenanceProps {
     appName?: string;

@@ -6,8 +6,12 @@ import {
     FileText,
     Gift,
     Heart,
+    Home,
+    LifeBuoy,
+    Newspaper,
     Shield,
     Sparkles,
+    Trophy,
     User,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -24,6 +28,10 @@ const iconStyles: Record<AdminNotificationIcon, string> = {
     task: 'bg-[#DBEAFE] text-[#2563EB] dark:bg-[#172554] dark:text-[#60A5FA]',
     certificate: 'bg-[#FEF3C7] text-[#D97706] dark:bg-[#451A03] dark:text-[#FBBF24]',
     system: 'bg-[#F3E8FF] text-[#7C3AED] dark:bg-[#2E1065] dark:text-[#C4B5FD]',
+    achievement: 'bg-[#FEF3C7] text-[#D97706] dark:bg-[#451A03] dark:text-[#FBBF24]',
+    blog: 'bg-[#E0F2FE] text-[#0284C7] dark:bg-[#082F49] dark:text-[#38BDF8]',
+    foster: 'bg-[#FCE7F3] text-[#DB2777] dark:bg-[#500724] dark:text-[#F472B6]',
+    help_desk: 'bg-[#CCFBF1] text-[#0D9488] dark:bg-[#042F2E] dark:text-[#2DD4BF]',
 };
 
 const icons: Record<AdminNotificationIcon, ReactNode> = {
@@ -36,6 +44,10 @@ const icons: Record<AdminNotificationIcon, ReactNode> = {
     task: <ClipboardList className="h-4 w-4" />,
     certificate: <Award className="h-4 w-4" />,
     system: <Shield className="h-4 w-4" />,
+    achievement: <Trophy className="h-4 w-4" />,
+    blog: <Newspaper className="h-4 w-4" />,
+    foster: <Home className="h-4 w-4" />,
+    help_desk: <LifeBuoy className="h-4 w-4" />,
 };
 
 export function AdminNotificationItem({

@@ -1,24 +1,25 @@
 
+import { Link, router, usePage } from '@inertiajs/react';
 import { Search, MapPin, Camera, Info, X, Phone, AlertTriangle, CheckCircle2, Upload, User, Mail, PawPrint, Activity, Plus, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { formatPhotoUrl } from '@/lib/utils';
-import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { formatPhoneNumber } from '@/lib/phone-formatter';
-import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
-import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import type {
+  MissingPetItem} from '@/components/missing';
 import {
   MissingPetCard,
   MissingPetDetailModal,
-  MissingPetShareModal,
-  MissingPetItem,
+  MissingPetShareModal
 } from '@/components/missing';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
+import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
+import { formatPhotoUrl } from '@/lib/utils';
 
 interface PetReport {
     id: number;
@@ -145,6 +146,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
       .filter((report: any) => report.status !== 'duplicate' && report.status !== 'cancelled')
       .map((report: any) => {
         let statusText = 'STILL SEARCHING';
+
         if (report.status === 'resolved') {
           statusText = 'FOUND';
         } else if (report.status === 'assigned') {
@@ -202,8 +204,10 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const petIdParam = urlParams.get('pet');
+
       if (petIdParam) {
         const found = mappedReports.find(p => String(p.id) === String(petIdParam));
+
         if (found) {
           setSelectedPet(found);
         }
@@ -214,9 +218,11 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
   // Lock background scroll when any modal is open
   useEffect(() => {
     const isModalOpen = reportModalOpen || selectedPet !== null || sharingPet !== null;
+
     if (isModalOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+
       return () => {
         document.body.style.overflow = originalOverflow;
       };
@@ -237,20 +243,24 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
       }
     };
     window.addEventListener('keydown', handleKeyDown);
+
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [reportModalOpen, selectedPet, sharingPet]);
 
   const handleRemoveFile = (indexToRemove: number) => {
     const previewToRevoke = filePreviews[indexToRemove];
+
     if (previewToRevoke && previewToRevoke.startsWith('blob:')) {
       URL.revokeObjectURL(previewToRevoke);
     }
+
     setUploadedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
     setFilePreviews(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
     if (name === 'contactPhone') {
       setFormData({ ...formData, [name]: formatPhoneNumber(value) });
     } else {
@@ -289,8 +299,13 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length === 0) return;
+
+    if (files.length === 0) {
+return;
+}
+
     processFiles(files);
+
     if (e.target) {
       e.target.value = '';
     }
@@ -313,6 +328,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
     e.stopPropagation();
     setIsDragging(false);
     const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+
     if (files.length > 0) {
       processFiles(files);
     }
@@ -369,8 +385,10 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!formData.lastSeenLocation) {
         toast.error('Location is required.');
+
         return;
     }
 
@@ -413,11 +431,14 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     is_duplicate?: boolean;
                 } | null;
             } | undefined;
+
             if (pageFlash?.error) {
                 toast.error(pageFlash.error);
                 setSubmitting(false);
+
                 return;
             }
+
             if (pageFlash?.submitted_report) {
                 setSubmittedReportInfo(pageFlash.submitted_report);
             } else {
@@ -427,6 +448,7 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
                     is_duplicate: false,
                 });
             }
+
             setSubmittedPetName(targetPetName);
             setReportSubmitted(true);
             setSubmitting(false);
@@ -535,9 +557,11 @@ export default function MissingPetsPage({ reports, filters }: MissingPetsPagePro
             <div className="flex justify-center gap-2 mt-12">
               {reports.links.map((link: any, idx: number) => {
                 let label = link.label;
+
                 if (label.includes('Previous')) {
                   label = '←';
                 }
+
                 if (label.includes('Next')) {
                   label = '→';
                 }

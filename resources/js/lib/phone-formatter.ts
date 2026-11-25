@@ -5,9 +5,12 @@
  */
 
 export function formatPhoneNumber(value: string): string {
-    if (!value) return '';
+    if (!value) {
+return '';
+}
 
     const trimmed = value.trim();
+
     if (trimmed === '+' || trimmed === '+6' || trimmed === '+63') {
         return '';
     }
@@ -31,12 +34,15 @@ export function formatPhoneNumber(value: string): string {
 
     // Format as +63 9XX XXX XXXX
     let formatted = '+63';
+
     if (digits.length > 0) {
         formatted += ' ' + digits.slice(0, 3);
     }
+
     if (digits.length > 3) {
         formatted += ' ' + digits.slice(3, 6);
     }
+
     if (digits.length > 6) {
         formatted += ' ' + digits.slice(6, 10);
     }
@@ -49,9 +55,12 @@ export function formatPhoneNumber(value: string): string {
  * Accepts standard Philippine mobile numbers (starting with 9) as well as 10-digit formatted numbers.
  */
 export function isValidPhoneNumber(value: string): boolean {
-    if (!value || value.trim() === '' || value.trim() === '+63') return true;
+    if (!value || value.trim() === '' || value.trim() === '+63') {
+return true;
+}
     
     let digits = value.replace(/\D/g, '');
+
     if (digits.startsWith('63')) {
         digits = digits.slice(2);
     } else if (digits.startsWith('0')) {
@@ -65,6 +74,9 @@ export function isValidPhoneNumber(value: string): boolean {
  * Formats value into standard database / API payload string.
  */
 export function cleanPhoneNumber(value: string): string {
-    if (!value) return '';
+    if (!value) {
+return '';
+}
+
     return formatPhoneNumber(value);
 }

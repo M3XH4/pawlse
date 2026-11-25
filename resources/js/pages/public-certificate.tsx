@@ -1,6 +1,6 @@
+import { Head, Link } from '@inertiajs/react';
 import { Award, Calendar, Download, Printer, ShieldCheck } from 'lucide-react';
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
 
 interface CertificateModel {
     id: number;
@@ -27,22 +27,30 @@ interface PublicCertificateProps {
 }
 
 const parseLocalDate = (dateStr?: string | null): Date | null => {
-    if (!dateStr) return null;
+    if (!dateStr) {
+return null;
+}
+
     const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
     if (match) {
         return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
     }
+
     const d = new Date(dateStr);
+
     return isNaN(d.getTime()) ? null : d;
 };
 
 const formatEventDate = (dateStr?: string | null, fallbackDateStr?: string | null) => {
     const d = parseLocalDate(dateStr) || parseLocalDate(fallbackDateStr) || new Date();
+
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
 const formatIssueDate = (dateStr?: string | null) => {
     const d = parseLocalDate(dateStr) || new Date();
+
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
@@ -56,7 +64,10 @@ export default function PublicCertificate({ certificate }: PublicCertificateProp
     };
 
     const handleDownloadPng = async () => {
-        if (isDownloading) return;
+        if (isDownloading) {
+return;
+}
+
         setIsDownloading(true);
 
         try {
@@ -71,8 +82,10 @@ export default function PublicCertificate({ certificate }: PublicCertificateProp
                 canvas.width = 1492;
                 canvas.height = 1054;
                 const ctx = canvas.getContext('2d');
+
                 if (!ctx) {
                     setIsDownloading(false);
+
                     return;
                 }
 
@@ -84,10 +97,12 @@ export default function PublicCertificate({ certificate }: PublicCertificateProp
                 ctx.fillStyle = '#0B2340';
                 let nameFontSize = 36;
                 ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
+
                 while (ctx.measureText(recipientName).width > 720 && nameFontSize > 18) {
                     nameFontSize -= 2;
                     ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
                 }
+
                 ctx.fillText(recipientName, 1492 * 0.545, 1054 * 0.575);
 
                 // 2. Role Slot
@@ -95,20 +110,24 @@ export default function PublicCertificate({ certificate }: PublicCertificateProp
                 const roleText = roleLabel.toUpperCase();
                 let roleFontSize = 14;
                 ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(roleText).width > 185 && roleFontSize > 9) {
                     roleFontSize -= 1;
                     ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(roleText, 1492 * 0.37, 1054 * 0.655);
 
                 // 3. Event / Activity Title
                 const eventTitle = certificate.event?.title || certificate.title || 'Community Stray Feeding Outreach';
                 let eventFontSize = 14;
                 ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(eventTitle).width > 460 && eventFontSize > 10) {
                     eventFontSize -= 1;
                     ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(eventTitle, 1492 * 0.649, 1054 * 0.655);
 
                 // 4. Event Date
@@ -121,10 +140,12 @@ export default function PublicCertificate({ certificate }: PublicCertificateProp
                 const eventLoc = certificate.event?.location || 'Iligan City, Philippines';
                 let locFontSize = 14;
                 ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(eventLoc).width > 240 && locFontSize > 9) {
                     locFontSize -= 1;
                     ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(eventLoc, 1492 * 0.68, 1054 * 0.785);
 
                 // 6. Signatory 1

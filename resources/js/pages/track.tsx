@@ -1,4 +1,3 @@
-import React, { useRef, useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
   Heart,
@@ -32,11 +31,13 @@ import {
   FileText,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Header } from '@/components/header';
+import React, { useRef, useState } from 'react';
+import type { AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { Footer } from '@/components/footer';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { Header } from '@/components/header';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 interface TrackedItemDetail {
@@ -166,6 +167,7 @@ export default function UnifiedTrackPage({
   const handleClearSearch = () => {
     setReferenceInput('');
     setEmailInput('');
+
     if (searched) {
       router.get('/track', {}, { preserveState: false });
     } else {
@@ -183,6 +185,7 @@ export default function UnifiedTrackPage({
 
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!item || (!replyText.trim() && replyFiles.length === 0)) {
       return;
     }
@@ -202,6 +205,7 @@ export default function UnifiedTrackPage({
         onSuccess: () => {
           setReplyText('');
           setReplyFiles([]);
+
           if (replyFileInputRef.current) {
             replyFileInputRef.current.value = '';
           }
@@ -246,6 +250,7 @@ export default function UnifiedTrackPage({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (referenceInput.trim() && emailInput.trim()) {
       router.get(
         '/track',
@@ -375,6 +380,7 @@ export default function UnifiedTrackPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-6 text-[11px] font-bold">
                 {SUBMISSION_TYPES.map((type) => {
                   const Icon = type.icon;
+
                   return (
                     <button
                       key={type.label}
@@ -742,6 +748,7 @@ export default function UnifiedTrackPage({
                       ) : (
                         item.messages.map((msg) => {
                           const isUser = msg.sender_type === 'user';
+
                           return (
                             <div
                               key={msg.id}
@@ -767,6 +774,7 @@ export default function UnifiedTrackPage({
                                   <div className="flex flex-wrap gap-2 pt-1">
                                     {msg.attachments.map((att, aIdx) => {
                                       const isImage = att.mime?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+
                                       return isImage ? (
                                         <button
                                           key={aIdx}

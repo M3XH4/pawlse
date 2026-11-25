@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
-import { getEventDateBadge, formatEventTime, formatEventDate, shareEvent } from '@/lib/event-utils';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { getEventDateBadge, formatEventTime, formatEventDate, shareEvent } from '@/lib/event-utils';
 
 interface EventsProps {
     events?: any[];
@@ -130,6 +130,7 @@ export function Events({
                 description: 'Sign in to join community drives and track your attendance.',
                 action: { label: 'Log In', onClick: () => navigate('/login') }
             });
+
             return;
         }
 
@@ -137,6 +138,7 @@ export function Events({
             router.get('/volunteer', {
                 selectedEvent: displayEvents.find((e) => e.id === eventId) as any,
             });
+
             return;
         }
 
@@ -180,6 +182,7 @@ export function Events({
                             setJoinedRoles((prev) => {
                                 const next = { ...prev };
                                 delete next[eventId];
+
                                 return next;
                             });
                             toast.success('Your registration has been cancelled.');

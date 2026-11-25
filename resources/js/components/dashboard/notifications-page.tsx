@@ -87,6 +87,7 @@ export function DashboardNotificationsPage() {
             if (filter === 'unread' && read) {
                 return false;
             }
+
             if (
                 filter === 'adoption' &&
                 notification.icon !== 'adoption' &&
@@ -94,6 +95,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'rescue' &&
                 notification.icon !== 'rescue' &&
@@ -101,6 +103,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'donation' &&
                 notification.icon !== 'donation' &&
@@ -108,6 +111,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'volunteer' &&
                 notification.icon !== 'volunteer' &&
@@ -117,6 +121,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'achievement' &&
                 notification.icon !== 'achievement' &&
@@ -124,6 +129,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'blog' &&
                 notification.icon !== 'blog' &&
@@ -131,6 +137,7 @@ export function DashboardNotificationsPage() {
             ) {
                 return false;
             }
+
             if (
                 filter === 'system' &&
                 ((notification.icon !== 'system' &&

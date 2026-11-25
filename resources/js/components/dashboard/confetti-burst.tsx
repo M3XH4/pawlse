@@ -40,11 +40,13 @@ export function ConfettiBurst({
         }
 
         const canvas = canvasRef.current;
+
         if (!canvas) {
             return;
         }
 
         const ctx = canvas.getContext('2d');
+
         if (!ctx) {
             return;
         }
@@ -96,6 +98,7 @@ export function ConfettiBurst({
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             let aliveCount = 0;
+
             for (const p of pieces) {
                 p.vy += 0.24; // gravity
                 p.vx *= 0.985; // air drag

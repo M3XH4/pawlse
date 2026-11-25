@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
     Award, Heart, Users, Star, Gift, Shield, Sparkles, Home, 
     Calendar, CheckCircle2, ArrowRight, ExternalLink, HelpCircle 
 } from 'lucide-react';
-import { Header } from '@/components/header';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
 import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ScrollRevealWrapper } from '@/components/scroll-reveal-wrapper';
 
 interface CommunityHonorItem {
@@ -71,9 +71,16 @@ export default function HonorPage({
     ];
 
     const getInitials = (item: CommunityHonorItem) => {
-        if (item.initials) return item.initials;
+        if (item.initials) {
+return item.initials;
+}
+
         const parts = item.name.trim().split(' ');
-        if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+
+        if (parts.length >= 2) {
+return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
+
         return item.name.substring(0, 2).toUpperCase();
     };
 
@@ -81,17 +88,32 @@ export default function HonorPage({
     const filteredRecognized = selectedTab === 'all'
         ? recognizedSupporters
         : recognizedSupporters.filter(item => {
-            if (selectedTab === 'donors') return item.category === 'donor';
-            if (selectedTab === 'volunteers') return item.category === 'volunteer';
-            if (selectedTab === 'sponsors') return item.category === 'sponsor';
-            if (selectedTab === 'community_supporters') return item.category === 'community_supporter';
+            if (selectedTab === 'donors') {
+return item.category === 'donor';
+}
+
+            if (selectedTab === 'volunteers') {
+return item.category === 'volunteer';
+}
+
+            if (selectedTab === 'sponsors') {
+return item.category === 'sponsor';
+}
+
+            if (selectedTab === 'community_supporters') {
+return item.category === 'community_supporter';
+}
+
             return true;
         });
 
     const filteredCommunity = selectedTab === 'all'
         ? communitySupporters
         : communitySupporters.filter(item => {
-            if (selectedTab === 'community_supporters') return true;
+            if (selectedTab === 'community_supporters') {
+return true;
+}
+
             return false;
         });
 
@@ -147,6 +169,7 @@ export default function HonorPage({
                         >
                             {tabs.map((tab) => {
                                 const isActive = selectedTab === tab.id;
+
                                 return (
                                     <button
                                         key={tab.id}

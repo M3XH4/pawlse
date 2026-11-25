@@ -1,12 +1,12 @@
+import { Link, Head } from '@inertiajs/react';
 import { Award, Calendar, Eye, Download, Printer, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Link, Head } from '@inertiajs/react';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { DashboardPagination } from '@/components/dashboard/pagination';
 
 interface CertificateModel {
     id: number;
@@ -42,28 +42,37 @@ interface CertificatesProps {
 }
 
 const parseLocalDate = (dateStr?: string | null): Date | null => {
-    if (!dateStr) return null;
+    if (!dateStr) {
+return null;
+}
+
     const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
     if (match) {
         return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
     }
+
     const d = new Date(dateStr);
+
     return isNaN(d.getTime()) ? null : d;
 };
 
 const formatEventDate = (dateStr?: string | null, fallbackDateStr?: string | null) => {
     const d = parseLocalDate(dateStr) || parseLocalDate(fallbackDateStr) || new Date();
+
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
 const formatIssueDate = (dateStr?: string | null) => {
     const d = parseLocalDate(dateStr) || new Date();
+
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 const formatCertificateDateTime = (cert: CertificateModel) => {
     if (cert.created_at) {
         const d = new Date(cert.created_at);
+
         if (!isNaN(d.getTime())) {
             const dateStr = d.toLocaleDateString('en-US', {
                 month: 'short',
@@ -75,14 +84,17 @@ const formatCertificateDateTime = (cert: CertificateModel) => {
                 minute: '2-digit',
                 hour12: true,
             });
+
             return `${dateStr} • ${timeStr}`;
         }
     }
 
     if (cert.issue_date) {
         const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(cert.issue_date) || /T00:00:00(\.0+)?Z?$/i.test(cert.issue_date);
+
         if (!isDateOnly) {
             const d = new Date(cert.issue_date);
+
             if (!isNaN(d.getTime())) {
                 const dateStr = d.toLocaleDateString('en-US', {
                     month: 'short',
@@ -94,6 +106,7 @@ const formatCertificateDateTime = (cert: CertificateModel) => {
                     minute: '2-digit',
                     hour12: true,
                 });
+
                 return `${dateStr} • ${timeStr}`;
             }
         }
@@ -113,7 +126,10 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
     };
 
     const handleDownloadPng = async () => {
-        if (!viewingCert || isDownloading) return;
+        if (!viewingCert || isDownloading) {
+return;
+}
+
         setIsDownloading(true);
 
         try {
@@ -128,8 +144,10 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 canvas.width = 1492;
                 canvas.height = 1054;
                 const ctx = canvas.getContext('2d');
+
                 if (!ctx) {
                     setIsDownloading(false);
+
                     return;
                 }
 
@@ -142,10 +160,12 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 const recipientName = (viewingCert.user?.name || viewingCert.guest_name || user?.name || 'Participant').toUpperCase();
                 let nameFontSize = 36;
                 ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
+
                 while (ctx.measureText(recipientName).width > 720 && nameFontSize > 18) {
                     nameFontSize -= 2;
                     ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
                 }
+
                 ctx.fillText(recipientName, 1492 * 0.545, 1054 * 0.575);
 
                 // 2. Role Slot
@@ -153,20 +173,24 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 const roleText = (viewingCert.role || defaultRole || 'Participant').toUpperCase();
                 let roleFontSize = 14;
                 ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(roleText).width > 185 && roleFontSize > 9) {
                     roleFontSize -= 1;
                     ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(roleText, 1492 * 0.37, 1054 * 0.655);
 
                 // 3. Event / Activity Title
                 const eventTitle = viewingCert.event?.title || viewingCert.title || 'Community Stray Feeding Outreach';
                 let eventFontSize = 14;
                 ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(eventTitle).width > 460 && eventFontSize > 10) {
                     eventFontSize -= 1;
                     ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(eventTitle, 1492 * 0.649, 1054 * 0.655);
 
                 // 4. Event Date
@@ -179,10 +203,12 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
                 const eventLoc = viewingCert.event?.location || 'Iligan City, Philippines';
                 let locFontSize = 14;
                 ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
+
                 while (ctx.measureText(eventLoc).width > 240 && locFontSize > 9) {
                     locFontSize -= 1;
                     ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
                 }
+
                 ctx.fillText(eventLoc, 1492 * 0.68, 1054 * 0.785);
 
                 // 6. Signatory 1

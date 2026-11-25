@@ -1,9 +1,4 @@
-import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { toast } from 'sonner';
 import {
     Newspaper, Plus, Search, Filter, Edit, Trash2, Eye,
     ToggleLeft, ToggleRight, X, Heart, Share2, Sparkles,
@@ -12,8 +7,13 @@ import {
     GraduationCap, Scale, Layers, Tag, Star, MessageSquareQuote,
     XCircle, CheckCircle2
 } from 'lucide-react';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
@@ -194,7 +194,10 @@ export default function BlogManagement({
     };
 
     const handleConfirmApprove = () => {
-        if (!postToApprove) return;
+        if (!postToApprove) {
+return;
+}
+
         setIsApproving(true);
         router.post(`${basePath}/${postToApprove.id}/approve`, {}, {
             preserveScroll: true,
@@ -218,7 +221,10 @@ export default function BlogManagement({
     };
 
     const handleConfirmReject = () => {
-        if (!postToReject) return;
+        if (!postToReject) {
+return;
+}
+
         setIsRejecting(true);
         router.post(`${basePath}/${postToReject.id}/reject`, {
             rejection_reason: rejectionReason,
@@ -247,7 +253,10 @@ export default function BlogManagement({
     };
 
     const handleConfirmDelete = () => {
-        if (!postToDelete) return;
+        if (!postToDelete) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`${basePath}/${postToDelete.id}`, {
             preserveScroll: true,
@@ -266,6 +275,7 @@ export default function BlogManagement({
 
     const addTagSuggestion = (tag: string) => {
         const existing = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [];
+
         if (!existing.includes(tag)) {
             setTagsInput(existing.length ? `${existing.join(', ')}, ${tag}` : tag);
         }
@@ -584,6 +594,7 @@ export default function BlogManagement({
                                                         icon: FileText,
                                                     };
                                                     const BadgeIcon = style.icon;
+
                                                     return (
                                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs ${style.badge}`}>
                                                             <BadgeIcon size={12} className="shrink-0" />

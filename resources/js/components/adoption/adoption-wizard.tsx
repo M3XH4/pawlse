@@ -1,16 +1,16 @@
+import { useForm } from '@inertiajs/react';
 import { X, CheckCircle2, User, FileText, Upload, Calendar, ChevronLeft, ChevronRight, MapPin, Mail, Camera, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
-import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { formatPhoneNumber } from '@/lib/phone-formatter';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { ModernTimePicker } from '@/components/ui/modern-time-picker';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { compressImageFile } from '@/lib/image-compression';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 const STORAGE_KEY = 'pawlse_saved_adoption_applicant';
 
@@ -145,11 +145,13 @@ export function AdoptionWizard({
   useEffect(() => {
     if (initialData) {
       setHasLoadedSavedData(true);
+
       return;
     }
 
     try {
       const savedRaw = localStorage.getItem(STORAGE_KEY);
+
       if (savedRaw) {
         const saved = JSON.parse(savedRaw);
         let filledAny = false;
@@ -228,7 +230,9 @@ export function AdoptionWizard({
 
   // Auto-save applicant profile to localStorage on field or checkbox changes
   useEffect(() => {
-    if (resubmitApplicationId) return;
+    if (resubmitApplicationId) {
+return;
+}
 
     const hasAnyContent = Boolean(
       (data.fullName && data.fullName.trim()) ||
@@ -330,12 +334,16 @@ export function AdoptionWizard({
   const handleFileUpload = async (key: string, file: File | null) => {
     if (file && file.size > 8 * 1024 * 1024) {
       toast.error('File size must be less than 8MB');
+
       return;
     }
+
     if (!file) {
       setData(key as any, null);
+
       return;
     }
+
     const processed = await compressImageFile(file);
     setData(key as any, processed);
   };
@@ -388,20 +396,34 @@ export function AdoptionWizard({
     if (resubmitApplicationId) {
       return true;
     }
+
     return data.uploadedId !== null;
   };
 
   const validateStep4 = () => {
     const minDateStr = new Date().toISOString().split('T')[0];
     const isDateValid = Boolean(data.preferredDate && data.preferredDate >= minDateStr);
+
     return Boolean(isDateValid && data.preferredTime && data.canVisitShelter);
   };
 
   const canProceed = () => {
-    if (currentStep === 1) return validateStep1();
-    if (currentStep === 2) return validateStep2();
-    if (currentStep === 3) return validateStep3();
-    if (currentStep === 4) return validateStep4();
+    if (currentStep === 1) {
+return validateStep1();
+}
+
+    if (currentStep === 2) {
+return validateStep2();
+}
+
+    if (currentStep === 3) {
+return validateStep3();
+}
+
+    if (currentStep === 4) {
+return validateStep4();
+}
+
     return false;
   };
 
@@ -415,6 +437,7 @@ export function AdoptionWizard({
       }, 50);
     } else {
       let message = 'Please fill in all required fields to proceed';
+
       if (currentStep === 1) {
         if (!data.fullName?.trim() || !data.phone?.trim() || !data.email?.trim() || !data.address?.trim()) {
           message = 'Please provide your full name, address, phone number, and email.';
@@ -446,9 +469,11 @@ export function AdoptionWizard({
           message = 'Please upload a valid government ID or proof of identity to proceed.';
         }
       }
+
       toast.error(message);
       setTimeout(() => {
         const firstInvalid = document.querySelector('input:invalid, select:invalid, textarea:invalid');
+
         if (firstInvalid) {
           firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -468,11 +493,13 @@ export function AdoptionWizard({
     
     if (isAlreadyApplied) {
       toast.error(`You have already submitted an adoption application for ${pet.name}. Duplicate applications are not allowed.`);
+
       return;
     }
 
     if (!validateStep4()) {
       const minDateStr = new Date().toISOString().split('T')[0];
+
       if (!data.preferredDate) {
         toast.error('Please select your preferred interview date.');
       } else if (data.preferredDate < minDateStr) {
@@ -484,6 +511,7 @@ export function AdoptionWizard({
       } else {
         toast.error('Please complete all interview details before submitting.');
       }
+
       return;
     }
 
@@ -1186,6 +1214,7 @@ export function AdoptionWizard({
                     { key: 'yard', label: 'Yard (for dogs) (Optional)' }
                   ].map(({ key, label }) => {
                     const fileObj = (data as any)[key] as File | null;
+
                     return (
                       <div key={key} className="space-y-2">
                         <label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 block">{label}</label>
@@ -1233,14 +1262,19 @@ export function AdoptionWizard({
                     accept="image/*,.pdf"
                     onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
+
                       if (file && file.size > 8 * 1024 * 1024) {
                         toast.error('File size must be less than 8MB');
+
                         return;
                       }
+
                       if (!file) {
                         setData('uploadedId', null);
+
                         return;
                       }
+
                       const processed = await compressImageFile(file);
                       setData('uploadedId', processed);
                     }}

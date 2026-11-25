@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { toast } from 'sonner';
 import {
     Award,
     Calendar,
@@ -21,6 +19,8 @@ import {
     Utensils,
     X,
 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { ConfettiBurst } from '@/components/dashboard/confetti-burst';
 import { SandboxDemoControls } from '@/components/dashboard/sandbox-demo-controls';
 import {
@@ -368,6 +368,7 @@ export function AchievementsView({
         if (hasCelebratedRef.current) {
             return;
         }
+
         hasCelebratedRef.current = true;
 
         const storageKey = `pawlse-rank-${audience}-${userId}`;
@@ -434,6 +435,7 @@ export function AchievementsView({
 
     const categories = useMemo(() => {
         const unique = Array.from(new Set(badges.map((b) => b.category)));
+
         return ['all', ...unique];
     }, [badges]);
 
@@ -447,15 +449,19 @@ export function AchievementsView({
             if (categoryFilter !== 'all' && badge.category !== categoryFilter) {
                 return false;
             }
+
             if (statusFilter === 'unlocked') {
                 return badge.is_unlocked;
             }
+
             if (statusFilter === 'in_progress') {
                 return !badge.is_unlocked && badge.progress_value > 0;
             }
+
             if (statusFilter === 'locked') {
                 return !badge.is_unlocked && badge.progress_value === 0;
             }
+
             return true;
         });
 
@@ -468,6 +474,7 @@ export function AchievementsView({
                 if (a.is_pinned !== b.is_pinned) {
                     return a.is_pinned ? -1 : 1;
                 }
+
                 return 0;
             }
 
@@ -495,6 +502,7 @@ export function AchievementsView({
         if (!summary.next_rank_xp || summary.next_rank_xp <= 0) {
             return 100;
         }
+
         return Math.min(100, Math.round((summary.total_xp / summary.next_rank_xp) * 100));
     }, [summary.next_rank_xp, summary.total_xp]);
 

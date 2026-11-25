@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { LogOut, Menu } from 'lucide-react';
-import { AdminNavLink } from '@/components/admin/nav-link';
 import { adminNavItems } from '@/components/admin/nav-items';
+import { AdminNavLink } from '@/components/admin/nav-link';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 
@@ -36,6 +36,7 @@ export function AdminSidebar({
         if (item.title === 'My Foster Pets' && !isFosterParent) {
             return false;
         }
+
         return true;
     });
 

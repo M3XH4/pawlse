@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { FileSearch, Search, Activity, Terminal } from 'lucide-react';
-import { DashboardSectionPage } from '@/components/dashboard/section-page';
+import React, { useState, useEffect } from 'react';
 import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage } from '@/components/dashboard/section-page';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
@@ -67,6 +67,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                 applyFilters({ search: searchTerm });
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
@@ -241,6 +242,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                                 value={dateFrom}
                                 onChange={(date) => {
                                     setDateFrom(date);
+
                                     if (dateTo && date > dateTo) {
                                         setDateTo(date);
                                         applyFilters({ date_from: date, date_to: date });
@@ -264,6 +266,7 @@ export default function AuditLogs({ logs, users, actions, filters, stats }: Audi
                                     if (dateFrom && date < dateFrom) {
                                         return;
                                     }
+
                                     setDateTo(date);
                                     applyFilters({ date_to: date });
                                 }}

@@ -7,11 +7,14 @@ export function normalizePath(urlOrPath: string): string {
     if (!urlOrPath) {
         return '';
     }
+
     try {
         if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
             const parsed = new URL(urlOrPath);
+
             return parsed.pathname.replace(/\/$/, '').toLowerCase();
         }
+
         return urlOrPath.split('?')[0].replace(/\/$/, '').toLowerCase();
     } catch {
         return urlOrPath.split('?')[0].replace(/\/$/, '').toLowerCase();
@@ -58,6 +61,7 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'visit' || category === 'shelter_visit') {
             if (
                 itemPath.includes('shelter-visits') ||
@@ -67,6 +71,7 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'rehoming') {
             if (
                 itemPath.includes('rehoming-requests') ||
@@ -76,6 +81,7 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'rescue') {
             if (
                 itemPath.includes('rescue') ||
@@ -85,36 +91,43 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'donation') {
             if (itemPath.includes('donation') || titleLower.includes('donation')) {
                 return true;
             }
         }
+
         if (category === 'foster') {
             if (itemPath.includes('foster') || titleLower.includes('foster')) {
                 return true;
             }
         }
+
         if (category === 'task') {
             if (itemPath.includes('task') || titleLower.includes('task')) {
                 return true;
             }
         }
+
         if (category === 'volunteer') {
             if (itemPath.includes('volunteer') || titleLower.includes('volunteer')) {
                 return true;
             }
         }
+
         if (category === 'event') {
             if (itemPath.includes('event') || titleLower.includes('event')) {
                 return true;
             }
         }
+
         if (category === 'ticket' || category === 'help_desk') {
             if (itemPath.includes('help-desk') || titleLower.includes('help desk')) {
                 return true;
             }
         }
+
         if (category === 'story' || category === 'blog') {
             if (
                 itemPath.includes('stories') ||
@@ -125,6 +138,7 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'certificate' || category === 'honor') {
             if (
                 itemPath.includes('certificate') ||
@@ -135,21 +149,25 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'security') {
             if (itemPath.includes('security') || titleLower.includes('security')) {
                 return true;
             }
         }
+
         if (category === 'backup') {
             if (itemPath.includes('backup') || titleLower.includes('backup')) {
                 return true;
             }
         }
+
         if (category === 'audit') {
             if (itemPath.includes('audit') || titleLower.includes('audit')) {
                 return true;
             }
         }
+
         if (category === 'resource' || category === 'file') {
             if (
                 itemPath.includes('resources') ||
@@ -159,11 +177,13 @@ export function notificationMatchesTab(
                 return true;
             }
         }
+
         if (category === 'partner') {
             if (itemPath.includes('partner') || titleLower.includes('partner')) {
                 return true;
             }
         }
+
         if (category === 'ai') {
             if (itemPath.includes('ai-') || titleLower.includes('ai')) {
                 return true;
@@ -187,10 +207,12 @@ export function getTabNotificationCount(
     }
 
     let count = 0;
+
     for (const notif of notifications) {
         if (isRead(notif)) {
             continue;
         }
+
         if (item.children && item.children.length > 0) {
             if (item.children.some((child) => notificationMatchesTab(child, notif))) {
                 count++;

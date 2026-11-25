@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AdminCard } from '@/components/admin/card';
 
 export function AdminPageShell({

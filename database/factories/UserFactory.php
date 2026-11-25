@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\Role;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,7 +25,10 @@ class UserFactory extends Factory
         return $this->afterCreating(function (User $user): void {
             $role = $user->role ?? Role::User->value;
 
-            PermissionRole::findOrCreate($role, 'web');
+            if (! PermissionRole::where('name', $role)->exists()) {
+                app(RoleSeeder::class)->run();
+            }
+
             $user->syncRoles([$role]);
         });
     }

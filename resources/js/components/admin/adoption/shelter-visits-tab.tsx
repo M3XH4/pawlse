@@ -1,8 +1,4 @@
-import React, { useState, useMemo } from 'react';
 import { useForm } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { formatPillLabel } from '@/lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Building2,
   Calendar,
@@ -24,11 +20,15 @@ import {
   Settings2,
   ShieldCheck,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
-import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
+import { formatPillLabel } from '@/lib/utils';
 import { formatPhotoUrl } from '@/lib/utils';
 
 export interface ShelterVisitSettings {
@@ -120,7 +120,10 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
 
   const handleStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVisit) return;
+
+    if (!selectedVisit) {
+return;
+}
 
     post(`/account/admin/adoption-management/shelter-visits/${selectedVisit.id}/status`, {
       preserveScroll: true,
@@ -634,12 +637,14 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
                       const isClosed = (configData.closed_days || []).includes(day);
+
                       return (
                         <button
                           key={day}
                           type="button"
                           onClick={() => {
                             const current = configData.closed_days || [];
+
                             if (isClosed) {
                               setConfigData('closed_days', current.filter((d) => d !== day));
                             } else {
@@ -677,11 +682,16 @@ export function ShelterVisitsTab({ visits = [], settings }: ShelterVisitsTabProp
                     <button
                       type="button"
                       onClick={() => {
-                        if (!newBlackoutDate) return;
+                        if (!newBlackoutDate) {
+return;
+}
+
                         const current = configData.blackout_dates || [];
+
                         if (!current.includes(newBlackoutDate)) {
                           setConfigData('blackout_dates', [...current, newBlackoutDate].sort());
                         }
+
                         setNewBlackoutDate('');
                       }}
                       className="px-4 py-2 rounded-xl bg-paw-orange hover:bg-orange-600 text-white font-black text-xs transition-colors cursor-pointer"

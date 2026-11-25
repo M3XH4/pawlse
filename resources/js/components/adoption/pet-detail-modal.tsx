@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Heart,
@@ -24,6 +22,8 @@ import {
   Images,
   Maximize2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 export interface MedicalRecordItem {
@@ -122,7 +122,9 @@ export function PetDetailModal({
     setActiveTab('overview');
   }, [pet?.id]);
 
-  if (!pet) return null;
+  if (!pet) {
+return null;
+}
 
   const primaryPhoto = pet.img || pet.mainImg || pet.photo_url || '';
   const rawPhotos = Array.isArray(pet.photos) && pet.photos.length > 0
@@ -224,6 +226,7 @@ export function PetDetailModal({
                   {/* Status Badge */}
                   {(() => {
                     const st = (pet.status || 'available').toLowerCase();
+
                     if (st === 'available') {
                       return (
                         <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-orange-600 font-bold text-xs flex items-center gap-1.5 shadow-xs border border-orange-100">
@@ -232,6 +235,7 @@ export function PetDetailModal({
                         </div>
                       );
                     }
+
                     if (st === 'treatment') {
                       return (
                         <div className="absolute top-3 left-3 bg-amber-500 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
@@ -240,6 +244,7 @@ export function PetDetailModal({
                         </div>
                       );
                     }
+
                     if (st === 'foster') {
                       return (
                         <div className="absolute top-3 left-3 bg-blue-600 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
@@ -248,6 +253,7 @@ export function PetDetailModal({
                         </div>
                       );
                     }
+
                     if (st === 'adopted') {
                       return (
                         <div className="absolute top-3 left-3 bg-teal-600 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
@@ -256,6 +262,7 @@ export function PetDetailModal({
                         </div>
                       );
                     }
+
                     return (
                       <div className="absolute top-3 left-3 bg-slate-800 text-white backdrop-blur-sm px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs">
                         <AlertTriangle size={12} />
@@ -330,8 +337,15 @@ export function PetDetailModal({
                     <Clock size={13} />
                     {(() => {
                       const days = Math.max(0, pet.shelterDays || 0);
-                      if (days === 0) return 'Today';
-                      if (days < 30) return `${days}d`;
+
+                      if (days === 0) {
+return 'Today';
+}
+
+                      if (days < 30) {
+return `${days}d`;
+}
+
                       return `${Math.floor(days / 30)}mo`;
                     })()}
                   </p>

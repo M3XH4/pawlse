@@ -30,18 +30,23 @@ export function useFloatingPopover({
     const [coords, setCoords] = useState<FloatingCoords | null>(null);
 
     const updatePosition = useCallback(() => {
-        if (!triggerRef.current) return;
+        if (!triggerRef.current) {
+return;
+}
 
         const rect = triggerRef.current.getBoundingClientRect();
 
         // If trigger is detached or hidden (e.g. scrolled far offscreen)
-        if (rect.width === 0 && rect.height === 0) return;
+        if (rect.width === 0 && rect.height === 0) {
+return;
+}
 
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;
 
         // Auto flip if there is not enough space below and more space above
         let placement: 'bottom' | 'top' = preferredPlacement;
+
         if (placement === 'bottom') {
             if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
                 placement = 'top';
@@ -55,12 +60,14 @@ export function useFloatingPopover({
         // Clamp left position within viewport
         const minMargin = 12;
         let left = rect.left;
+
         if (left + estimatedWidth > window.innerWidth - minMargin) {
             left = Math.max(
                 minMargin,
                 window.innerWidth - estimatedWidth - minMargin,
             );
         }
+
         if (left < minMargin) {
             left = minMargin;
         }
@@ -85,6 +92,7 @@ export function useFloatingPopover({
     useEffect(() => {
         if (!isOpen) {
             setCoords(null);
+
             return;
         }
 
@@ -100,6 +108,7 @@ export function useFloatingPopover({
 
         const handleClickOutside = (event: MouseEvent | TouchEvent) => {
             const target = event.target as Node;
+
             if (
                 triggerRef.current &&
                 !triggerRef.current.contains(target) &&

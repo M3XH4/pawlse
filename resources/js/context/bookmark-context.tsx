@@ -8,6 +8,8 @@ export interface BookmarkItem {
   id: string | number;
   type: BookmarkType;
   title: string;
+  subtitle?: string;
+  url?: string;
   image?: string;
   data: any;
   bookmarkedAt: string;

@@ -55,7 +55,7 @@ class HomeController extends Controller
             : [];
 
         // 4. Public landing page data (cached for 60s to avoid repeated aggregate & disk stat overhead)
-        $publicData = Cache::remember('home:public_payload', 60, function () use ($getString): array {
+        $publicData = Cache::remember('home:public_payload:v2', 60, function () use ($getString): array {
             $pets = ShelterAnimal::query()
                 ->where('status', ShelterAnimalStatus::Available)
                 ->latest()
@@ -234,7 +234,7 @@ class HomeController extends Controller
                             'quantity' => $need->quantity,
                             'priority' => ucfirst($need->priority ?? 'Medium'),
                         ];
-                    }),
+                    })->values()->all(),
                 ];
             })->all();
 

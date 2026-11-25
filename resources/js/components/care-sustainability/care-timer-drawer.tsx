@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, Heart, HelpCircle, ChevronLeft, ChevronRight, Clock, Sparkles } from 'lucide-react';
 import { Link, usePage } from '@inertiajs/react';
-import type { CareSustainabilityData } from '@/types/care-sustainability';
+import { AlertTriangle, Heart, HelpCircle, ChevronLeft, ChevronRight, Clock, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from 'react';
 import { useCareCountdown } from '@/hooks/use-care-countdown';
+import type { CareSustainabilityData } from '@/types/care-sustainability';
 import { HowCalculatedModal } from './how-calculated-modal';
 
 interface CareTimerDrawerProps {
@@ -21,8 +21,10 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
         if (typeof window === 'undefined') {
             return true;
         }
+
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
+
             return saved !== null ? saved === 'true' : true;
         } catch {
             return true;
@@ -37,11 +39,13 @@ export function CareTimerDrawer({ sustainability: propSustainability }: CareTime
             }
         };
         window.addEventListener('storage', handleStorage);
+
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
     const toggleDrawer = (open: boolean) => {
         setIsOpen(open);
+
         if (typeof window !== 'undefined') {
             localStorage.setItem(STORAGE_KEY, String(open));
         }

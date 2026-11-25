@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { DashboardPagination } from '@/components/dashboard/pagination';
 import { 
     Heart, CreditCard, Gift, Users, Check, ArrowRight, ShieldCheck, X, 
     Copy, CheckCircle2, Smartphone, Filter, Calendar, Download, FileText, 
@@ -10,11 +7,14 @@ import {
     AlertTriangle, CalendarDays, Edit2, Trash2, ShieldAlert, Sparkles,
     Eye, MapPin, XCircle, Printer, ExternalLink, CheckCircle, HeartHandshake, Maximize2
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { AdminPageShell } from '@/components/admin/page-shell';
 import { SustainabilityAdminTab } from '@/components/care-sustainability/sustainability-admin-tab';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
@@ -323,12 +323,30 @@ export default function DonationMonitoring({
 
     // Filtered Inventory items
     const filteredInventory = (inventory.data || []).filter((item) => {
-        if (invStatusFilter === 'all') return true;
-        if (invStatusFilter === 'expiring_soon') return item.stock_status === 'expiring_soon';
-        if (invStatusFilter === 'expired') return item.stock_status === 'expired';
-        if (invStatusFilter === 'low_stock') return item.stock_status === 'low_stock';
-        if (invStatusFilter === 'out_of_stock') return item.stock_status === 'out_of_stock';
-        if (invStatusFilter === 'in_stock') return item.stock_status === 'in_stock';
+        if (invStatusFilter === 'all') {
+return true;
+}
+
+        if (invStatusFilter === 'expiring_soon') {
+return item.stock_status === 'expiring_soon';
+}
+
+        if (invStatusFilter === 'expired') {
+return item.stock_status === 'expired';
+}
+
+        if (invStatusFilter === 'low_stock') {
+return item.stock_status === 'low_stock';
+}
+
+        if (invStatusFilter === 'out_of_stock') {
+return item.stock_status === 'out_of_stock';
+}
+
+        if (invStatusFilter === 'in_stock') {
+return item.stock_status === 'in_stock';
+}
+
         return true;
     });
 
@@ -339,6 +357,7 @@ export default function DonationMonitoring({
                 applyFilters();
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
@@ -348,6 +367,7 @@ export default function DonationMonitoring({
                 applyFilters();
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [invSearchTerm]);
 
@@ -388,7 +408,10 @@ export default function DonationMonitoring({
 
     const submitVerify = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!verifyingInKind) return;
+
+        if (!verifyingInKind) {
+return;
+}
 
         router.post(`${basePath}/in-kind/${verifyingInKind.id}/verify`, {
             ...verifyForm,
@@ -420,7 +443,10 @@ export default function DonationMonitoring({
 
     const submitReject = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!rejectingDonation) return;
+
+        if (!rejectingDonation) {
+return;
+}
 
         router.post(`${basePath}/donations/${rejectingDonation.id}/reject`, {
             reason: rejectReason || 'Payment/Drop-off rejected by administrator.'
@@ -439,7 +465,10 @@ export default function DonationMonitoring({
 
     const submitRequestAmountEdit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingAmountDonation) return;
+
+        if (!editingAmountDonation) {
+return;
+}
 
         router.post(`${basePath}/donations/${editingAmountDonation.id}/request-amount-edit`, {
             requested_amount: parseFloat(editAmountValue),
@@ -513,7 +542,10 @@ export default function DonationMonitoring({
 
     const submitEditItem = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingItem) return;
+
+        if (!editingItem) {
+return;
+}
 
         router.put(`${basePath}/inventory/${editingItem.id}`, {
             ...editItemForm,
@@ -531,7 +563,10 @@ export default function DonationMonitoring({
 
     const submitAddBatch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!addingBatchToItem) return;
+
+        if (!addingBatchToItem) {
+return;
+}
 
         router.post(`${basePath}/inventory/${addingBatchToItem.id}/batches`, addBatchForm, {
             onSuccess: () => {
@@ -554,7 +589,10 @@ export default function DonationMonitoring({
 
     const submitAdjustBatch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!adjustingBatchData) return;
+
+        if (!adjustingBatchData) {
+return;
+}
 
         router.post(`${basePath}/inventory/batches/${adjustingBatchData.batch.id}/adjust`, adjustBatchForm, {
             onSuccess: () => {
@@ -575,7 +613,10 @@ export default function DonationMonitoring({
 
     const submitAdjust = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!adjustingItem) return;
+
+        if (!adjustingItem) {
+return;
+}
 
         const change = adjustForm.direction === 'add' ? adjustForm.quantity : -adjustForm.quantity;
 

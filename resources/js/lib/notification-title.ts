@@ -10,9 +10,11 @@ export function stripTitleBadge(title: string): string {
  */
 export function formatTitleWithBadge(baseTitle: string, unreadCount: number): string {
     const cleanTitle = stripTitleBadge(baseTitle);
+
     if (unreadCount > 0) {
         return `(${unreadCount}) ${cleanTitle}`;
     }
+
     return cleanTitle;
 }
 

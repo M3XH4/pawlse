@@ -1,6 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   RefreshCw,
@@ -10,12 +8,14 @@ import {
   Camera,
   CheckCircle2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
 import { PhoneInput } from '@/components/phone-input';
 import { ModernSelect } from '@/components/ui/modern-select';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { Spinner } from '@/components/ui/spinner';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 
 interface RehomingModalProps {
   isOpen: boolean;
@@ -59,17 +59,22 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Photo file size must be 5MB or smaller.');
+
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+
         return;
       }
+
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
+
       setData('photo', file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -78,10 +83,13 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
 
   const removePhoto = () => {
     setData('photo', null);
+
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
+
     setPreviewUrl(null);
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -114,6 +122,7 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
 
     if (!data.photo) {
       toast.error('Please upload a clear photo of the animal before submitting.');
+
       return;
     }
 
@@ -133,7 +142,9 @@ export function RehomingModal({ isOpen, onClose }: RehomingModalProps) {
     });
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+return null;
+}
 
   return (
     <>

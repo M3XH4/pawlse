@@ -90,6 +90,7 @@ export function initializeTheme(): void {
                 localStorage.setItem('appearance', 'light');
                 setCookie('appearance', 'light');
             }
+
             localStorage.setItem('appearance_initialized_v2', 'true');
         }
     } catch {

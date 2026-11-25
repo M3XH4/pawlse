@@ -1,7 +1,8 @@
 import React from 'react';
+import type {
+    ModernDatePickerProps as BaseProps} from '@/components/ui/modern-date-picker';
 import {
-    ModernDatePicker as BaseModernDatePicker,
-    ModernDatePickerProps as BaseProps,
+    ModernDatePicker as BaseModernDatePicker
 } from '@/components/ui/modern-date-picker';
 
 export interface ModernDatePickerProps extends Partial<BaseProps> {

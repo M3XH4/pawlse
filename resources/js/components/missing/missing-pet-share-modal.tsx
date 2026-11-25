@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
     X,
     Share2,
@@ -14,8 +12,9 @@ import {
     Smartphone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import {
     FacebookIcon,
     TwitterXIcon,
@@ -23,7 +22,9 @@ import {
     WhatsAppIcon,
     TelegramIcon,
 } from '@/components/events/event-share-modal';
-import { MissingPetItem, buildMissingPetShareContent } from './types';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import type { MissingPetItem} from './types';
+import { buildMissingPetShareContent } from './types';
 
 export { FacebookIcon, TwitterXIcon, InstagramIcon, WhatsAppIcon, TelegramIcon };
 
@@ -57,10 +58,13 @@ export function MissingPetShareModal({
         if (isOpen) {
             window.addEventListener('keydown', handleKeyDown);
         }
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!mounted || typeof document === 'undefined') return null;
+    if (!mounted || typeof document === 'undefined') {
+return null;
+}
 
     const shareUrl =
         pet && typeof window !== 'undefined'
@@ -108,7 +112,9 @@ export function MissingPetShareModal({
             | 'email'
             | 'native',
     ) => {
-        if (!pet) return;
+        if (!pet) {
+return;
+}
 
         const encodedUrl = encodeURIComponent(shareUrl);
         const encodedFullPost = encodeURIComponent(fullPost);
@@ -131,6 +137,7 @@ export function MissingPetShareModal({
                 } catch {
                     toast.success('Opening Facebook share...');
                 }
+
                 const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
                 window.open(
                     fbUrl,
@@ -175,6 +182,7 @@ export function MissingPetShareModal({
                 } catch {
                     toast.error('Failed to copy alert details.');
                 }
+
                 break;
             }
 
@@ -205,6 +213,7 @@ export function MissingPetShareModal({
                 } else {
                     await handleCopyCaption();
                 }
+
                 break;
             }
         }
@@ -385,6 +394,7 @@ export function MissingPetShareModal({
                                 <div className="grid grid-cols-6 gap-2 text-center sm:gap-3">
                                     {socialPlatforms.map((platform) => {
                                         const IconComponent = platform.icon;
+
                                         return (
                                             <button
                                                 key={platform.id}

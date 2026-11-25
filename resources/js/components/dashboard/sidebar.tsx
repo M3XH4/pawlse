@@ -48,17 +48,20 @@ export function DashboardSidebar({
     const [badgeStyle, setBadgeStyle] = useState<'count' | 'dot' | 'none'>(() => {
         try {
             const stored = localStorage.getItem('pawlse_sidebar_notif_style');
+
             if (stored === 'count' || stored === 'dot' || stored === 'none') {
                 return stored;
             }
         } catch {
             // Ignore storage read error
         }
+
         return ((auth.user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style) || 'count';
     });
 
     useEffect(() => {
         const serverPref = (auth.user as { sidebar_notification_style?: 'count' | 'dot' | 'none' })?.sidebar_notification_style;
+
         if (serverPref && (serverPref === 'count' || serverPref === 'dot' || serverPref === 'none')) {
             setBadgeStyle(serverPref);
         }
@@ -67,12 +70,14 @@ export function DashboardSidebar({
     useEffect(() => {
         const handleStyleChange = (e: Event) => {
             const detail = (e as CustomEvent<string>).detail;
+
             if (detail === 'count' || detail === 'dot' || detail === 'none') {
                 setBadgeStyle(detail);
             }
         };
 
         window.addEventListener('pawlse:sidebar-notif-style-changed', handleStyleChange);
+
         return () => {
             window.removeEventListener('pawlse:sidebar-notif-style-changed', handleStyleChange);
         };
@@ -85,11 +90,13 @@ export function DashboardSidebar({
 
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
+
         for (const item of navItems) {
             if (item.children?.some((child) => isNavItemActive(child.match))) {
                 initial[item.title] = true;
             }
         }
+
         return initial;
     });
 
@@ -105,8 +112,10 @@ export function DashboardSidebar({
         if (collapsed) {
             onToggleCollapsed();
             setOpenGroups((prev) => ({ ...prev, [title]: true }));
+
             return;
         }
+
         setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
     };
 
@@ -116,10 +125,12 @@ export function DashboardSidebar({
                 const allowed = Array.isArray(item.permission)
                     ? hasAnyPermission(item.permission)
                     : can(item.permission);
+
                 if (!allowed) {
                     return null;
                 }
             }
+
             if (item.title === 'My Foster Pets' && !isFosterParent) {
                 if (theme === 'volunteer') {
                     return {
@@ -129,14 +140,18 @@ export function DashboardSidebar({
                         icon: item.icon,
                     };
                 }
+
                 return null;
             }
+
             if (item.title === 'Volunteer Status' && theme === 'user' && canSwitchToVolunteer) {
                 return null;
             }
+
             if (item.href === '/volunteer/switch-user') {
                 return null;
             }
+
             return item;
         })
         .filter(Boolean) as typeof navItems;

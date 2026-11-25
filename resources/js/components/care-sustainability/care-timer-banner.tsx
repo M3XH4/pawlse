@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import { AlertTriangle, Heart, HelpCircle, ArrowDown } from 'lucide-react';
-import type { CareSustainabilityData } from '@/types/care-sustainability';
+import React, { useState } from 'react';
 import { useCareCountdown } from '@/hooks/use-care-countdown';
+import type { CareSustainabilityData } from '@/types/care-sustainability';
 import { HowCalculatedModal } from './how-calculated-modal';
 
 interface CareTimerBannerProps {
@@ -64,10 +64,12 @@ export function CareTimerBanner({ sustainability, onScrollToDonate }: CareTimerB
     const handleHelpExtend = () => {
         if (onScrollToDonate) {
             onScrollToDonate();
+
             return;
         }
 
         const donationSection = document.getElementById('donation-form') || document.getElementById('donation-options') || document.getElementById('donate-types');
+
         if (donationSection) {
             donationSection.scrollIntoView({ behavior: 'smooth' });
         }

@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Building2,
@@ -11,13 +9,15 @@ import {
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import { ModernSelect } from '@/components/ui/modern-select';
 import { PhoneInput } from '@/components/phone-input';
 import { ModernDatePicker } from '@/components/ui/modern-date-picker';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 
 interface PetOption {
   id: number;
@@ -45,6 +45,7 @@ function getLocalTodayStr(): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
+
   return `${year}-${month}-${day}`;
 }
 
@@ -110,8 +111,10 @@ export function ShelterVisitModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!isAcceptingVisits) {
       toast.error('The shelter is temporarily not accepting visit requests.');
+
       return;
     }
 
@@ -129,7 +132,9 @@ export function ShelterVisitModal({
     });
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+return null;
+}
 
   const todayStr = getLocalTodayStr();
 

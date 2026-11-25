@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { 
     TrendingUp, AlertTriangle, Zap, Save, History, Plus, 
     ArrowUpRight, Clock, HelpCircle, CheckCircle2 
 } from 'lucide-react';
-import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useCareCountdown } from '@/hooks/use-care-countdown';
+import type { CareSustainabilityData, CareSustainabilityHistoryItem } from '@/types/care-sustainability';
 import { SustainabilityHistoryModal } from './sustainability-history-modal';
 
 interface SustainabilityAdminTabProps {
@@ -157,8 +157,10 @@ export function SustainabilityAdminTab({
     const handleExtendTimer = (e: React.FormEvent) => {
         e.preventDefault();
         const amt = parseFloat(extendAmount);
+
         if (!amt || amt <= 0) {
             toast.error('Please enter a valid donation amount to extend the timer.');
+
             return;
         }
 

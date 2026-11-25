@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -10,16 +9,17 @@ import {
     Search,
     Sparkles,
 } from 'lucide-react';
+import { useState } from 'react';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { FrequentProblemsAccordion } from '@/components/help-desk/frequent-problems-accordion';
 import { CreateTicketModal } from '@/components/help-desk/create-ticket-modal';
+import { FrequentProblemsAccordion } from '@/components/help-desk/frequent-problems-accordion';
 import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
-import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 import { cn } from '@/lib/utils';
+import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 
 interface UserHelpDeskProps {
     tickets: {

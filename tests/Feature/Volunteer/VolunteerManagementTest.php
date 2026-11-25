@@ -477,7 +477,7 @@ test('volunteer can view their profile details', function () {
     ]);
 
     $response = $this->actingAs($volunteer)
-        ->get(route('account.volunteer.index'));
+        ->get(route('account.volunteer.profile'));
 
     $response->assertOk()
         ->assertInertia(fn (Assert $page) => $page

@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { 
     Settings, 
@@ -20,6 +19,8 @@ import {
     MapPin,
     Map as MapIcon
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import {
     Dialog,
@@ -29,7 +30,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
 
 interface SystemSettingsProps {
     settings: {
@@ -92,9 +92,11 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                     setIsModalOpen(false);
                     const willBeActive = !data.maintenance_mode;
                     setData('maintenance_mode', willBeActive);
+
                     if (modalMessage) {
                         setData('maintenance_message', modalMessage);
                     }
+
                     toast.success(
                         willBeActive
                             ? 'Maintenance mode activated. Public access is now restricted.'

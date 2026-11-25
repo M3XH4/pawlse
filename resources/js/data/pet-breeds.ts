@@ -468,8 +468,13 @@ function levenshteinDistance(a: string, b: string): number {
   const n = b.length;
   const d: number[][] = [];
 
-  for (let i = 0; i <= m; i++) d[i] = [i];
-  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 0; i <= m; i++) {
+d[i] = [i];
+}
+
+  for (let j = 0; j <= n; j++) {
+d[0][j] = j;
+}
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -496,8 +501,12 @@ export function findClosestBreeds(
   if (!targetBreed || targetBreed.trim() === '' || targetBreed.toLowerCase() === 'unknown') {
     // If no target breed provided, return top recommendations for the species
     const speciesNorm = targetSpecies ? targetSpecies.toLowerCase() : '';
+
     return PET_BREEDS_CATALOG.filter((b) => {
-      if (!speciesNorm || speciesNorm === 'all' || speciesNorm === 'other') return true;
+      if (!speciesNorm || speciesNorm === 'all' || speciesNorm === 'other') {
+return true;
+}
+
       return b.species.toLowerCase() === speciesNorm;
     }).slice(0, limit);
   }
@@ -508,7 +517,10 @@ export function findClosestBreeds(
 
   // Filter candidates by species if specified
   const pool = PET_BREEDS_CATALOG.filter((b) => {
-    if (!speciesNorm || speciesNorm === 'all' || speciesNorm === 'other') return true;
+    if (!speciesNorm || speciesNorm === 'all' || speciesNorm === 'other') {
+return true;
+}
+
     return b.species.toLowerCase() === speciesNorm;
   });
 
@@ -530,6 +542,7 @@ export function findClosestBreeds(
     for (const alias of b.aliases) {
       const aliasLower = alias.toLowerCase();
       const aliasNorm = normalizeStr(alias);
+
       if (aliasLower === query || aliasNorm === queryNorm) {
         score += 85;
       } else if (aliasLower.includes(query) || query.includes(aliasLower)) {
@@ -547,8 +560,10 @@ export function findClosestBreeds(
     // Levenshtein fuzzy score
     const dist = levenshteinDistance(queryNorm, bNameNorm);
     const maxLen = Math.max(queryNorm.length, bNameNorm.length);
+
     if (maxLen > 0) {
       const similarity = 1 - dist / maxLen;
+
       if (similarity > 0.4) {
         score += Math.round(similarity * 40);
       }

@@ -1,19 +1,4 @@
-import React, { useState, useMemo } from 'react';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
-import { AdminCard } from '@/components/admin/card';
-import { DashboardPagination } from '@/components/dashboard/pagination';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
-import { toast } from 'sonner';
-import { ModernDatePicker } from '@/components/ui/modern-date-picker';
-import { PhoneInput } from '@/components/phone-input';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
-import { usePermissions } from '@/hooks/use-permissions';
 import {
     PawPrint,
     Search,
@@ -55,6 +40,21 @@ import {
     Images,
     Maximize2,
 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
+import { DashboardPagination } from '@/components/dashboard/pagination';
+import { PhoneInput } from '@/components/phone-input';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ModernDatePicker } from '@/components/ui/modern-date-picker';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
+import { usePermissions } from '@/hooks/use-permissions';
+import { formatPhotoUrl, formatPillLabel } from '@/lib/utils';
 
 interface MedicalRecordItem {
     id: number;
@@ -258,6 +258,7 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
     React.useEffect(() => {
         if (selectedAnimal) {
             const fresh = animals.data.find((a) => a.id === selectedAnimal.id);
+
             if (fresh) {
                 setSelectedAnimal(fresh);
             }
@@ -361,11 +362,15 @@ export default function AnimalMasterRecords({ animals, statusBar, filters, locat
 
     // Handle delete animal
     const confirmDelete = () => {
-        if (!animalToDelete) return;
+        if (!animalToDelete) {
+return;
+}
+
         router.delete(`${basePath}/${animalToDelete.id}`, {
             onSuccess: () => {
                 toast.success(`Animal #${animalToDelete.code} archived successfully.`);
                 setAnimalToDelete(null);
+
                 if (selectedAnimal?.id === animalToDelete.id) {
                     setSelectedAnimal(null);
                 }
@@ -2152,7 +2157,10 @@ function AddAnimalModal({ onClose, locationsList }: { onClose: () => void; locat
     });
 
     const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return;
+        if (!e.target.files) {
+return;
+}
+
         const selectedFiles = Array.from(e.target.files);
         setData('gallery_photos', [...data.gallery_photos, ...selectedFiles]);
     };
@@ -2537,7 +2545,10 @@ function EditAnimalModal({ animal, onClose, locationsList }: { animal: AnimalRec
     });
 
     const handleEditGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return;
+        if (!e.target.files) {
+return;
+}
+
         const selectedFiles = Array.from(e.target.files);
         setData('gallery_photos', [...data.gallery_photos, ...selectedFiles]);
     };

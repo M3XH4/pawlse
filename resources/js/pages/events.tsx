@@ -1,4 +1,4 @@
-/* eslint-disable @stylistic/brace-style */
+ 
 /* eslint-disable curly */
 import { router, Link, usePage, Head } from '@inertiajs/react';
 import {
@@ -159,12 +159,15 @@ const categoryConfig: Record<
 
 function isPastEventDate(dateStr: string): boolean {
     const normalized = dateStr?.slice(0, 10);
+
     if (!normalized) {
         return false;
     }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const eventDate = new Date(`${normalized}T00:00:00`);
+
     return !Number.isNaN(eventDate.getTime()) && eventDate < today;
 }
 
@@ -192,10 +195,12 @@ export default function Events({
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const eventIdParam = params.get('event') || params.get('id');
+
             if (eventIdParam && events?.data) {
                 const target = events.data.find(
                     (e) => String(e.id) === eventIdParam,
                 );
+
                 if (target) {
                     setSelectedEvent(target);
                 }
@@ -215,6 +220,7 @@ export default function Events({
             window.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
         }
+
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = '';
@@ -256,7 +262,9 @@ export default function Events({
     // Filter suggestions based on search query
     const filteredSuggestions = useMemo(() => {
         if (!searchQuery.trim()) return [];
+
         const query = searchQuery.toLowerCase();
+
         return SEARCH_SUGGESTIONS.filter(
             (s) =>
                 s.keyword.toLowerCase().includes(query) ||
@@ -280,10 +288,13 @@ export default function Events({
             if (joinAs === 'volunteer') {
                 toast.info('Volunteering requires a volunteer account. Please sign in or register to join as a volunteer.');
                 router.get('/volunteer');
+
                 return;
             }
+
             const ev = events.data.find((e) => e.id === eventId) || selectedEvent;
             setGuestModalEvent(ev || null);
+
             return;
         }
 
@@ -291,6 +302,7 @@ export default function Events({
             router.get('/volunteer', {
                 selectedEvent: events.data.find((e) => e.id === eventId) as any,
             });
+
             return;
         }
 
@@ -308,9 +320,12 @@ export default function Events({
 
     const handleGuestSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!guestModalEvent) return;
+
         if (!guestForm.name.trim() || !guestForm.email.trim()) {
             toast.error('Please enter your full name and valid email address.');
+
             return;
         }
 
@@ -382,6 +397,7 @@ export default function Events({
     const handleJoinFeeding = (scheduleId: number) => {
         if (!user) {
             router.get('/login');
+
             return;
         }
 
@@ -409,6 +425,7 @@ export default function Events({
                     });
                 },
             });
+
             return;
         }
 
@@ -439,6 +456,7 @@ export default function Events({
 
     const toggleBookmark = (e: React.MouseEvent, event: EventModel) => {
         e.stopPropagation();
+
         if (isBookmarked(event.id, 'event')) {
             removeBookmark(event.id, 'event');
         } else {
@@ -455,6 +473,7 @@ export default function Events({
     // Helper Pagination Component
     const Pagination = ({ links }: { links: any[] }) => {
         if (!links || links.length <= 3) return null;
+
         return (
             <div className="mt-12 flex items-center justify-center gap-2">
                 {links.map((link, idx) => {
@@ -467,6 +486,7 @@ export default function Events({
                             />
                         );
                     }
+
                     return (
                         <Link
                             key={idx}
@@ -636,6 +656,7 @@ export default function Events({
                                     const isSelected =
                                         filter.toLowerCase() ===
                                         f.toLowerCase();
+
                                     return (
                                         <button
                                             key={f}
@@ -1082,6 +1103,7 @@ export default function Events({
                                                     joinedScheduleIds.includes(
                                                         feeding.id,
                                                     );
+
                                                 return (
                                                     <motion.div
                                                         key={feeding.id}
@@ -1186,6 +1208,7 @@ export default function Events({
 
                                                             {(() => {
                                                                 const roster = feeding.assigned_tasks || feeding.assignedTasks || [];
+
                                                                 if (roster.length === 0) {
                                                                     return (
                                                                         <p className="text-center text-xs font-semibold text-gray-400">
@@ -1193,6 +1216,7 @@ export default function Events({
                                                                         </p>
                                                                     );
                                                                 }
+
                                                                 return (
                                                                     <div className="space-y-1.5 border-t border-gray-100 pt-3">
                                                                         <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">

@@ -165,6 +165,7 @@ test('SEC-15: role manipulation via registration payload does not grant elevated
         'email' => 'attacker@pawlse.test',
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
+        'terms' => true,
         'role' => 'super-admin',
     ]);
 

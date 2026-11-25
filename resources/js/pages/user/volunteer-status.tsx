@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     Zap,
     Clock,
@@ -13,7 +14,6 @@ import {
     ShieldCheck,
     LifeBuoy,
 } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 import {
     DashboardCard,
     DashboardMetricBadge,

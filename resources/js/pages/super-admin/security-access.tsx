@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { 
     ShieldCheck, ShieldAlert, CheckCircle2, AlertCircle, Search, Filter,
     Globe, HelpCircle
 } from 'lucide-react';
-import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
+import React, { useState, useEffect } from 'react';
 import { DashboardPagination } from '@/components/dashboard/pagination';
+import { DashboardSectionPage, DashboardCard } from '@/components/dashboard/section-page';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
@@ -58,6 +58,7 @@ export default function SecurityAccess({ logs, filters, stats }: SecurityAccessP
                 applyFilters();
             }
         }, 500);
+
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 

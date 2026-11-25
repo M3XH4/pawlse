@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     PawPrint,
@@ -24,10 +23,12 @@ import {
     CheckCircle2,
     Copy,
     Check,
-    Info,
-    type LucideIcon,
+    Info
+    
 } from 'lucide-react';
+import type {LucideIcon} from 'lucide-react';
 import { motion } from 'motion/react';
+import React, { useState } from 'react';
 
 interface ErrorProps {
     status: number;
@@ -325,6 +326,7 @@ export default function ErrorPage({
         if (!errorReference || typeof navigator === 'undefined') {
             return;
         }
+
         navigator.clipboard?.writeText(errorReference);
         setCopiedRef(true);
         setTimeout(() => setCopiedRef(false), 2000);

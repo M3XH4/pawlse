@@ -1,6 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -16,8 +14,10 @@ import {
     User,
     X,
 } from 'lucide-react';
-import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
+import { useState, useRef, useEffect } from 'react';
+import { ModernSelect } from '@/components/ui/modern-select';
 import { cn, formatPillLabel } from '@/lib/utils';
+import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 
 interface TicketDetailModalProps {
     ticket: HelpDeskTicket | null;
@@ -34,7 +34,9 @@ export function TicketDetailModal({
     role,
     frequentProblems = [],
 }: TicketDetailModalProps) {
-    if (!isOpen || !ticket) return null;
+    if (!isOpen || !ticket) {
+return null;
+}
 
     const isStaff = role === 'admin' || role === 'super-admin';
     const isSuperAdmin = role === 'super-admin';
@@ -60,10 +62,12 @@ export function TicketDetailModal({
                 setCannedMenuOpen(false);
             }
         }
+
         if (cannedMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleKeyDown);
         }
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleKeyDown);
@@ -157,6 +161,7 @@ export function TicketDetailModal({
 
     const handleInsertCannedProblem = (problemId: string) => {
         const problem = frequentProblems.find((p) => p.id === Number(problemId));
+
         if (problem) {
             const formatted = `Hi! Here is how to fix this:\n\n${problem.solution}`;
             const currentMessage = typeof replyForm.data.message === 'string' ? replyForm.data.message : '';

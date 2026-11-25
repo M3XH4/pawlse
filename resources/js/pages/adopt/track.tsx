@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
   Heart,
@@ -14,10 +13,12 @@ import {
   ArrowLeft,
   Hash,
 } from 'lucide-react';
-import { Header } from '@/components/header';
+import React, { useState } from 'react';
+import type { AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
+import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
 import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { AdoptionWizard, AdoptionWizardInitialData } from '@/components/adoption/adoption-wizard';
 
 interface ShelterAnimal {
   id: number;
@@ -94,6 +95,7 @@ export default function AdoptTrack({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (referenceInput.trim() && emailInput.trim()) {
       router.get(
         '/adopt/track',
@@ -136,6 +138,7 @@ export default function AdoptTrack({
             </span>
           );
         }
+
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
             <XCircle size={12} /> Declined

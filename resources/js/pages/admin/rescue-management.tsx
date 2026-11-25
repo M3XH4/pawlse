@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
+import { 
+  User, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
+  MapPin, Calendar, Camera, Info, ShieldAlert, Sparkles, Siren, 
+  Eye, Check, Link as LinkIcon, RefreshCw, Phone, Mail, X
+} from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
-import { AdminPageShell } from '@/components/admin/page-shell';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
+import { AdminPageShell } from '@/components/admin/page-shell';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import { useResponsiveViewMode, ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
@@ -11,12 +17,6 @@ import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatPhotoUrl } from '@/lib/utils';
-import { toast } from 'sonner';
-import { 
-  User, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, 
-  MapPin, Calendar, Camera, Info, ShieldAlert, Sparkles, Siren, 
-  Eye, Check, Link as LinkIcon, RefreshCw, Phone, Mail, X
-} from 'lucide-react';
 
 interface PaginatedData<T> {
   data: T[];
@@ -140,7 +140,10 @@ export default function RescueManagement({
 
   const handleAssignSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedReport || !assignVolunteerId) return;
+
+    if (!selectedReport || !assignVolunteerId) {
+return;
+}
 
     router.post(`${basePath}/${selectedReport.id}/assign`, {
       volunteer_id: assignVolunteerId
@@ -152,7 +155,10 @@ export default function RescueManagement({
           only: ['reports'],
           onSuccess: (page) => {
             const updated = (page.props.reports as any).data.find((r: any) => r.id === selectedReport.id);
-            if (updated) setSelectedReport(updated);
+
+            if (updated) {
+setSelectedReport(updated);
+}
           }
         });
         setAssignVolunteerId('');
@@ -162,7 +168,10 @@ export default function RescueManagement({
 
   const handleStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedReport || !updateStatusVal) return;
+
+    if (!selectedReport || !updateStatusVal) {
+return;
+}
 
     router.post(`${basePath}/${selectedReport.id}/status`, {
       status: updateStatusVal
@@ -173,7 +182,10 @@ export default function RescueManagement({
           only: ['reports'],
           onSuccess: (page) => {
             const updated = (page.props.reports as any).data.find((r: any) => r.id === selectedReport.id);
-            if (updated) setSelectedReport(updated);
+
+            if (updated) {
+setSelectedReport(updated);
+}
           }
         });
       }
@@ -182,7 +194,10 @@ export default function RescueManagement({
 
   const handleDuplicateLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedReport || !linkDuplicateOfId) return;
+
+    if (!selectedReport || !linkDuplicateOfId) {
+return;
+}
 
     router.post(`${basePath}/${selectedReport.id}/duplicate`, {
       is_duplicate: true,
@@ -194,7 +209,10 @@ export default function RescueManagement({
           only: ['reports'],
           onSuccess: (page) => {
             const updated = (page.props.reports as any).data.find((r: any) => r.id === selectedReport.id);
-            if (updated) setSelectedReport(updated);
+
+            if (updated) {
+setSelectedReport(updated);
+}
           }
         });
         setLinkDuplicateOfId('');
@@ -203,7 +221,9 @@ export default function RescueManagement({
   };
 
   const handleMarkNotDuplicate = () => {
-    if (!selectedReport) return;
+    if (!selectedReport) {
+return;
+}
 
     router.post(`${basePath}/${selectedReport.id}/duplicate`, {
       is_duplicate: false,
@@ -215,7 +235,10 @@ export default function RescueManagement({
           only: ['reports'],
           onSuccess: (page) => {
             const updated = (page.props.reports as any).data.find((r: any) => r.id === selectedReport.id);
-            if (updated) setSelectedReport(updated);
+
+            if (updated) {
+setSelectedReport(updated);
+}
           }
         });
       }
@@ -668,6 +691,7 @@ export default function RescueManagement({
                             const isVideo = /\.(mp4|mov|avi|webm|mkv|3gp)(\?.*)?$/i.test(photo.path || '') ||
                               Boolean((photo as { mime_type?: string | null }).mime_type?.startsWith('video/'));
                             const spanClass = selectedReport.photos?.length === 1 ? 'h-52' : idx === 0 ? 'h-36 sm:col-span-2' : 'h-36';
+
                             if (isVideo) {
                               return (
                                 <div
@@ -683,6 +707,7 @@ export default function RescueManagement({
                                 </div>
                               );
                             }
+
                             return (
                               <a
                                 key={photo.id}

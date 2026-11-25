@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { 
     Heart, 
@@ -24,6 +23,7 @@ import {
     ClipboardPaste,
     Image as ImageIcon
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 interface OfficialAccount {
@@ -111,10 +111,12 @@ export default function Checkout({ donation, simulation_enabled = false, officia
 
         for (const pattern of patterns) {
             const match = input.match(pattern);
+
             if (match && match[1]) {
                 return match[1].replace(/-/g, ' ').trim();
             }
         }
+
         return null;
     };
 
@@ -126,12 +128,14 @@ export default function Checkout({ donation, simulation_enabled = false, officia
 
         // Fallback: auto-detect transaction reference from file name if present
         const detectedFromFilename = extractReferenceFromString(file.name);
+
         if (detectedFromFilename && !data.payment_reference.trim()) {
             setData('payment_reference', detectedFromFilename);
         }
 
         // Run receipt OCR to extract Reference No. and Amount Received
         setIsScanningProof(true);
+
         try {
             const csrfToken =
                 document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -154,18 +158,22 @@ export default function Checkout({ donation, simulation_enabled = false, officia
                 if (result.reference_no) {
                     setData('payment_reference', result.reference_no);
                 }
+
                 if (typeof result.amount_received === 'number' && result.amount_received > 0) {
                     setDetectedAmount(result.amount_received);
                 }
 
                 if (result.reference_no || result.amount_received) {
                     const parts: string[] = [];
+
                     if (result.reference_no) {
                         parts.push(`Ref #${result.reference_no}`);
                     }
+
                     if (result.amount_received) {
                         parts.push(`Amount ₱${Number(result.amount_received).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
                     }
+
                     toast.success(`Detected ${parts.join(' • ')} from receipt!`, {
                         icon: <Sparkles className="text-amber-500" size={16} />,
                     });
@@ -181,6 +189,7 @@ export default function Checkout({ donation, simulation_enabled = false, officia
     const handlePasteFromClipboard = async () => {
         try {
             const text = await navigator.clipboard.readText();
+
             if (text && text.trim()) {
                 const detected = extractReferenceFromString(text) || text.trim();
                 setData('payment_reference', detected);
@@ -198,11 +207,13 @@ export default function Checkout({ donation, simulation_enabled = false, officia
 
         if (!data.proof && !isProofSubmitted) {
             toast.error('Please upload a screenshot or photo of your receipt.');
+
             return;
         }
 
         if (!data.payment_reference.trim()) {
             toast.error('Please provide the transaction reference number.');
+
             return;
         }
 

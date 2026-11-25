@@ -1,8 +1,4 @@
-import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
-import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -21,16 +17,20 @@ import {
     Sparkles,
     Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import {
     DashboardCard,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { FrequentProblemsManagerModal } from '@/components/help-desk/frequent-problems-manager-modal';
+import { TicketDetailModal } from '@/components/help-desk/ticket-detail-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
-import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
+import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { cn, formatPillLabel } from '@/lib/utils';
+import type { FrequentProblem, HelpDeskTicket } from '@/types/help-desk';
 
 interface SuperAdminHelpDeskProps {
     tickets: {

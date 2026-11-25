@@ -31,7 +31,7 @@ test('modernized otp email template renders Iligan Stray Feeders logo and 6-digi
     $html = (string) $mail->render();
 
     expect($html)
-        ->toContain('images/logo.png')
+        ->toContain('images/email-logo.png')
         ->toContain('Iligan Stray Feeders')
         ->toContain("Here's your code to verify your account")
         ->toContain('654321')
@@ -46,6 +46,7 @@ test('modernized transactional notification email renders branded header and log
     $pet = ShelterAnimal::factory()->available()->create(['name' => 'Bantay']);
     $application = AdoptionApplication::factory()->create([
         'user_id' => $user->id,
+        'full_name' => 'Carlo Mendoza',
         'shelter_animal_id' => $pet->id,
         'status' => AdoptionApplicationStatus::Approved,
     ]);
@@ -55,7 +56,7 @@ test('modernized transactional notification email renders branded header and log
     $html = (string) $mail->render();
 
     expect($html)
-        ->toContain('images/logo.png')
+        ->toContain('images/email-logo.png')
         ->toContain('PAWLSE')
         ->toContain('Iligan Stray Feeders')
         ->toContain('Hello there, Carlo Mendoza!')
@@ -78,7 +79,7 @@ test('modernized e-receipt email renders Grab-inspired layout with logo, breakdo
     $html = (string) $mail->render();
 
     expect($html)
-        ->toContain('images/logo.png')
+        ->toContain('images/email-logo.png')
         ->toContain('Iligan Stray Feeders')
         ->toContain('Hope you know you saved a life today!')
         ->toContain('DON-2026-9999')

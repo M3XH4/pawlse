@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
     Building2,
@@ -15,19 +14,21 @@ import {
     Heart,
     MessageSquareText,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { formatPillLabel } from '@/lib/utils';
+import {
+    ShelterVisitModal
+    
+} from '@/components/adoption/shelter-visit-modal';
+import type {ShelterVisitSettings} from '@/components/adoption/shelter-visit-modal';
 import {
     DashboardCard,
     DashboardMetricBadge,
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
-import {
-    ShelterVisitModal,
-    type ShelterVisitSettings,
-} from '@/components/adoption/shelter-visit-modal';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
+import { formatPillLabel } from '@/lib/utils';
 
 interface ShelterVisitItem {
     id: number;

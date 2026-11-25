@@ -1,7 +1,3 @@
-import { AnimatePresence, motion } from 'motion/react';
-import React, { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { ModernSelect } from '@/components/ui/modern-select';
 import {
     ShieldCheck,
     X,
@@ -18,6 +14,10 @@ import {
     DollarSign,
     Search
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { ModernSelect } from '@/components/ui/modern-select';
 
 export interface AuditRecord {
     id: number;
@@ -64,14 +64,18 @@ export function TransparencyAuditModal({
         const yearsSet = new Set<number>();
         yearsSet.add(currentYear);
         records.forEach((r) => {
-            if (r.year) yearsSet.add(r.year);
+            if (r.year) {
+yearsSet.add(r.year);
+}
         });
+
         return Array.from(yearsSet).sort((a, b) => b - a);
     }, [records, currentYear]);
 
     // Handle Quick Period Filter selection
     const handlePeriodChange = (filter: 'all' | 'this_month' | 'last_month' | 'this_year') => {
         setPeriodFilter(filter);
+
         if (filter === 'all') {
             setSelectedMonth('all');
         } else if (filter === 'this_year') {
@@ -93,30 +97,49 @@ export function TransparencyAuditModal({
         return records.filter((record) => {
             // Type filter
             if (selectedType !== 'all') {
-                if (selectedType === 'cash' && record.type !== 'cash') return false;
-                if (selectedType === 'in_kind' && record.type !== 'in_kind') return false;
-                if (selectedType === 'feeding_sponsorship' && record.type !== 'feeding_sponsorship') return false;
+                if (selectedType === 'cash' && record.type !== 'cash') {
+return false;
+}
+
+                if (selectedType === 'in_kind' && record.type !== 'in_kind') {
+return false;
+}
+
+                if (selectedType === 'feeding_sponsorship' && record.type !== 'feeding_sponsorship') {
+return false;
+}
             }
 
             // Period quick pills
             if (periodFilter === 'this_year') {
-                if (record.year !== selectedYear) return false;
+                if (record.year !== selectedYear) {
+return false;
+}
             } else if (periodFilter === 'this_month') {
-                if (record.year !== currentYear || record.month !== currentMonth) return false;
+                if (record.year !== currentYear || record.month !== currentMonth) {
+return false;
+}
             } else if (periodFilter === 'last_month') {
                 const targetMonth = currentMonth === 1 ? 12 : currentMonth - 1;
                 const targetYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-                if (record.year !== targetYear || record.month !== targetMonth) return false;
+
+                if (record.year !== targetYear || record.month !== targetMonth) {
+return false;
+}
             }
 
             // Specific Month dropdown filter
             if (selectedMonth !== 'all' && periodFilter === 'this_year') {
-                if (record.month !== selectedMonth) return false;
+                if (record.month !== selectedMonth) {
+return false;
+}
             }
 
             // Year dropdown filter
             if (selectedYear && periodFilter !== 'all' && periodFilter !== 'this_month' && periodFilter !== 'last_month') {
-                if (record.year !== selectedYear) return false;
+                if (record.year !== selectedYear) {
+return false;
+}
             }
 
             // Search query filter
@@ -125,6 +148,7 @@ export function TransparencyAuditModal({
                 const donor = (record.donor_name || record.name || '').toLowerCase();
                 const receipt = (record.receipt || '').toLowerCase();
                 const purpose = (record.purpose || '').toLowerCase();
+
                 return donor.includes(query) || receipt.includes(query) || purpose.includes(query);
             }
 
@@ -148,28 +172,40 @@ export function TransparencyAuditModal({
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
 
-        if (periodFilter === 'all') return 'All Time Public Record';
-        if (periodFilter === 'this_month') return `${monthNames[currentMonth - 1]} ${currentYear}`;
+        if (periodFilter === 'all') {
+return 'All Time Public Record';
+}
+
+        if (periodFilter === 'this_month') {
+return `${monthNames[currentMonth - 1]} ${currentYear}`;
+}
+
         if (periodFilter === 'last_month') {
             const lastM = currentMonth === 1 ? 12 : currentMonth - 1;
             const lastY = currentMonth === 1 ? currentYear - 1 : currentYear;
+
             return `${monthNames[lastM - 1]} ${lastY}`;
         }
+
         if (selectedMonth !== 'all') {
             return `${monthNames[Number(selectedMonth) - 1]} ${selectedYear}`;
         }
+
         return `All Months ${selectedYear}`;
     }, [periodFilter, selectedMonth, selectedYear, currentMonth, currentYear]);
 
     // CSV Export functionality
     const handleExport = () => {
-        if (filteredRecords.length === 0) return;
+        if (filteredRecords.length === 0) {
+return;
+}
 
         const headers = ['Receipt Ref', 'Date', 'Donor Name', 'Type', 'Amount (PHP)', 'In-Kind Quantity', 'Purpose / Usage', 'Status'];
         const csvRows = [
             headers.join(','),
             ...filteredRecords.map((r) => {
                 const escapeCsv = (str: any) => `"${String(str || '').replace(/"/g, '""')}"`;
+
                 return [
                     escapeCsv(r.receipt),
                     escapeCsv(r.date),

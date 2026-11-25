@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import { BookOpen, Check, Sparkles, X } from 'lucide-react';
-import type { FrequentProblem } from '@/types/help-desk';
-import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { cn } from '@/lib/utils';
+import type { FrequentProblem } from '@/types/help-desk';
 
 interface FrequentProblemsManagerModalProps {
     isOpen: boolean;
@@ -51,7 +51,9 @@ export function FrequentProblemsManagerModal({
         }
     }, [editingProblem, isOpen]);
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+return null;
+}
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

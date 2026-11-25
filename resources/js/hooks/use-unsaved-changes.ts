@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
 import { router } from '@inertiajs/react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 type PendingAction =
     | {
@@ -70,6 +70,7 @@ export function useUnsavedChanges({ isDirty, disabled = false }: UseUnsavedChang
             if (!allowNavigationRef.current && !disabled && isDirty) {
                 e.preventDefault();
                 e.returnValue = '';
+
                 return '';
             }
         };
@@ -106,6 +107,7 @@ export function useUnsavedChanges({ isDirty, disabled = false }: UseUnsavedChang
 
         if (!action) {
             window.history.back();
+
             return;
         }
 
@@ -136,6 +138,7 @@ export function useUnsavedChanges({ isDirty, disabled = false }: UseUnsavedChang
         (onProceed: () => void) => {
             if (disabled || !isDirty) {
                 onProceed();
+
                 return;
             }
 

@@ -13,12 +13,10 @@ use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
-use Spatie\Permission\Models\Role as PermissionRole;
 
 test('admin can request additional info and email applicant with track link', function () {
     Notification::fake();
 
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
     $admin = User::factory()->create(['role' => Role::Admin->value]);
     $admin->syncRoles([Role::Admin]);
 
@@ -61,7 +59,6 @@ test('public applicant on track page can reply with requirement images and trans
     Notification::fake();
     Storage::fake('public');
 
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
     $admin = User::factory()->create(['role' => Role::Admin->value]);
     $admin->syncRoles([Role::Admin]);
 
@@ -123,7 +120,6 @@ test('public user with mismatched email cannot reply or cancel adoption applicat
 test('admin rejecting an application emails the reason and displays it on the track page', function () {
     Notification::fake();
 
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
     $admin = User::factory()->create(['role' => Role::Admin->value]);
     $admin->syncRoles([Role::Admin]);
 
@@ -167,9 +163,6 @@ test('admin rejecting an application emails the reason and displays it on the tr
 
 test('applicant can cancel scheduled adoption application from dashboard or track page and admin sees cancelled status', function () {
     Notification::fake();
-
-    PermissionRole::findOrCreate(Role::User->value, 'web');
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
 
     $user = User::factory()->create(['role' => Role::User->value]);
     $user->syncRoles([Role::User]);
@@ -231,9 +224,6 @@ test('applicant can cancel scheduled adoption application from dashboard or trac
 test('authenticated applicant can view messages and reply from dashboard without using track page', function () {
     Notification::fake();
     Storage::fake('public');
-
-    PermissionRole::findOrCreate(Role::User->value, 'web');
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
 
     $user = User::factory()->create(['role' => Role::User->value]);
     $user->syncRoles([Role::User]);
@@ -303,9 +293,6 @@ test('authenticated applicant can view messages and reply from dashboard without
 
 test('coordinator notifications link registered applicants to dashboard sidebar instead of track page', function () {
     Notification::fake();
-
-    PermissionRole::findOrCreate(Role::User->value, 'web');
-    PermissionRole::findOrCreate(Role::Admin->value, 'web');
 
     $user = User::factory()->create(['role' => Role::User->value]);
     $user->syncRoles([Role::User]);

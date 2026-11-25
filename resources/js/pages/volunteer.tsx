@@ -2,12 +2,12 @@ import { usePage, useForm, router, Link } from '@inertiajs/react';
 import { Heart, Users, MapPin, Check, Plus, ShieldCheck, Zap, HandHeart, Trophy, Award, ChevronRight, ChevronLeft, Info, CheckCircle2, Calendar, Clock, Utensils, User, Mail, Phone, Home, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
+import { SubmissionReceipt } from '@/components/donation/submission-receipt';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
-import { SubmissionReceipt } from '@/components/donation/submission-receipt';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/phone-formatter';
 
 type Event = {
     type: string,
@@ -243,56 +243,73 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
 
     const getStep1MissingRequirements = () => {
         const missing: string[] = [];
+
         if (!data.fullName.trim()) {
             missing.push('Full Name');
         }
+
         if (!data.mobile.trim() || data.mobile.trim() === '+63') {
             missing.push('Mobile Number');
         } else if (!isValidPhoneNumber(data.mobile)) {
             missing.push('Complete 10-digit Mobile Number');
         }
+
         if (!data.email.trim()) {
             missing.push('Email Address');
         } else if (!isValidEmail(data.email)) {
             missing.push('Valid Email Address (e.g. name@example.com)');
         }
+
         if (!data.address.trim()) {
             missing.push('Address');
         }
+
         if (!data.role) {
             missing.push('Preferred Role Selection');
         }
+
         return missing;
     };
 
     const validateStep2 = () => {
-        if (!allTermsAccepted) return false;
+        if (!allTermsAccepted) {
+return false;
+}
+
         if (data.role === 'Transport' && !data.transport_has_license) {
             return false;
         }
+
         return true;
     };
 
     const getStep2MissingRequirements = () => {
         const missing: string[] = [];
+
         if (!termsAccepted.codeOfConduct) {
             missing.push('Code of Conduct Agreement');
         }
+
         if (!termsAccepted.orientation) {
             missing.push('Mandatory Orientation Attendance');
         }
+
         if (!termsAccepted.backgroundCheck) {
             missing.push('Background Verification');
         }
+
         if (!termsAccepted.availability) {
             missing.push('Time Commitment');
         }
+
         if (!termsAccepted.safetyProtocol) {
             missing.push('Animal Safety Protocols');
         }
+
         if (data.role === 'Transport' && !data.transport_has_license) {
             missing.push("Driver's License & Vehicle Registration Declaration");
         }
+
         return missing;
     };
 
@@ -303,10 +320,12 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                     Boolean(data.foster_preference) &&
                     data.foster_needs.trim() !== '';
             }
+
             if (data.role === 'Medic Volunteer') {
                 return data.medic_certifications.trim() !== '';
             }
         }
+
         return data.why.trim() !== '';
     };
 
@@ -314,24 +333,44 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
         if (hasRoleSpecificStep) {
             return data.why.trim() !== '';
         }
+
         return true;
     };
 
     const canProceed = () => {
-        if (currentStep === 1) return validateStep1();
-        if (currentStep === 2) return validateStep2();
-        if (currentStep === 3) return validateStep3();
-        if (currentStep === 4) return validateStep4();
+        if (currentStep === 1) {
+return validateStep1();
+}
+
+        if (currentStep === 2) {
+return validateStep2();
+}
+
+        if (currentStep === 3) {
+return validateStep3();
+}
+
+        if (currentStep === 4) {
+return validateStep4();
+}
+
         return false;
     };
 
     const nextStep = () => {
-        if (!canProceed()) return;
-        if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+        if (!canProceed()) {
+return;
+}
+
+        if (currentStep < totalSteps) {
+setCurrentStep(currentStep + 1);
+}
     };
 
     const prevStep = () => {
-        if (currentStep > 1) setCurrentStep(currentStep - 1);
+        if (currentStep > 1) {
+setCurrentStep(currentStep - 1);
+}
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -373,10 +412,13 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+
         if (name === 'mobile') {
             setData('mobile', formatPhoneNumber(value));
+
             return;
         }
+
         setData(name as any, value);
     };
 
@@ -803,6 +845,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                 {VOLUNTEER_ROLES.map((r) => {
                                                                     const isSelected = data.role === r.title;
+
                                                                     return (
                                                                         <button
                                                                             key={r.id}
@@ -1116,6 +1159,7 @@ export default function VolunteerPage({ application, selectedEvent, auth }: Volu
                                                                             { id: 'both', label: 'Both Cats & Dogs', desc: 'Flexible to foster either species' },
                                                                         ].map((pref) => {
                                                                             const isSelected = data.foster_preference === pref.id;
+
                                                                             return (
                                                                                 <button
                                                                                     key={pref.id}

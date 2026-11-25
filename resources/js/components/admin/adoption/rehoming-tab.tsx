@@ -1,7 +1,4 @@
-import React, { useState, useMemo } from 'react';
 import { useForm, router } from '@inertiajs/react';
-import { ModernSelect } from '@/components/ui/modern-select';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   HeartHandshake,
   Search,
@@ -22,11 +19,14 @@ import {
   Camera,
   Sparkles,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
-import { Spinner } from '@/components/ui/spinner';
 import { AdminCard } from '@/components/admin/card';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
+import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 
 export interface RehomingRequestData {
   id: number;
@@ -77,7 +77,10 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
 
   const handleStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRequest) return;
+
+    if (!selectedRequest) {
+return;
+}
 
     post(`/account/admin/adoption-management/rehoming-requests/${selectedRequest.id}/status`, {
       preserveScroll: true,
@@ -93,7 +96,10 @@ export function RehomingTab({ rehomingRequests = [] }: RehomingTabProps) {
   };
 
   const handleIntakeSubmit = () => {
-    if (!selectedRequest) return;
+    if (!selectedRequest) {
+return;
+}
+
     openConfirmModal({
       title: 'Admit Pet to Shelter Records',
       description: `Are you sure you want to admit ${selectedRequest.animal_name} into shelter master records as an available adoptable pet?`,

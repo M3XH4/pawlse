@@ -1,4 +1,3 @@
-import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
   Heart,
@@ -29,13 +28,15 @@ import {
   Maximize2,
   X,
 } from 'lucide-react';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import React, { useState, useMemo } from 'react';
 import { AdoptionWizard } from '@/components/adoption/adoption-wizard';
+import type { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
 import { ShareModal } from '@/components/adoption/share-modal';
-import { ShelterVisitModal, ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
-import { AdoptPetDetail } from '@/components/adoption/pet-detail-modal';
+import type { ShelterVisitSettings } from '@/components/adoption/shelter-visit-modal';
+import { ShelterVisitModal } from '@/components/adoption/shelter-visit-modal';
+import { Footer } from '@/components/footer';
+import { Header } from '@/components/header';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useBookmarks } from '@/context/bookmark-context';
 
 interface PetShowProps {
@@ -120,6 +121,7 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
 
   const getStatusBadge = () => {
     const st = (pet.status || 'available').toLowerCase();
+
     switch (st) {
       case 'available':
         return {
@@ -496,6 +498,7 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
           <div className="flex flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto hide-scrollbar py-2 mb-8">
             {availableTabs.map((tab: TabType) => {
               const isActive = activeTab === tab;
+
               return (
                 <button
                   key={tab}

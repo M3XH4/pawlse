@@ -1,3 +1,4 @@
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     MapPin,
@@ -15,24 +16,24 @@ import {
     Video,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ModernSelect } from '@/components/ui/modern-select';
 import React, { useRef, useState, useEffect } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
+import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
+import { ModernSelect } from '@/components/ui/modern-select';
+import { Spinner } from '@/components/ui/spinner';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import {
     fetchNearbyVetClinics,
     forwardGeocode,
-    NearbyMapVet,
     reverseGeocode,
 } from '@/lib/geocoding';
-import { haversineDistanceKm } from '@/lib/routing';
-import { LoadingTimeUI } from '@/components/ui/loading-time-ui';
-import { Spinner } from '@/components/ui/spinner';
+import type {
+    NearbyMapVet} from '@/lib/geocoding';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
-import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
-import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { haversineDistanceKm } from '@/lib/routing';
 
 const EMERGENCY_CONTACTS = [
     {
@@ -109,7 +110,10 @@ interface VeterinaryClinic {
 }
 
 const isVideoFile = (file?: File | null): boolean => {
-    if (!file) return false;
+    if (!file) {
+return false;
+}
+
     return (
         file.type.startsWith('video/') ||
         /\.(mp4|mov|avi|webm|mkv|3gp)$/i.test(file.name)
@@ -203,7 +207,9 @@ export default function SOS({
     }, []);
 
     useEffect(() => {
-        if (!submitted || !sosGpsEnabled) return;
+        if (!submitted || !sosGpsEnabled) {
+return;
+}
 
         let cancelled = false;
 
@@ -214,6 +220,7 @@ export default function SOS({
                 const coordMatch = submittedLocation.match(
                     /^\s*([\d.-]+)\s*,\s*([\d.-]+)\s*$/,
                 );
+
                 if (coordMatch) {
                     coords = {
                         lat: parseFloat(coordMatch[1]),
@@ -222,6 +229,7 @@ export default function SOS({
                 } else {
                     coords = await forwardGeocode(submittedLocation);
                 }
+
                 if (!cancelled && coords) {
                     setUserCoords(coords);
                 }
@@ -233,6 +241,7 @@ export default function SOS({
                     coords.lat,
                     coords.lng,
                 );
+
                 if (!cancelled) {
                     setMapVets(nearby);
                     setLoadingMapVets(false);
@@ -253,6 +262,7 @@ export default function SOS({
         >,
     ) => {
         const { name, value } = e.target;
+
         if (name === 'contactPhone') {
             setFormData({ ...formData, [name]: formatPhoneNumber(value) });
         } else {
@@ -299,8 +309,13 @@ export default function SOS({
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length === 0) return;
+
+        if (files.length === 0) {
+return;
+}
+
         processFiles(files);
+
         if (e.target) {
             e.target.value = '';
         }
@@ -308,9 +323,11 @@ export default function SOS({
 
     const handleRemoveFile = (indexToRemove: number) => {
         const previewToRevoke = filePreviews[indexToRemove];
+
         if (previewToRevoke && previewToRevoke.startsWith('blob:')) {
             URL.revokeObjectURL(previewToRevoke);
         }
+
         setUploadedFiles((prev) =>
             prev.filter((_, idx) => idx !== indexToRemove),
         );
@@ -338,6 +355,7 @@ export default function SOS({
         const files = e.dataTransfer.files
             ? Array.from(e.dataTransfer.files)
             : [];
+
         if (files.length > 0) {
             processFiles(files);
         }
@@ -353,6 +371,7 @@ export default function SOS({
                 async (position) => {
                     const { latitude, longitude } = position.coords;
                     setUserCoords({ lat: latitude, lng: longitude });
+
                     try {
                         const address = await reverseGeocode(
                             latitude,
@@ -392,20 +411,28 @@ export default function SOS({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!formData.situationType) {
             toast.error('Please select the type of emergency.');
+
             return;
         }
+
         if (!formData.animalType) {
             toast.error('Please select the animal type.');
+
             return;
         }
+
         if (!formData.location.trim()) {
             toast.error('Location is required.');
+
             return;
         }
+
         if (!formData.description.trim()) {
             toast.error('Detailed description is required.');
+
             return;
         }
 
@@ -440,10 +467,13 @@ export default function SOS({
                         is_duplicate?: boolean;
                     } | null;
                 } | undefined;
+
                 if (pageFlash?.error) {
                     toast.error(pageFlash.error);
+
                     return;
                 }
+
                 if (pageFlash?.submitted_report) {
                     setSubmittedReportInfo(pageFlash.submitted_report);
                 } else {
@@ -453,6 +483,7 @@ export default function SOS({
                         is_duplicate: false,
                     });
                 }
+
                 setSubmittedLocation(targetLocation);
                 setSubmitted(true);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -775,6 +806,7 @@ export default function SOS({
                                                             const fileIsVideo = isVideoFile(
                                                                 uploadedFiles[idx],
                                                             );
+
                                                             return (
                                                                 <div
                                                                     key={idx}
@@ -1317,6 +1349,7 @@ export default function SOS({
                                                         ? -1
                                                         : 1;
                                                 }
+
                                                 if (
                                                     a.distanceKm !== null &&
                                                     b.distanceKm !== null
@@ -1326,10 +1359,15 @@ export default function SOS({
                                                         b.distanceKm
                                                     );
                                                 }
-                                                if (a.distanceKm !== null)
-                                                    return -1;
-                                                if (b.distanceKm !== null)
-                                                    return 1;
+
+                                                if (a.distanceKm !== null) {
+return -1;
+}
+
+                                                if (b.distanceKm !== null) {
+return 1;
+}
+
                                                 return (
                                                     a.display_order -
                                                     b.display_order
@@ -1337,11 +1375,18 @@ export default function SOS({
                                             })
                                             .slice(0, 4);
                                     })().map((vet, index) => {
-                                        const mapsHref =
-                                            vet.latitude != null &&
-                                            vet.longitude != null
-                                                ? `https://www.google.com/maps/dir/?api=1&destination=${vet.latitude},${vet.longitude}`
-                                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vet.name} ${vet.address}`)}`;
+                                        const destinationQuery = [
+                                            vet.name,
+                                            vet.address,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ');
+                                        const mapsHref = destinationQuery
+                                            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinationQuery)}`
+                                            : vet.latitude != null &&
+                                                vet.longitude != null
+                                              ? `https://www.google.com/maps/dir/?api=1&destination=${vet.latitude},${vet.longitude}`
+                                              : '#';
 
                                         return (
                                             <motion.div
