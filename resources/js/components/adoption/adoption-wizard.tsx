@@ -54,6 +54,7 @@ export interface AdoptionWizardInitialData {
 interface AdoptionWizardProps {
   pet: any;
   onClose: () => void;
+  onBack?: () => void;
   initialData?: AdoptionWizardInitialData | null;
   resubmitApplicationId?: number | null;
 }
@@ -61,6 +62,7 @@ interface AdoptionWizardProps {
 export function AdoptionWizard({
   pet,
   onClose,
+  onBack,
   initialData = null,
   resubmitApplicationId = null,
 }: AdoptionWizardProps) {
@@ -1411,9 +1413,10 @@ return validateStep4();
 
         {/* Footer */}
         <div className="shrink-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 sm:p-6 flex justify-between items-center gap-4 relative z-20">
-          {currentStep > 1 && (
+          {(currentStep > 1 || onBack) && (
             <button
-              onClick={handleBack}
+              type="button"
+              onClick={currentStep > 1 ? handleBack : () => confirmAction(onBack!)}
               className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all cursor-pointer"
             >
               <ChevronLeft size={20} />

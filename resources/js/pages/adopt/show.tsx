@@ -641,8 +641,8 @@ export default function PetShow({ pet, shelterVisitSettings }: PetShowProps) {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                     INITIAL CONDITION
                   </div>
-                  <div className="text-sm font-bold text-slate-900">
-                    {pet.intake_type || 'Not Recorded'}
+                  <div className="text-sm font-bold text-slate-900 capitalize">
+                    {pet.intake_type ? pet.intake_type.replace(/_/g, ' ') : 'Not Recorded'}
                   </div>
                 </div>
               </div>

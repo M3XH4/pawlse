@@ -1910,7 +1910,7 @@ return;
                                             </div>
                                             <div>
                                                 <span className="text-gray-400 block text-[11px]">Intake Type</span>
-                                                <strong className="text-gray-800 dark:text-gray-200 capitalize">{selectedAnimal.intake_type}</strong>
+                                                <strong className="text-gray-800 dark:text-gray-200 capitalize">{selectedAnimal.intake_type?.replace(/_/g, ' ')}</strong>
                                             </div>
                                             <div>
                                                 <span className="text-gray-400 block text-[11px]">Shelter Admission</span>

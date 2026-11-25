@@ -22,6 +22,9 @@ import {
   ChevronRight,
   ShieldCheck,
   Images,
+  PawPrint,
+  Dog,
+  Cat,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useMemo, useRef } from 'react';
@@ -432,29 +435,52 @@ return [];
           {/* Quick Species Filter Tabs */}
           <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 mb-6 w-full sm:w-auto">
             {[
-              { id: 'All', label: 'All Animals', count: safePets.length, icon: '🐾' },
-              { id: 'Dog', label: 'Dogs', count: dogCount, icon: '🐕' },
-              { id: 'Cat', label: 'Cats', count: catCount, icon: '🐈' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilters((prev) => ({ ...prev, type: tab.id }))}
-                className={`flex-1 sm:flex-initial justify-center px-2.5 py-2 sm:px-4 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
-                  filters.type === tab.id
-                    ? 'bg-[#0B2340] text-white shadow-md shadow-paw-navy/20 sm:scale-105'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/70'
-                }`}
-              >
-                <span className="shrink-0">{tab.icon}</span>
-                <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
-                  filters.type === tab.id ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+              {
+                id: 'All',
+                label: 'All Animals',
+                count: safePets.length,
+                icon: PawPrint,
+                iconColor: 'text-paw-orange',
+              },
+              {
+                id: 'Dog',
+                label: 'Dogs',
+                count: dogCount,
+                icon: Dog,
+                iconColor: 'text-amber-500',
+              },
+              {
+                id: 'Cat',
+                label: 'Cats',
+                count: catCount,
+                icon: Cat,
+                iconColor: 'text-violet-500',
+              },
+            ].map((tab) => {
+              const IconComponent = tab.icon;
+              const isActive = filters.type === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilters((prev) => ({ ...prev, type: tab.id }))}
+                  className={`flex-1 sm:flex-initial justify-center px-2.5 py-2 sm:px-4 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-[#0B2340] text-white shadow-md shadow-paw-navy/20 sm:scale-105'
+                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/70'
+                  }`}
+                >
+                  <IconComponent size={14} className={`shrink-0 ${tab.iconColor}`} />
+                  <span>{tab.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
+                    isActive ? 'bg-paw-orange text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Filter Panel */}
@@ -982,6 +1008,10 @@ return `${days}d in care`;
           <AdoptionWizard
             pet={applyingPet}
             onClose={() => setApplyingPet(null)}
+            onBack={() => {
+              setSelectedPet(applyingPet);
+              setApplyingPet(null);
+            }}
           />
         )}
       </AnimatePresence>

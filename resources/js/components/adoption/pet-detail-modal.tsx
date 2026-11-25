@@ -429,7 +429,7 @@ return `${days}d`;
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Intake Type</p>
                         <p className="font-semibold text-slate-800 text-sm capitalize mt-0.5">
-                          {pet.intake_type || 'Rescue / Stray'}
+                          {(pet.intake_type || 'Rescue / Stray').replace(/_/g, ' ')}
                         </p>
                       </div>
                     </div>
