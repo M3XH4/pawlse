@@ -310,9 +310,15 @@ test('public about page renders successfully with partners network and community
         );
 });
 
-test('public resource download route increments download counter and returns file attachment', function () {
+test('public resource download route increments download counter and returns valid ISF-templated PDF attachment', function () {
+    $this->seed(PartnerAndResourceSeeder::class);
+
     $resource = ResourceFile::factory()->create([
         'title' => 'Emergency First Aid Guide',
+        'category' => 'emergency_protocol',
+        'badge' => 'ISF OFFICIAL PROTOCOL',
+        'description' => 'Immediate first aid guidance for injured street animals in Iligan City.',
+        'content' => "## Quick Triage\nResponse Goal: Stabilize and transport rapidly\n- Keep the animal calm and warm.\n- Call Dr. E Veterinary Clinic ahead of arrival.",
         'file_name' => 'FirstAid.pdf',
         'download_count' => 5,
     ]);
@@ -320,8 +326,49 @@ test('public resource download route increments download counter and returns fil
     $response = $this->get(route('resources.download', $resource));
 
     $response->assertOk();
+    $response->assertHeader('Content-Type', 'application/pdf');
     $response->assertHeader('Content-Disposition', 'attachment; filename="FirstAid.pdf"');
+
+    $pdfContent = (string) $response->getContent();
+    expect($pdfContent)->toStartWith('%PDF-1.4')
+        ->and($pdfContent)->toContain('%%EOF')
+        ->and($pdfContent)->toContain('ILIGAN STRAY FEEDERS')
+        ->and($pdfContent)->toContain('Emergency First Aid Guide')
+        ->and($pdfContent)->toContain('Dr. E Veterinary Clinic');
+
     expect($resource->fresh()->download_count)->toBe(6);
+});
+
+test('public resource preview route renders print-ready ISF A4 template with parsed sections and clinic contacts', function () {
+    $this->seed(PartnerAndResourceSeeder::class);
+
+    $resource = ResourceFile::where('slug', 'pet-boarding-cats')->firstOrFail();
+
+    $this->get(route('resources.preview', $resource))
+        ->assertOk()
+        ->assertSee('Official ISF Template', false)
+        ->assertSee('Pet Boarding - Cats', false)
+        ->assertSee('Pre-Boarding Health Requirements', false)
+        ->assertSee('Dr. E Veterinary Clinic', false);
+});
+
+test('public vet page excludes audit documents from pet care resources and loads enriched guide content', function () {
+    $this->seed(PartnerAndResourceSeeder::class);
+
+    ResourceFile::factory()->create([
+        'title' => 'Annual Financial Audit 2026',
+        'category' => 'audit_report',
+        'is_active' => true,
+    ]);
+
+    $this->get(route('vet'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('vet')
+            ->has('petResources', 7)
+            ->where('stats.care_resources', 7)
+            ->where('petResources.0.slug', 'pet-boarding-cats')
+        );
 });
 
 test('public donate page passes auditPartner and supportingDocuments to view', function () {

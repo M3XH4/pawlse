@@ -33,6 +33,7 @@ class VetController extends Controller
             ->get();
 
         $petResources = ResourceFile::active()
+            ->whereNotIn('category', ['audit_report', 'financial_audit'])
             ->orderBy('display_order')
             ->get();
 
@@ -40,7 +41,7 @@ class VetController extends Controller
             'trusted_clinics' => Partner::active()->veterinary()->count(),
             'vet_on_record' => 1,
             'emergency_contacts' => Partner::active()->emergency()->count(),
-            'care_resources' => ResourceFile::active()->count(),
+            'care_resources' => $petResources->count(),
         ];
 
         $vetOnRecord = [

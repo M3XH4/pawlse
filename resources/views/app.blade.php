@@ -57,7 +57,7 @@
                     const isSameOriginReferrer = Boolean(document.referrer && document.referrer.indexOf(window.location.origin) === 0);
                     const skipUntil = Number(localStorage.getItem('pawlse_skip_splash_until') || '0');
                     const isSkipActive = skipUntil > Date.now();
-                    if (isSkipActive) {
+                    if (skipUntil && !isSkipActive) {
                         localStorage.removeItem('pawlse_skip_splash_until');
                     }
 
@@ -511,6 +511,7 @@
                 function markSkipNextSplash() {
                     try {
                         localStorage.setItem('pawlse_skip_splash_until', String(Date.now() + 180000));
+                        sessionStorage.setItem('pawlse_splash_shown', '1');
                     } catch (e) {}
                 }
 
@@ -523,11 +524,15 @@
                 }
 
                 document.addEventListener('click', function(event) {
-                    const anchor = event.target && event.target.closest ? event.target.closest('a[target="_blank"]') : null;
+                    const anchor = event.target && event.target.closest
+                        ? event.target.closest('a[target="_blank"], a[href*="/preview"], a[href*="/download"], a[href*="/pdf"]')
+                        : null;
                     if (anchor) {
                         markSkipNextSplash();
                     }
                 }, true);
+
+                window.addEventListener('beforeprint', markSkipNextSplash);
 
                 if ('serviceWorker' in navigator) {
                     window.addEventListener('load', function() {

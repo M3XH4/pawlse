@@ -21,11 +21,11 @@ class PartnerAndResourceSeeder extends Seeder
                 'badge_title' => 'FREQUENTLY CONTACTED BY ISF',
                 'badges' => ['Emergency Response', 'Frequently Contacted by ISF'],
                 'short_description' => 'Frequently contacted by ISF for veterinary and emergency animal care.',
-                'description' => 'Primary veterinary clinic in Iligan City providing comprehensive emergency services, routine animal treatments, surgery, and consultations for rescued stray animals.',
-                'address' => 'D’Armanni Bldg., Dao Hinaplanon Highway (in front of Gerona Enterprises)',
+                'description' => 'Primary veterinary clinic in Iligan City located along Dao Hinaplanon Highway (in front of Gerona Enterprises). Provides emergency trauma response, medical consultations, vaccinations, minor and major surgeries, and post-treatment confinement for rescued stray cats and dogs.',
+                'address' => 'Purok 3 Barangay Dao, Hinaplanon, Highway, Iligan City, 9200 Lanao del Norte',
                 'city' => 'Tambo, Iligan City',
-                'latitude' => 8.2392000,
-                'longitude' => 124.2535000,
+                'latitude' => 8.2485580,
+                'longitude' => 124.2608434,
                 'phone' => '+63 956 381 9018',
                 'email' => 'dre.vetclinic@gmail.com',
                 'operating_hours' => 'Mon - Sat: 8:00 AM – 7:00 PM | Sun: 9:00 AM – 3:00 PM',
@@ -43,15 +43,15 @@ class PartnerAndResourceSeeder extends Seeder
                 'badge_title' => 'TRUSTED VETERINARY RESOURCE',
                 'badges' => ['Trusted Veterinary Resource', 'Emergency Option'],
                 'short_description' => 'Veterinary resource contacted by ISF when additional veterinary assistance is needed.',
-                'description' => 'Trusted animal care facility in Iligan City providing wellness checks, deworming, spay/neuter support, and on-call emergency diagnostics.',
-                'address' => 'Purok 1, Camague Highway, Tominobo (near Shell Station)',
+                'description' => 'Trusted companion animal clinic on Camague Highway, Tominobo (near Shell Station) offering wellness check-ups, deworming, core vaccinations, spay/neuter support, diagnostic lab work, and after-clinic emergency care (with standard after-hours fee).',
+                'address' => '666J+R6J, Iligan City, Lanao del Norte',
                 'city' => 'Palao / Camague, Iligan City',
-                'latitude' => 8.2155000,
-                'longitude' => 124.2345000,
+                'latitude' => 8.2123657,
+                'longitude' => 124.2304882,
                 'phone' => '+63 935 380 1820',
                 'email' => 'petmate.iligan@gmail.com',
-                'operating_hours' => 'Mon - Sat: 8:00 AM – 6:00 PM | Sun: 8:00 AM – 3:00 PM',
-                'services' => ['Routine Check-ups', 'Deworming & Vaccines', 'Diagnostics', 'After-Hours Emergency'],
+                'operating_hours' => 'Mon - Sat: 8:00 AM – 6:00 PM | Sun: 8:00 AM – 3:00 PM (After-hours emergency available)',
+                'services' => ['Routine Check-ups', 'Deworming & Vaccines', 'Diagnostics', 'Spay & Neuter', 'After-Hours Emergency'],
                 'image_url' => '/images/partners/petmate.jpg',
                 'is_emergency' => true,
                 'is_featured' => false,
@@ -65,15 +65,15 @@ class PartnerAndResourceSeeder extends Seeder
                 'badge_title' => 'EMERGENCY OPTION',
                 'badges' => ['Emergency Option', 'Veterinary Resource'],
                 'short_description' => 'Veterinary resource mentioned by ISF for emergency and routine animal care.',
-                'description' => 'Full-service animal clinic and pet supply clinic actively supporting rescued cats and dogs in Northern Mindanao.',
-                'address' => '008 V. Sheker St., Barangay Bagong Silang',
+                'description' => 'Full-service veterinary clinic and pet supply center on V. Sheker Street in Barangay Bagong Silang, providing wellness exams, emergency triage, prescribed medications, parasite control, and grooming support for rescued cats and dogs in Iligan City.',
+                'address' => '67Q2+W8P Brgy, Vicente Sheker St, Bagong Silang, Iligan City, 9200 Lanao del Norte',
                 'city' => 'Bagong Silang, Iligan City',
-                'latitude' => 8.2348000,
-                'longitude' => 124.2428000,
+                'latitude' => 8.2399905,
+                'longitude' => 124.2507731,
                 'phone' => '+63 917 105 0446',
                 'email' => 'furpetsake.iligan@gmail.com',
-                'operating_hours' => 'Mon - Sat: 9:00 AM – 6:00 PM',
-                'services' => ['Wellness Exams', 'Emergency Triage', 'Medications', 'Grooming'],
+                'operating_hours' => 'Mon - Sat: 9:00 AM – 6:00 PM | Sun: Closed',
+                'services' => ['Wellness Exams', 'Emergency Triage', 'Medications', 'Parasite Control', 'Grooming'],
                 'image_url' => '/images/partners/furpet.jpg',
                 'is_emergency' => true,
                 'is_featured' => false,
@@ -217,7 +217,33 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'boarding',
                 'badge' => 'COMMUNITY DIRECTORY',
                 'description' => 'ISF has contacts for cat boarding services provided by trusted foster caregivers and private pet care providers in Iligan.',
-                'content' => 'Directory of approved foster parents and home-based feline boarding spaces equipped for safe short-term stays.',
+                'content' => <<<'TEXT'
+## Service & Referral Snapshot
+Service Area: Iligan City (Poblacion, Tibanga, Palao, Tambo & nearby barangays)
+Boarding Format: Home-based feline foster rooms & vetted private cat boarding spaces
+Estimated Community Rate: PHP 350 - PHP 600 per day (confirm inclusions directly with caregiver)
+Coordination Desk: Iligan Stray Feeders Community Referral Desk
+
+Directory of approved foster parents and home-based feline boarding spaces equipped for safe, quiet, short-term stays. Cats are sensitive to sudden environmental changes, so ISF prioritizes low-stress, escape-proof indoor rooms separated from dogs.
+
+## Pre-Boarding Health Requirements
+- Updated 4-in-1 (FVRCP) vaccine and anti-rabies record booklet must be presented before drop-off.
+- Recent deworming and flea/tick spot-on preventive applied at least 7 days prior to boarding.
+- Cats must be free from active upper respiratory symptoms (sneezing, eye discharge, or fever) to protect other resident pets.
+- Spayed or neutered status should be declared in advance so caregivers can arrange isolated housing if needed.
+
+## What to Pack for Your Cat
+- Enough of your cat's regular dry/wet food for the full stay plus 2 extra days to prevent digestive upset.
+- A familiar blanket, worn t-shirt with your scent, or favorite small toy to reduce separation stress.
+- Preferred litter brand or transition scoop if your cat refuses unfamiliar litter substrates.
+- Secure hard-shell carrier labeled with your name, emergency contact number, and preferred Iligan vet clinic.
+- Written feeding schedule and clear dosage instructions for any maintenance medications or vitamins.
+
+## Questions to Ask Before Confirming
+- How many cats share the room, and are separate multi-tier enclosures or private rooms available?
+- Are daily photo or video updates sent to owners, including litter box and appetite logs?
+- Which Iligan City veterinary clinic (such as Dr. E, Petmate, or Furpet'sake) is contacted in case of emergency?
+TEXT,
                 'image_url' => '/images/resources/cat-boarding.jpg',
                 'file_name' => 'Cat-Boarding-Directory-Iligan.pdf',
                 'file_size' => '1.2 MB',
@@ -233,7 +259,33 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'boarding',
                 'badge' => 'INFORMATIONAL RESOURCE',
                 'description' => 'ISF has contacts for dog boarding resources. Contact ISF directly or our partner clinics for referrals.',
-                'content' => 'List of vetted canine accommodations offering safe, secure, and stress-free boarding during owner travel.',
+                'content' => <<<'TEXT'
+## Service & Referral Snapshot
+Service Area: Iligan City & nearby Lanao del Norte communities
+Accommodation Types: Clinic-supervised kennel confinement & home-based canine boarding
+Typical Rate Range: PHP 400 - PHP 800 per day depending on dog size and care level
+Referral Contact: ISF Volunteer Desk or Partner Veterinary Clinics
+
+List of vetted canine accommodations and preparation guidelines offering safe, secure, and stress-free boarding while pet parents travel or handle emergencies.
+
+## Mandatory Canine Health & Vaccination Checklist
+- Up-to-date 5-in-1 or 6-in-1 (DHPPiL) vaccination and annual anti-rabies certificate.
+- Active tick, flea, and heartworm prevention (especially important in tropical outdoor play yards).
+- Kennel cough (Bordetella) vaccination strongly recommended when boarding alongside other dogs.
+- Full disclosure of prior medical history, seizures, heat cycles, or food allergies.
+
+## Facility Safety & Inspection Checklist
+- Double-gated entryways and secure perimeter fencing with zero gaps for escape-prone rescues.
+- Clean, shaded, well-ventilated sleeping areas with elevated bedding and constant fresh water access.
+- Separate rest zones for shy, senior, or newly adopted Aspins who may feel overwhelmed by large groups.
+- Scheduled potty breaks, supervised enrichment, and documented meal logging twice daily.
+
+## Preparing Your Dog for Drop-Off
+- Pack measured portions of regular kibble and treats to avoid sudden diet changes.
+- Provide a well-fitted harness or collar with an ID tag listing your mobile number and an alternate local contact.
+- Share behavioral notes honestly (food guarding, thunderstorm anxiety, reactivity to cats or strangers).
+- Schedule a short 1-hour meet-and-greet visit beforehand whenever possible to help your dog build trust.
+TEXT,
                 'image_url' => '/images/resources/dog-boarding.jpg',
                 'file_name' => 'Dog-Boarding-Referrals-Iligan.pdf',
                 'file_size' => '1.8 MB',
@@ -249,7 +301,32 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'insurance',
                 'badge' => 'COMMUNITY RESOURCE',
                 'description' => 'Pet insurance after adoption is the adopter\'s responsibility. ISF has information on pet insurance options available in the Philippines.',
-                'content' => 'Comparison of veterinary health insurance providers, wellness coverage, and emergency reimbursement in the Philippines.',
+                'content' => <<<'TEXT'
+## Adopter Responsibility & Coverage Overview
+Responsibility: Managed and funded directly by the adopter after official adoption turnover
+Market Scope: Philippine non-life insurance providers offering companion dog & cat policies
+Typical Annual Premium: PHP 1,500 - PHP 7,500 per year depending on tier & vet reimbursement cap
+ISF Advisory Role: Educational comparison only (ISF does not sell or broker policies)
+
+Comparison of veterinary health insurance options, accidental injury reimbursement, and emergency financial planning for dog and cat adopters in the Philippines.
+
+## Notable Philippine Pet Insurance Providers to Research
+- Malayan Insurance (Pet Care Insurance): Covers accidental injury, medical reimbursement, owner liability, and burial assistance for eligible dogs and cats.
+- Standard Insurance (Pet Protect): Offers annual medical reimbursement tiers, personal accident coverage for owners, and third-party liability protection.
+- BDO Insure / Partner Micro-Plans: Accessible annual plans tailored for household pets with straightforward digital claims submission.
+- Clinic Wellness Packages & Emergency Pet Funds: For senior rescues or mixed-breed pets outside insurer age limits, setting aside PHP 300 - PHP 500 monthly in a dedicated vet fund provides immediate liquidity.
+
+## Common Eligibility & Documentation Requirements
+- Pet age generally between 6 months and 8 years at initial enrollment (renewal rules vary by insurer).
+- Updated veterinary vaccination booklet signed by a PRC-licensed veterinarian.
+- Clear identification photos and, for higher coverage tiers, microchip registration number.
+- Standard 15 to 30-day waiting periods apply; pre-existing conditions are typically excluded.
+
+## How to File Claims Smoothly
+- Always request itemized official receipts (OR) and a signed Veterinary Medical Abstract after every clinic visit.
+- Take clear photos of diagnostic lab results, prescriptions, and discharge summaries before leaving the clinic.
+- Notify your insurer within their required window (often 7 to 15 days from incident date).
+TEXT,
                 'image_url' => '/images/resources/pet-insurance.jpg',
                 'file_name' => 'Pet-Insurance-Guide-Philippines.pdf',
                 'file_size' => '940 KB',
@@ -265,7 +342,30 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'training',
                 'badge' => 'INFORMATIONAL RESOURCE',
                 'description' => 'Pet training and behavioral guidance have been compiled by ISF for adopters. Check our free resource guide.',
-                'content' => 'Positive reinforcement techniques, basic obedience, leash manners, and anxiety reduction for newly adopted strays.',
+                'content' => <<<'TEXT'
+## Positive Reinforcement & Rescue Decompression
+Training Philosophy: Force-free, reward-based positive reinforcement (never physical punishment)
+Recommended Session Length: 5 to 10 minutes, twice daily, ending on a successful repetition
+Best Rewards: Small soft treats, verbal praise ("Yes!"), gentle chest scratches, or play
+Target Audience: Newly adopted street rescues (Aspins & Puspins) and foster pets
+
+Positive reinforcement techniques, basic obedience foundations, leash manners, and anxiety reduction designed specifically for rescued cats and dogs adjusting to family homes.
+
+## The 3-3-3 Rule for Newly Adopted Rescues
+- First 3 Days: Your pet may feel overwhelmed, hide, sleep excessively, or refuse meals. Keep routines calm, quiet, and predictable with limited visitors.
+- First 3 Weeks: Your rescue starts learning house schedules, recognizing family voices, and testing boundaries. Begin gentle name recognition and basic cues.
+- First 3 Months: Deep trust forms and your pet's true playful personality emerges. Continue consistent boundaries, socialization, and enrichment.
+
+## Core Everyday Skills to Practice First
+- Name & Eye Contact: Say your pet's name once cheerfully; reward immediately the moment they look at you.
+- Potty & Litter Routine: Take dogs outdoors right after waking, eating, and naps; keep cat litter boxes scoop-cleaned daily in quiet, low-traffic corners.
+- Loose-Leash Walking: Use a Y-front harness instead of choke chains; pause walking when your dog pulls and reward when slack returns.
+- Safe Crate & Quiet Space Training: Feed meals near an open carrier or bed so it becomes a comforting sanctuary rather than a punishment spot.
+
+## When to Seek Professional Behavioral or Vet Support
+- Sudden aggression, house-soiling, or intense hiding should first be evaluated by a veterinarian to rule out hidden pain or infection.
+- Contact ISF post-adoption support if your newly adopted pet struggles with separation panic or multi-pet introductions.
+TEXT,
                 'image_url' => '/images/resources/pet-training.jpg',
                 'file_name' => 'Positive-Dog-Training-Handbook.pdf',
                 'file_size' => '3.1 MB',
@@ -281,7 +381,29 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'memorial',
                 'badge' => 'COMMUNITY RESOURCE',
                 'description' => 'ISF has remembrance resources for pet memorial services and support to help grieving pet parents honor their lost companions.',
-                'content' => 'Grief resources, memorial paw keepsakes, and honoring departed companion animals in Iligan City.',
+                'content' => <<<'TEXT'
+## Compassionate Aftercare & Grief Support
+Coverage Area: Iligan City & Northern Mindanao regional remembrance providers
+Support Focus: Dignified aftercare planning, keepsakes, and emotional healing for pet families
+ISF Tribute Option: Honor a beloved companion by sponsoring a stray feeding round in their memory
+
+Grief resources, humane aftercare guidance, memorial paw keepsakes, and meaningful ways to honor departed companion animals in Iligan City.
+
+## Immediate Practical Steps After a Pet Passes
+- If your pet passed at home, gently wrap them in a clean, soft blanket or towel and place them in a cool, quiet room while you make arrangements.
+- Contact your attending veterinary clinic (Dr. E, Petmate, or Furpet'sake) for compassionate aftercare referrals or temporary cold storage if arranging cremation.
+- If burying on private property where permitted, choose a shaded site away from water lines and dig at least 3 to 4 feet deep to protect the resting place.
+- For communal or private aquamation/cremation options in Northern Mindanao, confirm urn return timelines and certificate documentation directly with the memorial provider.
+
+## Meaningful Ways to Honor Their Memory
+- Paw Print & Fur Keepsake: Gently press your pet's paw onto air-dry clay or non-toxic ink pad, or preserve a small lock of fur in a glass vial.
+- Memory Corner & Photo Tribute: Frame a favorite candid photo alongside their collar tag and a living indoor plant.
+- Feed Furr A Cause Tribute: Dedicate a meal sponsorship or rescue donation through PAWLSE in your pet's name so their love continues nourishing Iligan strays.
+
+## Navigating Pet Loss Grief
+- Allow yourself and children time to grieve openly; losing a companion animal is a genuine family bereavement.
+- Maintain steady routines for surviving household pets, as cats and dogs can also notice a companion's absence.
+TEXT,
                 'image_url' => '/images/resources/pet-memorial.jpg',
                 'file_name' => 'Pet-Memorial-Keepsake-Guide.pdf',
                 'file_size' => '850 KB',
@@ -297,7 +419,27 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'portrait',
                 'badge' => 'COMMUNITY RESOURCE',
                 'description' => 'Local artists in Iligan City create pet portraits with a portion of proceeds donated to ISF.',
-                'content' => 'Directory of local digital and watercolor pet artists who contribute 20% of commissions back to stray feeding rounds.',
+                'content' => <<<'TEXT'
+## Art That Feeds Iligan's Strays
+Community Impact: 20% of participating commission proceeds support ISF stray feeding & rescue funds
+Available Mediums: Digital Pet Illustration, Traditional Watercolor, Graphite Sketch & Minimalist Line Art
+Typical Turnaround: 5 to 14 business days depending on artwork detail and framing
+Coordination: Direct artist booking or inquiry through ISF Community Channels
+
+Directory guidelines for commissioning custom pet portraits from talented local Iligan City artists whose work directly contributes back to community feeding runs and shelter medical funds.
+
+## How to Submit the Best Reference Photos
+- Shoot in natural daylight near a window or outdoors in light shade so fur colors and eye reflections stay accurate.
+- Take photos at your pet's eye level rather than straight down from above to capture their true expression.
+- Share 2 to 3 clear, uncropped photos (front face plus a personality shot showing favorite ears, markings, or collar).
+- Mention any special details you want highlighted (a favorite bandana, rainbow bridge halo, or pet name lettering).
+
+## Commissioning & Delivery Guidelines
+- Confirm artwork dimensions (A5, A4, high-resolution digital print file), background style, and total fee before paying a deposit.
+- Ask if a quick pencil or digital rough sketch preview is included for minor revisions before final coloring.
+- Request verification of the ISF charity share if you are booking through an official ISF fundraising art drive.
+- Local pickup in Iligan City or nationwide courier shipping can be arranged directly with the artist.
+TEXT,
                 'image_url' => '/images/resources/pet-portraits.jpg',
                 'file_name' => 'Local-Pet-Artists-Directory.pdf',
                 'file_size' => '1.5 MB',
@@ -313,7 +455,36 @@ class PartnerAndResourceSeeder extends Seeder
                 'category' => 'emergency_protocol',
                 'badge' => 'ISF OFFICIAL PROTOCOL',
                 'description' => 'Emergency care protocol for field volunteers and community members encountering injured animals.',
-                'content' => 'Step-by-step instructions for stabilizing vehicular trauma, heat stress, poisoning, and safe transportation to Dr. E or Petmate.',
+                'content' => <<<'TEXT'
+## Official ISF Field Triage Protocol
+Protocol Authority: Iligan Stray Feeders Rescue Operations & Veterinarian on Record
+Primary Triage Goal: Stabilize airway, control bleeding, prevent shock, and transport rapidly
+Immediate Reporting: Submit an SOS Report on PAWLSE with GPS pin and clear injury photo
+Primary Emergency Clinic: Dr. E Veterinary Clinic (Tambo, Iligan City) — +63 956 381 9018
+
+Step-by-step field response instructions for volunteers and concerned citizens encountering vehicular trauma, severe wounds, heatstroke, or suspected poisoning in Iligan City.
+
+## Step 1: Scene Safety & Calm Restraint
+- Park safely with hazard lights on and move bystanders back to keep frightened animals from bolting into traffic.
+- Approach slowly from the side in a low posture; speak softly and avoid direct looming eye contact.
+- Even gentle animals may bite when in severe pain: wrap cats snugly in a thick towel ("burrito wrap") and use a soft cloth loop muzzle for alert dogs (NEVER muzzle a vomiting, panting, or short-snouted dog).
+
+## Step 2: Critical Red Flags Requiring Immediate Transport
+- Uncontrolled bleeding, deep lacerations, exposed bone fractures, or suspected internal trauma after a road collision.
+- Pale/white or blue-tinted gums, labored open-mouth breathing in cats, or unresponsiveness.
+- Continuous seizures, foaming at the mouth, severe tremors, or suspected toxic ingestion (rat poison, chocolate, household bleach, human painkillers).
+- Heatstroke signs: frantic heavy panting, bright red gums, stumbling, or collapse under midday sun.
+
+## Step 3: Safe Stabilization Before Reaching the Clinic
+- Active Bleeding: Apply firm, direct pressure with sterile gauze or clean cloth for at least 3 to 5 minutes; do not remove soaked pads—layer fresh cloth on top.
+- Suspected Spinal/Limb Trauma: Slide the animal gently onto a rigid cardboard sheet, wooden board, or folded blanket stretched taut as a makeshift stretcher.
+- Heatstroke: Move immediately to shade/air-conditioning, drape cool (NOT ice-cold) wet towels over paws, belly, and neck, and fan continuously during transport.
+- Poisoning: Do NOT induce vomiting unless instructed by a licensed veterinarian; bring packaging or take a photo of the suspected toxin.
+
+## Step 4: Rapid Clinic Referral & Handoff
+- Call ahead to Dr. E (+63 956 381 9018), Petmate (+63 935 380 1820), or Furpet'sake (+63 917 105 0446) so the clinic can prepare emergency triage supplies before arrival.
+- Log the rescue time, exact Iligan barangay location, and treatment updates in the PAWLSE Rescue Portal for medical continuity.
+TEXT,
                 'image_url' => '/images/partners/dr-e.jpg',
                 'file_name' => 'ISF-Emergency-Field-Protocol.pdf',
                 'file_size' => '2.4 MB',

@@ -75,6 +75,7 @@ Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/vet', [VetController::class, 'index'])->name('vet');
 Route::get('/honor', [HonorController::class, 'index'])->name('honor');
 Route::get('/resources/{resourceFile}/download', [ResourceDownloadController::class, 'download'])->name('resources.download');
+Route::get('/resources/{resourceFile}/preview', [ResourceDownloadController::class, 'preview'])->name('resources.preview');
 Route::get('/animals', [AnimalOverviewController::class, 'index'])->name('animals.index');
 Route::get('/animals/{pet}', [AdoptController::class, 'show'])->name('animals.show');
 Route::get('/adopt', [AdoptController::class, 'index'])->name('adopt');

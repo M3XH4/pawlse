@@ -1,57 +1,27 @@
 import { Head, Link } from '@inertiajs/react';
-import { 
-    Stethoscope, ShieldAlert, Phone, Clock, MapPin, ExternalLink, 
-    Download, FileText, ArrowRight, Heart, Sparkles, AlertCircle, 
-    ChevronRight, CheckCircle2, Siren, Share2, X, Info, Activity
+import {
+    Stethoscope, ShieldAlert, Phone, MapPin,
+    FileText, ArrowRight, Heart, Sparkles,
+    Siren, Activity
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import React, { useState } from 'react';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { ScrollRevealWrapper } from '@/components/scroll-reveal-wrapper';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-
-interface PartnerClinic {
-    id: number;
-    name: string;
-    slug: string;
-    category: string;
-    badge_title?: string;
-    badges?: string[];
-    short_description?: string;
-    description?: string;
-    address?: string;
-    city?: string;
-    phone?: string;
-    email?: string;
-    website_url?: string;
-    operating_hours?: string;
-    services?: string[];
-    image_url?: string;
-    is_emergency: boolean;
-    is_featured: boolean;
-}
-
-interface PetResource {
-    id: number;
-    title: string;
-    slug: string;
-    category: string;
-    badge?: string;
-    description?: string;
-    content?: string;
-    file_name?: string;
-    file_size?: string;
-    file_type?: string;
-    image_url?: string;
-    download_count: number;
-}
+import { PartnerClinicCard } from '@/components/vet/partner-clinic-card';
+import type { PartnerClinicItem } from '@/components/vet/partner-clinic-card';
+import { PartnerClinicModal } from '@/components/vet/partner-clinic-modal';
+import { PetCareResourceCard } from '@/components/vet/pet-care-resource-card';
+import { PetCareResourceModal } from '@/components/vet/pet-care-resource-modal';
+import type { PetResourceItem } from '@/components/vet/pet-care-resource-theme';
 
 interface VetPageProps {
-    featuredClinic?: PartnerClinic;
-    veterinaryClinics: PartnerClinic[];
-    emergencyClinics: PartnerClinic[];
-    petResources: PetResource[];
+    featuredClinic?: PartnerClinicItem;
+    veterinaryClinics: PartnerClinicItem[];
+    emergencyClinics: PartnerClinicItem[];
+    petResources: PetResourceItem[];
     vetOnRecord: {
         name: string;
         title: string;
@@ -72,13 +42,17 @@ interface VetPageProps {
 export default function VetPage({
     featuredClinic,
     veterinaryClinics = [],
-    emergencyClinics = [],
     petResources = [],
     vetOnRecord,
     stats
 }: VetPageProps) {
-    const [selectedClinic, setSelectedClinic] = useState<PartnerClinic | null>(null);
-    const [selectedResource, setSelectedResource] = useState<PetResource | null>(null);
+    const [selectedClinic, setSelectedClinic] = useState<PartnerClinicItem | null>(null);
+    const [selectedResource, setSelectedResource] = useState<PetResourceItem | null>(null);
+    const allClinics = [featuredClinic, ...veterinaryClinics].filter(
+        (clinic): clinic is PartnerClinicItem => Boolean(clinic),
+    );
+    const useFeaturedPlusThreeLayout = allClinics.length >= 4;
+    const gridClinics = useFeaturedPlusThreeLayout ? allClinics.slice(1) : allClinics;
 
     const scrollToResources = () => {
         const el = document.getElementById('pet-care-resources');
@@ -146,22 +120,22 @@ export default function VetPage({
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
-                                    className="flex flex-wrap items-center gap-4 pt-2"
+                                    className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 pt-2"
                                 >
                                     <button 
                                         onClick={scrollToResources}
-                                        className="px-6 py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center gap-2 group cursor-pointer"
+                                        className="w-full sm:w-auto px-3.5 sm:px-6 py-3 sm:py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap group cursor-pointer"
                                     >
-                                        <FileText size={16} />
+                                        <FileText size={15} className="shrink-0" />
                                         <span>View Vet Resources</span>
                                     </button>
 
                                     <button 
                                         onClick={scrollToPartners}
-                                        className="px-6 py-3.5 rounded-full bg-slate-800/80 hover:bg-slate-700/80 text-white border border-slate-700 font-bold text-sm transition-all flex items-center gap-2 cursor-pointer"
+                                        className="w-full sm:w-auto px-3.5 sm:px-6 py-3 sm:py-3.5 rounded-full bg-slate-800/80 hover:bg-slate-700/80 text-white border border-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer"
                                     >
                                         <span>All ISF Partners</span>
-                                        <ArrowRight size={15} className="text-[#FFAE33]" />
+                                        <ArrowRight size={14} className="text-[#FFAE33] shrink-0" />
                                     </button>
                                 </motion.div>
                             </div>
@@ -252,166 +226,28 @@ export default function VetPage({
                         </div>
                     </ScrollRevealWrapper>
 
-                    {/* Featured Clinic (Dr. E Banner) */}
-                    {featuredClinic && (
+                    {/* Featured Clinic Banner (only when 4+ clinics exist) */}
+                    {useFeaturedPlusThreeLayout && allClinics[0] && (
                         <ScrollRevealWrapper>
-                            <div className="mb-8 rounded-3xl overflow-hidden border border-emerald-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl transition-all">
-                                <div className="grid md:grid-cols-12">
-                                    <div className="md:col-span-7 relative min-h-[260px] md:min-h-[340px]">
-                                        <ImageWithFallback 
-                                            src={featuredClinic.image_url || '/images/partners/dr-e.jpg'} 
-                                            alt={featuredClinic.name} 
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-                                        
-                                        {/* Floating badges on image */}
-                                        <div className="absolute top-4 right-4 flex flex-wrap gap-2 justify-end">
-                                            <span className="px-3 py-1 rounded-full bg-red-600 text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
-                                                <AlertCircle size={12} />
-                                                Emergency Response
-                                            </span>
-                                            <span className="px-3 py-1 rounded-full bg-emerald-600/90 text-white text-[11px] font-black uppercase tracking-wider shadow-md">
-                                                Frequently Contacted by ISF
-                                            </span>
-                                        </div>
-
-                                        <div className="absolute bottom-4 left-4 text-white/90 text-xs font-bold flex items-center gap-1.5 drop-shadow">
-                                            <MapPin size={14} className="text-[#FFAE33]" />
-                                            <span>{featuredClinic.city || 'Tambo, Iligan City'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="md:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h3 className="text-2xl sm:text-3xl font-black text-paw-navy dark:text-white">
-                                                    {featuredClinic.name}
-                                                </h3>
-                                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mt-1">
-                                                    Frequently Contacted by ISF
-                                                </p>
-                                            </div>
-
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                                                {featuredClinic.short_description || featuredClinic.description}
-                                            </p>
-
-                                            <div className="space-y-2 pt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                {featuredClinic.address && (
-                                                    <div className="flex items-start gap-2">
-                                                        <MapPin size={14} className="text-paw-orange shrink-0 mt-0.5" />
-                                                        <span>{featuredClinic.address}</span>
-                                                    </div>
-                                                )}
-                                                {featuredClinic.phone && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Phone size={14} className="text-emerald-500 shrink-0" />
-                                                        <span className="font-bold text-slate-800 dark:text-slate-200">{featuredClinic.phone}</span>
-                                                    </div>
-                                                )}
-                                                {featuredClinic.operating_hours && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock size={14} className="text-amber-500 shrink-0" />
-                                                        <span>{featuredClinic.operating_hours}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
-                                            <button
-                                                onClick={() => setSelectedClinic(featuredClinic)}
-                                                className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-1 group cursor-pointer uppercase tracking-wider"
-                                            >
-                                                <span>View Details</span>
-                                                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                            </button>
-
-                                            {featuredClinic.phone && (
-                                                <a 
-                                                    href={`tel:${featuredClinic.phone.replace(/[^0-9+]/g, '')}`} 
-                                                    className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
-                                                >
-                                                    <Phone size={13} />
-                                                    <span>Call Clinic</span>
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className="mb-8">
+                                <PartnerClinicCard
+                                    clinic={allClinics[0]}
+                                    variant="featured"
+                                    onSelect={setSelectedClinic}
+                                />
                             </div>
                         </ScrollRevealWrapper>
                     )}
 
-                    {/* Clinic Cards Grid */}
+                    {/* Equal-Sized 3-Column Clinic Cards Grid */}
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {veterinaryClinics.map((clinic, idx) => (
-                            <ScrollRevealWrapper key={clinic.id} delay={idx * 0.1}>
-                                <div className="h-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-lg shadow-slate-100 dark:shadow-none flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl transition-all">
-                                    <div>
-                                        {/* Card Image */}
-                                        <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                            <ImageWithFallback 
-                                                src={clinic.image_url || '/images/partners/petmate.jpg'} 
-                                                alt={clinic.name} 
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            />
-                                            {clinic.is_emergency && (
-                                                <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider shadow">
-                                                    Emergency
-                                                </span>
-                                            )}
-                                            <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs text-white text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                                <MapPin size={11} className="text-[#FFAE33]" />
-                                                <span>{clinic.city || 'Iligan City'}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Card Body */}
-                                        <div className="p-6">
-                                            {clinic.badge_title && (
-                                                <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 text-[10px] font-black uppercase tracking-wider mb-2">
-                                                    {clinic.badge_title}
-                                                </span>
-                                            )}
-                                            <h4 className="text-xl font-black text-paw-navy dark:text-white">
-                                                {clinic.name}
-                                            </h4>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-                                                {clinic.short_description || clinic.description}
-                                            </p>
-
-                                            {clinic.operating_hours && (
-                                                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-3 flex items-center gap-1">
-                                                    <Clock size={12} className="text-amber-500 shrink-0" />
-                                                    <span className="truncate">{clinic.operating_hours}</span>
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Card Footer */}
-                                    <div className="p-6 pt-0 border-t border-gray-100 dark:border-slate-800/60 flex items-center justify-between">
-                                        <button
-                                            onClick={() => setSelectedClinic(clinic)}
-                                            className="text-xs font-black text-paw-orange hover:text-orange-600 flex items-center gap-1 group cursor-pointer uppercase tracking-wider"
-                                        >
-                                            <span>View Details</span>
-                                            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                        </button>
-
-                                        {clinic.phone && (
-                                            <a 
-                                                href={`tel:${clinic.phone.replace(/[^0-9+]/g, '')}`} 
-                                                className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-colors"
-                                                title={`Call ${clinic.name}`}
-                                            >
-                                                <Phone size={14} />
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
+                        {gridClinics.map((clinic, idx) => (
+                            <ScrollRevealWrapper key={clinic.id} delay={idx * 0.08}>
+                                <PartnerClinicCard
+                                    clinic={clinic}
+                                    variant="grid"
+                                    onSelect={setSelectedClinic}
+                                />
                             </ScrollRevealWrapper>
                         ))}
                     </div>
@@ -436,51 +272,11 @@ export default function VetPage({
 
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {petResources.map((res, idx) => (
-                                <ScrollRevealWrapper key={res.id} delay={idx * 0.08}>
-                                    <div className="h-full bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between">
-                                        <div>
-                                            <div className="relative h-44 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                                <ImageWithFallback 
-                                                    src={res.image_url || '/images/resources/cat-boarding.jpg'} 
-                                                    alt={res.title} 
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                <div className="absolute top-3 left-3">
-                                                    <span className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs text-[10px] font-black uppercase tracking-wider text-paw-navy dark:text-white shadow-xs">
-                                                        {res.badge || 'Community Resource'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-6">
-                                                <h4 className="text-lg font-black text-paw-navy dark:text-white">
-                                                    {res.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
-                                                    {res.description}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6 pt-0 border-t border-gray-100 dark:border-slate-800/60 flex items-center justify-between">
-                                            <button
-                                                onClick={() => setSelectedResource(res)}
-                                                className="text-xs font-black text-paw-orange hover:text-orange-600 uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-                                            >
-                                                <span>View Details</span>
-                                                <ChevronRight size={14} />
-                                            </button>
-
-                                            <a 
-                                                href={`/resources/${res.id}/download`} 
-                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-paw-orange transition-colors"
-                                                title="Download Resource Guide"
-                                            >
-                                                <Download size={13} />
-                                                <span>{res.file_size || 'Download'}</span>
-                                            </a>
-                                        </div>
-                                    </div>
+                                <ScrollRevealWrapper key={res.id} delay={idx * 0.06}>
+                                    <PetCareResourceCard
+                                        resource={res}
+                                        onSelect={setSelectedResource}
+                                    />
                                 </ScrollRevealWrapper>
                             ))}
                         </div>
@@ -595,89 +391,91 @@ export default function VetPage({
 
                 {/* 5. How ISF Works with Veterinary Partners + Vet on Record */}
                 <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid lg:grid-cols-12 gap-12 items-center">
+                    <div className="max-w-2xl space-y-4 mb-8">
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase tracking-wider">
+                            How It Works
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl font-black text-paw-navy dark:text-white">
+                            How ISF Works with Veterinary Partners
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                            When a rescued animal requires veterinary care, we coordinate with our trusted partner clinics to ensure the animal receives immediate and proper medical treatment.
+                        </p>
+                    </div>
+
+                    <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
                         {/* Steps */}
-                        <div className="lg:col-span-7 space-y-6">
-                            <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase tracking-wider">
-                                How It Works
-                            </span>
-                            <h2 className="text-3xl sm:text-4xl font-black text-paw-navy dark:text-white">
-                                How ISF Works with Veterinary Partners
-                            </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                When a rescued animal requires veterinary care, we coordinate with our trusted partner clinics to ensure the animal receives immediate and proper medical treatment.
-                            </p>
-
-                            <div className="space-y-4 pt-2">
-                                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
-                                    <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
-                                        1
-                                    </div>
-                                    <div>
-                                        <h5 className="font-bold text-sm text-paw-navy dark:text-white">Rescued animal identified and assessed</h5>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Volunteers or community reports triage injury, severity, and urgency via AI Rescue or SOS.</p>
-                                    </div>
+                        <div className="lg:col-span-7 flex flex-col justify-between gap-4">
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
+                                <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
+                                    1
                                 </div>
-
-                                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
-                                    <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
-                                        2
-                                    </div>
-                                    <div>
-                                        <h5 className="font-bold text-sm text-paw-navy dark:text-white">Referred to a trusted partner clinic</h5>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Animal is transported directly to Dr. E, Petmate, or nearest available partner for diagnostics.</p>
-                                    </div>
+                                <div>
+                                    <h5 className="font-bold text-sm text-paw-navy dark:text-white">Rescued animal identified and assessed</h5>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Volunteers or community reports triage injury, severity, and urgency via AI Rescue or SOS.</p>
                                 </div>
+                            </div>
 
-                                <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
-                                    <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
-                                        3
-                                    </div>
-                                    <div>
-                                        <h5 className="font-bold text-sm text-paw-navy dark:text-white">Treatment coordinated and recorded</h5>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">All medical records, vaccinations, and recovery updates are digitized into the PAWLSE master record.</p>
-                                    </div>
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
+                                <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
+                                    2
+                                </div>
+                                <div>
+                                    <h5 className="font-bold text-sm text-paw-navy dark:text-white">Referred to a trusted partner clinic</h5>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Animal is transported directly to Dr. E, Petmate, or nearest available partner for diagnostics.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs">
+                                <div className="w-9 h-9 rounded-full bg-[#FFAE33]/20 text-[#FFAE33] flex items-center justify-center font-black text-sm shrink-0">
+                                    3
+                                </div>
+                                <div>
+                                    <h5 className="font-bold text-sm text-paw-navy dark:text-white">Treatment coordinated and recorded</h5>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">All medical records, vaccinations, and recovery updates are digitized into the PAWLSE master record.</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Veterinarian on Record Card */}
-                        <div className="lg:col-span-5">
-                            <div className="p-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-50/40 to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 border-2 border-emerald-400/40 shadow-xl">
-                                <span className="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider mb-4">
-                                    Veterinarian on Record
-                                </span>
+                        <div className="lg:col-span-5 flex">
+                            <div className="w-full h-full p-7 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-50/40 to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 border-2 border-emerald-400/40 shadow-xl flex flex-col justify-between">
+                                <div>
+                                    <span className="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider mb-4">
+                                        Veterinarian on Record
+                                    </span>
 
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-400 shrink-0 shadow-md">
-                                        <ImageWithFallback 
-                                            src={vetOnRecord.image || '/images/partners/vet-record.jpg'} 
-                                            alt={vetOnRecord.name} 
-                                            className="w-full h-full object-cover"
-                                        />
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-400 shrink-0 shadow-md">
+                                            <ImageWithFallback
+                                                src={vetOnRecord.image || '/images/partners/vet-record.jpg'}
+                                                alt={vetOnRecord.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-paw-navy dark:text-white">{vetOnRecord.name}</h4>
+                                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{vetOnRecord.title}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="text-xl font-black text-paw-navy dark:text-white">{vetOnRecord.name}</h4>
-                                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{vetOnRecord.title}</p>
-                                    </div>
+
+                                    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-5 font-medium">
+                                        {vetOnRecord.description}
+                                    </p>
                                 </div>
 
-                                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-6 font-medium">
-                                    {vetOnRecord.description}
-                                </p>
-
                                 <div className="space-y-2 text-xs border-t border-emerald-100 dark:border-slate-800 pt-4 text-gray-600 dark:text-gray-400">
-                                    <div className="flex justify-between">
-                                        <span className="font-bold text-gray-400">Clinic Hours:</span>
-                                        <span>{vetOnRecord.clinic_hours}</span>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="font-bold text-gray-400 shrink-0">Clinic Hours:</span>
+                                        <span className="text-right">{vetOnRecord.clinic_hours}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-bold text-gray-400">Contact:</span>
-                                        <span>{vetOnRecord.contact}</span>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="font-bold text-gray-400 shrink-0">Contact:</span>
+                                        <span className="text-right">{vetOnRecord.contact}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-bold text-gray-400">Address:</span>
-                                        <span>{vetOnRecord.address}</span>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="font-bold text-gray-400 shrink-0">Address:</span>
+                                        <span className="text-right">{vetOnRecord.address}</span>
                                     </div>
                                 </div>
                             </div>
@@ -720,171 +518,16 @@ export default function VetPage({
             </main>
 
             {/* Modal for Clinic Details */}
-            <AnimatePresence>
-                {selectedClinic && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setSelectedClinic(null)}
-                    >
-                        <motion.div 
-                            initial={{ scale: 0.95, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-[28px] sm:rounded-[36px] max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
-                        >
-                            {/* Clinic Image Banner in Modal */}
-                            <div className="relative h-48 sm:h-56 -mx-6 sm:-mx-8 -mt-6 sm:-mt-8 mb-6 overflow-hidden rounded-t-[28px] sm:rounded-t-[36px] bg-slate-100 dark:bg-slate-800">
-                                <ImageWithFallback 
-                                    src={selectedClinic.image_url || '/images/partners/dr-e.jpg'} 
-                                    alt={selectedClinic.name} 
-                                    className="w-full h-full object-cover" 
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                                <button 
-                                    onClick={() => setSelectedClinic(null)}
-                                    className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors cursor-pointer"
-                                    aria-label="Close modal"
-                                >
-                                    <X size={18} />
-                                </button>
-                                <div className="absolute bottom-4 left-6 right-6 flex flex-wrap items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-3 py-1 rounded-full bg-emerald-500/90 text-white text-[11px] font-black uppercase tracking-wider shadow">
-                                            Veterinary Partner
-                                        </span>
-                                        {selectedClinic.is_emergency && (
-                                            <span className="px-3 py-1 rounded-full bg-red-600 text-white text-[11px] font-black uppercase tracking-wider shadow">
-                                                Emergency Option
-                                            </span>
-                                        )}
-                                    </div>
-                                    {selectedClinic.badge_title && (
-                                        <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold uppercase shadow">
-                                            {selectedClinic.badge_title}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <h3 className="text-2xl font-black text-paw-navy dark:text-white">{selectedClinic.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                                <MapPin size={13} className="text-[#FFAE33]" />
-                                <span>{selectedClinic.address || selectedClinic.city}</span>
-                            </p>
-
-                            <div className="mt-4 py-4 border-y border-gray-100 dark:border-slate-800 space-y-3 text-sm">
-                                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    {selectedClinic.description || selectedClinic.short_description}
-                                </p>
-
-                                {selectedClinic.services && selectedClinic.services.length > 0 && (
-                                    <div>
-                                        <h5 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-2">Available Services</h5>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {selectedClinic.services.map((svc, i) => (
-                                                <span key={i} className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                    {svc}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {selectedClinic.operating_hours && (
-                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                        <Clock size={14} className="text-amber-500 shrink-0" />
-                                        <span><strong>Hours:</strong> {selectedClinic.operating_hours}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mt-6 flex flex-wrap gap-3 justify-end">
-                                <button
-                                    onClick={() => setSelectedClinic(null)}
-                                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                                >
-                                    Close
-                                </button>
-                                {selectedClinic.phone && (
-                                    <a
-                                        href={`tel:${selectedClinic.phone.replace(/[^0-9+]/g, '')}`}
-                                        className="px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-500/20"
-                                    >
-                                        <Phone size={14} />
-                                        <span>Call {selectedClinic.phone}</span>
-                                    </a>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <PartnerClinicModal
+                clinic={selectedClinic}
+                onClose={() => setSelectedClinic(null)}
+            />
 
             {/* Modal for Resource Details */}
-            <AnimatePresence>
-                {selectedResource && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setSelectedResource(null)}
-                    >
-                        <motion.div 
-                            initial={{ scale: 0.95, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
-                        >
-                            <button 
-                                onClick={() => setSelectedResource(null)}
-                                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-
-                            <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-black uppercase mb-3 inline-block">
-                                {selectedResource.badge || 'Resource Guide'}
-                            </span>
-
-                            <h3 className="text-2xl font-black text-paw-navy dark:text-white">{selectedResource.title}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Category: {selectedResource.category}</p>
-
-                            <div className="mt-4 py-4 border-y border-gray-100 dark:border-slate-800 space-y-3 text-sm">
-                                <p className="text-gray-700 dark:text-gray-300 font-medium">
-                                    {selectedResource.description}
-                                </p>
-                                {selectedResource.content && (
-                                    <div className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-2xl text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                        {selectedResource.content}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mt-6 flex flex-wrap gap-3 justify-end items-center">
-                                <button
-                                    onClick={() => setSelectedResource(null)}
-                                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                                >
-                                    Close
-                                </button>
-                                <a
-                                    href={`/resources/${selectedResource.id}/download`}
-                                    className="px-5 py-2.5 rounded-full bg-paw-orange hover:bg-orange-600 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-orange-500/20"
-                                >
-                                    <Download size={14} />
-                                    <span>Download Guide ({selectedResource.file_size || 'PDF'})</span>
-                                </a>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <PetCareResourceModal
+                resource={selectedResource}
+                onClose={() => setSelectedResource(null)}
+            />
 
             <Footer />
         </div>

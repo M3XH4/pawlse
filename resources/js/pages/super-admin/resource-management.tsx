@@ -1,8 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { 
-    FolderDown, Plus, Search, Filter, Edit2, Trash2, X, Check, 
-    RotateCcw, Download, FileText, ExternalLink, Image as ImageIcon,
-    Upload, Sparkles, BookOpen, AlertCircle
+import {
+    FolderDown, Plus, Search, Edit2, Trash2, X,
+    RotateCcw, Download, FileText, ExternalLink, BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
@@ -79,7 +78,7 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
     const canEditResource = can('resources.edit');
     const canDeleteResource = can('resources.delete');
 
-    const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
+    const { data, setData, processing, reset, errors, clearErrors } = useForm({
         title: '',
         category: 'boarding',
         badge: '',
@@ -432,11 +431,20 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                             <td className="py-3 px-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <a
+                                                        href={`/resources/${res.id}/preview`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors cursor-pointer"
+                                                        title="Preview ISF A4 Guide"
+                                                    >
+                                                        <ExternalLink size={15} />
+                                                    </a>
+                                                    <a
                                                         href={`/resources/${res.id}/download`}
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors cursor-pointer"
-                                                        title="Download / Test View File"
+                                                        title="Download ISF PDF File"
                                                     >
                                                         <Download size={15} />
                                                     </a>
@@ -594,12 +602,15 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
                                 <div>
                                     <label className="block text-gray-500 mb-1">Detailed Content / Instructions</label>
                                     <textarea
-                                        rows={3}
+                                        rows={4}
                                         value={data.content}
                                         onChange={(e) => setData('content', e.target.value)}
                                         className="w-full px-3 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                        placeholder="Detailed guide content or service instructions"
+                                        placeholder="Use ## Section Heading, Label: Value, and - Bullet lines for structured ISF PDF guides"
                                     />
+                                    <p className="text-[10px] text-gray-400 mt-1">
+                                        Tip: Lines starting with <code className="font-mono">## </code> become section headings and <code className="font-mono">- </code> become checklist items in both the modal and ISF PDF template.
+                                    </p>
                                 </div>
 
                                 <div className="grid sm:grid-cols-2 gap-4">
