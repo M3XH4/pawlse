@@ -247,11 +247,6 @@ export default function UserStories({
                 onSuccess: () => {
                     setIsModalOpen(false);
                     setIsSubmitting(false);
-                    toast.success(
-                        category === 'testimonial'
-                            ? 'Your testimonial has been updated and resubmitted for admin review!'
-                            : 'Your story has been updated and resubmitted for admin review!'
-                    );
                 },
                 onError: (errors) => {
                     setIsSubmitting(false);
@@ -264,11 +259,6 @@ export default function UserStories({
                 onSuccess: () => {
                     setIsModalOpen(false);
                     setIsSubmitting(false);
-                    toast.success(
-                        category === 'testimonial'
-                            ? 'Your testimonial was submitted! Admin will review it before publishing.'
-                            : 'Your adoption story was submitted! Admin will review it before publishing.'
-                    );
                 },
                 onError: (errors) => {
                     setIsSubmitting(false);
@@ -290,7 +280,6 @@ export default function UserStories({
                 router.delete(`/account/user/stories/${id}`, {
                     onSuccess: () => {
                         setDeletingId(null);
-                        toast.success('Story deleted successfully.');
                     },
                     onError: () => {
                         setDeletingId(null);

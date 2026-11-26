@@ -21,6 +21,7 @@ use App\Notifications\VolunteerApplicationReviewedNotification;
 use App\Notifications\VolunteerCertificateIssuedNotification;
 use App\Notifications\VolunteerMedicalAidUpdatedNotification;
 use App\Notifications\VolunteerTaskAssignedNotification;
+use App\Services\FieldGroupLifecycleService;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -182,6 +183,12 @@ class VolunteerManagementController extends Controller
                 'missed' => PartnerFoodPickup::query()->where('status', PartnerFoodPickup::StatusMissed)->count(),
             ],
             'events' => fn () => Event::query()->where('approval_status', 'approved')->latest()->get(),
+            'issuedEventIdsByUser' => fn () => (object) Certificate::query()
+                ->whereNotNull('event_id')
+                ->get(['user_id', 'event_id'])
+                ->groupBy('user_id')
+                ->map(fn (Collection $certs) => $certs->pluck('event_id')->map(fn ($id) => (int) $id)->unique()->values()->all())
+                ->all(),
             'feedingSchedules' => fn () => FeedingSchedule::query()->where('status', 'active')->latest()->get(),
             'injuryReports' => fn () => $injuryReportsQuery->latest()->paginate(10, ['*'], 'injuries_page')->withQueryString(),
             'injuryStats' => fn () => [
@@ -975,7 +982,105 @@ class VolunteerManagementController extends Controller
     }
 
     /**
-     * Build unified Field Groups from active Feeding Routes and approved upcoming Events.
+     * Adjust a Field Group's member capacity (quota), preventing lowering below the current member count.
+     */
+    public function updateGroupSettings(Request $request, string $type, int $id): RedirectResponse
+    {
+        if (! in_array($type, ['feeding', 'event'], true)) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'quota' => ['nullable', 'integer', 'min:1', 'max:500'],
+        ]);
+
+        $column = $type === 'feeding' ? 'feeding_schedule_id' : 'event_id';
+        $currentMembersCount = AssignedTask::query()
+            ->where($column, $id)
+            ->whereIn('status', [AssignedTask::STATUS_PENDING, AssignedTask::STATUS_COMPLETED])
+            ->count();
+
+        $newQuota = $validated['quota'] ?? null;
+
+        if ($newQuota !== null && $newQuota < $currentMembersCount) {
+            return redirect()->back()->withErrors([
+                'quota' => "Cannot adjust member limit to {$newQuota} because this group already has {$currentMembersCount} assigned member(s). Remove a member first.",
+            ]);
+        }
+
+        if ($type === 'feeding') {
+            $schedule = FeedingSchedule::query()->findOrFail($id);
+            $schedule->update([
+                'volunteers' => $newQuota ?? 0,
+            ]);
+            $groupName = $schedule->zone;
+        } else {
+            $event = Event::query()->findOrFail($id);
+            $event->update([
+                'spots' => $newQuota !== null ? max(0, $newQuota - $currentMembersCount) : null,
+            ]);
+            $groupName = $event->title;
+        }
+
+        $limitLabel = $newQuota !== null ? (string) $newQuota : 'Unlimited';
+        AuditLog::log('volunteer_group_settings_updated', "Updated member limit for '{$groupName}' to {$limitLabel}");
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Updated member limit for '{$groupName}' to {$limitLabel}.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Finalize member attendance & hours and disband a Field Group while preserving all data.
+     */
+    public function disbandGroup(
+        Request $request,
+        string $type,
+        int $id,
+        FieldGroupLifecycleService $lifecycleService
+    ): RedirectResponse {
+        if (! in_array($type, ['feeding', 'event'], true)) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.task_id' => ['required', 'integer'],
+            'attendees.*.attended' => ['required', 'boolean'],
+            'attendees.*.hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
+        ]);
+
+        if ($type === 'feeding') {
+            $schedule = FeedingSchedule::query()->findOrFail($id);
+            $stats = $lifecycleService->completeAndDisbandFeedingSchedule(
+                $schedule,
+                $request->user(),
+                $validated['attendees'] ?? null
+            );
+            $groupName = $schedule->zone;
+        } else {
+            $event = Event::query()->findOrFail($id);
+            $stats = $lifecycleService->completeAndDisbandEvent(
+                $event,
+                $request->user(),
+                $validated['attendees'] ?? null
+            );
+            $groupName = $event->title;
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Disbanded '{$groupName}' ({$stats['completed_count']} attended, {$stats['no_show_count']} no-show). All logs and chat history preserved.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Build unified Field Groups from active and disbanded Feeding Routes and approved Events.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -984,7 +1089,11 @@ class VolunteerManagementController extends Controller
         $feedingGroups = FeedingSchedule::query()
             ->where('status', 'active')
             ->with([
-                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                'assignedTasks' => fn ($q) => $q->whereIn('status', [
+                    AssignedTask::STATUS_PENDING,
+                    AssignedTask::STATUS_COMPLETED,
+                    AssignedTask::STATUS_NO_SHOW,
+                ])
                     ->with('user:id,name,email,phone,avatar_path')
                     ->orderBy('created_at'),
             ])
@@ -997,18 +1106,27 @@ class VolunteerManagementController extends Controller
                 schedule: "{$schedule->day} • {$schedule->time}",
                 quota: (int) $schedule->volunteers,
                 executionStatus: $schedule->execution_status ?? 'scheduled',
+                disbandedAt: $schedule->disbanded_at?->toIso8601String(),
+                totalFoodDistributed: (int) ($schedule->total_food_distributed ?? 0),
                 tasks: $schedule->assignedTasks,
             ));
 
         $eventGroups = Event::query()
             ->where('approval_status', 'approved')
-            ->whereDate('date', '>=', now()->toDateString())
+            ->where(function ($q): void {
+                $q->whereDate('date', '>=', now()->toDateString())
+                    ->orWhereNotNull('disbanded_at');
+            })
             ->with([
-                'assignedTasks' => fn ($q) => $q->whereIn('status', ['pending', 'completed'])
+                'assignedTasks' => fn ($q) => $q->whereIn('status', [
+                    AssignedTask::STATUS_PENDING,
+                    AssignedTask::STATUS_COMPLETED,
+                    AssignedTask::STATUS_NO_SHOW,
+                ])
                     ->with('user:id,name,email,phone,avatar_path')
                     ->orderBy('created_at'),
             ])
-            ->orderBy('date')
+            ->orderByDesc('date')
             ->get()
             ->map(fn (Event $event): array => $this->formatFieldGroup(
                 id: $event->id,
@@ -1016,7 +1134,9 @@ class VolunteerManagementController extends Controller
                 name: $event->title,
                 schedule: ($event->date?->format('M d, Y') ?? '').($event->time ? " • {$event->time}" : ''),
                 quota: $event->spots !== null && $event->spots > 0 ? (int) $event->spots + $event->assignedTasks->count() : 0,
-                executionStatus: null,
+                executionStatus: $event->status,
+                disbandedAt: $event->disbanded_at?->toIso8601String(),
+                totalFoodDistributed: 0,
                 tasks: $event->assignedTasks,
             ));
 
@@ -1034,6 +1154,8 @@ class VolunteerManagementController extends Controller
         string $schedule,
         int $quota,
         ?string $executionStatus,
+        ?string $disbandedAt,
+        int $totalFoodDistributed,
         $tasks,
     ): array {
         $members = $tasks
@@ -1050,6 +1172,7 @@ class VolunteerManagementController extends Controller
                     'avatar_path' => $t->user->avatar_path,
                     'role' => $t->role,
                     'status' => $t->status,
+                    'hours_logged' => (float) $t->hours_logged,
                     'is_lead' => str_contains($roleLower, 'lead'),
                     'is_recorder' => str_contains($roleLower, 'recorder'),
                     'is_medic' => str_contains($roleLower, 'medic'),
@@ -1077,6 +1200,12 @@ class VolunteerManagementController extends Controller
             'schedule' => $schedule,
             'quota' => $quota,
             'execution_status' => $executionStatus,
+            'is_disbanded' => $disbandedAt !== null,
+            'disbanded_at' => $disbandedAt,
+            'total_food_distributed' => $totalFoodDistributed,
+            'total_hours_logged' => round($members->sum('hours_logged'), 2),
+            'completed_count' => $members->where('status', AssignedTask::STATUS_COMPLETED)->count(),
+            'no_show_count' => $members->where('status', AssignedTask::STATUS_NO_SHOW)->count(),
             'members_count' => $members->count(),
             'has_lead' => $members->contains('is_lead', true),
             'has_recorder' => $members->contains('is_recorder', true),

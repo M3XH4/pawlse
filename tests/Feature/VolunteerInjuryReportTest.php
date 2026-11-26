@@ -193,3 +193,64 @@ test('admin can log injury report on behalf of a volunteer with field medic and 
     expect($report->assigned_medic_user_id)->toBe($medic->id);
     Notification::assertSentTo($volunteer, VolunteerMedicalAidUpdatedNotification::class);
 });
+
+test('volunteer injury reports can be filtered by search, status, severity, incident type, and sort order', function () {
+    $volunteer = User::factory()->create(['role' => Role::Volunteer->value]);
+    $volunteer->assignRole(Role::Volunteer->value);
+
+    $biteReport = VolunteerInjuryReport::factory()->create([
+        'user_id' => $volunteer->id,
+        'incident_type' => 'animal_bite',
+        'severity' => 'severe',
+        'status' => VolunteerInjuryReport::StatusReported,
+        'location' => 'Public Market Gate',
+        'description' => 'Deep dog bite near market entrance.',
+        'created_at' => now()->subDays(2),
+    ]);
+
+    $sprainReport = VolunteerInjuryReport::factory()->create([
+        'user_id' => $volunteer->id,
+        'incident_type' => 'fall_or_sprain',
+        'severity' => 'minor',
+        'status' => VolunteerInjuryReport::StatusConfirmed,
+        'location' => 'Shelter Courtyard',
+        'description' => 'Twisted ankle while carrying supplies.',
+        'created_at' => now()->subDay(),
+    ]);
+
+    // Filter by status, severity, and incident_type
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.injury-reports', [
+            'status' => VolunteerInjuryReport::StatusConfirmed,
+            'severity' => 'minor',
+            'incident_type' => 'fall_or_sprain',
+        ]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('volunteer/injury-reports')
+            ->has('reports.data', 1)
+            ->where('reports.data.0.id', $sprainReport->id)
+            ->where('filters.status', VolunteerInjuryReport::StatusConfirmed)
+            ->where('filters.severity', 'minor')
+            ->where('filters.incident_type', 'fall_or_sprain')
+        );
+
+    // Filter by search with #ID
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.injury-reports', ['search' => "#{$biteReport->id}"]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('reports.data', 1)
+            ->where('reports.data.0.id', $biteReport->id)
+        );
+
+    // Sort oldest first
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.injury-reports', ['sort' => 'oldest']))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('reports.data', 2)
+            ->where('reports.data.0.id', $biteReport->id)
+            ->where('filters.sort', 'oldest')
+        );
+});

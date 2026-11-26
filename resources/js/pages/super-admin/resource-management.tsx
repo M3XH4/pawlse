@@ -161,7 +161,6 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
         if (editingResource) {
             router.put(`/account/super-admin/resources/${editingResource.id}`, data as any, {
                 onSuccess: () => {
-                    toast.success('Resource file updated successfully.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -169,7 +168,6 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
         } else {
             router.post('/account/super-admin/resources', data as any, {
                 onSuccess: () => {
-                    toast.success('Resource file added successfully.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -180,7 +178,6 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
     const handleToggleStatus = (res: ResourceRecord) => {
         router.patch(`/account/super-admin/resources/${res.id}/toggle-status`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success(`Status updated for "${res.title}".`),
         });
     };
 
@@ -193,7 +190,6 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
             onConfirm: () => {
                 router.delete(`/account/super-admin/resources/${res.id}`, {
                     preserveScroll: true,
-                    onSuccess: () => toast.success(`Resource "${res.title}" archived.`),
                 });
             },
         });
@@ -202,7 +198,6 @@ export default function ResourceManagement({ resources, stats, filters }: Resour
     const handleRestore = (res: ResourceRecord) => {
         router.post(`/account/super-admin/resources/${res.id}/restore`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success(`Resource "${res.title}" restored.`),
         });
     };
 

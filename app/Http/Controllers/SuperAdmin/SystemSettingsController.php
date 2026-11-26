@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\SystemSetting;
+use App\Services\DashboardAssistantService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +16,7 @@ class SystemSettingsController extends Controller
     /**
      * Display System Settings screen.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, DashboardAssistantService $assistantService): Response
     {
         $settings = SystemSetting::getValue('system_settings', [
             'app_name' => config('app.name', 'PAWLSE'),
@@ -30,6 +31,7 @@ class SystemSettingsController extends Controller
             'sos_gps_enabled' => true,
             'volunteer_map_enabled' => true,
             'push_test_alert_enabled' => false,
+            'assistant_chatbot_enabled' => true,
         ]);
 
         if (! isset($settings['maintenance_message'])) {
@@ -60,8 +62,13 @@ class SystemSettingsController extends Controller
             $settings['push_test_alert_enabled'] = false;
         }
 
+        if (! isset($settings['assistant_chatbot_enabled'])) {
+            $settings['assistant_chatbot_enabled'] = true;
+        }
+
         return Inertia::render('super-admin/system-settings', [
             'settings' => $settings,
+            'assistantInsights' => $assistantService->getInsightsSummary(),
         ]);
     }
 
@@ -83,6 +90,7 @@ class SystemSettingsController extends Controller
             'sos_gps_enabled' => ['nullable', 'boolean'],
             'volunteer_map_enabled' => ['nullable', 'boolean'],
             'push_test_alert_enabled' => ['nullable', 'boolean'],
+            'assistant_chatbot_enabled' => ['nullable', 'boolean'],
         ]);
 
         $settings = $request->only([
@@ -100,6 +108,7 @@ class SystemSettingsController extends Controller
         $settings['sos_gps_enabled'] = (bool) $request->input('sos_gps_enabled', false);
         $settings['volunteer_map_enabled'] = (bool) $request->input('volunteer_map_enabled', false);
         $settings['push_test_alert_enabled'] = (bool) $request->input('push_test_alert_enabled', false);
+        $settings['assistant_chatbot_enabled'] = (bool) $request->input('assistant_chatbot_enabled', false);
 
         if (empty($settings['maintenance_message'])) {
             $settings['maintenance_message'] = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';
@@ -149,6 +158,38 @@ class SystemSettingsController extends Controller
         $flashMessage = $newMode
             ? 'Maintenance mode has been activated. Public visitors will now see the maintenance screen.'
             : 'Maintenance mode has been deactivated. The platform is now live and fully accessible.';
+
+        return redirect()->back()->with('success', $flashMessage);
+    }
+
+    /**
+     * Quick toggle for the Dashboard Assistant Chatbot FAB across all dashboards.
+     */
+    public function toggleAssistantChatbot(): RedirectResponse
+    {
+        $settings = SystemSetting::getValue('system_settings', [
+            'app_name' => config('app.name', 'PAWLSE'),
+            'contact_email' => 'support@pawlse.test',
+            'contact_phone' => '09123456789',
+            'registration_enabled' => true,
+            'maintenance_mode' => false,
+            'maintenance_message' => 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!',
+            'assistant_chatbot_enabled' => true,
+        ]);
+
+        $newState = ! (bool) ($settings['assistant_chatbot_enabled'] ?? true);
+        $settings['assistant_chatbot_enabled'] = $newState;
+
+        SystemSetting::setValue('system_settings', $settings);
+
+        AuditLog::log(
+            'assistant_chatbot_toggle',
+            $newState ? 'Enabled Dashboard Assistant Chatbot across all dashboards' : 'Disabled Dashboard Assistant Chatbot across all dashboards'
+        );
+
+        $flashMessage = $newState
+            ? 'Dashboard Assistant Chatbot has been enabled across all dashboards.'
+            : 'Dashboard Assistant Chatbot has been disabled across all dashboards.';
 
         return redirect()->back()->with('success', $flashMessage);
     }

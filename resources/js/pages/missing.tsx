@@ -433,7 +433,6 @@ return;
             } | undefined;
 
             if (pageFlash?.error) {
-                toast.error(pageFlash.error);
                 setSubmitting(false);
 
                 return;

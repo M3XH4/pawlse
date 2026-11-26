@@ -9,10 +9,12 @@ use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\FeedingSchedule;
+use App\Models\FeedingSponsorship;
 use App\Models\User;
 use App\Notifications\EventApprovalStatusUpdatedNotification;
 use App\Notifications\EventPendingApprovalNotification;
 use App\Notifications\VolunteerCertificateIssuedNotification;
+use App\Services\FieldGroupLifecycleService;
 use App\Support\EReceiptDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,10 +78,16 @@ class EventManagementController extends Controller
                 'distributionLogs' => fn ($q) => $q->with('recordedBy:id,name')->latest('recorded_at'),
                 'startedBy:id,name',
                 'completedBy:id,name',
+                'feedingSponsorship:id,public_reference,donor_name,preferred_date,occasion,packs_distributed,strays_fed',
             ])
             ->latest()
             ->paginate(10, ['*'], 'feeding_page')
             ->withQueryString();
+
+        $feedingSponsorships = FeedingSponsorship::query()
+            ->latest()
+            ->take(50)
+            ->get(['id', 'public_reference', 'donor_name', 'preferred_date', 'occasion', 'packs_distributed', 'strays_fed']);
 
         $currentUser = $request->user();
         $isSuperAdmin = $currentUser ? $currentUser->isSuperAdmin() : false;
@@ -90,6 +98,7 @@ class EventManagementController extends Controller
         return Inertia::render($view, [
             'events' => $events,
             'feedingSchedules' => $feedingSchedules,
+            'feedingSponsorships' => $feedingSponsorships,
             'filters' => [
                 'search' => $search,
                 'category' => $category,
@@ -330,6 +339,8 @@ class EventManagementController extends Controller
             'time' => ['required', 'string', 'max:255'],
             'volunteers' => ['required', 'integer', 'min:0'],
             'strays' => ['required', 'integer', 'min:0'],
+            'food_packs_allocated' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'feeding_sponsorship_id' => ['nullable', 'integer', 'exists:feeding_sponsorships,id'],
         ]);
 
         FeedingSchedule::query()->create($validated);
@@ -356,6 +367,8 @@ class EventManagementController extends Controller
             'volunteers' => ['required', 'integer', 'min:0'],
             'strays' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'string', 'in:active,closed'],
+            'food_packs_allocated' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'feeding_sponsorship_id' => ['nullable', 'integer', 'exists:feeding_sponsorships,id'],
         ]);
 
         $schedule->update($validated);
@@ -422,8 +435,11 @@ class EventManagementController extends Controller
     /**
      * Complete a feeding route run from the admin/super-admin panel.
      */
-    public function completeFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
-    {
+    public function completeFeedingRoute(
+        Request $request,
+        FeedingSchedule $schedule,
+        FieldGroupLifecycleService $lifecycleService
+    ): RedirectResponse {
         if ($schedule->execution_status !== FeedingSchedule::ExecutionInProgress) {
             Inertia::flash('toast', [
                 'type' => 'error',
@@ -433,17 +449,22 @@ class EventManagementController extends Controller
             return redirect()->back();
         }
 
-        $schedule->update([
-            'execution_status' => FeedingSchedule::ExecutionCompleted,
-            'completed_at' => now(),
-            'completed_by_user_id' => $request->user()?->id,
+        $validated = $request->validate([
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.task_id' => ['required', 'integer'],
+            'attendees.*.attended' => ['required', 'boolean'],
+            'attendees.*.hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
         ]);
 
-        AuditLog::log('feeding_route_completed', "Admin completed feeding route '{$schedule->zone}'");
+        $stats = $lifecycleService->completeAndDisbandFeedingSchedule(
+            $schedule,
+            $request->user(),
+            $validated['attendees'] ?? null
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "Feeding route '{$schedule->zone}' marked as completed.",
+            'message' => "Feeding route '{$schedule->zone}' completed & group disbanded ({$stats['completed_count']} attended, {$stats['no_show_count']} no-show).",
         ]);
 
         return redirect()->back();
@@ -460,6 +481,7 @@ class EventManagementController extends Controller
             'started_by_user_id' => null,
             'completed_at' => null,
             'completed_by_user_id' => null,
+            'disbanded_at' => null,
         ]);
 
         AuditLog::log('feeding_route_reset', "Admin reset feeding route '{$schedule->zone}' to scheduled");
@@ -473,7 +495,7 @@ class EventManagementController extends Controller
     }
 
     /**
-     * Mark an individual event attendee (volunteer, registered user, or public guest) as completed and issue their certificate.
+     * Mark an individual event attendee (volunteer, registered user, or public guest) as completed or no-show.
      */
     public function completeAttendee(Request $request, AssignedTask $task): RedirectResponse
     {
@@ -482,17 +504,41 @@ class EventManagementController extends Controller
             abort(404, 'Associated event not found.');
         }
 
+        $status = $request->input('status', AssignedTask::STATUS_COMPLETED);
+        $recipientName = $task->user?->name ?? $task->guest_name ?? 'Attendee';
+
+        if ($status === AssignedTask::STATUS_NO_SHOW) {
+            $task->update([
+                'status' => AssignedTask::STATUS_NO_SHOW,
+                'hours_logged' => 0.00,
+                'completed_at' => null,
+                'attendance_marked_by' => $request->user()?->id,
+                'attendance_marked_at' => now(),
+            ]);
+
+            AuditLog::log('event_attendee_no_show', "Marked '{$recipientName}' as no-show in event '{$event->title}'");
+
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => "{$recipientName} marked as No Show (0 hours logged, no certificate issued).",
+            ]);
+
+            return redirect()->back();
+        }
+
         $hours = $request->input('hours_logged');
         $defaultHours = strtolower((string) $task->role) === 'participant' ? 2.0 : 4.0;
         $resolvedHours = $hours !== null ? (float) $hours : ((float) $task->hours_logged > 0 ? (float) $task->hours_logged : $defaultHours);
 
         $task->update([
-            'status' => 'completed',
+            'status' => AssignedTask::STATUS_COMPLETED,
             'hours_logged' => $resolvedHours,
+            'completed_at' => $task->completed_at ?? now(),
+            'attendance_marked_by' => $request->user()?->id,
+            'attendance_marked_at' => now(),
         ]);
 
         $issued = $this->issueCertificateForTask($event, $task);
-        $recipientName = $task->user?->name ?? $task->guest_name ?? 'Attendee';
 
         AuditLog::log('event_attendee_complete', "Completed attendance & issued certificate for '{$recipientName}' in event '{$event->title}'");
 
@@ -507,13 +553,16 @@ class EventManagementController extends Controller
     }
 
     /**
-     * Bulk complete attendance & issue certificates to all active/completed attendees of an event.
+     * Bulk complete attendance, disband the event group, and issue certificates to attended members only.
      */
-    public function issueEventCertificates(Request $request, Event $event): RedirectResponse
-    {
+    public function issueEventCertificates(
+        Request $request,
+        Event $event,
+        FieldGroupLifecycleService $lifecycleService
+    ): RedirectResponse {
         $tasks = AssignedTask::with('user')
             ->where('event_id', $event->id)
-            ->whereIn('status', ['pending', 'completed'])
+            ->whereIn('status', [AssignedTask::STATUS_PENDING, AssignedTask::STATUS_COMPLETED, AssignedTask::STATUS_NO_SHOW])
             ->get();
 
         if ($tasks->isEmpty()) {
@@ -525,29 +574,31 @@ class EventManagementController extends Controller
             return redirect()->back();
         }
 
+        $validated = $request->validate([
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.task_id' => ['required', 'integer'],
+            'attendees.*.attended' => ['required', 'boolean'],
+            'attendees.*.hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
+        ]);
+
+        $result = $lifecycleService->completeAndDisbandEvent(
+            $event,
+            $request->user(),
+            $validated['attendees'] ?? null
+        );
+
         $issuedCount = 0;
-
-        foreach ($tasks as $task) {
-            if ($task->status !== 'completed') {
-                $defaultHours = strtolower((string) $task->role) === 'participant' ? 2.0 : 4.0;
-                $task->update([
-                    'status' => 'completed',
-                    'hours_logged' => (float) $task->hours_logged > 0 ? $task->hours_logged : $defaultHours,
-                ]);
-            }
-
-            if ($this->issueCertificateForTask($event, $task)) {
+        foreach ($result['tasks'] as $task) {
+            if ($task->status === AssignedTask::STATUS_COMPLETED && $this->issueCertificateForTask($event, $task)) {
                 $issuedCount++;
             }
         }
 
-        AuditLog::log('event_bulk_certificates_issue', "Issued {$issuedCount} certificate(s) for event '{$event->title}'");
+        AuditLog::log('event_bulk_certificates_issue', "Completed & disbanded event '{$event->title}', issued {$issuedCount} certificate(s)");
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => $issuedCount > 0
-                ? "Successfully issued and emailed {$issuedCount} certificate(s) to event attendees!"
-                : 'All attendees for this event have already been issued their certificates.',
+            'message' => "Event completed & group disbanded ({$result['completed_count']} attended, {$result['no_show_count']} no-show). Issued {$issuedCount} certificate(s).",
         ]);
 
         return redirect()->back();

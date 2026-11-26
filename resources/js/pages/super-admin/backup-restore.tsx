@@ -56,7 +56,6 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
         toast.info('Starting manual database dump...');
         router.post('/account/super-admin/backup-restore/run', {}, {
             onSuccess: () => {
-                toast.success('Database backup created successfully.');
                 setRunningBackup(false);
             },
             onError: (err: any) => {
@@ -77,7 +76,6 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
                 toast.info('Restoring database schema and data...');
                 router.post(`/account/super-admin/backup-restore/${backup.id}/restore`, {}, {
                     onSuccess: () => {
-                        toast.success('Database restored successfully.');
                         setRestoringBackupId(null);
                     },
                     onError: (err: any) => {
@@ -97,7 +95,6 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
             variant: 'danger',
             onConfirm: () => {
                 router.delete(`/account/super-admin/backup-restore/${backup.id}`, {
-                    onSuccess: () => toast.success('Backup file deleted.'),
                     onError: () => toast.error('Failed to delete backup.')
                 });
             },
@@ -107,7 +104,6 @@ export default function BackupRestore({ backups, settings }: BackupRestoreProps)
     const handleSaveSettings = (e: React.FormEvent) => {
         e.preventDefault();
         post('/account/super-admin/backup-restore/settings', {
-            onSuccess: () => toast.success('Automated backup settings updated.'),
             onError: () => toast.error('Failed to save settings.')
         });
     };

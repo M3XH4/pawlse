@@ -22,7 +22,13 @@ class Event extends Model
         'keywords' => 'array',
         'spots' => 'integer',
         'approved_at' => 'datetime',
+        'disbanded_at' => 'datetime',
     ];
+
+    public function isDisbanded(): bool
+    {
+        return $this->disbanded_at !== null;
+    }
 
     /**
      * @return BelongsTo<User, $this>

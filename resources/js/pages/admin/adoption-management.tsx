@@ -261,7 +261,6 @@ return;
         preserveScroll: true,
         only: ['applications'],
         onSuccess: () => {
-          toast.success(requestInfo ? 'Additional info request emailed to applicant.' : 'Message sent to applicant.');
           setAdminMessageText('');
         },
         onError: () => {
@@ -308,7 +307,6 @@ return;
       preserveScroll: true,
       only: ['applications', 'pets', 'adoptedPets'],
       onSuccess: () => {
-        toast.success(`Application status updated to ${status}.`);
         setIsRejectOpen(false);
         // Refresh local selectedApp info
         const updated = applications.find(a => a.id === selectedApp.id);

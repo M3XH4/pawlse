@@ -178,11 +178,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowUpdateModal(false);
-                    toast.success(
-                        isEmergency
-                            ? 'Emergency alert transmitted to shelter coordinators.'
-                            : 'Care update submitted successfully.',
-                    );
                 },
                 onError: (errors) => {
                     toast.error(

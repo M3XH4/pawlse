@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { ChevronDown, LogOut, Menu, User, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useDashboard } from '@/components/dashboard/dashboard-context';
 import { DashboardNavLink } from '@/components/dashboard/nav-link';
 import { useDashboardNotifications } from '@/hooks/use-dashboard-notifications';
@@ -398,9 +399,16 @@ export function DashboardSidebar({
                         collapsed && 'lg:gap-0 lg:px-[calc((5.5rem-2.5rem)/2)]',
                     )}
                 >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)] text-sm font-bold text-white">
-                        {initials}
-                    </div>
+                    <Avatar className="h-10 w-10 shrink-0 bg-gradient-to-br from-[var(--dashboard-primary-from)] to-[var(--dashboard-primary-to)]">
+                        <AvatarImage
+                            src={auth.user?.avatar_path ? auth.user.avatar : undefined}
+                            alt={userName}
+                            className="object-cover"
+                        />
+                        <AvatarFallback className="bg-transparent text-sm font-bold text-white">
+                            {initials}
+                        </AvatarFallback>
+                    </Avatar>
                     <div
                         className={cn(
                             'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out',

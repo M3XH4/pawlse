@@ -1,5 +1,5 @@
-import { Head, router, Link } from '@inertiajs/react';
-import { User, Users, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus, HeartPulse, Stethoscope, Trash2, Edit3, SlidersHorizontal, Calendar, Utensils } from 'lucide-react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
+import { User, Users, ClipboardList, CheckCircle2, XCircle, Award, Clock, Search, Filter, Check, X, ShieldAlert, Plus, Store, PackageCheck, AlertTriangle, UserPlus, HeartPulse, Stethoscope, Trash2, Edit3, SlidersHorizontal, Calendar, Utensils, MessageSquare, Archive, FileText } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { AdminCard } from '@/components/admin/card';
@@ -11,10 +11,15 @@ import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
 import { FilteredContentSkeleton } from '@/components/ui/skeleton-presets';
 import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
+import { CompleteGroupModal } from '@/components/volunteer/complete-group-modal';
+import type { AttendeeSubmission } from '@/components/volunteer/complete-group-modal';
+import { GroupChatDrawer } from '@/components/volunteer/group-chat-drawer';
+import { MissionSummaryModal } from '@/components/volunteer/mission-summary-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { useFilteredSectionLoading } from '@/hooks/use-inertia-loading';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatPhotoUrl } from '@/lib/utils';
+import type { SharedData } from '@/types';
 
 interface PaginatedData<T> {
     data: T[];
@@ -181,6 +186,12 @@ interface VolunteerManagementProps {
         schedule: string;
         quota: number;
         execution_status: string | null;
+        is_disbanded?: boolean;
+        disbanded_at?: string | null;
+        total_food_distributed?: number;
+        total_hours_logged?: number;
+        completed_count?: number;
+        no_show_count?: number;
         members_count: number;
         has_lead: boolean;
         has_recorder: boolean;
@@ -194,6 +205,7 @@ interface VolunteerManagementProps {
             avatar_path?: string | null;
             role: string;
             status: string;
+            hours_logged?: number;
             is_lead: boolean;
             is_recorder: boolean;
             is_medic: boolean;
@@ -201,6 +213,7 @@ interface VolunteerManagementProps {
     }>;
     allVolunteers?: { id: number; name: string; email: string }[];
     allRecipients?: { id: number; name: string; email: string; role?: string }[];
+    issuedEventIdsByUser?: Record<string, number[]>;
     filters: {
         search: string;
         status: string;
@@ -314,6 +327,7 @@ export default function VolunteerManagement({
     fieldGroups = [],
     allVolunteers = [],
     allRecipients = [],
+    issuedEventIdsByUser = {},
     filters,
     basePath = '/account/admin/volunteer-management',
 }: VolunteerManagementProps) {
@@ -400,10 +414,76 @@ export default function VolunteerManagement({
         members_count: number;
         quota: number;
     } | null>(null);
+    const { auth } = usePage<SharedData>().props;
+    const currentUserId = auth.user?.id ?? 0;
+    const [groupFilter, setGroupFilter] = useState<'active' | 'disbanded'>('active');
+    const [chatGroupKey, setChatGroupKey] = useState<{ type: 'feeding' | 'event'; id: number } | null>(null);
+    const [summaryGroupKey, setSummaryGroupKey] = useState<{ type: 'feeding' | 'event'; id: number } | null>(null);
+    const activeChatGroup = chatGroupKey
+        ? fieldGroups.find((g) => g.type === chatGroupKey.type && g.id === chatGroupKey.id) || null
+        : null;
+
     const [selectedGroupKey, setSelectedGroupKey] = useState<{ type: 'feeding' | 'event'; id: number } | null>(null);
     const activeDrawerGroup = selectedGroupKey
         ? fieldGroups.find((g) => g.type === selectedGroupKey.type && g.id === selectedGroupKey.id) || null
         : null;
+    const [groupQuotaInput, setGroupQuotaInput] = useState('');
+    const [isGroupSettingsModalOpen, setIsGroupSettingsModalOpen] = useState(false);
+    const [isSavingGroupSettings, setIsSavingGroupSettings] = useState(false);
+    const [disbandingGroup, setDisbandingGroup] = useState<typeof activeDrawerGroup>(null);
+    const [isDisbandingGroup, setIsDisbandingGroup] = useState(false);
+
+    React.useEffect(() => {
+        if (activeDrawerGroup) {
+            setGroupQuotaInput(activeDrawerGroup.quota > 0 ? String(activeDrawerGroup.quota) : '');
+        }
+    }, [activeDrawerGroup?.type, activeDrawerGroup?.id, activeDrawerGroup?.quota]);
+
+    const handleSaveGroupSettings = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!activeDrawerGroup) {
+            return;
+        }
+        const parsed = groupQuotaInput.trim() === '' ? null : parseInt(groupQuotaInput, 10);
+        if (parsed !== null && parsed < activeDrawerGroup.members_count) {
+            toast.error(`Cannot set limit to ${parsed} when ${activeDrawerGroup.members_count} member(s) are already in this group.`);
+            return;
+        }
+        setIsSavingGroupSettings(true);
+        router.post(
+            `${basePath}/groups/${activeDrawerGroup.type}/${activeDrawerGroup.id}/settings`,
+            { quota: parsed },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsGroupSettingsModalOpen(false);
+                },
+                onError: (errors) => {
+                    toast.error(Object.values(errors)[0] || 'Failed to update group settings.');
+                },
+                onFinish: () => setIsSavingGroupSettings(false),
+            }
+        );
+    };
+
+    const handleConfirmDisbandGroup = (attendees: AttendeeSubmission[]) => {
+        if (!disbandingGroup) {
+            return;
+        }
+        setIsDisbandingGroup(true);
+        router.post(
+            `${basePath}/groups/${disbandingGroup.type}/${disbandingGroup.id}/disband`,
+            { attendees },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setDisbandingGroup(null);
+                    setSelectedGroupKey(null);
+                },
+                onFinish: () => setIsDisbandingGroup(false),
+            }
+        );
+    };
 
     // Complete Task modal state
     const [completingTask, setCompletingTask] = useState<TaskModel | null>(null);
@@ -495,6 +575,12 @@ return;
     const [certTargetEventId, setCertTargetEventId] = useState('');
     const [certTitle, setCertTitle] = useState('Certificate of Appreciation');
     const [certDesc, setCertDesc] = useState('');
+    const issuedEventIdsForSelectedUser = new Set(
+        certTargetUserId ? (issuedEventIdsByUser[certTargetUserId] ?? []) : [],
+    );
+    const availableCertEvents = events.filter(
+        (eventItem) => !issuedEventIdsForSelectedUser.has(eventItem.id),
+    );
     const isFiltering = useFilteredSectionLoading();
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -514,9 +600,7 @@ return;
     };
 
     const handleApprove = (appId: number) => {
-        router.post(`${basePath}/applications/${appId}/approve`, {}, {
-            onSuccess: () => toast.success('Application approved!')
-        });
+        router.post(`${basePath}/applications/${appId}/approve`, {});
     };
 
     const handleRejectSubmit = (e: React.FormEvent) => {
@@ -530,7 +614,6 @@ return;
             rejection_reason: rejectionReason
         }, {
             onSuccess: () => {
-                toast.success('Application rejected.');
                 setRejectingApp(null);
                 setRejectionReason('');
             }
@@ -546,7 +629,6 @@ return;
             role: assignRole
         }, {
             onSuccess: () => {
-                toast.success('Task successfully assigned.');
                 setIsAssignOpen(false);
                 setAssignTargetUserId('');
                 setAssignEventId('');
@@ -574,7 +656,6 @@ return;
             hours_logged: autoLogHours ? null : parseFloat(hoursLogged)
         }, {
             onSuccess: () => {
-                toast.success('Task marked as completed.');
                 setCompletingTask(null);
             }
         });
@@ -589,8 +670,6 @@ return;
             onConfirm: () => {
                 router.post(`${basePath}/tasks/${taskId}/status`, {
                     status: 'cancelled'
-                }, {
-                    onSuccess: () => toast.success('Task assignment cancelled.')
                 });
             },
         });
@@ -604,8 +683,13 @@ return;
             title: certTitle,
             description: certDesc
         }, {
-            onSuccess: () => {
-                toast.success('Certificate issued successfully!');
+            onSuccess: (page) => {
+                const flashToast = (page as { flash?: { toast?: { type?: string } } }).flash?.toast;
+
+                if (flashToast?.type === 'warning' || flashToast?.type === 'error') {
+                    return;
+                }
+
                 setIsCertOpen(false);
                 setCertTargetUserId('');
                 setCertTargetEventId('');
@@ -857,15 +941,19 @@ setAssignScheduleId(String(feedingSchedules[0].id));
                                 {canCertifyVolunteers && (
                                 <button
                                     onClick={() => {
+                                        const initialUserId = volunteers.data.length > 0
+                                            ? String(volunteers.data[0].id)
+                                            : (recipientList[0]?.id?.toString() || '');
+                                        const initialIssuedIds = new Set(
+                                            initialUserId ? (issuedEventIdsByUser[initialUserId] ?? []) : [],
+                                        );
+                                        const firstAvailableEvent = events.find(
+                                            (eventItem) => !initialIssuedIds.has(eventItem.id),
+                                        );
+
                                         setIsCertOpen(true);
-
-                                        if (volunteers.data.length > 0) {
-setCertTargetUserId(String(volunteers.data[0].id));
-}
-
-                                        if (events.length > 0) {
-setCertTargetEventId(String(events[0].id));
-}
+                                        setCertTargetUserId(initialUserId);
+                                        setCertTargetEventId(firstAvailableEvent ? String(firstAvailableEvent.id) : '');
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-paw-navy text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 cursor-pointer"
                                 >
@@ -1021,19 +1109,50 @@ setCertTargetEventId(String(events[0].id));
                                     Field Groups & Team Rosters
                                 </h3>
                                 <p className="text-xs font-semibold text-gray-400">
-                                    Manage Feeding Route and Event teams — assign members, update roles (Route Lead, Recorder, Medic, Feeder), or remove members.
+                                    Manage Feeding Route and Event teams — assign members, update roles, coordinate in chat, or inspect disbanded group archives.
                                 </p>
+                            </div>
+                            <div className="flex items-center gap-1.5 rounded-xl bg-gray-100 p-1 dark:bg-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupFilter('active')}
+                                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                        groupFilter === 'active'
+                                            ? 'bg-white text-[#0B2340] shadow-xs dark:bg-slate-900 dark:text-white'
+                                            : 'text-gray-500 hover:text-[#0B2340] dark:text-gray-400'
+                                    }`}
+                                >
+                                    Active ({fieldGroups.filter((g) => !g.is_disbanded).length})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupFilter('disbanded')}
+                                    className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                        groupFilter === 'disbanded'
+                                            ? 'bg-white text-[#0B2340] shadow-xs dark:bg-slate-900 dark:text-white'
+                                            : 'text-gray-500 hover:text-[#0B2340] dark:text-gray-400'
+                                    }`}
+                                >
+                                    <Archive size={12} />
+                                    Disbanded ({fieldGroups.filter((g) => g.is_disbanded).length})
+                                </button>
                             </div>
                         </div>
 
-                        {fieldGroups.length === 0 ? (
+                        {fieldGroups.filter((g) => (groupFilter === 'disbanded' ? g.is_disbanded : !g.is_disbanded)).length === 0 ? (
                             <AdminCard className="p-8 text-center">
                                 <Users className="mx-auto mb-3 text-gray-300" size={40} />
-                                <p className="text-sm font-bold text-gray-500">No active Feeding Routes or upcoming Events found.</p>
+                                <p className="text-sm font-bold text-gray-500">
+                                    {groupFilter === 'disbanded'
+                                        ? 'No disbanded groups archived yet.'
+                                        : 'No active Feeding Routes or upcoming Events found.'}
+                                </p>
                             </AdminCard>
                         ) : (
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                {fieldGroups.map((group) => (
+                                {fieldGroups
+                                    .filter((g) => (groupFilter === 'disbanded' ? g.is_disbanded : !g.is_disbanded))
+                                    .map((group) => (
                                     <AdminCard key={`${group.type}-${group.id}`} className="p-5 flex flex-col justify-between gap-4">
                                         <div>
                                             <div className="flex flex-wrap items-center gap-1.5">
@@ -1049,6 +1168,11 @@ setCertTargetEventId(String(events[0].id));
                                                         {group.execution_status.replace('_', ' ')}
                                                     </span>
                                                 )}
+                                                {group.is_disbanded && (
+                                                    <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-black uppercase text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                                                        Disbanded
+                                                    </span>
+                                                )}
                                             </div>
                                             <h4 className="mt-2 font-fredoka text-base font-bold text-[#0B2340] dark:text-white">
                                                 {group.name}
@@ -1056,23 +1180,48 @@ setCertTargetEventId(String(events[0].id));
                                             <p className="mt-0.5 text-xs font-semibold text-gray-400">
                                                 {group.schedule}
                                             </p>
+                                            {group.is_disbanded && (
+                                                <p className="mt-2 text-[11px] font-bold text-gray-600 dark:text-gray-300">
+                                                    {group.completed_count ?? 0} attended • {group.no_show_count ?? 0} no-show • {group.total_hours_logged ?? 0} hrs
+                                                    {group.type === 'feeding' ? ` • ${group.total_food_distributed ?? 0} packs` : ''}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-3.5 dark:border-gray-800">
+                                        <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-3.5 dark:border-gray-800">
                                             <TeamAvatarStack
                                                 members={group.members}
                                                 maxVisible={3}
                                                 onClick={() => setSelectedGroupKey({ type: group.type, id: group.id })}
                                                 emptyText="0 members"
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedGroupKey({ type: group.type, id: group.id })}
-                                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gray-100 px-3.5 py-1.5 text-[11px] font-black uppercase tracking-wider text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
-                                            >
-                                                <SlidersHorizontal size={12} />
-                                                Manage
-                                            </button>
+                                            <div className="flex items-center gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSummaryGroupKey({ type: group.type, id: group.id })}
+                                                    className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#0B2340] transition hover:border-paw-blue hover:text-paw-blue dark:border-gray-700 dark:bg-slate-800 dark:text-white"
+                                                    title="Post-Mission Summary Report"
+                                                >
+                                                    <FileText size={12} />
+                                                    Summary
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setChatGroupKey({ type: group.type, id: group.id })}
+                                                    className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-paw-blue px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white transition hover:bg-blue-700"
+                                                >
+                                                    <MessageSquare size={12} />
+                                                    Chat
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedGroupKey({ type: group.type, id: group.id })}
+                                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
+                                                >
+                                                    <SlidersHorizontal size={12} />
+                                                    Manage
+                                                </button>
+                                            </div>
                                         </div>
                                     </AdminCard>
                                 ))}
@@ -1804,7 +1953,16 @@ return null;
                                 label="Recipient (Volunteer or User)"
                                 required
                                 value={certTargetUserId}
-                                onChange={(val) => setCertTargetUserId(val)}
+                                onChange={(val) => {
+                                    setCertTargetUserId(val);
+                                    const nextIssuedIds = new Set(
+                                        val ? (issuedEventIdsByUser[val] ?? []) : [],
+                                    );
+
+                                    if (certTargetEventId && nextIssuedIds.has(Number(certTargetEventId))) {
+                                        setCertTargetEventId('');
+                                    }
+                                }}
                                 placeholder="Select recipient..."
                                 options={recipientList.map(v => ({
                                     value: String(v.id),
@@ -1820,7 +1978,7 @@ return null;
                                 placeholder="None / Manual Issuance"
                                 options={[
                                     { value: '', label: 'None / Manual Issuance' },
-                                    ...events.map(e => ({ value: String(e.id), label: e.title })),
+                                    ...availableCertEvents.map(e => ({ value: String(e.id), label: e.title })),
                                 ]}
                             />
 
@@ -2479,12 +2637,27 @@ return null;
                                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 shadow-2xs border border-gray-100 dark:border-gray-800 dark:bg-slate-800">
                                     <Users size={13} className="text-paw-blue" />
                                     {activeDrawerGroup.members_count} / {activeDrawerGroup.quota > 0 ? activeDrawerGroup.quota : '∞'} members
+                                    {canAssignTasks && !activeDrawerGroup.is_disbanded && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setGroupQuotaInput(activeDrawerGroup.quota > 0 ? String(activeDrawerGroup.quota) : '');
+                                                setIsGroupSettingsModalOpen(true);
+                                            }}
+                                            title="Update Member Limit"
+                                            aria-label="Update Member Limit"
+                                            className="ml-0.5 inline-flex cursor-pointer items-center justify-center rounded-md p-1 text-gray-400 transition hover:bg-blue-50 hover:text-paw-blue dark:hover:bg-slate-700"
+                                        >
+                                            <SlidersHorizontal size={12} />
+                                        </button>
+                                    )}
                                 </span>
                             </div>
                         </div>
 
                         {/* Scrollable Body */}
                         <div className="flex-1 space-y-6 overflow-y-auto p-6">
+
                             {/* Key Role Coverage Grid (Feeding Routes only) */}
                             {activeDrawerGroup.type === 'feeding' && (
                                 <div className="space-y-2.5">
@@ -2623,37 +2796,114 @@ return null;
                             >
                                 Close
                             </button>
-                            {canAssignTasks && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setAssignActivityType(activeDrawerGroup.type);
+                            {canAssignTasks && !activeDrawerGroup.is_disbanded && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDisbandingGroup(activeDrawerGroup)}
+                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-rose-600 transition hover:bg-rose-600 hover:text-white dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300"
+                                    >
+                                        <Archive size={13} />
+                                        Disband
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAssignActivityType(activeDrawerGroup.type);
 
-                                        if (activeDrawerGroup.type === 'feeding') {
-                                            setAssignScheduleId(String(activeDrawerGroup.id));
-                                            setAssignRole('Route Lead');
-                                        } else {
-                                            setAssignEventId(String(activeDrawerGroup.id));
-                                            setAssignRole('Event Lead');
-                                        }
+                                            if (activeDrawerGroup.type === 'feeding') {
+                                                setAssignScheduleId(String(activeDrawerGroup.id));
+                                                setAssignRole('Route Lead');
+                                            } else {
+                                                setAssignEventId(String(activeDrawerGroup.id));
+                                                setAssignRole('Event Lead');
+                                            }
 
-                                        setAddingToGroup({
-                                            type: activeDrawerGroup.type,
-                                            id: activeDrawerGroup.id,
-                                            name: activeDrawerGroup.name,
-                                            schedule: activeDrawerGroup.schedule,
-                                            members_count: activeDrawerGroup.members_count,
-                                            quota: activeDrawerGroup.quota,
-                                        });
-                                        setIsAssignOpen(true);
-                                    }}
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-orange px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-orange-600"
-                                >
-                                    <UserPlus size={14} />
-                                    Add Member
-                                </button>
+                                            setAddingToGroup({
+                                                type: activeDrawerGroup.type,
+                                                id: activeDrawerGroup.id,
+                                                name: activeDrawerGroup.name,
+                                                schedule: activeDrawerGroup.schedule,
+                                                members_count: activeDrawerGroup.members_count,
+                                                quota: activeDrawerGroup.quota,
+                                            });
+                                            setIsAssignOpen(true);
+                                        }}
+                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-orange px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-orange-600"
+                                    >
+                                        <UserPlus size={14} />
+                                        Add Member
+                                    </button>
+                                </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Update Group Member Limit Modal */}
+            {isGroupSettingsModalOpen && activeDrawerGroup && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setIsGroupSettingsModalOpen(false);
+                        }
+                    }}
+                >
+                    <div className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-2xl dark:border-gray-800 dark:bg-slate-900">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <h3 className="flex items-center gap-2 font-fredoka text-xl font-bold text-[#0B2340] dark:text-white">
+                                <SlidersHorizontal className="text-paw-blue" size={20} /> Update Member Limit
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsGroupSettingsModalOpen(false)}
+                                className="cursor-pointer rounded-xl p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800"
+                                aria-label="Close modal"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <p className="mb-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            {activeDrawerGroup.name} • Minimum allowed: {Math.max(1, activeDrawerGroup.members_count)} (current members: {activeDrawerGroup.members_count})
+                        </p>
+                        <form onSubmit={handleSaveGroupSettings} className="space-y-4">
+                            <div>
+                                <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-gray-400">
+                                    Member Limit
+                                </label>
+                                <input
+                                    type="number"
+                                    min={Math.max(1, activeDrawerGroup.members_count)}
+                                    max={500}
+                                    placeholder="Unlimited"
+                                    value={groupQuotaInput}
+                                    onChange={(e) => setGroupQuotaInput(e.target.value)}
+                                    autoFocus
+                                    className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-bold text-[#0B2340] focus:border-paw-blue focus:outline-none dark:border-gray-700 dark:bg-slate-900 dark:text-white"
+                                />
+                                <p className="mt-1.5 text-[11px] font-medium text-gray-400">
+                                    Leave blank for unlimited members.
+                                </p>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsGroupSettingsModalOpen(false)}
+                                    className="cursor-pointer rounded-xl border border-gray-200 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-slate-800"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingGroupSettings}
+                                    className="cursor-pointer rounded-xl bg-paw-blue px-4 py-2 text-xs font-black uppercase tracking-wider text-white transition hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {isSavingGroupSettings ? 'Saving...' : 'Save Limit'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
@@ -2769,6 +3019,49 @@ return null;
                         </form>
                     </div>
                 </div>
+            )}
+
+            {activeChatGroup && (
+                <GroupChatDrawer
+                    open={Boolean(activeChatGroup)}
+                    onClose={() => setChatGroupKey(null)}
+                    groupType={activeChatGroup.type}
+                    groupId={activeChatGroup.id}
+                    groupName={activeChatGroup.name}
+                    schedule={activeChatGroup.schedule}
+                    members={activeChatGroup.members}
+                    currentUserId={currentUserId}
+                    isDisbanded={Boolean(activeChatGroup.is_disbanded)}
+                    initialTab="chat"
+                />
+            )}
+
+            {summaryGroupKey && (
+                <MissionSummaryModal
+                    open={Boolean(summaryGroupKey)}
+                    onClose={() => setSummaryGroupKey(null)}
+                    groupType={summaryGroupKey.type}
+                    groupId={summaryGroupKey.id}
+                />
+            )}
+
+            {disbandingGroup && (
+                <CompleteGroupModal
+                    open={Boolean(disbandingGroup)}
+                    onClose={() => setDisbandingGroup(null)}
+                    title={disbandingGroup.name}
+                    subtitle={disbandingGroup.schedule}
+                    groupType={disbandingGroup.type}
+                    members={disbandingGroup.members.map((m) => ({
+                        task_id: m.task_id,
+                        name: m.name,
+                        role: m.role,
+                        hours_logged: m.hours_logged,
+                        status: m.status,
+                    }))}
+                    submitting={isDisbandingGroup}
+                    onSubmit={handleConfirmDisbandGroup}
+                />
             )}
 
             <ConfirmationModal {...confirmModalProps} />

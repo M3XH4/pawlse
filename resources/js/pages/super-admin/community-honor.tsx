@@ -173,7 +173,6 @@ export default function CommunityHonorManagement({
         if (editingHonor) {
             router.put(`/account/super-admin/community-honors/${editingHonor.id}`, payload, {
                 onSuccess: () => {
-                    toast.success('Community honoree updated.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -181,7 +180,6 @@ export default function CommunityHonorManagement({
         } else {
             router.post('/account/super-admin/community-honors', payload, {
                 onSuccess: () => {
-                    toast.success('Community honoree added.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -193,7 +191,6 @@ export default function CommunityHonorManagement({
         e.preventDefault();
         metricsForm.post('/account/super-admin/community-honors/stats', {
             onSuccess: () => {
-                toast.success('Recognition metrics updated successfully.');
                 setIsMetricsModalOpen(false);
             },
             onError: () => toast.error('Failed to update metrics.')
@@ -209,7 +206,6 @@ export default function CommunityHonorManagement({
             onConfirm: () => {
                 router.delete(`/account/super-admin/community-honors/${item.id}`, {
                     preserveScroll: true,
-                    onSuccess: () => toast.success(`Removed "${item.name}".`),
                 });
             },
         });

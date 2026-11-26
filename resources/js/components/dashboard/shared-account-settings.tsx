@@ -270,7 +270,6 @@ export default function SharedAccountSettings({
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSavingNotifs(false);
-                    toast.success('Notification preferences updated successfully!');
                 },
                 onError: () => {
                     setIsSavingNotifs(false);
@@ -356,9 +355,6 @@ return;
         submitProfile(ProfileController.update.url(), {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Profile information updated successfully!');
-            },
         });
     };
 
@@ -653,7 +649,6 @@ return;
                                 options={{
                                     preserveScroll: true,
                                 }}
-                                onSuccess={() => toast.success('Password updated successfully!')}
                                 resetOnSuccess
                                 className="space-y-6 max-w-xl"
                             >

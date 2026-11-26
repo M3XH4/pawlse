@@ -223,7 +223,6 @@ export default function Checkout({ donation, simulation_enabled = false, officia
         post(`/checkout/${donation.public_reference}/proof`, {
             forceFormData: true,
             onSuccess: () => {
-                toast.success('Proof of payment submitted! An administrator will review and verify it.');
                 reset('proof', 'payment_reference');
                 setPreviewUrl(null);
                 window.scrollTo({ top: 0, behavior: 'smooth' });

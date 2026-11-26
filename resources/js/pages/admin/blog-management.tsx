@@ -202,7 +202,6 @@ return;
         router.post(`${basePath}/${postToApprove.id}/approve`, {}, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success(`"${postToApprove.title}" approved and published to the blog!`);
                 setIsApproving(false);
                 setIsApproveModalOpen(false);
                 setPostToApprove(null);
@@ -234,7 +233,6 @@ return;
                 setIsRejecting(false);
                 setIsRejectModalOpen(false);
                 setPostToReject(null);
-                toast.success('Story has been rejected and author notified.');
             },
             onError: () => {
                 setIsRejecting(false);
@@ -261,7 +259,6 @@ return;
         router.delete(`${basePath}/${postToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Article deleted successfully.');
                 setIsDeleting(false);
                 setIsDeleteModalOpen(false);
                 setPostToDelete(null);
@@ -354,7 +351,6 @@ return;
         if (editingPost) {
             router.put(`${basePath}/${editingPost.id}`, payload, {
                 onSuccess: () => {
-                    toast.success('Article updated successfully.');
                     setIsModalOpen(false);
                     setIsSubmitting(false);
                 },
@@ -366,7 +362,6 @@ return;
         } else {
             router.post(basePath, payload, {
                 onSuccess: () => {
-                    toast.success('Article created and published successfully!');
                     setIsModalOpen(false);
                     setIsSubmitting(false);
                 },
@@ -381,9 +376,6 @@ return;
     const handleToggleStatus = (post: BlogPostModel) => {
         router.patch(`${basePath}/${post.id}/toggle-status`, {}, {
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success(`Article status updated.`);
-            },
         });
     };
 

@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2, Map as MapIcon, Users, Play, Flag, ClipboardCheck, X } from 'lucide-react';
+import { ClipboardList, Calendar, MapPin, Clock, Utensils, Trash2, Heart, PackageCheck, Store, CheckCircle2, Map as MapIcon, Users, Play, Flag, ClipboardCheck, MessageSquare, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -8,7 +8,11 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { CompleteGroupModal } from '@/components/volunteer/complete-group-modal';
+import type { AttendeeSubmission } from '@/components/volunteer/complete-group-modal';
+import { GroupChatDrawer } from '@/components/volunteer/group-chat-drawer';
 import { TeamAvatarStack } from '@/components/volunteer/team-avatar-stack';
+import { VolunteerFilterBar } from '@/components/volunteer/volunteer-filter-bar';
 import { VolunteerMapModal } from '@/components/volunteer/volunteer-map-modal';
 import { useConfirmationModal } from '@/hooks/use-confirmation-modal';
 import { formatPhotoUrl } from '@/lib/utils';
@@ -121,15 +125,54 @@ interface AssignedTasksProps {
         links: any[];
         total: number;
     };
+    filters?: {
+        search?: string;
+        type?: string;
+        sort?: string;
+    };
     volunteerMapEnabled?: boolean;
     foodTypes?: string[];
 }
 
-export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = true, foodTypes = ['Dry Kibble', 'Wet Food', 'Cooked Meal', 'Water & Treats', 'Mixed Packs'] }: AssignedTasksProps) {
+export default function VolunteerAssignedTasks({ tasks, filters, volunteerMapEnabled = true, foodTypes = ['Dry Kibble', 'Wet Food', 'Cooked Meal', 'Water & Treats', 'Mixed Packs'] }: AssignedTasksProps) {
     const { auth } = usePage<SharedData>().props;
     const currentUserId = auth.user?.id;
     const { confirmModalProps, openConfirmModal } = useConfirmationModal();
     const activeTasks = tasks?.data || [];
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [typeFilter, setTypeFilter] = useState(filters?.type || '');
+    const [sortOrder, setSortOrder] = useState(filters?.sort || 'latest');
+
+    const applyFilters = (next: Partial<{ search: string; type: string; sort: string }>) => {
+        const params = {
+            search: next.search ?? searchQuery,
+            type: next.type ?? typeFilter,
+            sort: next.sort ?? sortOrder,
+        };
+
+        router.get(
+            '/account/volunteer/assigned-tasks',
+            {
+                ...(params.search.trim() ? { search: params.search.trim() } : {}),
+                ...(params.type ? { type: params.type } : {}),
+                ...(params.sort && params.sort !== 'latest' ? { sort: params.sort } : {}),
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const handleResetFilters = () => {
+        setSearchQuery('');
+        setTypeFilter('');
+        setSortOrder('latest');
+        router.get('/account/volunteer/assigned-tasks', {}, { preserveState: true, preserveScroll: true });
+    };
+
+    const hasActiveFilters = Boolean(
+        filters?.search ||
+        filters?.type ||
+        (filters?.sort && filters.sort !== 'latest'),
+    );
     const [confirmingTask, setConfirmingTask] = useState<TaskModel | null>(null);
     const [volunteerNotes, setVolunteerNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,13 +187,25 @@ export default function VolunteerAssignedTasks({ tasks, volunteerMapEnabled = tr
     const [distributionNotes, setDistributionNotes] = useState('');
     const [isSubmittingDistribution, setIsSubmittingDistribution] = useState(false);
 
-    // Team roster side drawer state
+    // Team roster & chat side drawer state
     const [teamDrawer, setTeamDrawer] = useState<{
         type: 'feeding' | 'event';
+        id: number;
+        title: string;
+        subtitle: string;
+        members: FeedingRosterMember[];
+        initialTab: 'chat' | 'roster';
+    } | null>(null);
+
+    // Complete group attendance modal state
+    const [completingGroup, setCompletingGroup] = useState<{
+        type: 'feeding' | 'event';
+        id: number;
         title: string;
         subtitle: string;
         members: FeedingRosterMember[];
     } | null>(null);
+    const [isCompletingGroup, setIsCompletingGroup] = useState(false);
 
     const handleCancelTask = (taskId: number) => {
         openConfirmModal({
@@ -192,16 +247,48 @@ return;
         router.post(`/account/volunteer/feeding-schedules/${scheduleId}/start`, {}, { preserveScroll: true });
     };
 
-    const handleCompleteFeedingRoute = (schedule: FeedingScheduleModel) => {
+    const handleCompleteFeedingRoute = (schedule: FeedingScheduleModel, isLead: boolean, roster: FeedingRosterMember[]) => {
+        if (isLead && roster.length > 0) {
+            setCompletingGroup({
+                type: 'feeding',
+                id: schedule.id,
+                title: schedule.zone,
+                subtitle: `${schedule.day} • ${schedule.time}`,
+                members: roster,
+            });
+            return;
+        }
+
         openConfirmModal({
             title: 'Complete Feeding Route',
-            description: `Mark "${schedule.zone}" as completed for this run?`,
+            description: `Mark "${schedule.zone}" as completed for this run and disband the active team?`,
             confirmText: 'Complete Route',
             variant: 'info',
             onConfirm: () => {
                 router.post(`/account/volunteer/feeding-schedules/${schedule.id}/complete`, {}, { preserveScroll: true });
             },
         });
+    };
+
+    const handleSubmitGroupCompletion = (attendees: AttendeeSubmission[]) => {
+        if (!completingGroup) {
+            return;
+        }
+        setIsCompletingGroup(true);
+        const url =
+            completingGroup.type === 'feeding'
+                ? `/account/volunteer/feeding-schedules/${completingGroup.id}/complete`
+                : `/account/volunteer/events/${completingGroup.id}/complete`;
+
+        router.post(
+            url,
+            { attendees },
+            {
+                preserveScroll: true,
+                onSuccess: () => setCompletingGroup(null),
+                onFinish: () => setIsCompletingGroup(false),
+            }
+        );
     };
 
     const handleRecordDistribution = (e: React.FormEvent) => {
@@ -258,11 +345,56 @@ return;
                 </div>
             }
         >
+            <VolunteerFilterBar
+                search={searchQuery}
+                searchPlaceholder="Search by task, location, or role..."
+                onSearchChange={setSearchQuery}
+                onSearchSubmit={() => applyFilters({})}
+                selects={[
+                    {
+                        value: typeFilter,
+                        onChange: (val) => {
+                            setTypeFilter(val);
+                            applyFilters({ type: val });
+                        },
+                        ariaLabel: 'Filter by task type',
+                        defaultLabel: 'All Types',
+                        options: [
+                            { value: 'event', label: 'Events' },
+                            { value: 'feeding', label: 'Feeding Routes' },
+                            { value: 'rescue', label: 'Rescue Cases' },
+                            { value: 'food_pickup', label: 'Food Pickups' },
+                        ],
+                    },
+                ]}
+                sort={sortOrder}
+                onSortChange={(val) => {
+                    setSortOrder(val);
+                    applyFilters({ sort: val });
+                }}
+                hasActiveFilters={hasActiveFilters || Boolean(searchQuery.trim() || typeFilter || sortOrder === 'oldest')}
+                onReset={handleResetFilters}
+            />
+
             {activeTasks.length === 0 ? (
                 <DashboardCard className="p-8 text-center text-gray-500 font-bold">
                     <ClipboardList className="mx-auto mb-4 text-gray-300" size={48} />
-                    <p className="text-sm">You have no active volunteer task assignments at the moment.</p>
-                    <p className="text-xs text-gray-400 mt-1">Visit the Events page to find opportunities and join routes!</p>
+                    <p className="text-sm">
+                        {hasActiveFilters
+                            ? 'No assigned tasks matched your filters.'
+                            : 'You have no active volunteer task assignments at the moment.'}
+                    </p>
+                    {hasActiveFilters ? (
+                        <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                            Reset Filters
+                        </button>
+                    ) : (
+                        <p className="text-xs text-gray-400 mt-1">Visit the Events page to find opportunities and join routes!</p>
+                    )}
                 </DashboardCard>
             ) : (
                 <div className="flex flex-col gap-4">
@@ -470,11 +602,35 @@ return;
                                                 {feedingSchedule && executionStatus === 'in_progress' && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleCompleteFeedingRoute(feedingSchedule)}
+                                                        onClick={() =>
+                                                            handleCompleteFeedingRoute(
+                                                                feedingSchedule,
+                                                                task.role.toLowerCase().includes('lead'),
+                                                                feedingRoster
+                                                            )
+                                                        }
                                                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-blue-700"
                                                     >
                                                         <Flag size={13} />
                                                         Complete Route
+                                                    </button>
+                                                )}
+                                                {task.event && task.role.toLowerCase().includes('lead') && eventRoster.length > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setCompletingGroup({
+                                                                type: 'event',
+                                                                id: task.event!.id,
+                                                                title: task.event!.title,
+                                                                subtitle: `${task.event!.date ? new Date(task.event!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} • ${task.event!.time}`,
+                                                                members: eventRoster,
+                                                            })
+                                                        }
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-blue-700"
+                                                    >
+                                                        <Flag size={13} />
+                                                        Complete Event
                                                     </button>
                                                 )}
                                                 <span className="inline-flex items-center bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 text-xs font-black uppercase px-3 py-1.5 rounded-full whitespace-nowrap">
@@ -524,26 +680,49 @@ return;
                                                     onClick={() =>
                                                         setTeamDrawer({
                                                             type: 'feeding',
+                                                            id: feedingSchedule.id,
                                                             title: feedingSchedule.zone,
                                                             subtitle: `${feedingSchedule.day} • ${feedingSchedule.time}`,
                                                             members: feedingRoster,
+                                                            initialTab: 'roster',
                                                         })
                                                     }
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setTeamDrawer({
-                                                            type: 'feeding',
-                                                            title: feedingSchedule.zone,
-                                                            subtitle: `${feedingSchedule.day} • ${feedingSchedule.time}`,
-                                                            members: feedingRoster,
-                                                        })
-                                                    }
-                                                    className="cursor-pointer rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
-                                                >
-                                                    View Team ({feedingRoster.length})
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setTeamDrawer({
+                                                                type: 'feeding',
+                                                                id: feedingSchedule.id,
+                                                                title: feedingSchedule.zone,
+                                                                subtitle: `${feedingSchedule.day} • ${feedingSchedule.time}`,
+                                                                members: feedingRoster,
+                                                                initialTab: 'chat',
+                                                            })
+                                                        }
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-blue px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-blue-700"
+                                                    >
+                                                        <MessageSquare size={12} />
+                                                        Team Chat
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setTeamDrawer({
+                                                                type: 'feeding',
+                                                                id: feedingSchedule.id,
+                                                                title: feedingSchedule.zone,
+                                                                subtitle: `${feedingSchedule.day} • ${feedingSchedule.time}`,
+                                                                members: feedingRoster,
+                                                                initialTab: 'roster',
+                                                            })
+                                                        }
+                                                        className="cursor-pointer rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
+                                                    >
+                                                        View Team ({feedingRoster.length})
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
 
@@ -584,27 +763,50 @@ return;
                                                 onClick={() =>
                                                     setTeamDrawer({
                                                         type: 'event',
+                                                        id: task.event!.id,
                                                         title: task.event!.title,
                                                         subtitle: `${task.event!.date ? new Date(task.event!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} • ${task.event!.time}`,
                                                         members: eventRoster,
+                                                        initialTab: 'roster',
                                                     })
                                                 }
                                             />
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setTeamDrawer({
-                                                    type: 'event',
-                                                    title: task.event!.title,
-                                                    subtitle: `${task.event!.date ? new Date(task.event!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} • ${task.event!.time}`,
-                                                    members: eventRoster,
-                                                })
-                                            }
-                                            className="cursor-pointer rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
-                                        >
-                                            View Team ({eventRoster.length})
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setTeamDrawer({
+                                                        type: 'event',
+                                                        id: task.event!.id,
+                                                        title: task.event!.title,
+                                                        subtitle: `${task.event!.date ? new Date(task.event!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} • ${task.event!.time}`,
+                                                        members: eventRoster,
+                                                        initialTab: 'chat',
+                                                    })
+                                                }
+                                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-blue px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-blue-700"
+                                            >
+                                                <MessageSquare size={12} />
+                                                Team Chat
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setTeamDrawer({
+                                                        type: 'event',
+                                                        id: task.event!.id,
+                                                        title: task.event!.title,
+                                                        subtitle: `${task.event!.date ? new Date(task.event!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} • ${task.event!.time}`,
+                                                        members: eventRoster,
+                                                        initialTab: 'roster',
+                                                    })
+                                                }
+                                                className="cursor-pointer rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-[#0B2340] transition hover:bg-paw-orange hover:text-white dark:bg-slate-800 dark:text-white"
+                                            >
+                                                View Team ({eventRoster.length})
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </DashboardCard>
@@ -800,153 +1002,44 @@ return (
                 </div>
             )}
 
-            {/* Team Roster Side Drawer */}
-            {teamDrawer && (
-                <div
-                    className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                            setTeamDrawer(null);
-                        }
-                    }}
-                >
-                    <div className="flex h-full w-full max-w-md flex-col border-l border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-slate-900">
-                        <div className="shrink-0 border-b border-gray-100 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-6 dark:border-gray-800 dark:from-slate-800/70 dark:via-slate-900 dark:to-slate-900">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3.5">
-                                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                                        teamDrawer.type === 'feeding'
-                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                            : 'bg-paw-orange/15 text-paw-orange'
-                                    }`}>
-                                        {teamDrawer.type === 'feeding' ? <Utensils size={20} /> : <Calendar size={20} />}
-                                    </div>
-                                    <div>
-                                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                                            teamDrawer.type === 'feeding'
-                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                                : 'bg-paw-orange/15 text-paw-orange'
-                                        }`}>
-                                            {teamDrawer.type === 'feeding' ? 'Feeding Route Team' : 'Event Team'}
-                                        </span>
-                                        <h3 className="mt-1.5 font-fredoka text-xl font-bold leading-snug text-[#0B2340] dark:text-white">
-                                            {teamDrawer.title}
-                                        </h3>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setTeamDrawer(null)}
-                                    className="cursor-pointer rounded-xl p-1.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-slate-800"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Clock size={13} className="text-paw-orange" />
-                                    {teamDrawer.subtitle}
-                                </span>
-                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Users size={13} className="text-paw-blue" />
-                                    {teamDrawer.members.length} member(s)
-                                </span>
-                            </div>
-                        </div>
+            {teamDrawer && currentUserId !== undefined && (
+                <GroupChatDrawer
+                    open={Boolean(teamDrawer)}
+                    onClose={() => setTeamDrawer(null)}
+                    groupType={teamDrawer.type}
+                    groupId={teamDrawer.id}
+                    groupName={teamDrawer.title}
+                    schedule={teamDrawer.subtitle}
+                    members={teamDrawer.members.map((m) => ({
+                        id: m.id,
+                        task_id: m.id,
+                        user_id: m.user?.id ?? m.user_id,
+                        name: m.user?.name || 'Volunteer',
+                        role: m.role,
+                        avatar_path: m.user?.avatar_path,
+                        status: m.status,
+                    }))}
+                    currentUserId={currentUserId}
+                    initialTab={teamDrawer.initialTab}
+                />
+            )}
 
-                        <div className="flex-1 space-y-3 overflow-y-auto p-6">
-                            <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
-                                Team Roster ({teamDrawer.members.length})
-                            </p>
-                            {[...teamDrawer.members]
-                                .sort((a, b) => {
-                                    const rank = (role: string) => {
-                                        const lower = role.toLowerCase();
-
-                                        if (lower.includes('lead')) {
-return 0;
-}
-
-                                        if (lower.includes('medic')) {
-return 1;
-}
-
-                                        if (lower.includes('recorder')) {
-return 2;
-}
-
-                                        return 3;
-                                    };
-
-                                    return rank(a.role) - rank(b.role);
-                                })
-                                .map((member) => {
-                                    const roleLower = member.role.toLowerCase();
-                                    const memberIsMedic = roleLower.includes('medic');
-                                    const memberIsLead = roleLower.includes('lead');
-                                    const memberIsRecorder = roleLower.includes('recorder');
-                                    const memberIsCarrier = roleLower.includes('carrier');
-                                    const memberIsFeeder = roleLower.includes('feeder');
-                                    const name = member.user?.name || 'Volunteer';
-                                    const initials = name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
-                                    const avatarSrc = member.user?.avatar_path ? formatPhotoUrl(member.user.avatar_path) : null;
-                                    const isMe = currentUserId !== undefined && (member.user?.id === currentUserId || member.user_id === currentUserId);
-
-                                    return (
-                                        <div
-                                            key={member.id}
-                                            className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-2xs dark:border-gray-800 dark:bg-slate-800/50"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-xs font-black text-[#0B2340] dark:bg-slate-700 dark:text-white">
-                                                    {avatarSrc ? (
-                                                        <img src={avatarSrc} alt={name} className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        <span>{initials}</span>
-                                                    )}
-                                                </div>
-                                                <p className="truncate text-xs font-bold text-[#0B2340] dark:text-white">
-                                                    {name}
-                                                    {isMe && (
-                                                        <span className="ml-1.5 rounded-full bg-paw-blue/10 px-2 py-0.5 text-[10px] font-black text-paw-blue">
-                                                            You
-                                                        </span>
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                                                    memberIsLead
-                                                        ? 'border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
-                                                        : memberIsMedic
-                                                            ? 'border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                                            : memberIsRecorder
-                                                                ? 'border-paw-orange/30 bg-paw-orange/15 text-paw-orange'
-                                                                : memberIsCarrier
-                                                                    ? 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                                                                    : memberIsFeeder
-                                                                        ? 'border-violet-300 bg-violet-100 text-violet-800 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-300'
-                                                                        : 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                                }`}
-                                            >
-                                                {member.role}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-
-                        <div className="flex shrink-0 items-center justify-end border-t border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-800 dark:bg-slate-900/90">
-                            <button
-                                type="button"
-                                onClick={() => setTeamDrawer(null)}
-                                className="cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-slate-800 dark:text-gray-300"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {completingGroup && (
+                <CompleteGroupModal
+                    open={Boolean(completingGroup)}
+                    onClose={() => setCompletingGroup(null)}
+                    title={completingGroup.title}
+                    subtitle={completingGroup.subtitle}
+                    groupType={completingGroup.type}
+                    members={completingGroup.members.map((m) => ({
+                        task_id: m.id,
+                        name: m.user?.name || 'Volunteer',
+                        role: m.role,
+                        status: m.status,
+                    }))}
+                    submitting={isCompletingGroup}
+                    onSubmit={handleSubmitGroupCompletion}
+                />
             )}
 
             <ConfirmationModal {...confirmModalProps} />

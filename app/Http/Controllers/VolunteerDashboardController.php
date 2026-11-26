@@ -21,6 +21,9 @@ use App\Models\User;
 use App\Models\UserBadge;
 use App\Models\VolunteerApplication;
 use App\Models\VolunteerInjuryReport;
+use App\Services\FieldGroupLifecycleService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -124,9 +127,12 @@ class VolunteerDashboardController extends Controller
                 return [
                     'task_id' => $task->id,
                     'group_type' => $isFeeding ? 'Feeding Route Team' : 'Event Team',
+                    'group_type_key' => $isFeeding ? 'feeding' : 'event',
+                    'group_id' => $isFeeding ? $task->feeding_schedule_id : $task->event_id,
                     'group_name' => $groupName,
                     'schedule' => $scheduleText,
                     'execution_status' => $isFeeding ? ($task->feedingSchedule->execution_status ?? 'scheduled') : null,
+                    'is_disbanded' => $isFeeding ? $task->feedingSchedule->isDisbanded() : $task->event->isDisbanded(),
                     'my_role' => $task->role,
                     'members' => $members,
                 ];
@@ -631,7 +637,7 @@ class VolunteerDashboardController extends Controller
     {
         $user = $request->user();
 
-        $tasks = AssignedTask::with([
+        $query = AssignedTask::with([
             'event.assignedTasks' => function ($query) {
                 $query->whereIn('status', ['pending', 'completed'])
                     ->with('user:id,name,avatar_path')
@@ -652,12 +658,15 @@ class VolunteerDashboardController extends Controller
             'partnerFoodPickup.partner',
         ])
             ->where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->latest()
-            ->paginate(5);
+            ->where('status', 'pending');
+
+        $filters = $this->applyAssignedTaskFilters($query, $request);
+
+        $tasks = $query->paginate(5)->withQueryString();
 
         return Inertia::render('volunteer/assigned-tasks', [
             'tasks' => $tasks,
+            'filters' => $filters,
             'volunteerMapEnabled' => $this->isVolunteerMapEnabled(),
             'foodTypes' => FeedingDistributionLog::FOOD_TYPES,
         ]);
@@ -937,16 +946,20 @@ class VolunteerDashboardController extends Controller
     }
 
     /**
-     * Complete a feeding route run (available to volunteers joined to the route).
+     * Complete a feeding route run (available to volunteers joined to the route),
+     * record individual member attendance & hours, and disband the active group while preserving data.
      */
-    public function completeFeedingRoute(Request $request, FeedingSchedule $schedule): RedirectResponse
-    {
+    public function completeFeedingRoute(
+        Request $request,
+        FeedingSchedule $schedule,
+        FieldGroupLifecycleService $lifecycleService
+    ): RedirectResponse {
         $user = $request->user();
 
         $assignedTask = AssignedTask::query()
             ->where('user_id', $user->id)
             ->where('feeding_schedule_id', $schedule->id)
-            ->whereIn('status', ['pending', 'completed'])
+            ->whereIn('status', [AssignedTask::STATUS_PENDING, AssignedTask::STATUS_COMPLETED])
             ->first();
 
         if (! $assignedTask) {
@@ -962,17 +975,55 @@ class VolunteerDashboardController extends Controller
             return redirect()->back();
         }
 
-        $schedule->update([
-            'execution_status' => FeedingSchedule::ExecutionCompleted,
-            'completed_at' => now(),
-            'completed_by_user_id' => $user->id,
+        $validated = $request->validate([
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.task_id' => ['required', 'integer'],
+            'attendees.*.attended' => ['required', 'boolean'],
+            'attendees.*.hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
         ]);
 
-        AuditLog::log('feeding_route_completed', "Volunteer {$user->name} completed feeding route '{$schedule->zone}'");
+        $attendees = $validated['attendees'] ?? null;
+        if ($attendees !== null && ! $lifecycleService->isGroupLead($user, 'feeding', $schedule->id)) {
+            abort(403, 'Only a Route Lead or Admin can submit individual attendance records.');
+        }
+
+        $stats = $lifecycleService->completeAndDisbandFeedingSchedule($schedule, $user, $attendees);
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "Feeding route '{$schedule->zone}' marked as completed!",
+            'message' => "Feeding route '{$schedule->zone}' completed & group disbanded ({$stats['completed_count']} attended, {$stats['no_show_count']} no-show). History preserved.",
+        ]);
+
+        return redirect()->back();
+    }
+
+    /**
+     * Complete an event group (available to an Event Route Lead / Team Lead),
+     * record individual member attendance & hours, and disband the active group while preserving data.
+     */
+    public function completeEventGroup(
+        Request $request,
+        Event $event,
+        FieldGroupLifecycleService $lifecycleService
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (! $lifecycleService->isGroupLead($user, 'event', $event->id)) {
+            abort(403, 'Only a Route Lead or Team Lead can complete this event group.');
+        }
+
+        $validated = $request->validate([
+            'attendees' => ['nullable', 'array'],
+            'attendees.*.task_id' => ['required', 'integer'],
+            'attendees.*.attended' => ['required', 'boolean'],
+            'attendees.*.hours_logged' => ['nullable', 'numeric', 'min:0', 'max:24'],
+        ]);
+
+        $stats = $lifecycleService->completeAndDisbandEvent($event, $user, $validated['attendees'] ?? null);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Event '{$event->title}' completed & group disbanded ({$stats['completed_count']} attended, {$stats['no_show_count']} no-show). History preserved.",
         ]);
 
         return redirect()->back();
@@ -1031,6 +1082,12 @@ class VolunteerDashboardController extends Controller
             ]);
 
             $schedule->increment('total_food_distributed', (int) $validated['food_packs_distributed']);
+
+            if ($schedule->feeding_sponsorship_id !== null) {
+                $schedule->loadMissing('feedingSponsorship');
+                $schedule->feedingSponsorship?->increment('packs_distributed', (int) $validated['food_packs_distributed']);
+                $schedule->feedingSponsorship?->increment('strays_fed', (int) $validated['strays_fed']);
+            }
         });
 
         AuditLog::log(
@@ -1052,16 +1109,88 @@ class VolunteerDashboardController extends Controller
     public function participationHistory(Request $request): Response
     {
         $user = $request->user();
+        $status = trim((string) $request->input('status', ''));
+        $allowedStatuses = [AssignedTask::STATUS_COMPLETED, AssignedTask::STATUS_NO_SHOW];
 
-        $history = AssignedTask::with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->latest()
-            ->paginate(5);
+        $query = AssignedTask::with(['event', 'feedingSchedule', 'petReport', 'partnerFoodPickup.partner'])
+            ->where('user_id', $user->id);
+
+        if (in_array($status, $allowedStatuses, true)) {
+            $query->where('status', $status);
+        } else {
+            $status = '';
+            $query->whereIn('status', $allowedStatuses);
+        }
+
+        $filters = $this->applyAssignedTaskFilters($query, $request);
+        $filters['status'] = $status;
+
+        $history = $query->paginate(5)->withQueryString();
 
         return Inertia::render('volunteer/participation-history', [
             'history' => $history,
+            'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Apply search, task type, and sort filters to an AssignedTask query.
+     *
+     * @param  Builder<AssignedTask>  $query
+     * @return array{search: string, type: string, sort: string}
+     */
+    private function applyAssignedTaskFilters(Builder $query, Request $request): array
+    {
+        $search = trim((string) $request->input('search', ''));
+        $type = trim((string) $request->input('type', ''));
+        $sort = $request->input('sort') === 'oldest' ? 'oldest' : 'latest';
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function (Builder $q) use ($like) {
+                $q->where('role', 'like', $like)
+                    ->orWhereHas('event', function (Builder $eventQuery) use ($like) {
+                        $eventQuery->where('title', 'like', $like)
+                            ->orWhere('location', 'like', $like);
+                    })
+                    ->orWhereHas('feedingSchedule', function (Builder $feedingQuery) use ($like) {
+                        $feedingQuery->where('zone', 'like', $like);
+                    })
+                    ->orWhereHas('petReport', function (Builder $petQuery) use ($like) {
+                        $petQuery->where('name', 'like', $like)
+                            ->orWhere('animal_type', 'like', $like)
+                            ->orWhere('location', 'like', $like);
+                    })
+                    ->orWhereHas('partnerFoodPickup.partner', function (Builder $partnerQuery) use ($like) {
+                        $partnerQuery->where('name', 'like', $like);
+                    });
+            });
+        }
+
+        $typeColumnMap = [
+            'event' => 'event_id',
+            'feeding' => 'feeding_schedule_id',
+            'rescue' => 'pet_report_id',
+            'food_pickup' => 'partner_food_pickup_id',
+        ];
+
+        if (array_key_exists($type, $typeColumnMap)) {
+            $query->whereNotNull($typeColumnMap[$type]);
+        } else {
+            $type = '';
+        }
+
+        if ($sort === 'oldest') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
+        return [
+            'search' => $search,
+            'type' => $type,
+            'sort' => $sort,
+        ];
     }
 
     /**
@@ -1074,16 +1203,8 @@ class VolunteerDashboardController extends Controller
         $latestApplication = $user->volunteerApplications()->latest()->first();
         $volunteerRole = $latestApplication?->role ?? 'Volunteer';
 
-        $certificates = Certificate::with(['event', 'user'])
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhereRaw('LOWER(guest_email) = ?', [strtolower((string) $user->email)]);
-            })
-            ->latest()
-            ->paginate(5);
-
         return Inertia::render('volunteer/certificates', [
-            'certificates' => $certificates,
+            ...$this->queryUserCertificates($request, $user),
             'defaultRole' => $volunteerRole,
         ]);
     }
@@ -1093,20 +1214,93 @@ class VolunteerDashboardController extends Controller
      */
     public function userCertificates(Request $request): Response
     {
-        $user = $request->user();
+        return Inertia::render('user/certificates', [
+            ...$this->queryUserCertificates($request, $request->user()),
+            'defaultRole' => 'Participant',
+        ]);
+    }
 
-        $certificates = Certificate::with(['event', 'user'])
+    /**
+     * Query, filter, and paginate certificates belonging to a user.
+     *
+     * @return array{
+     *     certificates: LengthAwarePaginator<int, Certificate>,
+     *     filters: array{search: string, role: string, year: string, sort: string},
+     *     filterOptions: array{roles: list<string>, years: list<string>}
+     * }
+     */
+    private function queryUserCertificates(Request $request, User $user): array
+    {
+        $search = trim((string) $request->input('search', ''));
+        $role = trim((string) $request->input('role', ''));
+        $year = trim((string) $request->input('year', ''));
+        $sort = $request->input('sort') === 'oldest' ? 'oldest' : 'latest';
+
+        $baseQuery = Certificate::query()
             ->where(function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->orWhereRaw('LOWER(guest_email) = ?', [strtolower((string) $user->email)]);
-            })
-            ->latest()
-            ->paginate(5);
+            });
 
-        return Inertia::render('user/certificates', [
+        $roles = (clone $baseQuery)
+            ->whereNotNull('role')
+            ->where('role', '!=', '')
+            ->distinct()
+            ->orderBy('role')
+            ->pluck('role')
+            ->values()
+            ->all();
+
+        $years = (clone $baseQuery)
+            ->whereNotNull('issue_date')
+            ->pluck('issue_date')
+            ->map(fn ($date) => $date->format('Y'))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
+        $query = (clone $baseQuery)->with(['event', 'user']);
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('title', 'like', $like)
+                    ->orWhere('certificate_number', 'like', $like)
+                    ->orWhere('role', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhereHas('event', function ($eventQuery) use ($like) {
+                        $eventQuery->where('title', 'like', $like)
+                            ->orWhere('location', 'like', $like);
+                    });
+            });
+        }
+
+        if ($role !== '' && $role !== 'all') {
+            $query->where('role', $role);
+        }
+
+        if ($year !== '' && $year !== 'all' && preg_match('/^\d{4}$/', $year)) {
+            $query->whereYear('issue_date', $year);
+        }
+
+        $query = $sort === 'oldest' ? $query->oldest() : $query->latest();
+
+        $certificates = $query->paginate(5)->withQueryString();
+
+        return [
             'certificates' => $certificates,
-            'defaultRole' => 'Participant',
-        ]);
+            'filters' => [
+                'search' => $search,
+                'role' => $role,
+                'year' => $year,
+                'sort' => $sort,
+            ],
+            'filterOptions' => [
+                'roles' => $roles,
+                'years' => $years,
+            ],
+        ];
     }
 
     /**

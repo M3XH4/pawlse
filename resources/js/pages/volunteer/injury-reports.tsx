@@ -27,6 +27,7 @@ import {
 } from '@/components/dashboard/section-page';
 import { ModernDateTimePicker } from '@/components/ui/modern-date-time-picker';
 import { ModernSelect } from '@/components/ui/modern-select';
+import { VolunteerFilterBar } from '@/components/volunteer/volunteer-filter-bar';
 import { reverseGeocode } from '@/lib/geocoding';
 import { formatPhotoUrl } from '@/lib/utils';
 
@@ -74,6 +75,13 @@ interface VolunteerInjuryReportsProps {
     incidentTypes: Record<string, string>;
     severities: Record<string, string>;
     medicalAidTypes: Record<string, string>;
+    filters?: {
+        search?: string;
+        status?: string;
+        severity?: string;
+        incident_type?: string;
+        sort?: string;
+    };
 }
 
 const SEVERITY_BADGES: Record<string, string> = {
@@ -106,7 +114,53 @@ export default function VolunteerInjuryReports({
     incidentTypes,
     severities,
     medicalAidTypes,
+    filters,
 }: VolunteerInjuryReportsProps) {
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [statusFilter, setStatusFilter] = useState(filters?.status || '');
+    const [severityFilter, setSeverityFilter] = useState(filters?.severity || '');
+    const [incidentTypeFilter, setIncidentTypeFilter] = useState(filters?.incident_type || '');
+    const [sortOrder, setSortOrder] = useState(filters?.sort || 'latest');
+
+    const applyFilters = (next: Partial<{ search: string; status: string; severity: string; incident_type: string; sort: string }>) => {
+        const params = {
+            search: next.search ?? searchQuery,
+            status: next.status ?? statusFilter,
+            severity: next.severity ?? severityFilter,
+            incident_type: next.incident_type ?? incidentTypeFilter,
+            sort: next.sort ?? sortOrder,
+        };
+
+        router.get(
+            '/account/volunteer/injury-reports',
+            {
+                ...(params.search.trim() ? { search: params.search.trim() } : {}),
+                ...(params.status ? { status: params.status } : {}),
+                ...(params.severity ? { severity: params.severity } : {}),
+                ...(params.incident_type ? { incident_type: params.incident_type } : {}),
+                ...(params.sort && params.sort !== 'latest' ? { sort: params.sort } : {}),
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const handleResetFilters = () => {
+        setSearchQuery('');
+        setStatusFilter('');
+        setSeverityFilter('');
+        setIncidentTypeFilter('');
+        setSortOrder('latest');
+        router.get('/account/volunteer/injury-reports', {}, { preserveState: true, preserveScroll: true });
+    };
+
+    const hasActiveFilters = Boolean(
+        filters?.search ||
+        filters?.status ||
+        filters?.severity ||
+        filters?.incident_type ||
+        (filters?.sort && filters.sort !== 'latest'),
+    );
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -346,15 +400,75 @@ export default function VolunteerInjuryReports({
                 </div>
             }
         >
+            <VolunteerFilterBar
+                search={searchQuery}
+                searchPlaceholder="Search by #ID, description, location, or body part..."
+                onSearchChange={setSearchQuery}
+                onSearchSubmit={() => applyFilters({})}
+                selects={[
+                    {
+                        value: statusFilter,
+                        onChange: (val) => {
+                            setStatusFilter(val);
+                            applyFilters({ status: val });
+                        },
+                        ariaLabel: 'Filter by report status',
+                        defaultLabel: 'All Statuses',
+                        options: [
+                            { value: 'reported', label: 'Reported' },
+                            { value: 'medical_aid_initiated', label: 'Medical Aid Initiated' },
+                            { value: 'confirmed', label: 'Medical Aid Confirmed' },
+                        ],
+                    },
+                    {
+                        value: severityFilter,
+                        onChange: (val) => {
+                            setSeverityFilter(val);
+                            applyFilters({ severity: val });
+                        },
+                        ariaLabel: 'Filter by severity',
+                        defaultLabel: 'All Severities',
+                        options: Object.entries(severities).map(([value, label]) => ({ value, label })),
+                    },
+                    {
+                        value: incidentTypeFilter,
+                        onChange: (val) => {
+                            setIncidentTypeFilter(val);
+                            applyFilters({ incident_type: val });
+                        },
+                        ariaLabel: 'Filter by incident type',
+                        defaultLabel: 'All Incident Types',
+                        options: Object.entries(incidentTypes).map(([value, label]) => ({ value, label })),
+                    },
+                ]}
+                sort={sortOrder}
+                onSortChange={(val) => {
+                    setSortOrder(val);
+                    applyFilters({ sort: val });
+                }}
+                hasActiveFilters={hasActiveFilters || Boolean(searchQuery.trim() || statusFilter || severityFilter || incidentTypeFilter || sortOrder === 'oldest')}
+                onReset={handleResetFilters}
+            />
+
             {items.length === 0 ? (
                 <DashboardCard className="p-10 text-center">
                     <ShieldAlert className="mx-auto mb-3 text-gray-300 dark:text-gray-600" size={44} />
                     <p className="text-sm font-bold text-[#0B2340] dark:text-white">
-                        No field injury reports recorded.
+                        {hasActiveFilters ? 'No field injury reports matched your filters.' : 'No field injury reports recorded.'}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                        If you ever experience an injury while on duty, report it immediately so our team can coordinate medical aid.
-                    </p>
+                    {hasActiveFilters ? (
+                        <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                            Reset Filters
+                        </button>
+                    ) : (
+                        <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                            If you ever experience an injury while on duty, report it immediately so our team can coordinate medical aid.
+                        </p>
+                    )}
                 </DashboardCard>
             ) : (
                 <div className="flex flex-col gap-4">

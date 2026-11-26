@@ -24,7 +24,19 @@ class VolunteerInjuryReportController extends Controller
     {
         $user = $request->user();
 
-        $reports = VolunteerInjuryReport::query()
+        $search = trim((string) $request->input('search', ''));
+        $status = trim((string) $request->input('status', ''));
+        $severity = trim((string) $request->input('severity', ''));
+        $incidentType = trim((string) $request->input('incident_type', ''));
+        $sort = $request->input('sort') === 'oldest' ? 'oldest' : 'latest';
+
+        $allowedStatuses = [
+            VolunteerInjuryReport::StatusReported,
+            VolunteerInjuryReport::StatusMedicalAidInitiated,
+            VolunteerInjuryReport::StatusConfirmed,
+        ];
+
+        $query = VolunteerInjuryReport::query()
             ->with([
                 'assignedTask.event:id,title',
                 'assignedTask.feedingSchedule:id,zone',
@@ -32,10 +44,44 @@ class VolunteerInjuryReportController extends Controller
                 'initiatedBy:id,name',
                 'confirmedBy:id,name',
             ])
-            ->where('user_id', $user->id)
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->where('user_id', $user->id);
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $numericId = ltrim($search, '#');
+
+            $query->where(function ($q) use ($like, $numericId) {
+                $q->where('description', 'like', $like)
+                    ->orWhere('location', 'like', $like)
+                    ->orWhere('body_part', 'like', $like);
+
+                if (ctype_digit($numericId)) {
+                    $q->orWhere('id', (int) $numericId);
+                }
+            });
+        }
+
+        if (in_array($status, $allowedStatuses, true)) {
+            $query->where('status', $status);
+        } else {
+            $status = '';
+        }
+
+        if (array_key_exists($severity, VolunteerInjuryReport::SEVERITIES)) {
+            $query->where('severity', $severity);
+        } else {
+            $severity = '';
+        }
+
+        if (array_key_exists($incidentType, VolunteerInjuryReport::INCIDENT_TYPES)) {
+            $query->where('incident_type', $incidentType);
+        } else {
+            $incidentType = '';
+        }
+
+        $query = $sort === 'oldest' ? $query->oldest() : $query->latest();
+
+        $reports = $query->paginate(10)->withQueryString();
 
         $recentTasks = AssignedTask::query()
             ->with(['event:id,title', 'feedingSchedule:id,zone', 'petReport:id,name,animal_type,location'])
@@ -62,6 +108,13 @@ class VolunteerInjuryReportController extends Controller
             'incidentTypes' => VolunteerInjuryReport::INCIDENT_TYPES,
             'severities' => VolunteerInjuryReport::SEVERITIES,
             'medicalAidTypes' => VolunteerInjuryReport::MEDICAL_AID_TYPES,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'severity' => $severity,
+                'incident_type' => $incidentType,
+                'sort' => $sort,
+            ],
         ]);
     }
 

@@ -22,11 +22,13 @@ use App\Http\Controllers\AnimalOverviewController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DashboardAssistantController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\Donations\DonationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FosterCareController;
+use App\Http\Controllers\GroupChatController;
 use App\Http\Controllers\HelpDeskController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HonorController;
@@ -155,6 +157,13 @@ Route::prefix('account/notifications')->name('account.notifications.')->middlewa
     Route::delete('{notification}', [UserNotificationController::class, 'destroy'])->name('destroy');
 });
 
+Route::prefix('account/assistant')->name('account.assistant.')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('summary', [DashboardAssistantController::class, 'summary'])->name('summary');
+    Route::post('chat', [DashboardAssistantController::class, 'chat'])->middleware('throttle:30,1')->name('chat');
+    Route::post('quick-action', [DashboardAssistantController::class, 'quickAction'])->middleware('throttle:20,1')->name('quick-action');
+    Route::post('feedback', [DashboardAssistantController::class, 'feedback'])->middleware('throttle:30,1')->name('feedback');
+});
+
 Route::prefix('account/push-subscriptions')->name('account.push-subscriptions.')->group(function () {
     Route::post('/', [PushSubscriptionController::class, 'store'])
         ->middleware(['auth', 'verified'])
@@ -165,6 +174,24 @@ Route::prefix('account/push-subscriptions')->name('account.push-subscriptions.')
     Route::post('/test', [PushSubscriptionController::class, 'test'])
         ->middleware(['auth', 'verified'])
         ->name('test');
+});
+
+Route::prefix('account')->name('account.')->middleware($userDashboardMiddleware)->group(function () {
+    Route::get('field-groups/{type}/{id}/messages', [GroupChatController::class, 'index'])
+        ->whereIn('type', ['feeding', 'event'])
+        ->name('field-groups.messages.index');
+    Route::post('field-groups/{type}/{id}/messages', [GroupChatController::class, 'store'])
+        ->whereIn('type', ['feeding', 'event'])
+        ->name('field-groups.messages.store');
+    Route::post('field-groups/{type}/{id}/sos', [GroupChatController::class, 'sendSosAlert'])
+        ->whereIn('type', ['feeding', 'event'])
+        ->name('field-groups.sos.store');
+    Route::get('field-groups/{type}/{id}/summary', [GroupChatController::class, 'summary'])
+        ->whereIn('type', ['feeding', 'event'])
+        ->name('field-groups.summary');
+    Route::get('field-groups/{type}/{id}/summary/export', [GroupChatController::class, 'exportSummaryCsv'])
+        ->whereIn('type', ['feeding', 'event'])
+        ->name('field-groups.summary.export');
 });
 
 Route::prefix('account/user')->name('account.user.')->middleware($userDashboardMiddleware)->group(function () {
@@ -208,6 +235,7 @@ Route::prefix('account/volunteer')->name('account.volunteer.')->middleware($volu
     Route::post('feeding-schedules/{schedule}/start', [VolunteerDashboardController::class, 'startFeedingRoute'])->name('feeding-schedules.start');
     Route::post('feeding-schedules/{schedule}/complete', [VolunteerDashboardController::class, 'completeFeedingRoute'])->name('feeding-schedules.complete');
     Route::post('feeding-schedules/{schedule}/distributions', [VolunteerDashboardController::class, 'recordFeedingDistribution'])->name('feeding-schedules.distributions.store');
+    Route::post('events/{event}/complete', [VolunteerDashboardController::class, 'completeEventGroup'])->name('events.complete');
     Route::delete('assigned-tasks/{task}', [VolunteerDashboardController::class, 'cancelTask'])->name('assigned-tasks.cancel');
     Route::get('injury-reports', [VolunteerInjuryReportController::class, 'index'])->name('injury-reports');
     Route::post('injury-reports', [VolunteerInjuryReportController::class, 'store'])->name('injury-reports.store');
@@ -284,6 +312,8 @@ Route::prefix('account/admin')->name('account.admin.')->middleware($adminDashboa
     Route::post('volunteer-management/assign', [VolunteerManagementController::class, 'assignTask'])->name('volunteer-management.assign')->middleware('permission:volunteers.assign_tasks');
     Route::post('volunteer-management/groups/members/{task}/role', [VolunteerManagementController::class, 'updateGroupMemberRole'])->name('volunteer-management.groups.update-role')->middleware('permission:volunteers.assign_tasks');
     Route::delete('volunteer-management/groups/members/{task}', [VolunteerManagementController::class, 'removeGroupMember'])->name('volunteer-management.groups.remove-member')->middleware('permission:volunteers.assign_tasks');
+    Route::post('volunteer-management/groups/{type}/{id}/settings', [VolunteerManagementController::class, 'updateGroupSettings'])->whereIn('type', ['feeding', 'event'])->name('volunteer-management.groups.settings')->middleware('permission:volunteers.assign_tasks');
+    Route::post('volunteer-management/groups/{type}/{id}/disband', [VolunteerManagementController::class, 'disbandGroup'])->whereIn('type', ['feeding', 'event'])->name('volunteer-management.groups.disband')->middleware('permission:volunteers.assign_tasks');
     Route::post('volunteer-management/tasks/{task}/status', [VolunteerManagementController::class, 'updateTaskStatus'])->name('volunteer-management.update-task-status')->middleware('permission:volunteers.assign_tasks');
     Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate')->middleware('permission:volunteers.certify');
     Route::post('volunteer-management/food-pickups', [VolunteerManagementController::class, 'storeFoodPickup'])->name('volunteer-management.food-pickups.store')->middleware('permission:volunteers.assign_tasks');
@@ -393,6 +423,7 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings');
     Route::post('system-settings', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::post('system-settings/maintenance/toggle', [SystemSettingsController::class, 'toggleMaintenance'])->name('system-settings.maintenance.toggle');
+    Route::post('system-settings/assistant-chatbot/toggle', [SystemSettingsController::class, 'toggleAssistantChatbot'])->name('system-settings.assistant-chatbot.toggle');
 
     Route::inertia('advanced-analytics', 'super-admin/advanced-analytics')->name('advanced-analytics');
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
@@ -491,6 +522,8 @@ Route::prefix('account/super-admin')->name('account.super-admin.')->middleware($
     Route::post('volunteer-management/assign', [VolunteerManagementController::class, 'assignTask'])->name('volunteer-management.assign');
     Route::post('volunteer-management/groups/members/{task}/role', [VolunteerManagementController::class, 'updateGroupMemberRole'])->name('volunteer-management.groups.update-role');
     Route::delete('volunteer-management/groups/members/{task}', [VolunteerManagementController::class, 'removeGroupMember'])->name('volunteer-management.groups.remove-member');
+    Route::post('volunteer-management/groups/{type}/{id}/settings', [VolunteerManagementController::class, 'updateGroupSettings'])->whereIn('type', ['feeding', 'event'])->name('volunteer-management.groups.settings');
+    Route::post('volunteer-management/groups/{type}/{id}/disband', [VolunteerManagementController::class, 'disbandGroup'])->whereIn('type', ['feeding', 'event'])->name('volunteer-management.groups.disband');
     Route::post('volunteer-management/tasks/{task}/status', [VolunteerManagementController::class, 'updateTaskStatus'])->name('volunteer-management.update-task-status');
     Route::post('volunteer-management/issue-certificate', [VolunteerManagementController::class, 'issueCertificate'])->name('volunteer-management.issue-certificate');
     Route::post('volunteer-management/food-pickups', [VolunteerManagementController::class, 'storeFoodPickup'])->name('volunteer-management.food-pickups.store');

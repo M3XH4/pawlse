@@ -17,7 +17,8 @@ import {
     BookOpen,
     FlaskConical,
     MapPin,
-    Map as MapIcon
+    Map as MapIcon,
+    Bot
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -30,6 +31,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+
+interface AssistantInsights {
+    total_interactions: number;
+    helpful_count: number;
+    not_helpful_count: number;
+    unanswered_count: number;
+    helpfulness_rate: number | null;
+    top_intents: Array<{ intent: string; count: number }>;
+}
 
 interface SystemSettingsProps {
     settings: {
@@ -45,10 +55,12 @@ interface SystemSettingsProps {
         sos_gps_enabled?: boolean;
         volunteer_map_enabled?: boolean;
         push_test_alert_enabled?: boolean;
+        assistant_chatbot_enabled?: boolean;
     };
+    assistantInsights?: AssistantInsights;
 }
 
-export default function SystemSettings({ settings }: SystemSettingsProps) {
+export default function SystemSettings({ settings, assistantInsights }: SystemSettingsProps) {
     const defaultMaintenanceMessage = 'PAWLSE is currently taking a short paws for scheduled system maintenance. We will be back online shortly!';
 
     const { data, setData, post, processing, errors } = useForm({
@@ -64,12 +76,14 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
         sos_gps_enabled: settings.sos_gps_enabled ?? true,
         volunteer_map_enabled: settings.volunteer_map_enabled ?? true,
         push_test_alert_enabled: settings.push_test_alert_enabled ?? false,
+        assistant_chatbot_enabled: settings.assistant_chatbot_enabled ?? true,
     });
 
     // Quick toggle modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState(data.maintenance_message);
     const [isToggling, setIsToggling] = useState(false);
+    const [isTogglingChatbot, setIsTogglingChatbot] = useState(false);
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -96,18 +110,35 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                     if (modalMessage) {
                         setData('maintenance_message', modalMessage);
                     }
-
-                    toast.success(
-                        willBeActive
-                            ? 'Maintenance mode activated. Public access is now restricted.'
-                            : 'Maintenance mode deactivated. System is now live.',
-                    );
                 },
                 onError: () => {
                     toast.error('Failed to toggle maintenance mode.');
                 },
                 onFinish: () => {
                     setIsToggling(false);
+                },
+            },
+        );
+    };
+
+    const handleQuickToggleChatbot = () => {
+        setIsTogglingChatbot(true);
+        router.post(
+            '/account/super-admin/system-settings/assistant-chatbot/toggle',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setData(
+                        'assistant_chatbot_enabled',
+                        !data.assistant_chatbot_enabled,
+                    );
+                },
+                onError: () => {
+                    toast.error('Failed to toggle Dashboard Assistant Chatbot.');
+                },
+                onFinish: () => {
+                    setIsTogglingChatbot(false);
                 },
             },
         );
@@ -186,6 +217,91 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                             </div>
                         </div>
                     </div>
+                </DashboardCard>
+
+                {/* Dedicated Dashboard Assistant Chatbot Control */}
+                <DashboardCard>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 space-y-1">
+                            <div className="flex items-center justify-between gap-2 sm:justify-start">
+                                <h3 className="font-fredoka text-base font-bold leading-snug text-slate-800 sm:text-lg dark:text-white flex items-center gap-2">
+                                    <Bot className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                    <span>Dashboard Assistant Chatbot (FAB)</span>
+                                </h3>
+                                {data.assistant_chatbot_enabled ? (
+                                    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 sm:px-2.5 sm:text-xs dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 sm:h-2 sm:w-2" />
+                                        Enabled
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 sm:px-2.5 sm:text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400 sm:h-2 sm:w-2" />
+                                        Disabled
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Controls the bottom-right AI assistant FAB across User, Volunteer, Admin, and Super Admin dashboards. Reads database records strictly based on each user&apos;s permissions.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={isTogglingChatbot}
+                            onClick={handleQuickToggleChatbot}
+                            className={
+                                data.assistant_chatbot_enabled
+                                    ? 'inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-rose-600/20 transition hover:bg-rose-500 active:scale-[0.98] disabled:opacity-50'
+                                    : 'inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-purple-600/20 transition hover:bg-purple-500 active:scale-[0.98] disabled:opacity-50'
+                            }
+                        >
+                            <Power className="h-4 w-4" />
+                            <span>
+                                {data.assistant_chatbot_enabled
+                                    ? 'Disable Assistant Chatbot'
+                                    : 'Enable Assistant Chatbot'}
+                            </span>
+                        </button>
+                    </div>
+
+                    {assistantInsights && (
+                        <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-slate-150 bg-slate-50/70 p-3 sm:grid-cols-4 dark:border-slate-800 dark:bg-slate-900/40">
+                            <div>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    Total Queries
+                                </p>
+                                <p className="text-base font-bold text-slate-800 dark:text-white">
+                                    {assistantInsights.total_interactions}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    Helpfulness Rate
+                                </p>
+                                <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                    {assistantInsights.helpfulness_rate !== null
+                                        ? `${assistantInsights.helpfulness_rate}%`
+                                        : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    Unanswered Queries
+                                </p>
+                                <p className="text-base font-bold text-amber-600 dark:text-amber-400">
+                                    {assistantInsights.unanswered_count}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    Top Intent
+                                </p>
+                                <p className="truncate text-sm font-bold text-slate-800 dark:text-white">
+                                    {assistantInsights.top_intents[0]?.intent ?? '—'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </DashboardCard>
 
                 {/* Main Settings Form */}
@@ -382,6 +498,28 @@ export default function SystemSettings({ settings }: SystemSettingsProps) {
                                     </label>
                                     <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         When enabled, signed-in users see a &quot;Test Alert&quot; button in Account Settings → Notifications to test phone/browser push delivery.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 border border-purple-200 bg-purple-50/20 dark:border-purple-900/40 dark:bg-purple-950/20 p-4 rounded-xl">
+                                <input
+                                    type="checkbox"
+                                    id="assistant_chatbot_enabled"
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mt-1"
+                                    checked={data.assistant_chatbot_enabled}
+                                    onChange={(e) => setData('assistant_chatbot_enabled', e.target.checked)}
+                                />
+                                <div className="cursor-pointer">
+                                    <label
+                                        htmlFor="assistant_chatbot_enabled"
+                                        className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"
+                                    >
+                                        <Bot className="h-4 w-4 text-purple-600" />
+                                        Enable Dashboard Assistant Chatbot (FAB)
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When enabled, a floating assistant button appears on the bottom right of User, Volunteer, Admin, and Super Admin dashboards to provide permission-scoped insights and next-step guidance.
                                     </p>
                                 </div>
                             </div>

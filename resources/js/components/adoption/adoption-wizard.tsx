@@ -527,11 +527,6 @@ return validateStep4();
       onSuccess: () => {
         setSubmitted(true);
         setCompletedSteps(prev => [...new Set([...prev, 4])]);
-        toast.success(
-          resubmitApplicationId
-            ? 'Application updated and resubmitted successfully!'
-            : `Application for ${pet.name} submitted successfully!`
-        );
         onClose();
       },
       onError: (errs) => {

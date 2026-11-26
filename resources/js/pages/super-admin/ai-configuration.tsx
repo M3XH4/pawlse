@@ -92,11 +92,6 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
                 onSuccess: () => {
                     const willBeEnabled = !settings.ai_enabled;
                     setData('ai_enabled', willBeEnabled);
-                    toast.success(
-                        willBeEnabled
-                            ? 'AI features enabled successfully.'
-                            : 'AI features disabled. Public rescue AI boxes are deactivated.'
-                    );
                 },
                 onError: () => {
                     toast.error('Failed to toggle AI features.');
@@ -138,7 +133,6 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
     const handleSaveConfig = (e: React.FormEvent) => {
         e.preventDefault();
         post('/account/super-admin/ai-configuration/settings', {
-            onSuccess: () => toast.success('AI configurations saved.'),
             onError: () => toast.error('Failed to save AI configurations.')
         });
     };
@@ -147,7 +141,6 @@ export default function AiConfiguration({ settings, service_health, logs, stats 
         router.post(`/account/super-admin/ai-configuration/logs/${logId}/accuracy`, {
             is_accurate: accuracy
         }, {
-            onSuccess: () => toast.success('Accuracy calibration saved.'),
             onError: () => toast.error('Failed to calibrate prediction.')
         });
     };

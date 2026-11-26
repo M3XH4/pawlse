@@ -63,6 +63,18 @@ interface EventModel {
     created_by?: number | null;
     creator?: { id: number; name: string } | null;
     approved_by_user?: { id: number; name: string } | null;
+    total_food_distributed?: number;
+    food_packs_allocated?: number | null;
+    feeding_sponsorship_id?: number | null;
+    feeding_sponsorship?: {
+        id: number;
+        public_reference: string;
+        donor_name: string;
+        preferred_date?: string | null;
+        occasion?: string | null;
+        packs_distributed: number;
+        strays_fed: number;
+    } | null;
     assigned_tasks_count?: number;
     assigned_tasks?: any[];
 }
@@ -77,6 +89,18 @@ interface FeedingScheduleModel {
     status: string; // active, closed
     execution_status?: 'scheduled' | 'in_progress' | 'completed';
     total_food_distributed?: number;
+    total_food_distributed?: number;
+    food_packs_allocated?: number | null;
+    feeding_sponsorship_id?: number | null;
+    feeding_sponsorship?: {
+        id: number;
+        public_reference: string;
+        donor_name: string;
+        preferred_date?: string | null;
+        occasion?: string | null;
+        packs_distributed: number;
+        strays_fed: number;
+    } | null;
     assigned_tasks_count?: number;
     assigned_tasks?: any[];
     distribution_logs?: Array<{
@@ -94,6 +118,15 @@ interface FeedingScheduleModel {
 interface EventManagementProps {
     events: PaginatedData<EventModel>;
     feedingSchedules: PaginatedData<FeedingScheduleModel>;
+    feedingSponsorships?: Array<{
+        id: number;
+        public_reference: string;
+        donor_name: string;
+        preferred_date?: string | null;
+        occasion?: string | null;
+        packs_distributed: number;
+        strays_fed: number;
+    }>;
     filters: {
         search: string;
         category: string;
@@ -106,6 +139,7 @@ interface EventManagementProps {
 export default function EventManagement({
     events,
     feedingSchedules,
+    feedingSponsorships = [],
     filters,
     isSuperAdmin = false,
     basePath = '/account/admin/events',
@@ -129,22 +163,21 @@ export default function EventManagement({
     const [isIssuingAll, setIsIssuingAll] = useState(false);
     const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
 
-    const handleCompleteAttendee = (taskId: number) => {
+    const handleCompleteAttendee = (taskId: number, status: 'completed' | 'no_show' = 'completed') => {
         setCompletingTaskId(taskId);
         router.post(
             `${basePath}/attendees/${taskId}/complete`,
-            {},
+            { status },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setCompletingTaskId(null);
-                    toast.success('Attendee marked completed and certificate issued!');
                     setViewingAttendeesEvent((prev) =>
                         prev
                             ? {
                                   ...prev,
                                   attendees: prev.attendees.map((a) =>
-                                      a.id === taskId ? { ...a, status: 'completed' } : a,
+                                      a.id === taskId ? { ...a, status } : a,
                                   ),
                               }
                             : null,
@@ -152,7 +185,7 @@ export default function EventManagement({
                 },
                 onError: () => {
                     setCompletingTaskId(null);
-                    toast.error('Failed to complete attendee.');
+                    toast.error('Failed to update attendee status.');
                 },
             },
         );
@@ -171,7 +204,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsIssuingAll(false);
-                    toast.success('Completed all attendees and issued certificates!');
                     setViewingAttendeesEvent((prev) =>
                         prev
                             ? {
@@ -316,7 +348,6 @@ return;
         if (editingEvent) {
             router.put(`${basePath}/${editingEvent.id}`, payload, {
                 onSuccess: () => {
-                    toast.success('Event updated successfully.');
                     setIsEventModalOpen(false);
                 },
                 onFinish: () => setIsSubmittingEvent(false),
@@ -338,9 +369,7 @@ return;
             return;
         }
 
-        router.post(`${basePath}/${event.id}/toggle`, {}, {
-            onSuccess: () => toast.success('Event status changed.'),
-        });
+        router.post(`${basePath}/${event.id}/toggle`, {});
     };
 
     const handleDeleteEvent = (event: EventModel) => {
@@ -361,7 +390,6 @@ return;
                 setConfirmModal((prev) => ({ ...prev, isLoading: true }));
                 router.delete(`${basePath}/${event.id}`, {
                     onSuccess: () => {
-                        toast.success('Event deleted.');
                         closeConfirmModal();
                     },
                     onError: () => closeConfirmModal(),
@@ -389,7 +417,6 @@ return;
                 setConfirmModal((prev) => ({ ...prev, isLoading: true }));
                 router.post(`${basePath}/${event.id}/approve`, {}, {
                     onSuccess: () => {
-                        toast.success('Event approved successfully.');
                         closeConfirmModal();
                     },
                     onError: () => closeConfirmModal(),
@@ -415,11 +442,13 @@ return;
             reason: rejectionReason,
         }, {
             onSuccess: () => {
-                toast.success('Event marked as rejected.');
                 setRejectingEvent(null);
             },
         });
     };
+
+    const [feedingAllocated, setFeedingAllocated] = useState('');
+    const [feedingSponsorshipId, setFeedingSponsorshipId] = useState('');
 
     // Feeding CRUD submissions
     const openFeedingCreate = () => {
@@ -430,6 +459,8 @@ return;
         setFeedingVolunteers('6');
         setFeedingStrays('30');
         setFeedingStatus('active');
+        setFeedingAllocated('');
+        setFeedingSponsorshipId('');
         setIsFeedingModalOpen(true);
     };
 
@@ -441,6 +472,8 @@ return;
         setFeedingVolunteers(String(schedule.volunteers));
         setFeedingStrays(String(schedule.strays));
         setFeedingStatus(schedule.status);
+        setFeedingAllocated(schedule.food_packs_allocated != null ? String(schedule.food_packs_allocated) : '');
+        setFeedingSponsorshipId(schedule.feeding_sponsorship_id != null ? String(schedule.feeding_sponsorship_id) : '');
         setIsFeedingModalOpen(true);
     };
 
@@ -454,12 +487,13 @@ return;
             volunteers: parseInt(feedingVolunteers),
             strays: parseInt(feedingStrays),
             status: feedingStatus,
+            food_packs_allocated: feedingAllocated !== '' ? parseInt(feedingAllocated) : null,
+            feeding_sponsorship_id: feedingSponsorshipId !== '' ? parseInt(feedingSponsorshipId) : null,
         };
 
         if (editingSchedule) {
             router.put(`${feedingBasePath}/${editingSchedule.id}`, payload, {
                 onSuccess: () => {
-                    toast.success('Feeding route updated.');
                     setIsFeedingModalOpen(false);
                 },
                 onFinish: () => setIsSubmittingFeeding(false),
@@ -467,7 +501,6 @@ return;
         } else {
             router.post(feedingBasePath, payload, {
                 onSuccess: () => {
-                    toast.success('Feeding route created.');
                     setIsFeedingModalOpen(false);
                 },
                 onFinish: () => setIsSubmittingFeeding(false),
@@ -493,7 +526,6 @@ return;
                 setConfirmModal((prev) => ({ ...prev, isLoading: true }));
                 router.delete(`${feedingBasePath}/${schedule.id}`, {
                     onSuccess: () => {
-                        toast.success('Feeding route deleted.');
                         closeConfirmModal();
                     },
                     onError: () => closeConfirmModal(),
@@ -1304,6 +1336,35 @@ return;
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Allocated Food Packs</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="Optional stock limit (e.g. 40)"
+                                        value={feedingAllocated}
+                                        onChange={(e) => setFeedingAllocated(e.target.value)}
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Link Feeding Sponsorship</label>
+                                    <select
+                                        value={feedingSponsorshipId}
+                                        onChange={(e) => setFeedingSponsorshipId(e.target.value)}
+                                        className="w-full p-3.5 bg-gray-50 dark:bg-slate-900 rounded-2xl border border-transparent focus:border-paw-orange outline-none font-semibold text-sm dark:text-white transition"
+                                    >
+                                        <option value="">None (General Shelter Stock)</option>
+                                        {feedingSponsorships.map((sp) => (
+                                            <option key={sp.id} value={sp.id}>
+                                                {sp.public_reference} • {sp.donor_name} ({sp.preferred_date ?? 'Flexible'})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
                             {editingSchedule && (
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Status *</label>
@@ -1488,16 +1549,32 @@ return;
                                                         <CheckCircle2 size={13} />
                                                         Completed • Cert Issued
                                                     </span>
+                                                ) : att.status === 'no_show' ? (
+                                                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/60 dark:text-rose-400 px-3 py-1.5 rounded-xl border border-rose-200/50">
+                                                        <X size={13} />
+                                                        No Show (0 hrs)
+                                                    </span>
                                                 ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCompleteAttendee(att.id)}
-                                                        disabled={completingTaskId === att.id}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition disabled:opacity-50 cursor-pointer"
-                                                    >
-                                                        <Award size={13} />
-                                                        {completingTaskId === att.id ? 'Issuing...' : 'Complete & Issue Cert'}
-                                                    </button>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCompleteAttendee(att.id, 'no_show')}
+                                                            disabled={completingTaskId === att.id}
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300 rounded-xl text-xs font-bold border border-rose-200/70 dark:border-rose-900/50 transition disabled:opacity-50 cursor-pointer"
+                                                        >
+                                                            <X size={12} />
+                                                            No Show
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCompleteAttendee(att.id, 'completed')}
+                                                            disabled={completingTaskId === att.id}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition disabled:opacity-50 cursor-pointer"
+                                                        >
+                                                            <Award size={13} />
+                                                            {completingTaskId === att.id ? 'Issuing...' : 'Complete & Issue Cert'}
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

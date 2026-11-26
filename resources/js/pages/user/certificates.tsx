@@ -1,6 +1,15 @@
-import { Link, Head } from '@inertiajs/react';
+import { Link, Head, router } from '@inertiajs/react';
 import { Award, Calendar, Eye, Download, Printer, X } from 'lucide-react';
 import React, { useState } from 'react';
+import {
+    CertificateCanvas,
+    type CertificateData as CertificateModel,
+    CertificateFilterBar,
+    type CertificateFilterOptions,
+    type CertificateFilters,
+    downloadCertificatePng,
+    formatCertificateDateTime,
+} from '@/components/certificate-canvas';
 import { DashboardPagination } from '@/components/dashboard/pagination';
 import {
     DashboardCard,
@@ -8,118 +17,65 @@ import {
     DashboardSectionPage,
 } from '@/components/dashboard/section-page';
 
-interface CertificateModel {
-    id: number;
-    title: string;
-    description: string | null;
-    issue_date: string;
-    certificate_number: string;
-    role?: string | null;
-    guest_name?: string | null;
-    created_at?: string;
-    updated_at?: string;
-    user?: {
-        name: string;
-    } | null;
-    event?: {
-        id: number;
-        title: string;
-        date?: string;
-        location?: string;
-    } | null;
-}
-
 interface CertificatesProps {
     certificates: {
         data: CertificateModel[];
         links: any[];
         total: number;
     };
+    filters?: CertificateFilters;
+    filterOptions?: CertificateFilterOptions;
     defaultRole?: string;
     auth?: {
         user?: any;
     };
 }
 
-const parseLocalDate = (dateStr?: string | null): Date | null => {
-    if (!dateStr) {
-return null;
-}
-
-    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-
-    if (match) {
-        return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
-    }
-
-    const d = new Date(dateStr);
-
-    return isNaN(d.getTime()) ? null : d;
-};
-
-const formatEventDate = (dateStr?: string | null, fallbackDateStr?: string | null) => {
-    const d = parseLocalDate(dateStr) || parseLocalDate(fallbackDateStr) || new Date();
-
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-const formatIssueDate = (dateStr?: string | null) => {
-    const d = parseLocalDate(dateStr) || new Date();
-
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const formatCertificateDateTime = (cert: CertificateModel) => {
-    if (cert.created_at) {
-        const d = new Date(cert.created_at);
-
-        if (!isNaN(d.getTime())) {
-            const dateStr = d.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-            });
-            const timeStr = d.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-            });
-
-            return `${dateStr} • ${timeStr}`;
-        }
-    }
-
-    if (cert.issue_date) {
-        const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(cert.issue_date) || /T00:00:00(\.0+)?Z?$/i.test(cert.issue_date);
-
-        if (!isDateOnly) {
-            const d = new Date(cert.issue_date);
-
-            if (!isNaN(d.getTime())) {
-                const dateStr = d.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                });
-                const timeStr = d.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                });
-
-                return `${dateStr} • ${timeStr}`;
-            }
-        }
-    }
-
-    return formatIssueDate(cert.issue_date);
-};
-
-export default function UserCertificates({ certificates, defaultRole = 'Participant', auth }: CertificatesProps) {
+export default function UserCertificates({
+    certificates,
+    filters,
+    filterOptions,
+    defaultRole = 'Participant',
+    auth,
+}: CertificatesProps) {
     const user = auth?.user;
     const certs = certificates?.data || [];
     const [viewingCert, setViewingCert] = useState<CertificateModel | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [roleFilter, setRoleFilter] = useState(filters?.role || '');
+    const [yearFilter, setYearFilter] = useState(filters?.year || '');
+    const [sortOrder, setSortOrder] = useState(filters?.sort || 'latest');
+
+    const applyFilters = (next: Partial<{ search: string; role: string; year: string; sort: string }>) => {
+        const params = {
+            search: next.search ?? searchQuery,
+            role: next.role ?? roleFilter,
+            year: next.year ?? yearFilter,
+            sort: next.sort ?? sortOrder,
+        };
+
+        router.get(
+            '/account/user/certificates',
+            {
+                ...(params.search.trim() ? { search: params.search.trim() } : {}),
+                ...(params.role ? { role: params.role } : {}),
+                ...(params.year ? { year: params.year } : {}),
+                ...(params.sort && params.sort !== 'latest' ? { sort: params.sort } : {}),
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const handleResetFilters = () => {
+        setSearchQuery('');
+        setRoleFilter('');
+        setYearFilter('');
+        setSortOrder('latest');
+        router.get('/account/user/certificates', {}, { preserveState: true, preserveScroll: true });
+    };
+
+    const hasActiveFilters = Boolean(filters?.search || filters?.role || filters?.year || (filters?.sort && filters.sort !== 'latest'));
 
     const handlePrint = () => {
         window.print();
@@ -127,117 +83,20 @@ export default function UserCertificates({ certificates, defaultRole = 'Particip
 
     const handleDownloadPng = async () => {
         if (!viewingCert || isDownloading) {
-return;
-}
+            return;
+        }
 
         setIsDownloading(true);
 
         try {
-            if (document.fonts) {
-                await document.fonts.ready;
-            }
-
-            const img = new Image();
-            img.src = '/images/resources/certificate_template.jpg';
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 1492;
-                canvas.height = 1054;
-                const ctx = canvas.getContext('2d');
-
-                if (!ctx) {
-                    setIsDownloading(false);
-
-                    return;
-                }
-
-                ctx.drawImage(img, 0, 0, 1492, 1054);
-
-                // 1. Recipient Full Name
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillStyle = '#0B2340';
-                const recipientName = (viewingCert.user?.name || viewingCert.guest_name || user?.name || 'Participant').toUpperCase();
-                let nameFontSize = 36;
-                ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
-
-                while (ctx.measureText(recipientName).width > 720 && nameFontSize > 18) {
-                    nameFontSize -= 2;
-                    ctx.font = `bold ${nameFontSize}px "Fredoka", "Playfair Display", Georgia, serif`;
-                }
-
-                ctx.fillText(recipientName, 1492 * 0.545, 1054 * 0.575);
-
-                // 2. Role Slot
-                ctx.fillStyle = '#FF750F';
-                const roleText = (viewingCert.role || defaultRole || 'Participant').toUpperCase();
-                let roleFontSize = 14;
-                ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
-
-                while (ctx.measureText(roleText).width > 185 && roleFontSize > 9) {
-                    roleFontSize -= 1;
-                    ctx.font = `bold ${roleFontSize}px system-ui, -apple-system, sans-serif`;
-                }
-
-                ctx.fillText(roleText, 1492 * 0.37, 1054 * 0.655);
-
-                // 3. Event / Activity Title
-                const eventTitle = viewingCert.event?.title || viewingCert.title || 'Community Stray Feeding Outreach';
-                let eventFontSize = 14;
-                ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
-
-                while (ctx.measureText(eventTitle).width > 460 && eventFontSize > 10) {
-                    eventFontSize -= 1;
-                    ctx.font = `bold ${eventFontSize}px system-ui, -apple-system, sans-serif`;
-                }
-
-                ctx.fillText(eventTitle, 1492 * 0.649, 1054 * 0.655);
-
-                // 4. Event Date
-                ctx.fillStyle = '#0B2340';
-                ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-                const eventDate = formatEventDate(viewingCert.event?.date, viewingCert.issue_date);
-                ctx.fillText(eventDate, 1492 * 0.418, 1054 * 0.785);
-
-                // 5. Event Location
-                const eventLoc = viewingCert.event?.location || 'Iligan City, Philippines';
-                let locFontSize = 14;
-                ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
-
-                while (ctx.measureText(eventLoc).width > 240 && locFontSize > 9) {
-                    locFontSize -= 1;
-                    ctx.font = `bold ${locFontSize}px system-ui, -apple-system, sans-serif`;
-                }
-
-                ctx.fillText(eventLoc, 1492 * 0.68, 1054 * 0.785);
-
-                // 6. Signatory 1
-                ctx.font = 'italic bold 20px Georgia, serif';
-                ctx.fillStyle = '#0B2340';
-                ctx.fillText('M. Santos', 1492 * 0.39, 1054 * 0.842);
-
-                // 7. Signatory 2
-                ctx.fillText('ISF Operations', 1492 * 0.675, 1054 * 0.842);
-
-                // 8. Date Issued
-                ctx.font = 'bold 13px ui-monospace, monospace';
-                ctx.fillStyle = '#633306';
-                ctx.fillText(formatIssueDate(viewingCert.issue_date), 1492 * 0.895, 1054 * 0.855);
-
-                // 9. Certificate ID
-                ctx.font = 'bold 12px ui-monospace, monospace';
-                ctx.fillText(viewingCert.certificate_number, 1492 * 0.895, 1054 * 0.925);
-
-                const link = document.createElement('a');
-                link.download = `${viewingCert.certificate_number || 'Certificate'}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                setIsDownloading(false);
-            };
-            img.onerror = () => {
-                setIsDownloading(false);
-            };
+            await downloadCertificatePng(
+                viewingCert,
+                user?.name || 'Participant',
+                defaultRole || 'Participant',
+            );
         } catch {
+            // Keep UI responsive if template fails to load
+        } finally {
             setIsDownloading(false);
         }
     };
@@ -250,22 +109,60 @@ return;
         >
             <Head title="My Certificates" />
 
+            {(certs.length > 0 || hasActiveFilters) && (
+                <CertificateFilterBar
+                    search={searchQuery}
+                    role={roleFilter}
+                    year={yearFilter}
+                    sort={sortOrder}
+                    roles={filterOptions?.roles || []}
+                    years={filterOptions?.years || []}
+                    onSearchChange={setSearchQuery}
+                    onSearchSubmit={() => applyFilters({})}
+                    onRoleChange={(val) => {
+                        setRoleFilter(val);
+                        applyFilters({ role: val });
+                    }}
+                    onYearChange={(val) => {
+                        setYearFilter(val);
+                        applyFilters({ year: val });
+                    }}
+                    onSortChange={(val) => {
+                        setSortOrder(val);
+                        applyFilters({ sort: val });
+                    }}
+                    onReset={handleResetFilters}
+                />
+            )}
+
             {certs.length === 0 ? (
                 <DashboardCard className="p-10 text-center text-gray-500 font-bold">
                     <Award className="mx-auto mb-4 text-gray-300 dark:text-gray-600" size={54} />
                     <p className="text-base font-fredoka font-bold text-[#0B2340] dark:text-white">
-                        No certificates issued yet
+                        {hasActiveFilters ? 'No matching certificates found' : 'No certificates issued yet'}
                     </p>
                     <p className="text-xs text-gray-400 mt-1.5 max-w-md mx-auto leading-relaxed">
-                        Join our upcoming community feeding routes, adoption drives, and awareness campaigns. After attending an event, our shelter administrators will verify your participation and issue your official Certificate of Participation.
+                        {hasActiveFilters
+                            ? 'No certificates matched your current search or filter selection.'
+                            : 'Join our upcoming community feeding routes, adoption drives, and awareness campaigns. After attending an event, our shelter administrators will verify your participation and issue your official Certificate of Participation.'}
                     </p>
                     <div className="mt-5">
-                        <Link
-                            href="/events"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
-                        >
-                            Browse Community Events
-                        </Link>
+                        {hasActiveFilters ? (
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                            >
+                                Reset Filters
+                            </button>
+                        ) : (
+                            <Link
+                                href="/events"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-paw-orange hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                            >
+                                Browse Community Events
+                            </Link>
+                        )}
                     </div>
                 </DashboardCard>
             ) : (
@@ -405,148 +302,11 @@ return;
 
                         {/* Scrollable area for certificate canvas */}
                         <div id="printable-certificate-wrapper" className="p-3 sm:p-6 overflow-auto flex items-center justify-center bg-gray-100 dark:bg-slate-950/50 print:p-0 print:bg-white">
-                            <div id="printable-certificate-canvas" className="relative w-full aspect-[1492/1054] max-w-[1000px] bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:rounded-none select-none">
-                                <img
-                                    src="/images/resources/certificate_template.jpg"
-                                    alt="Certificate of Participation Template"
-                                    className="w-full h-full block object-cover pointer-events-none"
-                                />
-
-                                {/* 1. Recipient Full Name */}
-                                <div
-                                    className="absolute flex items-end justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '52.5%',
-                                        left: '30%',
-                                        width: '49%',
-                                        height: '5.8%',
-                                    }}
-                                >
-                                    <span className="font-serif font-black tracking-wide text-[#0B2340] text-[clamp(12px,2vw,28px)] uppercase leading-none drop-shadow-sm truncate max-w-full px-2">
-                                        {viewingCert.user?.name || viewingCert.guest_name || user?.name || 'Participant Name'}
-                                    </span>
-                                </div>
-
-                                {/* 2. Role Slot */}
-                                <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center px-1"
-                                    style={{
-                                        top: '62.6%',
-                                        left: '30.2%',
-                                        width: '13.8%',
-                                        height: '4.7%',
-                                    }}
-                                >
-                                    <span className="font-sans font-black text-paw-orange text-[clamp(8px,1.05vw,14px)] uppercase tracking-tight truncate">
-                                        {viewingCert.role || defaultRole || 'Participant'}
-                                    </span>
-                                </div>
-
-                                {/* 3. Event / Program Title */}
-                                <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center px-2"
-                                    style={{
-                                        top: '62.6%',
-                                        left: '48.7%',
-                                        width: '32.4%',
-                                        height: '4.7%',
-                                    }}
-                                >
-                                    <span className="font-sans font-black text-paw-orange text-[clamp(8px,1.05vw,14px)] tracking-tight truncate">
-                                        {viewingCert.event?.title || viewingCert.title || 'Community Stray Feeding Outreach'}
-                                    </span>
-                                </div>
-
-                                {/* 4. Event Date */}
-                                <div
-                                    className="absolute flex items-end justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '75.2%',
-                                        left: '34.2%',
-                                        width: '15.2%',
-                                        height: '4.0%',
-                                    }}
-                                >
-                                    <span className="font-sans font-bold text-[#0B2340] text-[clamp(7px,0.95vw,13px)] tracking-wide">
-                                        {formatEventDate(viewingCert.event?.date || viewingCert.issue_date)}
-                                    </span>
-                                </div>
-
-                                {/* 5. Event Location */}
-                                <div
-                                    className="absolute flex items-end justify-center pointer-events-none text-center px-1"
-                                    style={{
-                                        top: '75.2%',
-                                        left: '59.6%',
-                                        width: '17.2%',
-                                        height: '4.0%',
-                                    }}
-                                >
-                                    <span className="font-sans font-bold text-[#0B2340] text-[clamp(7px,0.95vw,13px)] tracking-wide truncate">
-                                        {viewingCert.event?.location || 'Iligan City, Philippines'}
-                                    </span>
-                                </div>
-
-                                {/* 6. Signatory 1 */}
-                                <div
-                                    className="absolute flex items-end justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '80.5%',
-                                        left: '30.8%',
-                                        width: '16.5%',
-                                        height: '4.3%',
-                                    }}
-                                >
-                                    <span className="font-serif italic font-bold text-[#0B2340]/90 text-[clamp(9px,1.15vw,16px)] tracking-wider">
-                                        M. Santos
-                                    </span>
-                                </div>
-
-                                {/* 7. Signatory 2 */}
-                                <div
-                                    className="absolute flex items-end justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '80.5%',
-                                        left: '58.3%',
-                                        width: '18.5%',
-                                        height: '4.3%',
-                                    }}
-                                >
-                                    <span className="font-serif italic font-bold text-[#0B2340]/90 text-[clamp(9px,1.15vw,16px)] tracking-wider">
-                                        ISF Operations
-                                    </span>
-                                </div>
-
-                                {/* 8. Date Issued */}
-                                <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '83.2%',
-                                        left: '82.8%',
-                                        width: '13.5%',
-                                        height: '3.6%',
-                                    }}
-                                >
-                                    <span className="font-mono font-black text-[#633306] text-[clamp(7px,0.9vw,12px)] tracking-wide">
-                                        {formatIssueDate(viewingCert.issue_date)}
-                                    </span>
-                                </div>
-
-                                {/* 9. Certificate ID */}
-                                <div
-                                    className="absolute flex items-center justify-center pointer-events-none text-center"
-                                    style={{
-                                        top: '90.2%',
-                                        left: '82.8%',
-                                        width: '13.5%',
-                                        height: '3.6%',
-                                    }}
-                                >
-                                    <span className="font-mono font-black text-[#633306] text-[clamp(6px,0.8vw,11px)] tracking-wider">
-                                        {viewingCert.certificate_number}
-                                    </span>
-                                </div>
-                            </div>
+                            <CertificateCanvas
+                                certificate={viewingCert}
+                                fallbackName={user?.name || 'Participant Name'}
+                                fallbackRole={defaultRole || 'Participant'}
+                            />
                         </div>
                     </div>
                 </div>

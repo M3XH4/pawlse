@@ -151,7 +151,6 @@ export function Events({
                 onSuccess: () => {
                     setJoinedIds((prev) => [...prev, eventId]);
                     setJoinedRoles((prev) => ({ ...prev, [eventId]: joinAs }));
-                    toast.success(`You have registered as ${joinAs} for this event!`);
                     setBookingEvent(null);
                     setIsSubmittingBooking(false);
                 },
@@ -185,7 +184,6 @@ export function Events({
 
                                 return next;
                             });
-                            toast.success('Your registration has been cancelled.');
                             setBookingEvent(null);
                             setIsSubmittingBooking(false);
                         },

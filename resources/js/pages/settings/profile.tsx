@@ -111,7 +111,6 @@ return;
         submitProfile(ProfileController.update.url(), {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => toast.success('Profile updated successfully!'),
         });
     };
 

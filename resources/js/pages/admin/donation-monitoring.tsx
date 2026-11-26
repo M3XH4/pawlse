@@ -420,7 +420,6 @@ return;
         }, {
             onSuccess: () => {
                 setVerifyingInKind(null);
-                toast.success('In-kind drop-off verified and inventory batch registered.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -433,7 +432,6 @@ return;
             onSuccess: () => {
                 setVerifyingCashDonation(null);
                 setSelectedDonationDetails(null);
-                toast.success(`Donation ${donation.public_reference} verified and completed.`);
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -455,7 +453,6 @@ return;
                 setRejectingDonation(null);
                 setRejectReason('');
                 setSelectedDonationDetails(null);
-                toast.success(`Donation ${rejectingDonation.public_reference} has been rejected.`);
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -479,7 +476,6 @@ return;
                 setEditAmountValue('');
                 setEditAmountReason('');
                 setSelectedDonationDetails(null);
-                toast.success('Amount edit request submitted for Super Admin confirmation.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -491,7 +487,6 @@ return;
         router.post(`${basePath}/amount-edit-requests/${editRequestId}/confirm`, {}, {
             onSuccess: () => {
                 setSelectedDonationDetails(null);
-                toast.success('Donation amount edit confirmed and applied.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -503,7 +498,6 @@ return;
         router.post(`${basePath}/amount-edit-requests/${editRequestId}/reject`, {}, {
             onSuccess: () => {
                 setSelectedDonationDetails(null);
-                toast.success('Donation amount edit request rejected.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -532,7 +526,6 @@ return;
                     expires_at: '',
                     notes: '',
                 });
-                toast.success('New inventory item added successfully.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -553,7 +546,6 @@ return;
         }, {
             onSuccess: () => {
                 setEditingItem(null);
-                toast.success('Inventory item details updated.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -579,7 +571,6 @@ return;
                     source: 'Direct Purchase / Restock',
                     notes: '',
                 });
-                toast.success('New stock batch added to inventory.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -603,7 +594,6 @@ return;
                     quantity: 1,
                     reason: 'Shelter feeding / animal care',
                 });
-                toast.success('Batch stock adjusted successfully.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -627,7 +617,6 @@ return;
             onSuccess: () => {
                 setAdjustingItem(null);
                 setAdjustForm({ direction: 'add', quantity: 1, reason: '' });
-                toast.success('Inventory stock level adjusted.');
             },
             onError: (err) => {
                 Object.values(err).forEach(e => toast.error(e));
@@ -642,11 +631,7 @@ return;
             confirmText: 'Delete Item',
             variant: 'danger',
             onConfirm: () => {
-                router.delete(`${basePath}/inventory/${item.id}`, {
-                    onSuccess: () => {
-                        toast.success(`"${item.name}" removed from inventory.`);
-                    }
-                });
+                router.delete(`${basePath}/inventory/${item.id}`);
             },
         });
     };

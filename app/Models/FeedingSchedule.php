@@ -32,11 +32,18 @@ class FeedingSchedule extends Model
         'volunteers' => 'integer',
         'strays' => 'integer',
         'total_food_distributed' => 'integer',
+        'food_packs_allocated' => 'integer',
         'latitude' => 'float',
         'longitude' => 'float',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'disbanded_at' => 'datetime',
     ];
+
+    public function isDisbanded(): bool
+    {
+        return $this->disbanded_at !== null;
+    }
 
     /**
      * @return HasMany<AssignedTask, $this>
@@ -68,5 +75,13 @@ class FeedingSchedule extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<FeedingSponsorship, $this>
+     */
+    public function feedingSponsorship(): BelongsTo
+    {
+        return $this->belongsTo(FeedingSponsorship::class);
     }
 }

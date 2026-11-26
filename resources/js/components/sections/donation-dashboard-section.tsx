@@ -267,7 +267,6 @@ export function DonationDashboard({ stats: propsStats }: { stats?: DonationStats
                 }, {
                   preserveScroll: true,
                   onSuccess: () => {
-                    toast.success(`In-kind sponsorship for ${sponsorItem.animalName} recorded!`);
                     setReceiptData({
                       title: 'In-Kind Sponsorship Confirmed!',
                       subtitle: `Supporting ${sponsorItem.animalName}`,

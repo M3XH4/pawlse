@@ -469,8 +469,6 @@ return;
                 } | undefined;
 
                 if (pageFlash?.error) {
-                    toast.error(pageFlash.error);
-
                     return;
                 }
 

@@ -368,7 +368,6 @@ return;
 
         router.delete(`${basePath}/${animalToDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Animal #${animalToDelete.code} archived successfully.`);
                 setAnimalToDelete(null);
 
                 if (selectedAnimal?.id === animalToDelete.id) {
@@ -1531,7 +1530,6 @@ return;
                                                                                                 status: 'resolved',
                                                                                                 update_animal_status: selectedAnimal.status === 'treatment' ? 'available' : undefined,
                                                                                             }, {
-                                                                                                onSuccess: () => toast.success(`"${cond.title}" marked as resolved!`),
                                                                                                 onError: () => toast.error('Failed to update status.'),
                                                                                             });
                                                                                         },
@@ -1552,9 +1550,7 @@ return;
                                                                                     confirmText: 'Remove',
                                                                                     variant: 'danger',
                                                                                     onConfirm: () => {
-                                                                                        router.delete(`${basePath}/medical/${cond.id}`, {
-                                                                                            onSuccess: () => toast.success('Record removed'),
-                                                                                        });
+                                                                                        router.delete(`${basePath}/medical/${cond.id}`);
                                                                                     },
                                                                                 });
                                                                             }}
@@ -1624,9 +1620,7 @@ return;
                                                                         confirmText: 'Remove',
                                                                         variant: 'danger',
                                                                         onConfirm: () => {
-                                                                            router.delete(`${basePath}/medical/${vac.id}`, {
-                                                                                onSuccess: () => toast.success('Medical record removed'),
-                                                                            });
+                                                                            router.delete(`${basePath}/medical/${vac.id}`);
                                                                         },
                                                                     });
                                                                 }}
@@ -1681,9 +1675,7 @@ return;
                                                                         confirmText: 'Remove',
                                                                         variant: 'danger',
                                                                         onConfirm: () => {
-                                                                            router.delete(`${basePath}/medical/${med.id}`, {
-                                                                                onSuccess: () => toast.success('Medical record removed'),
-                                                                            });
+                                                                            router.delete(`${basePath}/medical/${med.id}`);
                                                                         },
                                                                     });
                                                                 }}
@@ -2176,7 +2168,6 @@ return;
         e.preventDefault();
         post(basePath, {
             onSuccess: () => {
-                toast.success('Animal master record registered successfully!');
                 onClose();
             },
             onError: () => toast.error('Please resolve the form errors.'),
@@ -2571,7 +2562,6 @@ return;
         e.preventDefault();
         post(`${basePath}/${animal.id}`, {
             onSuccess: () => {
-                toast.success('Animal master record updated!');
                 onClose();
             },
             onError: () => toast.error('Failed to update animal record.'),
@@ -2985,11 +2975,6 @@ function AddMedicalModal({
         e.preventDefault();
         post(`${basePath}/${animal.id}/medical`, {
             onSuccess: () => {
-                toast.success(
-                    isCurrentCondition
-                        ? `${data.record_type === 'injury' ? 'Injury' : 'Disease'} record logged successfully!`
-                        : 'Medical record added successfully!'
-                );
                 onClose();
             },
             onError: () => toast.error('Failed to log medical record.'),

@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DashboardContext } from '@/components/dashboard/dashboard-context';
 import type { DashboardContextValue } from '@/components/dashboard/dashboard-context';
+import { DashboardAssistantFab } from '@/components/dashboard/dashboard-assistant-fab';
 import { DashboardHeader } from '@/components/dashboard/header';
 import {
     navItemsByTheme,
@@ -29,6 +30,8 @@ export default function DashboardLayout({
     const config = dashboardThemes[theme];
     const page = usePage();
     const isMaintenanceMode = Boolean(page.props.isMaintenanceMode);
+    const isAssistantChatbotEnabled =
+        page.props.isAssistantChatbotEnabled !== false;
     const { markTabRead } = useDashboardNotifications();
     const { isNavigating, targetPath } = useInertiaNavigationState({
         delayMs: 0,
@@ -149,6 +152,10 @@ export default function DashboardLayout({
                         {isNavigating ? <DashboardRouteSkeleton targetPath={targetPath} /> : children}
                     </main>
                 </div>
+
+                {isAssistantChatbotEnabled && (
+                    <DashboardAssistantFab theme={theme} />
+                )}
             </div>
         </DashboardContext.Provider>
     );

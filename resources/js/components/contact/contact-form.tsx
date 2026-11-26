@@ -34,7 +34,6 @@ export function ContactForm({ compact = false, onSuccess, defaultCategory = 'gen
       onSuccess: () => {
         setSubmitted(true);
         reset('subject', 'message');
-        toast.success('Your message has been sent successfully! We will get back to you shortly.');
         onSuccess?.();
       },
     });

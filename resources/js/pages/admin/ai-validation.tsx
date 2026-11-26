@@ -250,7 +250,6 @@ return;
 
     router.post(`${basePath}/${selectedReport.id}/reject`, payload, {
       onSuccess: () => {
-        toast.warning(isCorrecting ? 'AI details rejected and corrected!' : 'AI details flagged as incorrect!');
         setSelectedReport(null);
       },
       onError: () => {

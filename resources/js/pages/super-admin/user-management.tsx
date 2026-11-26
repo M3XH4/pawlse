@@ -325,7 +325,6 @@ export default function UserManagement({
         if (editingUser) {
             put(`/account/super-admin/user-management/${editingUser.id}`, {
                 onSuccess: () => {
-                    toast.success(`User '${data.name}' updated successfully.`);
                     closeDrawer();
                 },
                 onError: () => {
@@ -335,7 +334,6 @@ export default function UserManagement({
         } else {
             post('/account/super-admin/user-management', {
                 onSuccess: () => {
-                    toast.success(`User '${data.name}' created successfully.`);
                     closeDrawer();
                 },
                 onError: () => {
@@ -353,7 +351,6 @@ export default function UserManagement({
             variant: 'danger',
             onConfirm: () => {
                 router.delete(`/account/super-admin/user-management/${user.id}`, {
-                    onSuccess: () => toast.success('User archived successfully.'),
                     onError: (err: any) => toast.error(err.error || 'Failed to archive user.')
                 });
             },
@@ -386,7 +383,6 @@ export default function UserManagement({
             { permissions: matrixPermissions },
             {
                 onSuccess: () => {
-                    toast.success(`Permissions for role '${selectedMatrixRole}' updated successfully.`);
                     setIsSavingRolePerms(false);
                 },
                 onError: () => {
@@ -413,7 +409,6 @@ return;
             },
             {
                 onSuccess: () => {
-                    toast.success(`Custom role '${newRoleName}' created successfully.`);
                     setShowNewRoleModal(false);
                     setNewRoleName('');
                     setNewRolePermissions([]);
@@ -435,7 +430,6 @@ return;
             variant: 'danger',
             onConfirm: () => {
                 router.delete(`/account/super-admin/roles/${roleName}`, {
-                    onSuccess: () => toast.success(`Role '${roleName}' deleted successfully.`),
                     onError: (err: any) => toast.error(err.error || 'Failed to delete role.')
                 });
             },

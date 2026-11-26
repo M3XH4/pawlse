@@ -149,7 +149,6 @@ return;
       volunteer_id: assignVolunteerId
     }, {
       onSuccess: () => {
-        toast.success('Volunteer assigned successfully!');
         // Refresh selected report details in view
         router.reload({
           only: ['reports'],
@@ -177,7 +176,6 @@ return;
       status: updateStatusVal
     }, {
       onSuccess: () => {
-        toast.success('Report status updated successfully!');
         router.reload({
           only: ['reports'],
           onSuccess: (page) => {
@@ -204,7 +202,6 @@ return;
       duplicate_of_id: linkDuplicateOfId
     }, {
       onSuccess: () => {
-        toast.success('Report linked as duplicate.');
         router.reload({
           only: ['reports'],
           onSuccess: (page) => {
@@ -230,7 +227,6 @@ return;
       duplicate_of_id: null
     }, {
       onSuccess: () => {
-        toast.success('Report duplicate flag removed.');
         router.reload({
           only: ['reports'],
           onSuccess: (page) => {
@@ -736,8 +732,8 @@ setSelectedReport(updated);
                           <Camera size={18} />
                         </div>
                         <div>
-                          <p className="text-xs font-black text-paw-navy dark:text-gray-300">No Evidence Photos Attached</p>
-                          <p className="text-[11px] font-medium text-gray-400">Reporter submitted this case without photo attachments.</p>
+                          <p className="text-xs font-black text-paw-navy dark:text-gray-300">No Photos or Videos Attached</p>
+                          <p className="text-[11px] font-medium text-gray-400">Reporter submitted this case without photo or video attachments.</p>
                         </div>
                       </div>
                     )}

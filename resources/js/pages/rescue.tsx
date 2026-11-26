@@ -792,7 +792,6 @@ return;
             onSuccess: () => {
                 setSubmittedMode(modeType);
                 setMode('success');
-                toast.success('Rescue report submitted successfully!');
                 setSubmitting(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },

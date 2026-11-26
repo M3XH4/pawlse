@@ -58,13 +58,6 @@ export default function ApplyFoster({ fosterParent }: ApplyFosterProps) {
             },
             {
                 preserveScroll: true,
-                onSuccess: () => {
-                    toast.success(
-                        isPending
-                            ? 'Foster application details updated successfully!'
-                            : 'Foster caretaker application submitted successfully!',
-                    );
-                },
                 onError: (errors) => {
                     toast.error(
                         (Object.values(errors)[0] as string) ||

@@ -159,7 +159,6 @@ fileInputRef.current.value = '';
       preserveScroll: true,
       only: ['postAdoptionFollowUps', 'adoptedPets'],
       onSuccess: () => {
-        toast.success('Post-adoption follow-up check-in recorded successfully!');
         reset();
         clearPhoto();
         setIsRecordModalOpen(false);

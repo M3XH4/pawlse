@@ -345,7 +345,6 @@ export default function Events({
                     setGuestModalEvent(null);
                     setSelectedEvent(null);
                     setGuestForm({ name: '', email: '', phone: '' });
-                    toast.success('Registration confirmed! We sent your e-receipt to your email.');
                 },
                 onError: (errors) => {
                     setIsSubmittingGuest(false);

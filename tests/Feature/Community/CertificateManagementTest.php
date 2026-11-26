@@ -189,3 +189,94 @@ test('volunteer with no certificates receives empty state', function () {
             ->where('certificates.total', 0)
         );
 });
+
+test('volunteer and user certificates can be filtered by search, role, year, and sort', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $older = Certificate::factory()->create([
+        'user_id' => $volunteer->id,
+        'title' => 'Feeding Outreach 2025',
+        'certificate_number' => 'CERT-2025-OLD01',
+        'role' => 'Feeder',
+        'issue_date' => '2025-05-10',
+        'created_at' => now()->subYear(),
+    ]);
+
+    $newer = Certificate::factory()->create([
+        'user_id' => $volunteer->id,
+        'title' => 'Weekend Adoption Drive',
+        'certificate_number' => 'CERT-2026-NEW01',
+        'role' => 'Adoption Booth',
+        'issue_date' => '2026-11-20',
+        'created_at' => now(),
+    ]);
+
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.certificates', ['search' => 'Adoption', 'role' => 'Adoption Booth', 'year' => '2026']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('volunteer/certificates')
+            ->has('certificates.data', 1)
+            ->where('certificates.data.0.id', $newer->id)
+            ->where('filterOptions.roles', ['Adoption Booth', 'Feeder'])
+            ->where('filterOptions.years', ['2026', '2025'])
+        );
+
+    $this->actingAs($volunteer)
+        ->get(route('account.user.certificates', ['sort' => 'oldest']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('user/certificates')
+            ->has('certificates.data', 2)
+            ->where('certificates.data.0.id', $older->id)
+            ->where('certificates.data.1.id', $newer->id)
+        );
+});
+
+test('admin issuing duplicate event certificate receives warning flash and does not duplicate', function () {
+    Notification::fake();
+
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create(['name' => 'Pawlse Volunteer']);
+    $event = Event::factory()->create();
+
+    Certificate::factory()->create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('account.admin.volunteer-management.issue-certificate'), [
+            'user_id' => $volunteer->id,
+            'event_id' => $event->id,
+            'title' => 'Duplicate Certificate',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('inertia.flash_data.toast', [
+        'type' => 'warning',
+        'message' => 'A certificate for this event has already been issued to Pawlse Volunteer.',
+    ]);
+
+    expect(Certificate::where('user_id', $volunteer->id)->where('event_id', $event->id)->count())->toBe(1);
+    Notification::assertNothingSent();
+});
+
+test('admin volunteer management includes issuedEventIdsByUser for certificate filtering', function () {
+    $admin = User::factory()->admin()->create();
+    $volunteer = User::factory()->volunteer()->create();
+    $event = Event::factory()->create(['approval_status' => 'approved']);
+
+    Certificate::factory()->create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('account.admin.volunteer-management'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/volunteer-management')
+            ->where("issuedEventIdsByUser.{$volunteer->id}", [$event->id])
+        );
+});

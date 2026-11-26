@@ -291,7 +291,6 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                 forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('Partner updated successfully.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -301,7 +300,6 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
                 forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('Partner added successfully.');
                     closeModals();
                 },
                 onError: () => toast.error('Please check validation errors.')
@@ -312,7 +310,6 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const handleToggleStatus = (partner: PartnerRecord) => {
         router.patch(`/account/super-admin/partners/${partner.id}/toggle-status`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success(`Status updated for ${partner.name}.`),
         });
     };
 
@@ -325,7 +322,6 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
             onConfirm: () => {
                 router.delete(`/account/super-admin/partners/${partner.id}`, {
                     preserveScroll: true,
-                    onSuccess: () => toast.success(`Partner "${partner.name}" archived.`),
                 });
             },
         });
@@ -334,7 +330,6 @@ export default function PartnerManagement({ partners, stats, filters }: PartnerM
     const handleRestore = (partner: PartnerRecord) => {
         router.post(`/account/super-admin/partners/${partner.id}/restore`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success(`Partner "${partner.name}" restored.`),
         });
     };
 

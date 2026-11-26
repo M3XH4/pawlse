@@ -71,6 +71,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'isMaintenanceMode' => fn () => (bool) rescue(fn () => SystemSetting::getValue('system_settings')['maintenance_mode'] ?? false, false, false),
+            'isAssistantChatbotEnabled' => fn () => (bool) rescue(fn () => SystemSetting::getValue('system_settings')['assistant_chatbot_enabled'] ?? true, true, false),
             'isSandboxMode' => fn () => SandboxMode::isEnabled(),
             'careSustainability' => fn () => rescue(fn () => CareSustainability::current()->toPublicArray(), null, false),
             'auth' => [

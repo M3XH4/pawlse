@@ -114,7 +114,6 @@ export function SustainabilityAdminTab({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('Care sustainability successfully recalculated!');
                     setIsSubmitting(false);
                 },
                 onError: (errors) => {
@@ -143,7 +142,6 @@ export function SustainabilityAdminTab({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('Care configuration saved successfully.');
                     setIsSubmitting(false);
                 },
                 onError: (errors) => {
@@ -175,7 +173,6 @@ export function SustainabilityAdminTab({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success(`Care timer extended by ₱${amt.toLocaleString()}!`);
                     setExtendAmount('');
                     setIsSubmitting(false);
                 },

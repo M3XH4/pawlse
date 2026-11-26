@@ -71,7 +71,6 @@ export function ContactModal({ isOpen, onClose, defaultCategory = 'general' }: C
       onSuccess: () => {
         setSubmitted(true);
         reset('subject', 'message');
-        toast.success('Your message has been sent successfully! We will get back to you shortly.');
       },
       onError: () => {
         toast.error('Please check the form for errors.');

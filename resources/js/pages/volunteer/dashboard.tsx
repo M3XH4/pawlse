@@ -16,6 +16,7 @@ import {
     LifeBuoy,
     Map as MapIcon,
     MapPin,
+    MessageSquare,
     PackageCheck,
     PawPrint,
     Radio,
@@ -28,6 +29,7 @@ import {
 import { useState } from 'react';
 import { BlogCarousel } from '@/components/dashboard/blog-carousel';
 import type { DashboardBlogPost } from '@/components/dashboard/blog-carousel';
+import { GroupChatDrawer } from '@/components/volunteer/group-chat-drawer';
 import {
     DashboardCard,
     DashboardMetricBadge,
@@ -198,9 +200,12 @@ interface VolunteerDashboardProps {
     myFieldTeams?: Array<{
         task_id: number;
         group_type: string;
+        group_type_key: 'feeding' | 'event';
+        group_id: number;
         group_name: string;
         schedule: string;
         execution_status: string | null;
+        is_disbanded?: boolean;
         my_role: string;
         members: Array<{
             id: number;
@@ -758,19 +763,29 @@ export default function VolunteerDashboard({
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#E5E7EB]/70 pt-3 dark:border-[#1E293B]">
+                                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#E5E7EB]/70 pt-3 dark:border-[#1E293B]">
                                                 <TeamAvatarStack
                                                     members={team.members}
                                                     maxVisible={3}
                                                     onClick={() => setSelectedTeamTaskId(team.task_id)}
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSelectedTeamTaskId(team.task_id)}
-                                                    className="cursor-pointer rounded-xl bg-white px-3 py-1.5 text-[11px] font-bold text-[#0B2340] border border-[#E5E7EB] transition hover:border-paw-blue hover:text-paw-blue dark:border-[#1E293B] dark:bg-slate-800 dark:text-white"
-                                                >
-                                                    View Team ({team.members.length})
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedTeamTaskId(team.task_id)}
+                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-paw-blue px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-blue-700"
+                                                    >
+                                                        <MessageSquare className="size-3.5" />
+                                                        Open Chat
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedTeamTaskId(team.task_id)}
+                                                        className="cursor-pointer rounded-xl bg-white px-3 py-1.5 text-[11px] font-bold text-[#0B2340] border border-[#E5E7EB] transition hover:border-paw-blue hover:text-paw-blue dark:border-[#1E293B] dark:bg-slate-800 dark:text-white"
+                                                    >
+                                                        View Team ({team.members.length})
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -1213,116 +1228,18 @@ export default function VolunteerDashboard({
 
             {/* Volunteer Team Side Drawer */}
             {activeTeamDrawer && (
-                <div
-                    className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                            setSelectedTeamTaskId(null);
-                        }
-                    }}
-                >
-                    <div className="flex h-full w-full max-w-md flex-col border-l border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-slate-900">
-                        <div className="shrink-0 border-b border-gray-100 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-6 dark:border-gray-800 dark:from-slate-800/70 dark:via-slate-900 dark:to-slate-900">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3.5">
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-paw-blue/15 text-paw-blue">
-                                        {activeTeamDrawer.group_type.toLowerCase().includes('feeding') ? (
-                                            <Utensils className="size-5" />
-                                        ) : (
-                                            <Calendar className="size-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <span className="rounded-full bg-paw-blue/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-paw-blue">
-                                            {activeTeamDrawer.group_type}
-                                        </span>
-                                        <h3 className="mt-1.5 font-fredoka text-xl font-bold leading-snug text-[#0B2340] dark:text-white">
-                                            {activeTeamDrawer.group_name}
-                                        </h3>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedTeamTaskId(null)}
-                                    className="cursor-pointer rounded-xl p-1.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-slate-800"
-                                >
-                                    <X className="size-4" />
-                                </button>
-                            </div>
-                            <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400">
-                                <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Clock className="size-3.5 shrink-0 text-paw-orange" />
-                                    {activeTeamDrawer.schedule}
-                                </span>
-                                <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg border border-gray-100 bg-white px-2.5 py-1 shadow-2xs dark:border-gray-800 dark:bg-slate-800">
-                                    <Users className="size-3.5 shrink-0 text-paw-blue" />
-                                    {activeTeamDrawer.members.length} member(s)
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 space-y-3 overflow-y-auto p-6">
-                            <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
-                                Team Roster ({activeTeamDrawer.members.length})
-                            </p>
-                            {activeTeamDrawer.members.map((member) => {
-                                const initials = member.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'V';
-                                const avatarSrc = member.avatar_path ? formatPhotoUrl(member.avatar_path) : null;
-
-                                return (
-                                    <div
-                                        key={member.id}
-                                        className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-2xs dark:border-gray-800 dark:bg-slate-800/50"
-                                    >
-                                        <div className="flex min-w-0 items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-xs font-black text-[#0B2340] dark:bg-slate-700 dark:text-white">
-                                                {avatarSrc ? (
-                                                    <img src={avatarSrc} alt={member.name} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <span>{initials}</span>
-                                                )}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="truncate text-xs font-bold text-[#0B2340] dark:text-white">
-                                                    {member.name}
-                                                    {member.is_me && (
-                                                        <span className="ml-1.5 rounded-full bg-paw-blue/10 px-2 py-0.5 text-[10px] font-black text-paw-blue">
-                                                            You
-                                                        </span>
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span
-                                            className={cn(
-                                                'shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase',
-                                                member.is_lead
-                                                    ? 'border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
-                                                    : member.is_medic
-                                                        ? 'border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                                        : member.is_recorder
-                                                            ? 'border-paw-orange/30 bg-paw-orange/15 text-paw-orange'
-                                                            : 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
-                                            )}
-                                        >
-                                            {member.role}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-800 dark:bg-slate-900/90">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedTeamTaskId(null)}
-                                className="cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-slate-800 dark:text-gray-300"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <GroupChatDrawer
+                    open={Boolean(activeTeamDrawer)}
+                    onClose={() => setSelectedTeamTaskId(null)}
+                    groupType={activeTeamDrawer.group_type_key}
+                    groupId={activeTeamDrawer.group_id}
+                    groupName={activeTeamDrawer.group_name}
+                    schedule={activeTeamDrawer.schedule}
+                    members={activeTeamDrawer.members}
+                    currentUserId={auth.user.id}
+                    isDisbanded={Boolean(activeTeamDrawer.is_disbanded)}
+                    initialTab="chat"
+                />
             )}
         </DashboardSectionPage>
     );

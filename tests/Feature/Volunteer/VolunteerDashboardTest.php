@@ -284,3 +284,133 @@ test('volunteer dashboard surfaces urgent unassigned sos alerts, community pulse
             ->where('activeMissions.0.can_update_rescue', true)
         );
 });
+
+test('volunteer assigned tasks can be filtered by search, type, and sort order', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $event = Event::factory()->create([
+        'title' => 'Weekend Adoption Drive',
+        'location' => 'Main Plaza',
+    ]);
+
+    $feeding = FeedingSchedule::create([
+        'zone' => 'Harbor Feeding Zone',
+        'day' => 'Sunday',
+        'time' => '06:00 AM',
+        'status' => 'active',
+    ]);
+
+    $eventTask = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'role' => 'Booth Helper',
+        'status' => AssignedTask::STATUS_PENDING,
+        'created_at' => now()->subDays(2),
+    ]);
+
+    $feedingTask = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'feeding_schedule_id' => $feeding->id,
+        'role' => 'Route Feeder',
+        'status' => AssignedTask::STATUS_PENDING,
+        'created_at' => now()->subDay(),
+    ]);
+
+    // Filter by type=feeding
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.assigned-tasks', ['type' => 'feeding']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('volunteer/assigned-tasks')
+            ->has('tasks.data', 1)
+            ->where('tasks.data.0.id', $feedingTask->id)
+            ->where('filters.type', 'feeding')
+        );
+
+    // Filter by search matching event title
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.assigned-tasks', ['search' => 'Adoption']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('tasks.data', 1)
+            ->where('tasks.data.0.id', $eventTask->id)
+            ->where('filters.search', 'Adoption')
+        );
+
+    // Sort oldest first
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.assigned-tasks', ['sort' => 'oldest']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('tasks.data', 2)
+            ->where('tasks.data.0.id', $eventTask->id)
+            ->where('filters.sort', 'oldest')
+        );
+});
+
+test('volunteer participation history can be filtered by search, type, status, and sort order', function () {
+    $volunteer = User::factory()->volunteer()->create();
+
+    $event = Event::factory()->create([
+        'title' => 'Community Spay Clinic',
+        'location' => 'City Hall',
+    ]);
+
+    $rescue = PetReport::create([
+        'type' => 'rescue',
+        'animal_type' => 'dog',
+        'name' => 'Buddy',
+        'location' => 'Downtown',
+        'status' => 'resolved',
+    ]);
+
+    $completedEventTask = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'event_id' => $event->id,
+        'role' => 'Clinic Assistant',
+        'status' => AssignedTask::STATUS_COMPLETED,
+        'hours_logged' => 4.0,
+        'created_at' => now()->subDays(3),
+    ]);
+
+    $noShowRescueTask = AssignedTask::create([
+        'user_id' => $volunteer->id,
+        'pet_report_id' => $rescue->id,
+        'role' => 'Rescue Transporter',
+        'status' => AssignedTask::STATUS_NO_SHOW,
+        'hours_logged' => 0.0,
+        'created_at' => now()->subDay(),
+    ]);
+
+    // Filter by status=no_show
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.participation-history', ['status' => AssignedTask::STATUS_NO_SHOW]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('volunteer/participation-history')
+            ->has('history.data', 1)
+            ->where('history.data.0.id', $noShowRescueTask->id)
+            ->where('filters.status', AssignedTask::STATUS_NO_SHOW)
+        );
+
+    // Filter by type=event and search=Clinic
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.participation-history', ['type' => 'event', 'search' => 'Clinic']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('history.data', 1)
+            ->where('history.data.0.id', $completedEventTask->id)
+            ->where('filters.type', 'event')
+            ->where('filters.search', 'Clinic')
+        );
+
+    // Sort oldest first
+    $this->actingAs($volunteer)
+        ->get(route('account.volunteer.participation-history', ['sort' => 'oldest']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('history.data', 2)
+            ->where('history.data.0.id', $completedEventTask->id)
+            ->where('filters.sort', 'oldest')
+        );
+});

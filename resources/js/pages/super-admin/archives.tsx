@@ -97,7 +97,6 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
             variant: 'info',
             onConfirm: () => {
                 router.post(`/account/super-admin/archives/${item.type}/${item.id}/restore`, {}, {
-                    onSuccess: () => toast.success('Record restored successfully.'),
                     onError: () => toast.error('Failed to restore record.')
                 });
             },
@@ -112,7 +111,6 @@ export default function Archives({ items, filters, stats }: ArchiveProps) {
             variant: 'danger',
             onConfirm: () => {
                 router.delete(`/account/super-admin/archives/${item.type}/${item.id}/force`, {
-                    onSuccess: () => toast.success('Record permanently deleted.'),
                     onError: () => toast.error('Failed to delete record.')
                 });
             },

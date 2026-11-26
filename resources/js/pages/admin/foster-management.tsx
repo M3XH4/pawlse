@@ -344,7 +344,6 @@ export default function FosterManagement({
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowAssignModal(false);
-                    toast.success('Shelter pet assigned to foster home successfully.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to assign pet.');
@@ -374,7 +373,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowTransferModal(false);
-                    toast.success('Pet transferred to new foster parent successfully.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to transfer pet.');
@@ -402,7 +400,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowEndModal(false);
-                    toast.success('Foster placement ended successfully.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to end placement.');
@@ -432,7 +429,6 @@ return;
                     setShowAuthorizeModal(false);
                     setAuthLocation('');
                     setAuthNotes('');
-                    toast.success('Foster parent authorized successfully.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to authorize foster parent.');
@@ -464,7 +460,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowEditParentModal(false);
-                    toast.success('Foster parent updated successfully.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to update foster parent.');
@@ -495,7 +490,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowInstructionsModal(false);
-                    toast.success('Care instructions updated.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to update instructions.');
@@ -522,7 +516,6 @@ return;
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowAcknowledgeModal(false);
-                    toast.success('Care report response saved and sent.');
                 },
                 onError: (err) => {
                     toast.error(Object.values(err)[0] as string || 'Failed to respond to care update.');
@@ -1012,7 +1005,6 @@ return;
                                                         },
                                                         {
                                                             preserveScroll: true,
-                                                            onSuccess: () => toast.success(`${parent.name} approved as foster parent.`),
                                                         },
                                                     );
                                                 }}

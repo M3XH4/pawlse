@@ -12,11 +12,29 @@ class AssignedTask extends Model
     /** @use HasFactory<AssignedTaskFactory> */
     use HasFactory;
 
+    public const string STATUS_PENDING = 'pending';
+
+    public const string STATUS_COMPLETED = 'completed';
+
+    public const string STATUS_NO_SHOW = 'no_show';
+
+    public const string STATUS_CANCELLED = 'cancelled';
+
     protected $guarded = [];
 
     protected $casts = [
         'hours_logged' => 'decimal:2',
+        'completed_at' => 'datetime',
+        'attendance_marked_at' => 'datetime',
     ];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function attendanceMarkedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'attendance_marked_by');
+    }
 
     /**
      * @return BelongsTo<User, $this>
